@@ -5,6 +5,8 @@ import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader, ArrowRight, Check } from 
 import { FaGithub } from 'react-icons/fa';
 import AuthLayout from '../components/AuthLayout.jsx';
 
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000';
+
 /* ── Input field ───────────────────────────────────────────── */
 function Field({ icon: Icon, label, type = 'text', value, onChange, error, placeholder, right }) {
   const [focused, setFocused] = useState(false);
@@ -67,30 +69,67 @@ const GithubLogo = () => (
 /* ── Main component ────────────────────────────────────────── */
 export default function Login() {
   const navigate = useNavigate();
-  const [form, setForm]       = useState({ email: '', password: '' });
-  const [errors, setErrors]   = useState({});
-  const [showPw, setShowPw]   = useState(false);
+  const [form, setForm]         = useState({ email: '', password: '' });
+  const [errors, setErrors]     = useState({});
+  const [showPw, setShowPw]     = useState(false);
   const [remember, setRemember] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [loading, setLoading]   = useState(false);
+  const [success, setSuccess]   = useState(false);
+  const [apiError, setApiError] = useState('');
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
 
   const validate = () => {
     const e = {};
     if (!form.email.includes('@'))  e.email    = 'Enter a valid email address';
-    if (form.password.length < 6)   e.password = 'Password must be at least 6 characters';
+    if (form.password.length < 1)   e.password = 'Password is required';
     return e;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length) { setErrors(errs); return; }
     setErrors({});
+    setApiError('');
     setLoading(true);
-    // Simulate async — no backend yet
-    setTimeout(() => { setLoading(false); setSuccess(true); }, 1600);
+
+    try {
+      const res = await fetch(`${API_URL}/api/auth/login`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email:    form.email.trim().toLowerCase(),
+          password: form.password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.errors?.length) {
+          const fieldErrs = {};
+          data.errors.forEach(({ field, message }) => { fieldErrs[field] = message; });
+          setErrors(fieldErrs);
+        } else {
+          setApiError(data.message ?? 'Login failed. Please try again.');
+        }
+        return;
+      }
+
+      // Persist tokens
+      localStorage.setItem('access_token',  data.data.accessToken);
+      localStorage.setItem('refresh_token', data.data.refreshToken);
+      if (remember) {
+        localStorage.setItem('remember_email', form.email.trim().toLowerCase());
+      }
+
+      setSuccess(true);
+    } catch {
+      setApiError('Unable to reach the server. Please check your connection.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (success) {
@@ -124,12 +163,22 @@ export default function Login() {
         </p>
       </div>
 
+      {/* API-level error banner */}
+      <AnimatePresence>
+        {apiError && (
+          <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, marginBottom: 18, fontSize: 13, color: '#EF4444', fontWeight: 500 }}>
+            <AlertCircle size={14} /> {apiError}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* OAuth first — like Linear/Vercel */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-        <OAuthBtn logo={<GoogleLogo />} label="Continue with Google" onClick={() => {}} />
+        <OAuthBtn logo={<GoogleLogo />} label="Continue with Google" onClick={() => { window.location.href = `${API_URL}/api/auth/google`; }} />
       </div>
       <div style={{ marginBottom: 20 }}>
-        <OAuthBtn logo={<GithubLogo />} label="Continue with GitHub" onClick={() => {}} />
+        <OAuthBtn logo={<GithubLogo />} label="Continue with GitHub" onClick={() => { window.location.href = `${API_URL}/api/auth/github`; }} />
       </div>
 
       {/* Divider */}

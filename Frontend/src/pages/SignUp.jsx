@@ -5,6 +5,8 @@ import { User, Mail, Lock, Eye, EyeOff, Check, X, Zap, AlertCircle, Loader } fro
 import { FaGithub } from 'react-icons/fa';
 import AuthLayout from '../components/AuthLayout.jsx';
 
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000';
+
 /* ── Password strength ─────────────────────────────────────── */
 const rules = [
   { label: 'Minimum 8 characters', test: v => v.length >= 8 },
@@ -85,28 +87,64 @@ export default function SignUp() {
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [apiError, setApiError] = useState('');
 
   const score = strengthScore(form.password);
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
 
   const validate = () => {
     const e = {};
-    if (!form.name.trim())                          e.name    = 'Full name is required';
-    if (!form.email.includes('@'))                  e.email   = 'Enter a valid work email';
-    if (score < 3)                                  e.password = 'Password is too weak';
-    if (form.password !== form.confirm)             e.confirm = 'Passwords do not match';
-    if (!agreed)                                    e.agreed  = 'You must agree to continue';
+    if (!form.name.trim())                e.name     = 'Full name is required';
+    if (!form.email.includes('@'))        e.email    = 'Enter a valid work email';
+    if (score < 3)                        e.password = 'Password is too weak';
+    if (form.password !== form.confirm)   e.confirm  = 'Passwords do not match';
+    if (!agreed)                          e.agreed   = 'You must agree to continue';
     return e;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length) { setErrors(errs); return; }
     setErrors({});
+    setApiError('');
     setLoading(true);
-    // Simulate async — no backend yet
-    setTimeout(() => { setLoading(false); setSuccess(true); }, 1800);
+
+    try {
+      const res = await fetch(`${API_URL}/api/auth/signup`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name:        form.name.trim(),
+          email:            form.email.trim().toLowerCase(),
+          password:         form.password,
+          confirm_password: form.confirm,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        // Surface field-level errors from Zod if present
+        if (data.errors?.length) {
+          const fieldErrs = {};
+          data.errors.forEach(({ field, message }) => { fieldErrs[field] = message; });
+          setErrors(fieldErrs);
+        } else {
+          setApiError(data.message ?? 'Signup failed. Please try again.');
+        }
+        return;
+      }
+
+      // Persist tokens for the session
+      localStorage.setItem('access_token',  data.data.accessToken);
+      localStorage.setItem('refresh_token', data.data.refreshToken);
+      setSuccess(true);
+    } catch {
+      setApiError('Unable to reach the server. Please check your connection.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (success) {
@@ -138,6 +176,16 @@ export default function SignUp() {
           Start managing your team's work smarter with AI.
         </p>
       </div>
+
+      {/* API-level error banner */}
+      <AnimatePresence>
+        {apiError && (
+          <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, marginBottom: 18, fontSize: 13, color: '#EF4444', fontWeight: 500 }}>
+            <AlertCircle size={14} /> {apiError}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <form onSubmit={handleSubmit} noValidate>
         <Field icon={User} label="Full Name" value={form.name} onChange={set('name')} placeholder="Alex Johnson" error={errors.name} />
@@ -224,8 +272,8 @@ export default function SignUp() {
 
       {/* OAuth */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
-        <OAuthBtn logo={<GoogleLogo />} label="Google" onClick={() => {}} />
-        <OAuthBtn logo={<GithubLogo />} label="GitHub" onClick={() => {}} />
+        <OAuthBtn logo={<GoogleLogo />} label="Google" onClick={() => { window.location.href = `${API_URL}/api/auth/google`; }} />
+        <OAuthBtn logo={<GithubLogo />} label="GitHub" onClick={() => { window.location.href = `${API_URL}/api/auth/github`; }} />
       </div>
 
       {/* Footer link */}
