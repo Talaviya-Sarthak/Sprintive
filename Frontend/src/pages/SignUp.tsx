@@ -1,14 +1,44 @@
-import { useState } from 'react';
+import { useState, ChangeEvent, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, Lock, Eye, EyeOff, Check, X, Zap, AlertCircle, Loader } from 'lucide-react';
 import { FaGithub } from 'react-icons/fa';
-import AuthLayout from '../components/AuthLayout.jsx';
+import AuthLayout from '../components/AuthLayout';
+import type { LucideIcon } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000';
 
-/* ── Password strength ─────────────────────────────────────── */
-const rules = [
+interface SignUpForm {
+  name: string;
+  email: string;
+  password: string;
+  confirm: string;
+}
+
+interface FieldErrors {
+  [key: string]: string | undefined;
+}
+
+interface ApiErrorItem {
+  field: string;
+  message: string;
+}
+
+interface ApiResponse {
+  message?: string;
+  errors?: ApiErrorItem[];
+  data?: {
+    accessToken: string;
+    refreshToken: string;
+  };
+}
+
+interface PasswordRule {
+  label: string;
+  test: (v: string) => boolean;
+}
+
+const rules: PasswordRule[] = [
   { label: 'Minimum 8 characters', test: v => v.length >= 8 },
   { label: 'Uppercase letter',     test: v => /[A-Z]/.test(v) },
   { label: 'Lowercase letter',     test: v => /[a-z]/.test(v) },
@@ -16,12 +46,22 @@ const rules = [
   { label: 'Special character',    test: v => /[^A-Za-z0-9]/.test(v) },
 ];
 
-function strengthScore(pw) { return rules.filter(r => r.test(pw)).length; }
+function strengthScore(pw: string): number { return rules.filter(r => r.test(pw)).length; }
 const strengthLabel = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
 const strengthColor = ['', '#EF4444', '#F59E0B', '#F59E0B', '#10B981', '#10B981'];
 
-/* ── Input field ───────────────────────────────────────────── */
-function Field({ icon: Icon, label, type = 'text', value, onChange, error, placeholder, right }) {
+interface FieldProps {
+  icon: LucideIcon;
+  label: string;
+  type?: string;
+  value: string;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  error?: string;
+  placeholder?: string;
+  right?: React.ReactNode;
+}
+
+function Field({ icon: Icon, label, type = 'text', value, onChange, error, placeholder, right }: FieldProps) {
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ marginBottom: 16 }}>
@@ -55,8 +95,13 @@ function Field({ icon: Icon, label, type = 'text', value, onChange, error, place
   );
 }
 
-/* ── OAuth button ──────────────────────────────────────────── */
-function OAuthBtn({ logo, label, onClick }) {
+interface OAuthBtnProps {
+  logo: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}
+
+function OAuthBtn({ logo, label, onClick }: OAuthBtnProps) {
   return (
     <motion.button whileHover={{ y: -1, boxShadow: 'var(--shadow-md)' }} whileTap={{ scale: 0.98 }} onClick={onClick}
       style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, padding: '10px 16px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: 'var(--text-h)', fontFamily: 'var(--font)', transition: 'all 0.2s ease' }}>
@@ -77,11 +122,10 @@ const GoogleLogo = () => (
 
 const GithubLogo = () => <FaGithub size={16} style={{ color: 'var(--text-h)' }} />;
 
-/* ── Main component ────────────────────────────────────────── */
 export default function SignUp() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' });
-  const [errors, setErrors] = useState({});
+  const [form, setForm] = useState<SignUpForm>({ name: '', email: '', password: '', confirm: '' });
+  const [errors, setErrors] = useState<FieldErrors>({});
   const [showPw, setShowPw] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [agreed, setAgreed] = useState(false);
@@ -90,10 +134,11 @@ export default function SignUp() {
   const [apiError, setApiError] = useState('');
 
   const score = strengthScore(form.password);
-  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
+  const set = (k: keyof SignUpForm) => (e: ChangeEvent<HTMLInputElement>) =>
+    setForm(f => ({ ...f, [k]: e.target.value }));
 
-  const validate = () => {
-    const e = {};
+  const validate = (): FieldErrors => {
+    const e: FieldErrors = {};
     if (!form.name.trim())                e.name     = 'Full name is required';
     if (!form.email.includes('@'))        e.email    = 'Enter a valid work email';
     if (score < 3)                        e.password = 'Password is too weak';
@@ -102,7 +147,7 @@ export default function SignUp() {
     return e;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length) { setErrors(errs); return; }
@@ -122,12 +167,11 @@ export default function SignUp() {
         }),
       });
 
-      const data = await res.json();
+      const data: ApiResponse = await res.json();
 
       if (!res.ok) {
-        // Surface field-level errors from Zod if present
         if (data.errors?.length) {
-          const fieldErrs = {};
+          const fieldErrs: FieldErrors = {};
           data.errors.forEach(({ field, message }) => { fieldErrs[field] = message; });
           setErrors(fieldErrs);
         } else {
@@ -136,9 +180,8 @@ export default function SignUp() {
         return;
       }
 
-      // Persist tokens for the session
-      localStorage.setItem('access_token',  data.data.accessToken);
-      localStorage.setItem('refresh_token', data.data.refreshToken);
+      localStorage.setItem('access_token',  data.data!.accessToken);
+      localStorage.setItem('refresh_token', data.data!.refreshToken);
       setSuccess(true);
     } catch {
       setApiError('Unable to reach the server. Please check your connection.');
@@ -167,7 +210,6 @@ export default function SignUp() {
 
   return (
     <AuthLayout>
-      {/* Header */}
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-h)', letterSpacing: '-0.025em', marginBottom: 8 }}>
           Create your ScrumMind account
@@ -177,7 +219,6 @@ export default function SignUp() {
         </p>
       </div>
 
-      {/* API-level error banner */}
       <AnimatePresence>
         {apiError && (
           <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
@@ -191,7 +232,6 @@ export default function SignUp() {
         <Field icon={User} label="Full Name" value={form.name} onChange={set('name')} placeholder="Alex Johnson" error={errors.name} />
         <Field icon={Mail} label="Work Email" type="email" value={form.email} onChange={set('email')} placeholder="alex@company.com" error={errors.email} />
 
-        {/* Password */}
         <Field icon={Lock} label="Password" type={showPw ? 'text' : 'password'} value={form.password} onChange={set('password')} placeholder="Create a strong password" error={errors.password}
           right={
             <button type="button" onClick={() => setShowPw(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: 0 }}>
@@ -200,7 +240,6 @@ export default function SignUp() {
           }
         />
 
-        {/* Strength indicator */}
         {form.password && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} style={{ marginTop: -8, marginBottom: 14 }}>
             <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
@@ -223,7 +262,6 @@ export default function SignUp() {
           </motion.div>
         )}
 
-        {/* Confirm password */}
         <Field icon={Lock} label="Confirm Password" type={showConfirm ? 'text' : 'password'} value={form.confirm} onChange={set('confirm')} placeholder="Repeat your password" error={errors.confirm}
           right={
             <button type="button" onClick={() => setShowConfirm(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: 0 }}>
@@ -232,7 +270,6 @@ export default function SignUp() {
           }
         />
 
-        {/* Terms */}
         <div style={{ marginBottom: 20 }}>
           <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
             <div onClick={() => setAgreed(v => !v)} style={{ width: 18, height: 18, borderRadius: 5, border: `1.5px solid ${errors.agreed ? '#EF4444' : agreed ? 'var(--primary)' : 'var(--border2)'}`, background: agreed ? 'var(--primary)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1, transition: 'all 0.2s', cursor: 'pointer' }}>
@@ -255,7 +292,6 @@ export default function SignUp() {
           </AnimatePresence>
         </div>
 
-        {/* Submit */}
         <motion.button type="submit" whileHover={!loading ? { scale: 1.01 } : {}} whileTap={!loading ? { scale: 0.99 } : {}}
           disabled={loading}
           style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'var(--font)', letterSpacing: '-0.01em', boxShadow: '0 4px 16px rgba(59,130,246,0.35)', transition: 'all 0.2s', opacity: loading ? 0.8 : 1 }}>
@@ -263,20 +299,17 @@ export default function SignUp() {
         </motion.button>
       </form>
 
-      {/* Divider */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0' }}>
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
         <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>or continue with</span>
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
       </div>
 
-      {/* OAuth */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
         <OAuthBtn logo={<GoogleLogo />} label="Google" onClick={() => { window.location.href = `${API_URL}/api/auth/google`; }} />
         <OAuthBtn logo={<GithubLogo />} label="GitHub" onClick={() => { window.location.href = `${API_URL}/api/auth/github`; }} />
       </div>
 
-      {/* Footer link */}
       <p style={{ textAlign: 'center', fontSize: 13.5, color: 'var(--text-muted)' }}>
         Already have an account?{' '}
         <button onClick={() => navigate('/login')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', fontWeight: 700, fontSize: 13.5, fontFamily: 'var(--font)', padding: 0 }}>

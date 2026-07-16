@@ -1,7 +1,21 @@
 import { motion } from 'framer-motion';
 import { Check, Zap, Star, Building2 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
-const plans = [
+interface Plan {
+  name: string;
+  icon: LucideIcon;
+  price: string;
+  period: string;
+  desc: string;
+  features: string[];
+  cta: string;
+  highlight: boolean;
+  color: string;
+  badge?: string;
+}
+
+const plans: Plan[] = [
   {
     name: 'Starter', icon: Zap, price: '₹499', period: '/month',
     desc: 'Perfect for small teams getting started with AI-powered Agile.',
@@ -41,7 +55,7 @@ export default function Pricing() {
                 viewport={{ once: true }} transition={{ delay: i * 0.12 }}
                 whileHover={{ y: -6, boxShadow: plan.highlight ? 'var(--shadow-glow)' : 'var(--shadow-md)' }}
                 style={{
-                  background: plan.highlight ? 'var(--surface)' : 'var(--surface)',
+                  background: 'var(--surface)',
                   border: `1px solid ${plan.highlight ? 'rgba(59,130,246,0.4)' : 'var(--border)'}`,
                   borderRadius: 16,
                   padding: '32px 28px',
@@ -54,15 +68,9 @@ export default function Pricing() {
                   <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, var(--primary), var(--accent))' }} />
                 )}
                 {plan.badge && (
-                  <div style={{
-                    position: 'absolute', top: 18, right: 18,
-                    background: 'var(--primary)', borderRadius: 99,
-                    padding: '3px 11px', fontSize: 10, fontWeight: 700, color: '#fff',
-                    letterSpacing: '0.02em',
-                  }}>{plan.badge}</div>
+                  <div style={{ position: 'absolute', top: 18, right: 18, background: 'var(--primary)', borderRadius: 99, padding: '3px 11px', fontSize: 10, fontWeight: 700, color: '#fff', letterSpacing: '0.02em' }}>{plan.badge}</div>
                 )}
 
-                {/* Plan header */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
                   <div style={{ width: 40, height: 40, borderRadius: 10, background: `${plan.color}14`, border: `1px solid ${plan.color}28`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Icon size={18} color={plan.color} strokeWidth={1.8} />
@@ -73,13 +81,11 @@ export default function Pricing() {
                   </div>
                 </div>
 
-                {/* Price */}
                 <div style={{ marginBottom: 24, paddingBottom: 24, borderBottom: '1px solid var(--border)' }}>
                   <span style={{ fontSize: 40, fontWeight: 800, color: plan.highlight ? 'var(--primary)' : 'var(--text-h)', letterSpacing: '-0.04em' }}>{plan.price}</span>
                   <span style={{ fontSize: 14, color: 'var(--text-muted)', marginLeft: 2 }}>{plan.period}</span>
                 </div>
 
-                {/* Features */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginBottom: 28 }}>
                   {plan.features.map(f => (
                     <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -109,4 +115,3 @@ export default function Pricing() {
     </section>
   );
 }
-

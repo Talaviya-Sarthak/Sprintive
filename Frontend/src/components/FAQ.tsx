@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, HelpCircle } from 'lucide-react';
 
-const faqs = [
+interface FaqItem {
+  q: string;
+  a: string;
+}
+
+const faqs: FaqItem[] = [
   { q: 'How does AI understand our meetings?',    a: "ScrumMind uses OpenAI's Whisper for speech-to-text transcription and a fine-tuned LLM to understand Agile context. It identifies speakers, extracts tasks, detects blockers, and understands deadlines from natural conversation." },
   { q: 'Is our meeting data secure?',             a: 'Absolutely. ScrumMind is SOC 2 Type II compliant with end-to-end encryption for all recordings and transcripts. Data is stored in isolated tenant environments and never used to train AI models.' },
   { q: 'Can I import existing Jira projects?',    a: 'Yes! ScrumMind has a one-click Jira import that syncs your existing projects, epics, sprints, and tickets. Changes sync bidirectionally in real-time.' },
@@ -14,7 +19,7 @@ const faqs = [
 ];
 
 export default function FAQ() {
-  const [open, setOpen] = useState(null);
+  const [open, setOpen] = useState<number | null>(null);
 
   return (
     <section id="contact">

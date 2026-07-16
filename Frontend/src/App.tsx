@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
-import { useTheme } from './context/ThemeContext.jsx';
+import { useTheme } from './context/ThemeContext';
 import './index.css';
 
 import Navbar from './components/Navbar';
@@ -43,9 +43,9 @@ function LandingPage() {
 export default function App() {
   return (
     <Routes>
-      <Route path="/"        element={<LandingPage />} />
-      <Route path="/signup"  element={<SignUp />} />
-      <Route path="/login"   element={<Login />} />
+      <Route path="/"       element={<LandingPage />} />
+      <Route path="/signup" element={<SignUp />} />
+      <Route path="/login"  element={<Login />} />
     </Routes>
   );
 }

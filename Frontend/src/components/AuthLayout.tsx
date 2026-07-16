@@ -1,9 +1,19 @@
+import { ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Brain, Sun, Moon, Users, CheckSquare, BarChart3, MessageSquare } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext.jsx';
+import { useTheme } from '../context/ThemeContext';
+import type { LucideIcon } from 'lucide-react';
 
-function FloatingCard({ icon: Icon, title, value, color, style }) {
+interface FloatingCardProps {
+  icon: LucideIcon;
+  title: string;
+  value: string;
+  color: string;
+  style?: React.CSSProperties;
+}
+
+function FloatingCard({ icon: Icon, title, value, color, style }: FloatingCardProps) {
   return (
     <motion.div
       animate={{ y: [0, -6, 0] }}
@@ -40,18 +50,14 @@ function BrandPanel() {
       display: 'flex', flexDirection: 'column', justifyContent: 'center',
       padding: '60px 56px',
     }} className="auth-brand-panel">
-      {/* Animated background glows */}
       <motion.div animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.65, 0.4] }} transition={{ duration: 8, repeat: Infinity }}
         style={{ position: 'absolute', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.18) 0%, transparent 70%)', top: -100, left: -100, pointerEvents: 'none' }} />
       <motion.div animate={{ scale: [1.1, 1, 1.1], opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 10, repeat: Infinity }}
         style={{ position: 'absolute', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(6,182,212,0.12) 0%, transparent 70%)', bottom: -80, right: -80, pointerEvents: 'none' }} />
 
-      {/* Subtle grid */}
       <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)', backgroundSize: '48px 48px', pointerEvents: 'none' }} />
 
-      {/* Content */}
       <div style={{ position: 'relative', zIndex: 1 }}>
-        {/* Logo */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
           style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 56 }}>
           <div style={{ width: 36, height: 36, borderRadius: 10, background: '#3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 16px rgba(59,130,246,0.5)' }}>
@@ -62,7 +68,6 @@ function BrandPanel() {
           </span>
         </motion.div>
 
-        {/* Headline */}
         <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}>
           <h1 style={{ fontSize: 'clamp(28px, 3vw, 40px)', fontWeight: 800, color: '#F8FAFC', lineHeight: 1.15, letterSpacing: '-0.03em', marginBottom: 16 }}>
             Your team's meetings,<br />
@@ -76,20 +81,17 @@ function BrandPanel() {
           </p>
         </motion.div>
 
-        {/* Illustration area with floating cards */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.8 }}
           style={{ position: 'relative', height: 220, marginTop: 48 }}>
-          {/* Central abstract shape */}
           <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 160, height: 160, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%)', border: '1px solid rgba(59,130,246,0.15)' }} />
           <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 100, height: 100, borderRadius: '50%', background: 'radial-gradient(circle, rgba(6,182,212,0.12) 0%, transparent 70%)', border: '1px solid rgba(6,182,212,0.12)' }} />
 
-          <FloatingCard icon={Users}        title="Active Team"      value="12 Members"    color="#3B82F6" style={{ top: 0,   left: 0 }} />
-          <FloatingCard icon={CheckSquare}  title="Tasks Done"       value="28 / 35"       color="#10B981" style={{ top: 0,   right: 0 }} />
-          <FloatingCard icon={BarChart3}    title="Sprint Progress"  value="80% Complete"  color="#06B6D4" style={{ bottom: 0, left: 20 }} />
-          <FloatingCard icon={MessageSquare}title="Team Chat"        value="4 new messages" color="#8B5CF6" style={{ bottom: 0, right: 0 }} />
+          <FloatingCard icon={Users}         title="Active Team"      value="12 Members"    color="#3B82F6" style={{ top: 0,   left: 0 }} />
+          <FloatingCard icon={CheckSquare}   title="Tasks Done"       value="28 / 35"       color="#10B981" style={{ top: 0,   right: 0 }} />
+          <FloatingCard icon={BarChart3}     title="Sprint Progress"  value="80% Complete"  color="#06B6D4" style={{ bottom: 0, left: 20 }} />
+          <FloatingCard icon={MessageSquare} title="Team Chat"        value="4 new messages" color="#8B5CF6" style={{ bottom: 0, right: 0 }} />
         </motion.div>
 
-        {/* Social proof */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
           style={{ display: 'flex', gap: 28, marginTop: 40 }}>
           {[['500+', 'Teams'], ['95%', 'Time Saved'], ['4.9★', 'Rating']].map(([val, label]) => (
@@ -104,23 +106,24 @@ function BrandPanel() {
   );
 }
 
-export default function AuthLayout({ children }) {
+interface AuthLayoutProps {
+  children: ReactNode;
+}
+
+export default function AuthLayout({ children }: AuthLayoutProps) {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', background: 'var(--bg)', fontFamily: 'var(--font)' }}>
-      {/* Left brand panel */}
       <BrandPanel />
 
-      {/* Right form panel */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
-        {/* Top bar */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)' }}>
           <button onClick={() => navigate('/')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font)', transition: 'color 0.2s' }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-h)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-h)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}>
             ← Back to home
           </button>
           <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={toggleTheme}
@@ -129,7 +132,6 @@ export default function AuthLayout({ children }) {
           </motion.button>
         </div>
 
-        {/* Form area */}
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px' }}>
           <motion.div
             initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}

@@ -2,7 +2,17 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Quote, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 
-const testimonials = [
+interface Testimonial {
+  name: string;
+  role: string;
+  company: string;
+  avatar: string;
+  color: string;
+  quote: string;
+  rating: number;
+}
+
+const testimonials: Testimonial[] = [
   { name: 'Priya Sharma',   role: 'Product Manager',  company: 'TechStartup', avatar: 'PS', color: '#3B82F6', quote: 'ScrumMind saves us nearly 8 hours every week. The AI-generated meeting summaries are incredibly accurate and our team actually reads them.',                                                                rating: 5 },
   { name: 'Marcus Chen',    role: 'Scrum Master',      company: 'EnterpriseX', avatar: 'MC', color: '#06B6D4', quote: 'The AI-generated tasks are incredibly accurate. It catches things that even I miss during standups. Our sprint completion rate went from 70% to 94%.',                                                    rating: 5 },
   { name: 'Sarah Johnson',  role: 'Engineering Lead',  company: 'RemoteFirst', avatar: 'SJ', color: '#8B5CF6', quote: 'We completely stopped writing meeting notes manually. The AI understands context so well that it even identifies implicit blockers from the conversation.',                                               rating: 5 },
@@ -49,7 +59,6 @@ export default function Testimonials() {
               >
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${t.color}, transparent)` }} />
 
-                {/* Stars */}
                 <div style={{ display: 'flex', gap: 3, marginBottom: 14 }}>
                   {Array.from({ length: t.rating }).map((_, j) => <Star key={j} size={13} color="#F59E0B" fill="#F59E0B" />)}
                 </div>
@@ -59,12 +68,7 @@ export default function Testimonials() {
                 </p>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-                  <div style={{
-                    width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
-                    background: `linear-gradient(135deg, ${t.color}, ${t.color}99)`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 13, fontWeight: 700, color: '#fff',
-                  }}>{t.avatar}</div>
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0, background: `linear-gradient(135deg, ${t.color}, ${t.color}99)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff' }}>{t.avatar}</div>
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-h)', letterSpacing: '-0.01em' }}>{t.name}</div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>{t.role} · {t.company}</div>
@@ -75,7 +79,6 @@ export default function Testimonials() {
           </AnimatePresence>
         </div>
 
-        {/* Controls */}
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 14, marginTop: 32 }}>
           <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }} onClick={prev}
             style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--surface)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-h)', transition: 'all 0.2s' }}>

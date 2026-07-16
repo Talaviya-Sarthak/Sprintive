@@ -1,11 +1,17 @@
 import { motion } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
 
-const problems = [
-  { icon: '📝', title: 'Manual Note Taking', desc: 'Engineers waste 30+ minutes per meeting writing notes instead of building.' },
-  { icon: '🗑️', title: 'Forgotten Action Items', desc: 'Critical tasks get lost in chat threads and never make it to the backlog.' },
-  { icon: '🎥', title: 'No Meeting Recordings', desc: 'Team members who miss meetings have no way to catch up on decisions.' },
-  { icon: '💬', title: 'Lost Discussions', desc: 'Valuable context from standups disappears with no searchable archive.' },
+interface Problem {
+  icon: string;
+  title: string;
+  desc: string;
+}
+
+const problems: Problem[] = [
+  { icon: '📝', title: 'Manual Note Taking',       desc: 'Engineers waste 30+ minutes per meeting writing notes instead of building.' },
+  { icon: '🗑️', title: 'Forgotten Action Items',   desc: 'Critical tasks get lost in chat threads and never make it to the backlog.' },
+  { icon: '🎥', title: 'No Meeting Recordings',    desc: 'Team members who miss meetings have no way to catch up on decisions.' },
+  { icon: '💬', title: 'Lost Discussions',          desc: 'Valuable context from standups disappears with no searchable archive.' },
   { icon: '🔄', title: 'Jira Updates Done Manually', desc: 'Developers spend hours updating tickets instead of writing code.' },
   { icon: '📊', title: 'Difficult Sprint Tracking', desc: 'No real-time visibility into sprint progress, blockers, or velocity.' },
 ];

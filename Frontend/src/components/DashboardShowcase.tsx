@@ -2,16 +2,21 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Monitor } from 'lucide-react';
 
-const tabs = ['Kanban Board', 'Meeting Room', 'Meeting Summary', 'Sprint Analytics', 'Calendar', 'Team Chat'];
+type TabName = 'Kanban Board' | 'Meeting Room' | 'Meeting Summary' | 'Sprint Analytics' | 'Calendar' | 'Team Chat';
+
+const tabs: TabName[] = ['Kanban Board', 'Meeting Room', 'Meeting Summary', 'Sprint Analytics', 'Calendar', 'Team Chat'];
+
+interface KanbanTask { t: string; p: 'High' | 'Med' | 'Low'; }
+interface KanbanCol  { title: string; color: string; tasks: KanbanTask[]; }
 
 function KanbanMockup() {
-  const cols = [
+  const cols: KanbanCol[] = [
     { title: 'Backlog',     color: '#94A3B8', tasks: [{ t: 'User Auth', p: 'High' }, { t: 'API Design', p: 'Med' }, { t: 'DB Schema', p: 'Low' }] },
     { title: 'In Progress', color: '#3B82F6', tasks: [{ t: 'Dashboard UI', p: 'High' }, { t: 'Meeting API', p: 'High' }] },
     { title: 'Review',      color: '#F59E0B', tasks: [{ t: 'Login Flow', p: 'Med' }] },
     { title: 'Done',        color: '#10B981', tasks: [{ t: 'Setup CI/CD', p: 'Low' }, { t: 'DB Migrations', p: 'Med' }] },
   ];
-  const pColor = { High: '#EF4444', Med: '#F59E0B', Low: '#10B981' };
+  const pColor: Record<'High' | 'Med' | 'Low', string> = { High: '#EF4444', Med: '#F59E0B', Low: '#10B981' };
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
       {cols.map(col => (
@@ -34,6 +39,7 @@ function KanbanMockup() {
 }
 
 function MeetingMockup() {
+  const names = ['Alex Chen', 'Sam Rivera', 'Jordan Lee', 'Taylor Kim', 'Morgan Wu', 'AI Assistant'];
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px', background: 'rgba(16,185,129,0.08)', borderRadius: 9, border: '1px solid rgba(16,185,129,0.2)' }}>
@@ -42,13 +48,8 @@ function MeetingMockup() {
         <span style={{ marginLeft: 'auto', fontSize: 10, color: '#10B981', fontWeight: 600 }}>● Live</span>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
-        {['Alex Chen', 'Sam Rivera', 'Jordan Lee', 'Taylor Kim', 'Morgan Wu', 'AI Assistant'].map((name, i) => (
-          <div key={name} style={{
-            background: 'var(--bg3)', borderRadius: 10, padding: 14,
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 7,
-            border: i === 0 ? '1px solid rgba(59,130,246,0.4)' : '1px solid var(--border)',
-            position: 'relative',
-          }}>
+        {names.map((name, i) => (
+          <div key={name} style={{ background: 'var(--bg3)', borderRadius: 10, padding: 14, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 7, border: i === 0 ? '1px solid rgba(59,130,246,0.4)' : '1px solid var(--border)', position: 'relative' }}>
             <div style={{ width: 36, height: 36, borderRadius: '50%', background: `linear-gradient(135deg, hsl(${i*45+200},65%,55%), hsl(${i*45+240},65%,65%))`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff' }}>{name[0]}</div>
             <span style={{ fontSize: 10, color: 'var(--text-h)', fontWeight: 600, textAlign: 'center' }}>{name}</span>
             {i === 0 && (
@@ -66,8 +67,10 @@ function MeetingMockup() {
   );
 }
 
+interface TranscriptLine { speaker: string; time: string; text: string; tag: string | null; }
+
 function TranscriptMockup() {
-  const lines = [
+  const lines: TranscriptLine[] = [
     { speaker: 'Alex',    time: '09:01', text: "Yesterday I finished the authentication module. Today I'll work on the dashboard.", tag: null },
     { speaker: 'Summary', time: '09:01', text: 'Action item: Complete dashboard — Assigned to Alex',                              tag: '✅ Action' },
     { speaker: 'Sam',     time: '09:02', text: "I'm blocked on the payment flow. Need access from the DevOps team.",               tag: null },
@@ -78,12 +81,7 @@ function TranscriptMockup() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {lines.map((line, i) => (
-        <div key={i} style={{
-          display: 'flex', gap: 10, padding: '9px 12px',
-          background: line.speaker === 'Summary' ? 'rgba(59,130,246,0.06)' : 'transparent',
-          borderRadius: 8,
-          border: line.speaker === 'Summary' ? '1px solid rgba(59,130,246,0.12)' : '1px solid transparent',
-        }}>
+        <div key={i} style={{ display: 'flex', gap: 10, padding: '9px 12px', background: line.speaker === 'Summary' ? 'rgba(59,130,246,0.06)' : 'transparent', borderRadius: 8, border: line.speaker === 'Summary' ? '1px solid rgba(59,130,246,0.12)' : '1px solid transparent' }}>
           <span style={{ fontSize: 10, color: line.speaker === 'Summary' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 700, minWidth: 48, paddingTop: 1 }}>{line.speaker}</span>
           <span style={{ flex: 1, fontSize: 11, color: 'var(--text)', lineHeight: 1.55 }}>{line.text}</span>
           {line.tag && <span style={{ fontSize: 9, fontWeight: 600, background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.18)', borderRadius: 5, padding: '2px 7px', color: 'var(--primary)', whiteSpace: 'nowrap', alignSelf: 'flex-start' }}>{line.tag}</span>}
@@ -97,10 +95,16 @@ function TranscriptMockup() {
 function AnalyticsMockup() {
   const bars = [65, 80, 55, 90, 70, 85, 95];
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const metrics: [string, string, string][] = [
+    ['Sprint Velocity', '42 pts', '+12%'],
+    ['Tasks Done', '28/35', '80%'],
+    ['Meetings', '14', 'This Sprint'],
+    ['AI Accuracy', '96%', 'Task Detection'],
+  ];
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
-        {[['Sprint Velocity','42 pts','+12%'],['Tasks Done','28/35','80%'],['Meetings','14','This Sprint'],['AI Accuracy','96%','Task Detection']].map(([label,val,sub]) => (
+        {metrics.map(([label, val, sub]) => (
           <div key={label} style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px' }}>
             <div style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
             <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-h)', marginBottom: 3, letterSpacing: '-0.02em' }}>{val}</div>
@@ -138,13 +142,7 @@ function CalendarMockup() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 3 }}>
         {['S','M','T','W','T','F','S'].map((d,i) => <div key={i} style={{ textAlign: 'center', fontSize: 9, color: 'var(--text-muted)', fontWeight: 700, padding: '3px 0' }}>{d}</div>)}
         {days.map(d => (
-          <div key={d} style={{
-            textAlign: 'center', fontSize: 10, padding: '5px 3px', borderRadius: 5,
-            background: d === 15 ? 'var(--primary)' : meetings.includes(d) ? 'rgba(59,130,246,0.12)' : 'transparent',
-            color: d === 15 ? '#fff' : meetings.includes(d) ? 'var(--primary)' : 'var(--text)',
-            fontWeight: meetings.includes(d) || d === 15 ? 700 : 400,
-            cursor: 'default',
-          }}>
+          <div key={d} style={{ textAlign: 'center', fontSize: 10, padding: '5px 3px', borderRadius: 5, background: d === 15 ? 'var(--primary)' : meetings.includes(d) ? 'rgba(59,130,246,0.12)' : 'transparent', color: d === 15 ? '#fff' : meetings.includes(d) ? 'var(--primary)' : 'var(--text)', fontWeight: meetings.includes(d) || d === 15 ? 700 : 400, cursor: 'default' }}>
             {d}
             {meetings.includes(d) && d !== 15 && <div style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--primary)', margin: '2px auto 0' }} />}
           </div>
@@ -154,14 +152,16 @@ function CalendarMockup() {
   );
 }
 
+interface ChatMsg { user: string; msg: string; time: string; self: boolean; }
+
 function ChatMockup() {
-  const msgs = [
-    { user: 'Alex',   msg: 'Just pushed the auth fix 🚀',                      time: '09:15', self: false },
-    { user: 'Sam',    msg: "Great! I'll start the review now",                  time: '09:16', self: false },
-    { user: 'You',    msg: "AI created 3 tickets from today's standup",         time: '09:17', self: true  },
-    { user: 'Bot',    msg: '✅ Sprint board updated. 3 new tasks assigned.',    time: '09:17', self: false },
-    { user: 'Jordan', msg: 'Can we move the sprint review to 3pm?',             time: '09:20', self: false },
-    { user: 'You',    msg: "Sure, I'll update the calendar",                    time: '09:21', self: true  },
+  const msgs: ChatMsg[] = [
+    { user: 'Alex',   msg: 'Just pushed the auth fix 🚀',                     time: '09:15', self: false },
+    { user: 'Sam',    msg: "Great! I'll start the review now",                 time: '09:16', self: false },
+    { user: 'You',    msg: "AI created 3 tickets from today's standup",        time: '09:17', self: true  },
+    { user: 'Bot',    msg: '✅ Sprint board updated. 3 new tasks assigned.',   time: '09:17', self: false },
+    { user: 'Jordan', msg: 'Can we move the sprint review to 3pm?',            time: '09:20', self: false },
+    { user: 'You',    msg: "Sure, I'll update the calendar",                   time: '09:21', self: true  },
   ];
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -171,14 +171,7 @@ function ChatMockup() {
             {!m.self && <div style={{ width: 26, height: 26, borderRadius: '50%', background: `hsl(${i*50+200},60%,55%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{m.user[0]}</div>}
             <div style={{ maxWidth: '68%' }}>
               {!m.self && <div style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 2, fontWeight: 600 }}>{m.user}</div>}
-              <div style={{
-                background: m.self ? 'var(--primary)' : 'var(--surface2)',
-                border: m.self ? 'none' : '1px solid var(--border)',
-                borderRadius: m.self ? '10px 10px 3px 10px' : '10px 10px 10px 3px',
-                padding: '7px 10px', fontSize: 11,
-                color: m.self ? '#fff' : 'var(--text)',
-                fontWeight: m.self ? 500 : 400,
-              }}>{m.msg}</div>
+              <div style={{ background: m.self ? 'var(--primary)' : 'var(--surface2)', border: m.self ? 'none' : '1px solid var(--border)', borderRadius: m.self ? '10px 10px 3px 10px' : '10px 10px 10px 3px', padding: '7px 10px', fontSize: 11, color: m.self ? '#fff' : 'var(--text)', fontWeight: m.self ? 500 : 400 }}>{m.msg}</div>
             </div>
           </div>
         ))}
@@ -191,7 +184,7 @@ function ChatMockup() {
   );
 }
 
-const mockups = {
+const mockups: Record<TabName, React.ReactElement> = {
   'Kanban Board':    <KanbanMockup />,
   'Meeting Room':    <MeetingMockup />,
   'Meeting Summary': <TranscriptMockup />,
@@ -201,7 +194,7 @@ const mockups = {
 };
 
 export default function DashboardShowcase() {
-  const [active, setActive] = useState('Kanban Board');
+  const [active, setActive] = useState<TabName>('Kanban Board');
   return (
     <section className="section-alt">
       <div className="container">
@@ -211,7 +204,6 @@ export default function DashboardShowcase() {
           <p className="section-sub">Switch between views to see how ScrumMind keeps your entire team in sync.</p>
         </motion.div>
 
-        {/* Tab pills */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 20 }}>
           {tabs.map(tab => (
             <motion.button key={tab} whileTap={{ scale: 0.97 }} onClick={() => setActive(tab)} style={{
@@ -226,10 +218,8 @@ export default function DashboardShowcase() {
           ))}
         </div>
 
-        {/* Browser window */}
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
           style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
-          {/* Chrome bar */}
           <div style={{ padding: '12px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg3)' }}>
             <div style={{ display: 'flex', gap: 6 }}>
               {['#EF4444','#F59E0B','#10B981'].map(c => <div key={c} style={{ width: 11, height: 11, borderRadius: '50%', background: c, opacity: 0.8 }} />)}

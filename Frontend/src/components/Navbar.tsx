@@ -2,13 +2,17 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Brain, Menu, X, Sun, Moon, Zap } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext.jsx';
+import { useTheme } from '../context/ThemeContext';
 
 const links = ['Home', 'Features', 'How It Works', 'Pricing', 'Testimonials', 'Contact'];
 const ids    = ['hero', 'features', 'how-it-works', 'pricing', 'testimonials', 'contact'];
 
-export default function Navbar({ theme: themeProp, toggleTheme: toggleProp }) {
-  // Support both prop-based (legacy) and context-based usage
+interface NavbarProps {
+  theme?: string;
+  toggleTheme?: () => void;
+}
+
+export default function Navbar({ theme: themeProp, toggleTheme: toggleProp }: NavbarProps) {
   const ctx = (() => { try { return useTheme(); } catch { return null; } })();
   const theme       = ctx ? ctx.theme       : themeProp;
   const toggleTheme = ctx ? ctx.toggleTheme : toggleProp;
@@ -31,7 +35,7 @@ export default function Navbar({ theme: themeProp, toggleTheme: toggleProp }) {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const scrollTo = (id) => {
+  const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
     setOpen(false);
   };
@@ -56,7 +60,6 @@ export default function Navbar({ theme: themeProp, toggleTheme: toggleProp }) {
     >
       <div style={{ maxWidth: 1160, margin: '0 auto', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
 
-        {/* Logo */}
         <motion.button whileHover={{ opacity: 0.85 }} whileTap={{ scale: 0.97 }}
           onClick={() => navigate('/')}
           style={{ display: 'flex', alignItems: 'center', gap: 9, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
@@ -68,7 +71,6 @@ export default function Navbar({ theme: themeProp, toggleTheme: toggleProp }) {
           </span>
         </motion.button>
 
-        {/* Desktop nav links */}
         <div style={{ display: 'flex', gap: 2, alignItems: 'center' }} className="sm-desktop-nav">
           {links.map((l, i) => {
             const isActive = active === ids[i];
@@ -88,7 +90,6 @@ export default function Navbar({ theme: themeProp, toggleTheme: toggleProp }) {
           })}
         </div>
 
-        {/* Right actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={toggleTheme}
             style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 8, width: 34, height: 34, cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s ease', flexShrink: 0 }}
@@ -115,7 +116,6 @@ export default function Navbar({ theme: themeProp, toggleTheme: toggleProp }) {
         </div>
       </div>
 
-      {/* Mobile drawer */}
       <AnimatePresence>
         {open && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}

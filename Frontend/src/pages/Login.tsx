@@ -1,14 +1,48 @@
-import { useState } from 'react';
+import { useState, ChangeEvent, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader, ArrowRight, Check } from 'lucide-react';
 import { FaGithub } from 'react-icons/fa';
-import AuthLayout from '../components/AuthLayout.jsx';
+import AuthLayout from '../components/AuthLayout';
+import type { LucideIcon } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000';
 
-/* ── Input field ───────────────────────────────────────────── */
-function Field({ icon: Icon, label, type = 'text', value, onChange, error, placeholder, right }) {
+interface LoginForm {
+  email: string;
+  password: string;
+}
+
+interface FieldErrors {
+  [key: string]: string | undefined;
+}
+
+interface ApiErrorItem {
+  field: string;
+  message: string;
+}
+
+interface ApiResponse {
+  message?: string;
+  errors?: ApiErrorItem[];
+  data?: {
+    accessToken: string;
+    refreshToken: string;
+  };
+}
+
+interface FieldProps {
+  icon: LucideIcon;
+  label: string;
+  type?: string;
+  value: string;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  error?: string;
+  placeholder?: string;
+  right?: React.ReactNode;
+}
+
+function Field({ icon: Icon, label, type = 'text', value, onChange, error, placeholder, right }: FieldProps) {
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ marginBottom: 16 }}>
@@ -42,8 +76,13 @@ function Field({ icon: Icon, label, type = 'text', value, onChange, error, place
   );
 }
 
-/* ── OAuth button ──────────────────────────────────────────── */
-function OAuthBtn({ logo, label, onClick }) {
+interface OAuthBtnProps {
+  logo: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}
+
+function OAuthBtn({ logo, label, onClick }: OAuthBtnProps) {
   return (
     <motion.button whileHover={{ y: -1, boxShadow: 'var(--shadow-md)' }} whileTap={{ scale: 0.98 }} onClick={onClick}
       style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, padding: '10px 16px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: 'var(--text-h)', fontFamily: 'var(--font)', transition: 'all 0.2s ease' }}>
@@ -66,27 +105,27 @@ const GithubLogo = () => (
   <FaGithub size={16} style={{ color: 'var(--text-h)' }} />
 );
 
-/* ── Main component ────────────────────────────────────────── */
 export default function Login() {
   const navigate = useNavigate();
-  const [form, setForm]         = useState({ email: '', password: '' });
-  const [errors, setErrors]     = useState({});
+  const [form, setForm]         = useState<LoginForm>({ email: '', password: '' });
+  const [errors, setErrors]     = useState<FieldErrors>({});
   const [showPw, setShowPw]     = useState(false);
   const [remember, setRemember] = useState(false);
   const [loading, setLoading]   = useState(false);
   const [success, setSuccess]   = useState(false);
   const [apiError, setApiError] = useState('');
 
-  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
+  const set = (k: keyof LoginForm) => (e: ChangeEvent<HTMLInputElement>) =>
+    setForm(f => ({ ...f, [k]: e.target.value }));
 
-  const validate = () => {
-    const e = {};
+  const validate = (): FieldErrors => {
+    const e: FieldErrors = {};
     if (!form.email.includes('@'))  e.email    = 'Enter a valid email address';
     if (form.password.length < 1)   e.password = 'Password is required';
     return e;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length) { setErrors(errs); return; }
@@ -104,11 +143,11 @@ export default function Login() {
         }),
       });
 
-      const data = await res.json();
+      const data: ApiResponse = await res.json();
 
       if (!res.ok) {
         if (data.errors?.length) {
-          const fieldErrs = {};
+          const fieldErrs: FieldErrors = {};
           data.errors.forEach(({ field, message }) => { fieldErrs[field] = message; });
           setErrors(fieldErrs);
         } else {
@@ -117,9 +156,8 @@ export default function Login() {
         return;
       }
 
-      // Persist tokens
-      localStorage.setItem('access_token',  data.data.accessToken);
-      localStorage.setItem('refresh_token', data.data.refreshToken);
+      localStorage.setItem('access_token',  data.data!.accessToken);
+      localStorage.setItem('refresh_token', data.data!.refreshToken);
       if (remember) {
         localStorage.setItem('remember_email', form.email.trim().toLowerCase());
       }
@@ -153,7 +191,6 @@ export default function Login() {
 
   return (
     <AuthLayout>
-      {/* Header */}
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-h)', letterSpacing: '-0.025em', marginBottom: 8 }}>
           Welcome back
@@ -163,7 +200,6 @@ export default function Login() {
         </p>
       </div>
 
-      {/* API-level error banner */}
       <AnimatePresence>
         {apiError && (
           <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
@@ -173,7 +209,6 @@ export default function Login() {
         )}
       </AnimatePresence>
 
-      {/* OAuth first — like Linear/Vercel */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
         <OAuthBtn logo={<GoogleLogo />} label="Continue with Google" onClick={() => { window.location.href = `${API_URL}/api/auth/google`; }} />
       </div>
@@ -181,7 +216,6 @@ export default function Login() {
         <OAuthBtn logo={<GithubLogo />} label="Continue with GitHub" onClick={() => { window.location.href = `${API_URL}/api/auth/github`; }} />
       </div>
 
-      {/* Divider */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
         <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
         <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>or with email</span>
@@ -198,7 +232,6 @@ export default function Login() {
           }
         />
 
-        {/* Remember + Forgot */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, marginTop: -4 }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
             <div onClick={() => setRemember(v => !v)} style={{ width: 17, height: 17, borderRadius: 5, border: `1.5px solid ${remember ? 'var(--primary)' : 'var(--border2)'}`, background: remember ? 'var(--primary)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', cursor: 'pointer', flexShrink: 0 }}>
@@ -211,7 +244,6 @@ export default function Login() {
           </button>
         </div>
 
-        {/* Submit */}
         <motion.button type="submit" whileHover={!loading ? { scale: 1.01 } : {}} whileTap={!loading ? { scale: 0.99 } : {}}
           disabled={loading}
           style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'var(--font)', letterSpacing: '-0.01em', boxShadow: '0 4px 16px rgba(59,130,246,0.35)', transition: 'all 0.2s', opacity: loading ? 0.8 : 1 }}>
@@ -222,7 +254,6 @@ export default function Login() {
         </motion.button>
       </form>
 
-      {/* Footer link */}
       <p style={{ textAlign: 'center', fontSize: 13.5, color: 'var(--text-muted)', marginTop: 24 }}>
         Don't have an account?{' '}
         <button onClick={() => navigate('/signup')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', fontWeight: 700, fontSize: 13.5, fontFamily: 'var(--font)', padding: 0 }}>

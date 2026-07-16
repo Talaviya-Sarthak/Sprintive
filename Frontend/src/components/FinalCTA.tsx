@@ -6,7 +6,6 @@ export default function FinalCTA() {
   const navigate = useNavigate();
   return (
     <section className="section-alt" style={{ position: 'relative', overflow: 'hidden' }}>
-      {/* Background glows */}
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
         <motion.div
           animate={{ scale: [1, 1.08, 1], opacity: [0.6, 1, 0.6] }}
@@ -18,7 +17,6 @@ export default function FinalCTA() {
           transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
           style={{ position: 'absolute', width: '40%', height: '60%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(6,182,212,0.06) 0%, transparent 70%)', bottom: '5%', right: '15%' }}
         />
-        {/* Grid */}
         <div style={{
           position: 'absolute', inset: 0,
           backgroundImage: 'linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)',

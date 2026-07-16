@@ -2,9 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { TrendingUp } from 'lucide-react';
 
-function Counter({ target, suffix = '%', duration = 2 }) {
+interface CounterProps {
+  target: number;
+  suffix?: string;
+  duration?: number;
+}
+
+function Counter({ target, suffix = '%', duration = 2 }: CounterProps) {
   const [count, setCount] = useState(0);
-  const ref = useRef(null);
+  const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true });
 
   useEffect(() => {
@@ -22,14 +28,27 @@ function Counter({ target, suffix = '%', duration = 2 }) {
   return <span ref={ref}>{count}{suffix}</span>;
 }
 
-const stats = [
+interface Stat {
+  value: number;
+  suffix: string;
+  label: string;
+  desc: string;
+}
+
+interface Benefit {
+  icon: string;
+  title: string;
+  desc: string;
+}
+
+const stats: Stat[] = [
   { value: 95, suffix: '%', label: 'Reduction in Manual Scrum Work',  desc: 'Teams spend 95% less time on administrative Agile tasks.' },
   { value: 90, suffix: '%', label: 'Automatic Ticket Creation',        desc: '9 out of 10 tickets are created automatically from meetings.' },
   { value: 4,  suffix: '×', label: 'Faster Sprint Planning',           desc: 'Sprint planning sessions are 4x faster with AI pre-populated backlogs.' },
   { value: 80, suffix: '%', label: 'Less Meeting Documentation',       desc: 'AI handles 80% of all meeting documentation automatically.' },
 ];
 
-const benefits = [
+const benefits: Benefit[] = [
   { icon: '🚀', title: 'Ship Faster',         desc: 'Eliminate the overhead of manual Agile processes and focus on building.' },
   { icon: '🎯', title: 'Zero Missed Tasks',    desc: 'AI captures every action item, blocker, and deadline from every meeting.' },
   { icon: '🔄', title: 'Always in Sync',       desc: 'Your Kanban board, backlog, and sprint are always up to date automatically.' },
@@ -46,7 +65,6 @@ export default function Benefits() {
           <p className="section-sub">Teams using ScrumMind report dramatic improvements in productivity and sprint efficiency.</p>
         </motion.div>
 
-        {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16, marginBottom: 64 }}>
           {stats.map((s, i) => (
             <motion.div key={s.label}
@@ -66,7 +84,6 @@ export default function Benefits() {
           ))}
         </div>
 
-        {/* Benefits */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
           {benefits.map((b, i) => (
             <motion.div key={b.title}

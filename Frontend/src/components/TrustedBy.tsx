@@ -1,6 +1,11 @@
 import { motion } from 'framer-motion';
 
-const companies = [
+interface Company {
+  name: string;
+  icon: string;
+}
+
+const companies: Company[] = [
   { name: 'TechStartup',  icon: '⚡' },
   { name: 'EnterpriseX',  icon: '🏢' },
   { name: 'RemoteFirst',  icon: '🌍' },

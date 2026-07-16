@@ -1,19 +1,32 @@
 import { motion } from 'framer-motion';
 import { Brain, MessageCircle } from 'lucide-react';
 import { FaLinkedinIn, FaGithub, FaTwitter } from 'react-icons/fa';
+import type { IconType } from 'react-icons';
+import type { LucideIcon } from 'lucide-react';
 
-const cols = [
+interface FooterCol {
+  title: string;
+  links: string[];
+}
+
+interface Social {
+  icon: IconType | LucideIcon;
+  label: string;
+  href: string;
+}
+
+const cols: FooterCol[] = [
   { title: 'Product',   links: ['Features', 'Pricing', 'Roadmap', 'Integrations', 'Changelog'] },
   { title: 'Company',   links: ['About', 'Careers', 'Blog', 'Contact', 'Press'] },
   { title: 'Resources', links: ['Documentation', 'API Reference', 'Help Center', 'Community', 'Status'] },
   { title: 'Legal',     links: ['Privacy Policy', 'Terms of Service', 'Security', 'Cookie Policy', 'GDPR'] },
 ];
 
-const socials = [
-  { icon: FaLinkedinIn,   label: 'LinkedIn', href: '#' },
-  { icon: FaGithub,       label: 'GitHub',   href: '#' },
-  { icon: FaTwitter,      label: 'Twitter',  href: '#' },
-  { icon: MessageCircle,  label: 'Discord',  href: '#' },
+const socials: Social[] = [
+  { icon: FaLinkedinIn,  label: 'LinkedIn', href: '#' },
+  { icon: FaGithub,      label: 'GitHub',   href: '#' },
+  { icon: FaTwitter,     label: 'Twitter',  href: '#' },
+  { icon: MessageCircle, label: 'Discord',  href: '#' },
 ];
 
 export default function Footer() {
@@ -22,7 +35,6 @@ export default function Footer() {
       <div className="container">
         <div style={{ display: 'grid', gridTemplateColumns: '1.4fr repeat(4, 1fr)', gap: 40, marginBottom: 56 }} className="footer-grid">
 
-          {/* Brand */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 16 }}>
               <div style={{ width: 32, height: 32, borderRadius: 9, background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(59,130,246,0.35)', flexShrink: 0 }}>
@@ -47,7 +59,6 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Link columns */}
           {cols.map(col => (
             <div key={col.title}>
               <h4 style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-h)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 18 }}>{col.title}</h4>
@@ -55,8 +66,8 @@ export default function Footer() {
                 {col.links.map(link => (
                   <li key={link}>
                     <a href="#" style={{ fontSize: 13.5, color: 'var(--text)', textDecoration: 'none', transition: 'color 0.2s ease' }}
-                      onMouseEnter={e => e.target.style.color = 'var(--text-h)'}
-                      onMouseLeave={e => e.target.style.color = 'var(--text)'}>
+                      onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-h)')}
+                      onMouseLeave={e => (e.currentTarget.style.color = 'var(--text)')}>
                       {link}
                     </a>
                   </li>
@@ -66,14 +77,13 @@ export default function Footer() {
           ))}
         </div>
 
-        {/* Bottom bar */}
         <div style={{ borderTop: '1px solid var(--border)', paddingTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
           <p style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>© 2026 ScrumMind. All rights reserved.</p>
           <div style={{ display: 'flex', gap: 20 }}>
             {['Privacy', 'Terms', 'Security'].map(l => (
               <a key={l} href="#" style={{ fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s ease' }}
-                onMouseEnter={e => e.target.style.color = 'var(--text-h)'}
-                onMouseLeave={e => e.target.style.color = 'var(--text-muted)'}>
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-h)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}>
                 {l}
               </a>
             ))}
