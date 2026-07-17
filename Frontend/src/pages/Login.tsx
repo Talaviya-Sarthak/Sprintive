@@ -1,4 +1,4 @@
-import { useState, ChangeEvent, FormEvent } from 'react';
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader, ArrowRight, Check } from 'lucide-react';
@@ -114,6 +114,12 @@ export default function Login() {
   const [loading, setLoading]   = useState(false);
   const [success, setSuccess]   = useState(false);
   const [apiError, setApiError] = useState('');
+
+  useEffect(() => {
+    if (!success) return;
+    const t = setTimeout(() => navigate('/teams/create'), 1500);
+    return () => clearTimeout(t);
+  }, [success, navigate]);
 
   const set = (k: keyof LoginForm) => (e: ChangeEvent<HTMLInputElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }));
