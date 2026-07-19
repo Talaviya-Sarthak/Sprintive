@@ -26,7 +26,7 @@ export default function MeetingRoom() {
   const {
     meeting, participants, chats, recording, isMuted, isCameraOff, isScreenSharing,
     activeSpeakerId, sidebarTab, unreadCount,
-    setMeeting, setParticipants, setChats, setRecording,
+    setMeeting, setParticipants, setChats,
     toggleMute, toggleCamera, toggleScreenShare,
     setSidebarTab, resetUnread, reset,
   } = useMeetingStore();

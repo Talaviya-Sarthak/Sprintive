@@ -21,69 +21,85 @@ const steps: Step[] = [
 
 export default function HowItWorks() {
   return (
-    <section id="how-it-works" className="section-alt">
-      <div className="container">
+    <section id="how-it-works" className="py-28 max-sm:py-18 bg-[var(--color-bg2)]">
+      <div className="max-w-[1160px] mx-auto px-8 max-sm:px-5">
         <motion.div
-          initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }} style={{ textAlign: 'center', marginBottom: 72 }}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-18"
         >
-          <div className="section-tag">🗺️ How It Works</div>
-          <h2 className="section-title">Everything You Need,<br /><span className="glow-text">From Day One</span></h2>
-          <p className="section-sub">Sign up today and you'll be running your first AI-powered meeting in under 5 minutes.</p>
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-[5px] bg-[rgba(59,130,246,0.12)] border border-[rgba(59,130,246,0.25)] rounded-full text-[11px] font-semibold text-[#3B82F6] uppercase tracking-[0.07em] mb-5">
+            🗺️ How It Works
+          </div>
+          <h2 className="text-[clamp(28px,3.8vw,46px)] font-extrabold text-[var(--color-text-h)] leading-[1.12] tracking-[-0.025em] mb-4">
+            Everything You Need,<br />
+            <span className="bg-gradient-to-r from-[#3B82F6] to-[#06B6D4] bg-clip-text text-transparent">
+              From Day One
+            </span>
+          </h2>
+          <p className="text-[clamp(15px,1.8vw,17px)] text-[var(--color-text-body)] max-w-[560px] mx-auto leading-[1.75]">
+            Sign up today and you'll be running your first AI-powered meeting in under 5 minutes.
+          </p>
         </motion.div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }} className="journey-grid">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {steps.map((step, i) => {
             const Icon = step.icon;
             const isLastInRow = (i + 1) % 3 === 0;
             return (
-              <div key={step.num} style={{ position: 'relative' }}>
+              <div key={step.num} className="relative">
                 <motion.div
-                  initial={{ opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, y: 32 }}
+                  whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-48px' }}
                   transition={{ duration: 0.5, delay: i * 0.09 }}
-                  whileHover={{ y: -6, boxShadow: 'var(--shadow-md)' }}
-                  className="card"
-                  style={{ padding: '28px 24px', height: '100%', position: 'relative', overflow: 'hidden' }}
+                  whileHover={{ y: -6, boxShadow: '0 4px 16px rgba(0,0,0,0.4),0 2px 6px rgba(0,0,0,0.3)' }}
+                  className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-7 h-full relative overflow-hidden transition-all duration-200 hover:border-[var(--color-border2)]"
                 >
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${step.color}, transparent)` }} />
-
-                  <div style={{ position: 'absolute', top: 16, right: 16, fontSize: 10, fontWeight: 700, color: step.color, background: `${step.color}14`, border: `1px solid ${step.color}28`, borderRadius: 99, padding: '3px 9px', letterSpacing: '0.04em' }}>{step.num}</div>
-
+                  <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: `linear-gradient(90deg, ${step.color}, transparent)` }} />
+                  <div
+                    className="absolute top-4 right-4 text-[10px] font-bold rounded-full px-[9px] py-[3px] tracking-[0.04em]"
+                    style={{ color: step.color, background: `${step.color}14`, border: `1px solid ${step.color}28` }}
+                  >
+                    {step.num}
+                  </div>
                   <motion.div
                     whileHover={{ scale: 1.08 }}
-                    style={{ width: 56, height: 56, borderRadius: 14, background: `${step.color}12`, border: `1px solid ${step.color}24`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20, transition: 'all 0.2s ease' }}
+                    className="w-14 h-14 rounded-[14px] flex items-center justify-center mb-5 transition-all duration-200"
+                    style={{ background: `${step.color}12`, border: `1px solid ${step.color}24` }}
                   >
                     <Icon size={24} color={step.color} strokeWidth={1.7} />
                   </motion.div>
-
-                  <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-h)', marginBottom: 10, letterSpacing: '-0.015em', lineHeight: 1.3 }}>
-                    {step.title}
-                  </h3>
-                  <p style={{ fontSize: 13.5, color: 'var(--text)', lineHeight: 1.7 }}>{step.desc}</p>
+                  <h3 className="text-base font-bold text-[var(--color-text-h)] mb-2.5 tracking-[-0.015em] leading-[1.3]">{step.title}</h3>
+                  <p className="text-[13.5px] text-[var(--color-text-body)] leading-[1.7]">{step.desc}</p>
                 </motion.div>
 
+                {/* Horizontal arrow (desktop only, not last in row) */}
                 {!isLastInRow && i < steps.length - 1 && (
                   <motion.div
-                    initial={{ opacity: 0, scaleX: 0 }} whileInView={{ opacity: 1, scaleX: 1 }}
-                    viewport={{ once: true }} transition={{ delay: i * 0.09 + 0.35 }}
-                    className="step-arrow"
-                    style={{ position: 'absolute', top: '50%', right: -14, transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 1, transformOrigin: 'left', zIndex: 10 }}
+                    initial={{ opacity: 0, scaleX: 0 }}
+                    whileInView={{ opacity: 1, scaleX: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.09 + 0.35 }}
+                    className="hidden lg:flex absolute top-1/2 -right-3.5 -translate-y-1/2 items-center gap-px origin-left z-10"
                   >
-                    <div style={{ width: 14, height: 1.5, background: 'var(--border2)', borderRadius: 1 }} />
-                    <div style={{ width: 0, height: 0, borderTop: '4px solid transparent', borderBottom: '4px solid transparent', borderLeft: '6px solid var(--border2)' }} />
+                    <div className="w-3.5 h-[1.5px] bg-[var(--color-border2)] rounded-sm" />
+                    <div className="w-0 h-0 border-t-[4px] border-b-[4px] border-l-[6px] border-t-transparent border-b-transparent border-l-[var(--color-border2)]" />
                   </motion.div>
                 )}
 
+                {/* Down arrow after step 3 */}
                 {i === 2 && (
                   <motion.div
-                    initial={{ opacity: 0, scaleY: 0 }} whileInView={{ opacity: 1, scaleY: 1 }}
-                    viewport={{ once: true }} transition={{ delay: 0.5 }}
-                    className="step-arrow"
-                    style={{ position: 'absolute', bottom: -18, left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, transformOrigin: 'top', zIndex: 10 }}
+                    initial={{ opacity: 0, scaleY: 0 }}
+                    whileInView={{ opacity: 1, scaleY: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.5 }}
+                    className="hidden lg:flex absolute -bottom-[18px] left-1/2 -translate-x-1/2 flex-col items-center gap-px origin-top z-10"
                   >
-                    <div style={{ width: 1.5, height: 14, background: 'var(--border2)', borderRadius: 1 }} />
-                    <div style={{ width: 0, height: 0, borderLeft: '4px solid transparent', borderRight: '4px solid transparent', borderTop: '6px solid var(--border2)' }} />
+                    <div className="w-[1.5px] h-3.5 bg-[var(--color-border2)] rounded-sm" />
+                    <div className="w-0 h-0 border-l-[4px] border-r-[4px] border-t-[6px] border-l-transparent border-r-transparent border-t-[var(--color-border2)]" />
                   </motion.div>
                 )}
               </div>
@@ -92,18 +108,15 @@ export default function HowItWorks() {
         </div>
 
         <motion.p
-          initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
-          viewport={{ once: true }} transition={{ delay: 0.3 }}
-          style={{ textAlign: 'center', marginTop: 48, fontSize: 14, color: 'var(--text-muted)' }}
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.3 }}
+          className="text-center mt-12 text-sm text-[var(--color-text-muted)]"
         >
           That's it. No training required. Your team will feel at home from the very first meeting.
         </motion.p>
       </div>
-
-      <style>{`
-        @media (max-width: 860px)  { .journey-grid { grid-template-columns: repeat(2, 1fr) !important; } }
-        @media (max-width: 540px)  { .journey-grid { grid-template-columns: 1fr !important; } .step-arrow { display: none !important; } }
-      `}</style>
     </section>
   );
 }

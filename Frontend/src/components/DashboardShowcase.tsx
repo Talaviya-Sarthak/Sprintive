@@ -18,18 +18,18 @@ function KanbanMockup() {
   ];
   const pColor: Record<'High' | 'Med' | 'Low', string> = { High: '#EF4444', Med: '#F59E0B', Low: '#10B981' };
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
+    <div className="grid grid-cols-4 gap-2.5">
       {cols.map(col => (
-        <div key={col.title} style={{ background: 'var(--bg3)', borderRadius: 10, padding: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-            <div style={{ width: 7, height: 7, borderRadius: '50%', background: col.color }} />
-            <span style={{ fontSize: 10, fontWeight: 700, color: col.color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{col.title}</span>
-            <span style={{ marginLeft: 'auto', fontSize: 9, color: 'var(--text-muted)', background: 'var(--surface2)', borderRadius: 4, padding: '1px 5px' }}>{col.tasks.length}</span>
+        <div key={col.title} className="bg-[var(--color-bg3)] rounded-[10px] p-2.5">
+          <div className="flex items-center gap-1.5 mb-2.5">
+            <div className="w-[7px] h-[7px] rounded-full" style={{ background: col.color }} />
+            <span className="text-[10px] font-bold uppercase tracking-[0.05em]" style={{ color: col.color }}>{col.title}</span>
+            <span className="ml-auto text-[9px] text-[var(--color-text-muted)] bg-[var(--color-surface2)] rounded px-[5px] py-px">{col.tasks.length}</span>
           </div>
           {col.tasks.map(task => (
-            <div key={task.t} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '9px 10px', marginBottom: 6 }}>
-              <div style={{ fontSize: 11, color: 'var(--text-h)', fontWeight: 600, marginBottom: 5 }}>{task.t}</div>
-              <span style={{ fontSize: 9, background: `${pColor[task.p]}18`, color: pColor[task.p], borderRadius: 4, padding: '2px 6px', fontWeight: 700 }}>{task.p}</span>
+            <div key={task.t} className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[7px] px-2.5 py-[9px] mb-1.5">
+              <div className="text-[11px] text-[var(--color-text-h)] font-semibold mb-[5px]">{task.t}</div>
+              <span className="text-[9px] rounded px-1.5 py-0.5 font-bold" style={{ background: `${pColor[task.p]}18`, color: pColor[task.p] }}>{task.p}</span>
             </div>
           ))}
         </div>
@@ -41,22 +41,30 @@ function KanbanMockup() {
 function MeetingMockup() {
   const names = ['Alex Chen', 'Sam Rivera', 'Jordan Lee', 'Taylor Kim', 'Morgan Wu', 'AI Assistant'];
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px', background: 'rgba(16,185,129,0.08)', borderRadius: 9, border: '1px solid rgba(16,185,129,0.2)' }}>
-        <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981', boxShadow: '0 0 6px #10B981' }} />
-        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-h)' }}>Daily Scrum — Sprint 12</span>
-        <span style={{ marginLeft: 'auto', fontSize: 10, color: '#10B981', fontWeight: 600 }}>● Live</span>
+    <div className="flex flex-col gap-2.5">
+      <div className="flex items-center gap-2 px-3.5 py-[9px] bg-[rgba(16,185,129,0.08)] rounded-[9px] border border-[rgba(16,185,129,0.2)]">
+        <div className="w-[7px] h-[7px] rounded-full bg-[#10B981] shadow-[0_0_6px_#10B981]" />
+        <span className="text-xs font-semibold text-[var(--color-text-h)]">Daily Scrum — Sprint 12</span>
+        <span className="ml-auto text-[10px] text-[#10B981] font-semibold">● Live</span>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+      <div className="grid grid-cols-3 gap-2">
         {names.map((name, i) => (
-          <div key={name} style={{ background: 'var(--bg3)', borderRadius: 10, padding: 14, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 7, border: i === 0 ? '1px solid rgba(59,130,246,0.4)' : '1px solid var(--border)', position: 'relative' }}>
-            <div style={{ width: 36, height: 36, borderRadius: '50%', background: `linear-gradient(135deg, hsl(${i*45+200},65%,55%), hsl(${i*45+240},65%,65%))`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff' }}>{name[0]}</div>
-            <span style={{ fontSize: 10, color: 'var(--text-h)', fontWeight: 600, textAlign: 'center' }}>{name}</span>
+          <div
+            key={name}
+            className={`bg-[var(--color-bg3)] rounded-[10px] p-3.5 flex flex-col items-center justify-center gap-[7px] border relative ${i === 0 ? 'border-[rgba(59,130,246,0.4)]' : 'border-[var(--color-border)]'}`}
+          >
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold text-white"
+              style={{ background: `linear-gradient(135deg, hsl(${i*45+200},65%,55%), hsl(${i*45+240},65%,65%))` }}
+            >
+              {name[0]}
+            </div>
+            <span className="text-[10px] text-[var(--color-text-h)] font-semibold text-center">{name}</span>
             {i === 0 && (
-              <div style={{ position: 'absolute', bottom: 7, right: 7, display: 'flex', gap: 1.5, alignItems: 'flex-end', height: 12 }}>
+              <div className="absolute bottom-[7px] right-[7px] flex gap-[1.5px] items-end h-3">
                 {[3,5,4,6,3].map((h,j) => (
                   <motion.div key={j} animate={{ height: [h*1.5, h*3, h*1.5] }} transition={{ duration: 0.5, repeat: Infinity, delay: j*0.1 }}
-                    style={{ width: 2, background: 'var(--primary)', borderRadius: 1 }} />
+                    className="w-0.5 bg-[#3B82F6] rounded-sm" />
                 ))}
               </div>
             )}
@@ -79,13 +87,16 @@ function TranscriptMockup() {
     { speaker: 'Summary', time: '09:03', text: 'Deadline: Reporting module — Due: Thursday EOD',                                  tag: '📅 Deadline' },
   ];
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div className="flex flex-col gap-1.5">
       {lines.map((line, i) => (
-        <div key={i} style={{ display: 'flex', gap: 10, padding: '9px 12px', background: line.speaker === 'Summary' ? 'rgba(59,130,246,0.06)' : 'transparent', borderRadius: 8, border: line.speaker === 'Summary' ? '1px solid rgba(59,130,246,0.12)' : '1px solid transparent' }}>
-          <span style={{ fontSize: 10, color: line.speaker === 'Summary' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 700, minWidth: 48, paddingTop: 1 }}>{line.speaker}</span>
-          <span style={{ flex: 1, fontSize: 11, color: 'var(--text)', lineHeight: 1.55 }}>{line.text}</span>
-          {line.tag && <span style={{ fontSize: 9, fontWeight: 600, background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.18)', borderRadius: 5, padding: '2px 7px', color: 'var(--primary)', whiteSpace: 'nowrap', alignSelf: 'flex-start' }}>{line.tag}</span>}
-          <span style={{ fontSize: 9, color: 'var(--text-muted)', whiteSpace: 'nowrap', alignSelf: 'flex-start' }}>{line.time}</span>
+        <div
+          key={i}
+          className={`flex gap-2.5 px-3 py-[9px] rounded-lg border ${line.speaker === 'Summary' ? 'bg-[rgba(59,130,246,0.06)] border-[rgba(59,130,246,0.12)]' : 'bg-transparent border-transparent'}`}
+        >
+          <span className={`text-[10px] font-bold min-w-[48px] pt-px ${line.speaker === 'Summary' ? 'text-[#3B82F6]' : 'text-[var(--color-text-muted)]'}`}>{line.speaker}</span>
+          <span className="flex-1 text-[11px] text-[var(--color-text-body)] leading-[1.55]">{line.text}</span>
+          {line.tag && <span className="text-[9px] font-semibold bg-[rgba(59,130,246,0.1)] border border-[rgba(59,130,246,0.18)] rounded-[5px] px-[7px] py-0.5 text-[#3B82F6] whitespace-nowrap self-start">{line.tag}</span>}
+          <span className="text-[9px] text-[var(--color-text-muted)] whitespace-nowrap self-start">{line.time}</span>
         </div>
       ))}
     </div>
@@ -102,24 +113,30 @@ function AnalyticsMockup() {
     ['AI Accuracy', '96%', 'Task Detection'],
   ];
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
+    <div className="flex flex-col gap-3.5">
+      <div className="grid grid-cols-4 gap-2.5">
         {metrics.map(([label, val, sub]) => (
-          <div key={label} style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px' }}>
-            <div style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-h)', marginBottom: 3, letterSpacing: '-0.02em' }}>{val}</div>
-            <div style={{ fontSize: 9, color: 'var(--primary)', fontWeight: 600 }}>{sub}</div>
+          <div key={label} className="bg-[var(--color-bg3)] border border-[var(--color-border)] rounded-[10px] px-3.5 py-3">
+            <div className="text-[9px] text-[var(--color-text-muted)] mb-[5px] font-semibold uppercase tracking-[0.05em]">{label}</div>
+            <div className="text-lg font-extrabold text-[var(--color-text-h)] mb-[3px] tracking-[-0.02em]">{val}</div>
+            <div className="text-[9px] text-[#3B82F6] font-semibold">{sub}</div>
           </div>
         ))}
       </div>
-      <div style={{ background: 'var(--bg3)', borderRadius: 10, padding: 14, border: '1px solid var(--border)' }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-h)', marginBottom: 14 }}>Weekly Task Completion</div>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 72 }}>
+      <div className="bg-[var(--color-bg3)] rounded-[10px] p-3.5 border border-[var(--color-border)]">
+        <div className="text-[11px] font-semibold text-[var(--color-text-h)] mb-3.5">Weekly Task Completion</div>
+        <div className="flex items-end gap-1.5 h-[72px]">
           {bars.map((h, i) => (
-            <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <motion.div initial={{ height: 0 }} whileInView={{ height: `${h}%` }} viewport={{ once: true }} transition={{ delay: i * 0.08, duration: 0.5 }}
-                style={{ width: '100%', background: 'linear-gradient(to top, var(--primary), var(--accent))', borderRadius: '3px 3px 0 0', opacity: 0.85 }} />
-              <span style={{ fontSize: 8, color: 'var(--text-muted)' }}>{days[i]}</span>
+            <div key={i} className="flex-1 flex flex-col items-center gap-1">
+              <motion.div
+                initial={{ height: 0 }}
+                whileInView={{ height: `${h}%` }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08, duration: 0.5 }}
+                className="w-full rounded-t-[3px] opacity-85"
+                style={{ background: 'linear-gradient(to top, #3B82F6, #06B6D4)' }}
+              />
+              <span className="text-[8px] text-[var(--color-text-muted)]">{days[i]}</span>
             </div>
           ))}
         </div>
@@ -133,18 +150,31 @@ function CalendarMockup() {
   const meetings = [3, 8, 10, 15, 17, 22, 24, 29];
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-h)', letterSpacing: '-0.01em' }}>January 2026</span>
-        <div style={{ display: 'flex', gap: 6 }}>
-          {['‹','›'].map(c => <button key={c} style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 6, padding: '3px 9px', color: 'var(--text)', fontSize: 12, cursor: 'pointer' }}>{c}</button>)}
+      <div className="flex justify-between items-center mb-3.5">
+        <span className="text-[13px] font-bold text-[var(--color-text-h)] tracking-[-0.01em]">January 2026</span>
+        <div className="flex gap-1.5">
+          {['‹','›'].map(c => (
+            <button key={c} className="bg-[var(--color-surface2)] border border-[var(--color-border)] rounded-md px-[9px] py-[3px] text-[var(--color-text-body)] text-xs cursor-pointer">{c}</button>
+          ))}
         </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 3 }}>
-        {['S','M','T','W','T','F','S'].map((d,i) => <div key={i} style={{ textAlign: 'center', fontSize: 9, color: 'var(--text-muted)', fontWeight: 700, padding: '3px 0' }}>{d}</div>)}
+      <div className="grid grid-cols-7 gap-[3px]">
+        {['S','M','T','W','T','F','S'].map((d,i) => (
+          <div key={i} className="text-center text-[9px] text-[var(--color-text-muted)] font-bold py-[3px]">{d}</div>
+        ))}
         {days.map(d => (
-          <div key={d} style={{ textAlign: 'center', fontSize: 10, padding: '5px 3px', borderRadius: 5, background: d === 15 ? 'var(--primary)' : meetings.includes(d) ? 'rgba(59,130,246,0.12)' : 'transparent', color: d === 15 ? '#fff' : meetings.includes(d) ? 'var(--primary)' : 'var(--text)', fontWeight: meetings.includes(d) || d === 15 ? 700 : 400, cursor: 'default' }}>
+          <div
+            key={d}
+            className={`text-center text-[10px] py-[5px] px-[3px] rounded-[5px] cursor-default ${
+              d === 15 ? 'bg-[#3B82F6] text-white font-bold' :
+              meetings.includes(d) ? 'bg-[rgba(59,130,246,0.12)] text-[#3B82F6] font-bold' :
+              'text-[var(--color-text-body)]'
+            }`}
+          >
             {d}
-            {meetings.includes(d) && d !== 15 && <div style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--primary)', margin: '2px auto 0' }} />}
+            {meetings.includes(d) && d !== 15 && (
+              <div className="w-[3px] h-[3px] rounded-full bg-[#3B82F6] mx-auto mt-0.5" />
+            )}
           </div>
         ))}
       </div>
@@ -164,21 +194,30 @@ function ChatMockup() {
     { user: 'You',    msg: "Sure, I'll update the calendar",                   time: '09:21', self: true  },
   ];
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-[7px]">
         {msgs.map((m, i) => (
-          <div key={i} style={{ display: 'flex', justifyContent: m.self ? 'flex-end' : 'flex-start', gap: 7 }}>
-            {!m.self && <div style={{ width: 26, height: 26, borderRadius: '50%', background: `hsl(${i*50+200},60%,55%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{m.user[0]}</div>}
-            <div style={{ maxWidth: '68%' }}>
-              {!m.self && <div style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 2, fontWeight: 600 }}>{m.user}</div>}
-              <div style={{ background: m.self ? 'var(--primary)' : 'var(--surface2)', border: m.self ? 'none' : '1px solid var(--border)', borderRadius: m.self ? '10px 10px 3px 10px' : '10px 10px 10px 3px', padding: '7px 10px', fontSize: 11, color: m.self ? '#fff' : 'var(--text)', fontWeight: m.self ? 500 : 400 }}>{m.msg}</div>
+          <div key={i} className={`flex ${m.self ? 'justify-end' : 'justify-start'} gap-[7px]`}>
+            {!m.self && (
+              <div
+                className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+                style={{ background: `hsl(${i*50+200},60%,55%)` }}
+              >
+                {m.user[0]}
+              </div>
+            )}
+            <div className="max-w-[68%]">
+              {!m.self && <div className="text-[9px] text-[var(--color-text-muted)] mb-0.5 font-semibold">{m.user}</div>}
+              <div className={`px-2.5 py-[7px] text-[11px] ${m.self ? 'bg-[#3B82F6] text-white rounded-[10px_10px_3px_10px] font-medium' : 'bg-[var(--color-surface2)] text-[var(--color-text-body)] border border-[var(--color-border)] rounded-[10px_10px_10px_3px]'}`}>
+                {m.msg}
+              </div>
             </div>
           </div>
         ))}
       </div>
-      <div style={{ display: 'flex', gap: 7, paddingTop: 6, borderTop: '1px solid var(--border)' }}>
-        <div style={{ flex: 1, background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 7, padding: '7px 10px', fontSize: 11, color: 'var(--text-muted)' }}>Type a message…</div>
-        <button style={{ background: 'var(--primary)', border: 'none', borderRadius: 7, padding: '7px 12px', fontSize: 11, fontWeight: 600, color: '#fff', cursor: 'pointer' }}>Send</button>
+      <div className="flex gap-[7px] pt-1.5 border-t border-[var(--color-border)]">
+        <div className="flex-1 bg-[var(--color-surface2)] border border-[var(--color-border)] rounded-[7px] px-2.5 py-[7px] text-[11px] text-[var(--color-text-muted)]">Type a message…</div>
+        <button className="bg-[#3B82F6] border-none rounded-[7px] px-3 py-[7px] text-[11px] font-semibold text-white cursor-pointer">Send</button>
       </div>
     </div>
   );
@@ -196,41 +235,71 @@ const mockups: Record<TabName, React.ReactElement> = {
 export default function DashboardShowcase() {
   const [active, setActive] = useState<TabName>('Kanban Board');
   return (
-    <section className="section-alt">
-      <div className="container">
-        <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: 'center', marginBottom: 48 }}>
-          <div className="section-tag"><Monitor size={11} /> Dashboard</div>
-          <h2 className="section-title">Everything in One<br /><span className="glow-text">Unified Workspace</span></h2>
-          <p className="section-sub">Switch between views to see how ScrumMind keeps your entire team in sync.</p>
+    <section className="py-28 max-sm:py-18 bg-[var(--color-bg2)]">
+      <div className="max-w-[1160px] mx-auto px-8 max-sm:px-5">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-[5px] bg-[rgba(59,130,246,0.12)] border border-[rgba(59,130,246,0.25)] rounded-full text-[11px] font-semibold text-[#3B82F6] uppercase tracking-[0.07em] mb-5">
+            <Monitor size={11} /> Dashboard
+          </div>
+          <h2 className="text-[clamp(28px,3.8vw,46px)] font-extrabold text-[var(--color-text-h)] leading-[1.12] tracking-[-0.025em] mb-4">
+            Everything in One<br />
+            <span className="bg-gradient-to-r from-[#3B82F6] to-[#06B6D4] bg-clip-text text-transparent">
+              Unified Workspace
+            </span>
+          </h2>
+          <p className="text-[clamp(15px,1.8vw,17px)] text-[var(--color-text-body)] max-w-[560px] mx-auto leading-[1.75]">
+            Switch between views to see how ScrumMind keeps your entire team in sync.
+          </p>
         </motion.div>
 
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 20 }}>
+        <div className="flex gap-1.5 flex-wrap justify-center mb-5">
           {tabs.map(tab => (
-            <motion.button key={tab} whileTap={{ scale: 0.97 }} onClick={() => setActive(tab)} style={{
-              padding: '7px 16px', borderRadius: 8,
-              border: `1px solid ${active === tab ? 'var(--primary)' : 'var(--border)'}`,
-              background: active === tab ? 'var(--primary-glow)' : 'var(--surface)',
-              color: active === tab ? 'var(--primary)' : 'var(--text)',
-              fontSize: 13, fontWeight: active === tab ? 600 : 500,
-              cursor: 'pointer', transition: 'all 0.2s ease', fontFamily: 'var(--font)',
-              letterSpacing: '-0.01em',
-            }}>{tab}</motion.button>
+            <motion.button
+              key={tab}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => setActive(tab)}
+              className={[
+                'px-4 py-[7px] rounded-lg border text-[13px] cursor-pointer transition-all duration-200 tracking-[-0.01em]',
+                active === tab
+                  ? 'border-[#3B82F6] bg-[rgba(59,130,246,0.12)] text-[#3B82F6] font-semibold'
+                  : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-body)] font-medium hover:border-[var(--color-border2)]',
+              ].join(' ')}
+            >
+              {tab}
+            </motion.button>
           ))}
         </div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-          style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
-          <div style={{ padding: '12px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg3)' }}>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {['#EF4444','#F59E0B','#10B981'].map(c => <div key={c} style={{ width: 11, height: 11, borderRadius: '50%', background: c, opacity: 0.8 }} />)}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.5),0_4px_12px_rgba(0,0,0,0.3)]"
+        >
+          <div className="px-[18px] py-3 border-b border-[var(--color-border)] flex items-center gap-2 bg-[var(--color-bg3)]">
+            <div className="flex gap-1.5">
+              {['#EF4444','#F59E0B','#10B981'].map(c => (
+                <div key={c} className="w-[11px] h-[11px] rounded-full opacity-80" style={{ background: c }} />
+              ))}
             </div>
-            <div style={{ flex: 1, background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 12px', fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', maxWidth: 280, margin: '0 auto' }}>
+            <div className="flex-1 bg-[var(--color-surface2)] border border-[var(--color-border)] rounded-md px-3 py-1 text-[11px] text-[var(--color-text-muted)] text-center max-w-[280px] mx-auto">
               app.scrummind.io — {active}
             </div>
           </div>
-          <div style={{ padding: 20, minHeight: 360 }}>
+          <div className="p-5 min-h-[360px]">
             <AnimatePresence mode="wait">
-              <motion.div key={active} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
+              <motion.div
+                key={active}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.22 }}
+              >
                 {mockups[active]}
               </motion.div>
             </AnimatePresence>

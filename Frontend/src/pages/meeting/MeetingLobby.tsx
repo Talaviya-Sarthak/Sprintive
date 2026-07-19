@@ -53,7 +53,7 @@ export default function MeetingLobby() {
   return (
     <div className="min-h-screen bg-[#0B1220] flex items-center justify-center p-4">
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] opacity-8 rounded-full"
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full opacity-[0.08]"
           style={{ background: 'radial-gradient(ellipse, #3B82F6, transparent 70%)' }} />
       </div>
 
@@ -64,7 +64,7 @@ export default function MeetingLobby() {
       >
         {/* Preview */}
         <div className="space-y-4">
-          <div className="relative rounded-2xl overflow-hidden bg-[#0d1117] border border-white/8" style={{ aspectRatio: '16/9' }}>
+          <div className="relative rounded-2xl overflow-hidden bg-[#0d1117] border border-white/8 aspect-video">
             {!isCameraOff && stream ? (
               <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]" />
             ) : (

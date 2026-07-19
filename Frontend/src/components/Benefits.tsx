@@ -57,46 +57,66 @@ const benefits: Benefit[] = [
 
 export default function Benefits() {
   return (
-    <section>
-      <div className="container">
-        <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: 'center', marginBottom: 72 }}>
-          <div className="section-tag"><TrendingUp size={11} /> Results</div>
-          <h2 className="section-title">Real Results for<br /><span className="glow-text">Real Agile Teams</span></h2>
-          <p className="section-sub">Teams using ScrumMind report dramatic improvements in productivity and sprint efficiency.</p>
+    <section className="py-28 max-sm:py-18">
+      <div className="max-w-[1160px] mx-auto px-8 max-sm:px-5">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-18"
+        >
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-[5px] bg-[rgba(59,130,246,0.12)] border border-[rgba(59,130,246,0.25)] rounded-full text-[11px] font-semibold text-[#3B82F6] uppercase tracking-[0.07em] mb-5">
+            <TrendingUp size={11} /> Results
+          </div>
+          <h2 className="text-[clamp(28px,3.8vw,46px)] font-extrabold text-[var(--color-text-h)] leading-[1.12] tracking-[-0.025em] mb-4">
+            Real Results for<br />
+            <span className="bg-gradient-to-r from-[#3B82F6] to-[#06B6D4] bg-clip-text text-transparent">
+              Real Agile Teams
+            </span>
+          </h2>
+          <p className="text-[clamp(15px,1.8vw,17px)] text-[var(--color-text-body)] max-w-[560px] mx-auto leading-[1.75]">
+            Teams using ScrumMind report dramatic improvements in productivity and sprint efficiency.
+          </p>
         </motion.div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16, marginBottom: 64 }}>
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4 mb-16">
           {stats.map((s, i) => (
-            <motion.div key={s.label}
-              initial={{ opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }} transition={{ delay: i * 0.09 }}
-              whileHover={{ y: -4, boxShadow: 'var(--shadow-md)' }}
-              className="card"
-              style={{ padding: '28px 24px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}
+            <motion.div
+              key={s.label}
+              initial={{ opacity: 0, y: 32 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.09 }}
+              whileHover={{ y: -4, boxShadow: '0 4px 16px rgba(0,0,0,0.4),0 2px 6px rgba(0,0,0,0.3)' }}
+              className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl px-6 py-7 text-center relative overflow-hidden transition-all duration-200 hover:border-[var(--color-border2)]"
             >
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, var(--primary), var(--accent))' }} />
-              <div style={{ fontSize: 'clamp(38px, 5vw, 52px)', fontWeight: 800, lineHeight: 1, marginBottom: 10, letterSpacing: '-0.03em' }}>
-                <span className="glow-text"><Counter target={s.value} suffix={s.suffix} /></span>
+              <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: 'linear-gradient(90deg, #3B82F6, #06B6D4)' }} />
+              <div className="text-[clamp(38px,5vw,52px)] font-extrabold leading-none mb-2.5 tracking-[-0.03em]">
+                <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%)' }}>
+                  <Counter target={s.value} suffix={s.suffix} />
+                </span>
               </div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-h)', marginBottom: 8, letterSpacing: '-0.01em' }}>{s.label}</div>
-              <div style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.6 }}>{s.desc}</div>
+              <div className="text-sm font-bold text-[var(--color-text-h)] mb-2 tracking-[-0.01em]">{s.label}</div>
+              <div className="text-[13px] text-[var(--color-text-body)] leading-[1.6]">{s.desc}</div>
             </motion.div>
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
           {benefits.map((b, i) => (
-            <motion.div key={b.title}
-              initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }} transition={{ delay: i * 0.09 }}
-              whileHover={{ y: -4, boxShadow: 'var(--shadow-md)' }}
-              className="card"
-              style={{ display: 'flex', gap: 16, padding: '22px 20px' }}
+            <motion.div
+              key={b.title}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.09 }}
+              whileHover={{ y: -4, boxShadow: '0 4px 16px rgba(0,0,0,0.4),0 2px 6px rgba(0,0,0,0.3)' }}
+              className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl flex gap-4 px-5 py-[22px] transition-all duration-200 hover:border-[var(--color-border2)]"
             >
-              <div style={{ fontSize: 26, flexShrink: 0, lineHeight: 1 }}>{b.icon}</div>
+              <div className="text-[26px] shrink-0 leading-none">{b.icon}</div>
               <div>
-                <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-h)', marginBottom: 7, letterSpacing: '-0.01em' }}>{b.title}</h3>
-                <p style={{ fontSize: 13.5, color: 'var(--text)', lineHeight: 1.65 }}>{b.desc}</p>
+                <h3 className="text-[15px] font-bold text-[var(--color-text-h)] mb-[7px] tracking-[-0.01em]">{b.title}</h3>
+                <p className="text-[13.5px] text-[var(--color-text-body)] leading-[1.65]">{b.desc}</p>
               </div>
             </motion.div>
           ))}

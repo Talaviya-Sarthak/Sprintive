@@ -16,10 +16,9 @@ export default function ParticipantCard({ participant, isActive, videoRef }: Pro
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      className={`relative rounded-2xl overflow-hidden bg-[#0d1117] border transition-all duration-300 ${
+      className={`relative rounded-2xl overflow-hidden bg-[#0d1117] border transition-all duration-300 aspect-video ${
         isActive ? 'border-[#3B82F6] shadow-[0_0_0_2px_rgba(59,130,246,0.4)]' : 'border-white/8'
       }`}
-      style={{ aspectRatio: '16/9' }}
     >
       {/* Video */}
       {!participant.isCameraOff && participant.stream ? (
@@ -32,10 +31,7 @@ export default function ParticipantCard({ participant, isActive, videoRef }: Pro
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#1a1f2e] to-[#0d1117]">
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl"
-            style={{ background: `linear-gradient(135deg, #3B82F6, #06B6D4)` }}
-          >
+          <div className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl bg-gradient-to-br from-[#3B82F6] to-[#06B6D4]">
             {participant.avatar_url
               ? <img src={participant.avatar_url} alt={participant.full_name} className="w-full h-full rounded-full object-cover" />
               : initials}

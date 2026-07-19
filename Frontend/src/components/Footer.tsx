@@ -31,28 +31,31 @@ const socials: Social[] = [
 
 export default function Footer() {
   return (
-    <footer style={{ borderTop: '1px solid var(--border)', background: 'var(--bg2)', padding: '72px 0 32px' }}>
-      <div className="container">
-        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr repeat(4, 1fr)', gap: 40, marginBottom: 56 }} className="footer-grid">
+    <footer className="border-t border-[var(--color-border)] bg-[var(--color-bg2)] pt-[72px] pb-8">
+      <div className="max-w-[1160px] mx-auto px-8 max-sm:px-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(4,1fr)] gap-10 mb-14">
 
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 16 }}>
-              <div style={{ width: 32, height: 32, borderRadius: 9, background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(59,130,246,0.35)', flexShrink: 0 }}>
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="w-8 h-8 rounded-[9px] bg-[#3B82F6] flex items-center justify-center shadow-[0_2px_8px_rgba(59,130,246,0.35)] shrink-0">
                 <Brain size={17} color="#fff" strokeWidth={2.2} />
               </div>
-              <span style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-h)', letterSpacing: '-0.03em' }}>
-                Scrum<span style={{ color: 'var(--primary)' }}>Mind</span>
+              <span className="text-[17px] font-bold text-[var(--color-text-h)] tracking-[-0.03em]">
+                Scrum<span className="text-[#3B82F6]">Mind</span>
               </span>
             </div>
-            <p style={{ fontSize: 13.5, color: 'var(--text)', lineHeight: 1.7, marginBottom: 22, maxWidth: 220 }}>
+            <p className="text-[13.5px] text-[var(--color-text-body)] leading-[1.7] mb-[22px] max-w-[220px]">
               AI-powered Agile project management. Let AI run your Scrum meetings so your team can focus on building.
             </p>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="flex gap-2">
               {socials.map(({ icon: Icon, label, href }) => (
-                <motion.a key={label} href={href} whileHover={{ y: -2 }} aria-label={label}
-                  style={{ width: 34, height: 34, borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', textDecoration: 'none', transition: 'all 0.2s ease' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(59,130,246,0.4)'; e.currentTarget.style.color = 'var(--primary)'; e.currentTarget.style.background = 'var(--primary-glow)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'var(--surface)'; }}>
+                <motion.a
+                  key={label}
+                  href={href}
+                  whileHover={{ y: -2 }}
+                  aria-label={label}
+                  className="w-[34px] h-[34px] rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] no-underline transition-all duration-200 hover:border-[rgba(59,130,246,0.4)] hover:text-[#3B82F6] hover:bg-[rgba(59,130,246,0.12)]"
+                >
                   <Icon size={15} />
                 </motion.a>
               ))}
@@ -61,13 +64,14 @@ export default function Footer() {
 
           {cols.map(col => (
             <div key={col.title}>
-              <h4 style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-h)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 18 }}>{col.title}</h4>
-              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 11 }}>
+              <h4 className="text-[11px] font-bold text-[var(--color-text-h)] tracking-[0.07em] uppercase mb-[18px]">{col.title}</h4>
+              <ul className="list-none flex flex-col gap-[11px]">
                 {col.links.map(link => (
                   <li key={link}>
-                    <a href="#" style={{ fontSize: 13.5, color: 'var(--text)', textDecoration: 'none', transition: 'color 0.2s ease' }}
-                      onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-h)')}
-                      onMouseLeave={e => (e.currentTarget.style.color = 'var(--text)')}>
+                    <a
+                      href="#"
+                      className="text-[13.5px] text-[var(--color-text-body)] no-underline transition-colors duration-200 hover:text-[var(--color-text-h)]"
+                    >
                       {link}
                     </a>
                   </li>
@@ -77,24 +81,21 @@ export default function Footer() {
           ))}
         </div>
 
-        <div style={{ borderTop: '1px solid var(--border)', paddingTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
-          <p style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>© 2026 ScrumMind. All rights reserved.</p>
-          <div style={{ display: 'flex', gap: 20 }}>
+        <div className="border-t border-[var(--color-border)] pt-6 flex items-center justify-between flex-wrap gap-3.5">
+          <p className="text-[12.5px] text-[var(--color-text-muted)]">© 2026 ScrumMind. All rights reserved.</p>
+          <div className="flex gap-5">
             {['Privacy', 'Terms', 'Security'].map(l => (
-              <a key={l} href="#" style={{ fontSize: 12.5, color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s ease' }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-h)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}>
+              <a
+                key={l}
+                href="#"
+                className="text-[12.5px] text-[var(--color-text-muted)] no-underline transition-colors duration-200 hover:text-[var(--color-text-h)]"
+              >
                 {l}
               </a>
             ))}
           </div>
         </div>
       </div>
-
-      <style>{`
-        @media (max-width: 900px) { .footer-grid { grid-template-columns: 1fr 1fr !important; } }
-        @media (max-width: 480px) { .footer-grid { grid-template-columns: 1fr !important; } }
-      `}</style>
     </footer>
   );
 }

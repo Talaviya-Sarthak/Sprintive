@@ -1,6 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
 import { useTheme } from './context/ThemeContext';
-import './index.css';
 
 import Navbar            from './components/Navbar';
 import Hero              from './components/Hero';

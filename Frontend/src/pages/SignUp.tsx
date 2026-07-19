@@ -64,29 +64,41 @@ interface FieldProps {
 function Field({ icon: Icon, label, type = 'text', value, onChange, error, placeholder, right }: FieldProps) {
   const [focused, setFocused] = useState(false);
   return (
-    <div style={{ marginBottom: 16 }}>
-      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-h)', marginBottom: 7, letterSpacing: '-0.01em' }}>{label}</label>
-      <div style={{ position: 'relative' }}>
-        <div style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: focused ? 'var(--primary)' : 'var(--text-muted)', transition: 'color 0.2s', pointerEvents: 'none' }}>
+    <div className="mb-4">
+      <label className="block text-[13px] font-semibold text-[var(--color-text-h)] mb-[7px] tracking-[-0.01em]">{label}</label>
+      <div className="relative">
+        <div className={`absolute left-[13px] top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 ${focused ? 'text-[#3B82F6]' : 'text-[var(--color-text-muted)]'}`}>
           <Icon size={15} strokeWidth={1.8} />
         </div>
         <input
-          type={type} value={value} onChange={onChange} placeholder={placeholder}
-          onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-          style={{
-            width: '100%', padding: '11px 40px 11px 38px',
-            background: 'var(--surface2)', border: `1px solid ${error ? '#EF4444' : focused ? 'var(--primary)' : 'var(--border)'}`,
-            borderRadius: 10, fontSize: 14, color: 'var(--text-h)', fontFamily: 'var(--font)',
-            outline: 'none', transition: 'border-color 0.2s, box-shadow 0.2s',
-            boxShadow: focused ? (error ? '0 0 0 3px rgba(239,68,68,0.12)' : '0 0 0 3px rgba(59,130,246,0.12)') : 'none',
-          }}
+          type={type}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          className={[
+            'w-full py-[11px] pl-[38px] pr-10 bg-[var(--color-surface2)] rounded-[10px] text-sm text-[var(--color-text-h)] outline-none transition-all duration-200',
+            error
+              ? 'border border-[#EF4444] shadow-[0_0_0_3px_rgba(239,68,68,0.12)]'
+              : focused
+              ? 'border border-[#3B82F6] shadow-[0_0_0_3px_rgba(59,130,246,0.12)]'
+              : 'border border-[var(--color-border)]',
+          ].join(' ')}
         />
-        {right && <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)' }}>{right}</div>}
+        {right && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2">{right}</div>
+        )}
       </div>
       <AnimatePresence>
         {error && (
-          <motion.div initial={{ opacity: 0, y: -4, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }} exit={{ opacity: 0, y: -4, height: 0 }} transition={{ duration: 0.2 }}
-            style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, fontSize: 12, color: '#EF4444', fontWeight: 500 }}>
+          <motion.div
+            initial={{ opacity: 0, y: -4, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, y: -4, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="flex items-center gap-[5px] mt-1.5 text-xs text-[#EF4444] font-medium"
+          >
             <AlertCircle size={12} /> {error}
           </motion.div>
         )}
@@ -103,8 +115,12 @@ interface OAuthBtnProps {
 
 function OAuthBtn({ logo, label, onClick }: OAuthBtnProps) {
   return (
-    <motion.button whileHover={{ y: -1, boxShadow: 'var(--shadow-md)' }} whileTap={{ scale: 0.98 }} onClick={onClick}
-      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, padding: '10px 16px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: 'var(--text-h)', fontFamily: 'var(--font)', transition: 'all 0.2s ease' }}>
+    <motion.button
+      whileHover={{ y: -1 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onClick}
+      className="flex-1 flex items-center justify-center gap-[9px] py-2.5 px-4 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[10px] cursor-pointer text-[13.5px] font-semibold text-[var(--color-text-h)] transition-all duration-200 hover:border-[var(--color-border2)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
+    >
       {logo}
       {label}
     </motion.button>
@@ -120,7 +136,7 @@ const GoogleLogo = () => (
   </svg>
 );
 
-const GithubLogo = () => <FaGithub size={16} style={{ color: 'var(--text-h)' }} />;
+const GithubLogo = () => <FaGithub size={16} className="text-[var(--color-text-h)]" />;
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -193,14 +209,21 @@ export default function SignUp() {
   if (success) {
     return (
       <AuthLayout>
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ textAlign: 'center' }}>
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
-            style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
+            className="w-16 h-16 rounded-full bg-[rgba(16,185,129,0.15)] border border-[rgba(16,185,129,0.3)] flex items-center justify-center mx-auto mb-6"
+          >
             <Check size={28} color="#10B981" strokeWidth={2.5} />
           </motion.div>
-          <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-h)', marginBottom: 10, letterSpacing: '-0.02em' }}>Account created!</h2>
-          <p style={{ fontSize: 14, color: 'var(--text)', marginBottom: 28 }}>Welcome to ScrumMind. Your workspace is ready.</p>
-          <button onClick={() => navigate('/login')} className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '12px' }}>
+          <h2 className="text-2xl font-extrabold text-[var(--color-text-h)] mb-2.5 tracking-[-0.02em]">Account created!</h2>
+          <p className="text-sm text-[var(--color-text-body)] mb-7">Welcome to ScrumMind. Your workspace is ready.</p>
+          <button
+            onClick={() => navigate('/login')}
+            className="w-full flex items-center justify-center gap-2 py-3 bg-[#3B82F6] text-white font-bold text-[15px] rounded-[10px] border-none cursor-pointer hover:bg-[#2563EB] transition-colors"
+          >
             Continue to Login
           </button>
         </motion.div>
@@ -210,19 +233,23 @@ export default function SignUp() {
 
   return (
     <AuthLayout>
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-h)', letterSpacing: '-0.025em', marginBottom: 8 }}>
+      <div className="mb-7">
+        <h1 className="text-[26px] font-extrabold text-[var(--color-text-h)] tracking-[-0.025em] mb-2">
           Create your ScrumMind account
         </h1>
-        <p style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.6 }}>
+        <p className="text-sm text-[var(--color-text-body)] leading-[1.6]">
           Start managing your team's work smarter with AI.
         </p>
       </div>
 
       <AnimatePresence>
         {apiError && (
-          <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, marginBottom: 18, fontSize: 13, color: '#EF4444', fontWeight: 500 }}>
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.25)] rounded-[10px] mb-[18px] text-[13px] text-[#EF4444] font-medium"
+          >
             <AlertCircle size={14} /> {apiError}
           </motion.div>
         )}
@@ -232,27 +259,38 @@ export default function SignUp() {
         <Field icon={User} label="Full Name" value={form.name} onChange={set('name')} placeholder="Alex Johnson" error={errors.name} />
         <Field icon={Mail} label="Work Email" type="email" value={form.email} onChange={set('email')} placeholder="alex@company.com" error={errors.email} />
 
-        <Field icon={Lock} label="Password" type={showPw ? 'text' : 'password'} value={form.password} onChange={set('password')} placeholder="Create a strong password" error={errors.password}
+        <Field
+          icon={Lock}
+          label="Password"
+          type={showPw ? 'text' : 'password'}
+          value={form.password}
+          onChange={set('password')}
+          placeholder="Create a strong password"
+          error={errors.password}
           right={
-            <button type="button" onClick={() => setShowPw(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: 0 }}>
+            <button type="button" onClick={() => setShowPw(v => !v)} className="bg-transparent border-none cursor-pointer text-[var(--color-text-muted)] flex p-0">
               {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           }
         />
 
         {form.password && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} style={{ marginTop: -8, marginBottom: 14 }}>
-            <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="-mt-2 mb-3.5">
+            <div className="flex gap-1 mb-1.5">
               {[1,2,3,4,5].map(i => (
-                <div key={i} style={{ flex: 1, height: 3, borderRadius: 99, background: i <= score ? strengthColor[score] : 'var(--border)', transition: 'background 0.3s' }} />
+                <div
+                  key={i}
+                  className="flex-1 h-[3px] rounded-full transition-all duration-300"
+                  style={{ background: i <= score ? strengthColor[score] : 'var(--color-border)' }}
+                />
               ))}
             </div>
-            <div style={{ fontSize: 11, color: strengthColor[score], fontWeight: 600 }}>{strengthLabel[score]}</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
+            <div className="text-[11px] font-semibold" style={{ color: strengthColor[score] }}>{strengthLabel[score]}</div>
+            <div className="flex flex-col gap-1 mt-2">
               {rules.map(r => {
                 const ok = r.test(form.password);
                 return (
-                  <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: ok ? '#10B981' : 'var(--text-muted)' }}>
+                  <div key={r.label} className={`flex items-center gap-1.5 text-[11px] ${ok ? 'text-[#10B981]' : 'text-[var(--color-text-muted)]'}`}>
                     {ok ? <Check size={11} strokeWidth={3} /> : <X size={11} strokeWidth={2.5} />}
                     {r.label}
                   </div>
@@ -262,62 +300,85 @@ export default function SignUp() {
           </motion.div>
         )}
 
-        <Field icon={Lock} label="Confirm Password" type={showConfirm ? 'text' : 'password'} value={form.confirm} onChange={set('confirm')} placeholder="Repeat your password" error={errors.confirm}
+        <Field
+          icon={Lock}
+          label="Confirm Password"
+          type={showConfirm ? 'text' : 'password'}
+          value={form.confirm}
+          onChange={set('confirm')}
+          placeholder="Repeat your password"
+          error={errors.confirm}
           right={
-            <button type="button" onClick={() => setShowConfirm(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: 0 }}>
+            <button type="button" onClick={() => setShowConfirm(v => !v)} className="bg-transparent border-none cursor-pointer text-[var(--color-text-muted)] flex p-0">
               {showConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           }
         />
 
-        <div style={{ marginBottom: 20 }}>
-          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
-            <div onClick={() => setAgreed(v => !v)} style={{ width: 18, height: 18, borderRadius: 5, border: `1.5px solid ${errors.agreed ? '#EF4444' : agreed ? 'var(--primary)' : 'var(--border2)'}`, background: agreed ? 'var(--primary)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1, transition: 'all 0.2s', cursor: 'pointer' }}>
+        <div className="mb-5">
+          <label className="flex items-start gap-2.5 cursor-pointer">
+            <div
+              onClick={() => setAgreed(v => !v)}
+              className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center shrink-0 mt-px transition-all duration-200 cursor-pointer ${
+                errors.agreed ? 'border-[1.5px] border-[#EF4444]' :
+                agreed ? 'bg-[#3B82F6] border-[1.5px] border-[#3B82F6]' :
+                'bg-transparent border-[1.5px] border-[var(--color-border2)]'
+              }`}
+            >
               {agreed && <Check size={11} color="#fff" strokeWidth={3} />}
             </div>
-            <span style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.5 }}>
+            <span className="text-[13px] text-[var(--color-text-body)] leading-[1.5]">
               I agree to the{' '}
-              <a href="#" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>Terms of Service</a>
+              <a href="#" className="text-[#3B82F6] no-underline font-semibold">Terms of Service</a>
               {' '}and{' '}
-              <a href="#" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>Privacy Policy</a>
+              <a href="#" className="text-[#3B82F6] no-underline font-semibold">Privacy Policy</a>
             </span>
           </label>
           <AnimatePresence>
             {errors.agreed && (
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-                style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, fontSize: 12, color: '#EF4444', fontWeight: 500 }}>
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="flex items-center gap-[5px] mt-1.5 text-xs text-[#EF4444] font-medium"
+              >
                 <AlertCircle size={12} /> {errors.agreed}
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        <motion.button type="submit" whileHover={!loading ? { scale: 1.01 } : {}} whileTap={!loading ? { scale: 0.99 } : {}}
+        <motion.button
+          type="submit"
+          whileHover={!loading ? { scale: 1.01 } : {}}
+          whileTap={!loading ? { scale: 0.99 } : {}}
           disabled={loading}
-          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'var(--font)', letterSpacing: '-0.01em', boxShadow: '0 4px 16px rgba(59,130,246,0.35)', transition: 'all 0.2s', opacity: loading ? 0.8 : 1 }}>
-          {loading ? <><Loader size={16} style={{ animation: 'spin 1s linear infinite' }} /> Creating account…</> : <><Zap size={15} /> Create Account</>}
+          className={`w-full flex items-center justify-center gap-2 py-3 bg-[#3B82F6] text-white border-none rounded-[10px] text-[15px] font-bold cursor-pointer tracking-[-0.01em] shadow-[0_4px_16px_rgba(59,130,246,0.35)] transition-all duration-200 ${loading ? 'opacity-80 cursor-not-allowed' : 'hover:bg-[#2563EB]'}`}
+        >
+          {loading ? <><Loader size={16} className="animate-spin" /> Creating account…</> : <><Zap size={15} /> Create Account</>}
         </motion.button>
       </form>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0' }}>
-        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-        <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>or continue with</span>
-        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+      <div className="flex items-center gap-3 my-5">
+        <div className="flex-1 h-px bg-[var(--color-border)]" />
+        <span className="text-[11px] text-[var(--color-text-muted)] font-semibold tracking-[0.06em] uppercase">or continue with</span>
+        <div className="flex-1 h-px bg-[var(--color-border)]" />
       </div>
 
-      <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
+      <div className="flex gap-2.5 mb-6">
         <OAuthBtn logo={<GoogleLogo />} label="Google" onClick={() => { window.location.href = `${API_URL}/api/auth/google`; }} />
         <OAuthBtn logo={<GithubLogo />} label="GitHub" onClick={() => { window.location.href = `${API_URL}/api/auth/github`; }} />
       </div>
 
-      <p style={{ textAlign: 'center', fontSize: 13.5, color: 'var(--text-muted)' }}>
+      <p className="text-center text-[13.5px] text-[var(--color-text-muted)]">
         Already have an account?{' '}
-        <button onClick={() => navigate('/login')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', fontWeight: 700, fontSize: 13.5, fontFamily: 'var(--font)', padding: 0 }}>
+        <button
+          onClick={() => navigate('/login')}
+          className="bg-transparent border-none cursor-pointer text-[#3B82F6] font-bold text-[13.5px] p-0"
+        >
           Login
         </button>
       </p>
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </AuthLayout>
   );
 }

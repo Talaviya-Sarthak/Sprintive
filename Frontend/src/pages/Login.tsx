@@ -45,29 +45,41 @@ interface FieldProps {
 function Field({ icon: Icon, label, type = 'text', value, onChange, error, placeholder, right }: FieldProps) {
   const [focused, setFocused] = useState(false);
   return (
-    <div style={{ marginBottom: 16 }}>
-      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-h)', marginBottom: 7, letterSpacing: '-0.01em' }}>{label}</label>
-      <div style={{ position: 'relative' }}>
-        <div style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: focused ? 'var(--primary)' : 'var(--text-muted)', transition: 'color 0.2s', pointerEvents: 'none' }}>
+    <div className="mb-4">
+      <label className="block text-[13px] font-semibold text-[var(--color-text-h)] mb-[7px] tracking-[-0.01em]">{label}</label>
+      <div className="relative">
+        <div className={`absolute left-[13px] top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 ${focused ? 'text-[#3B82F6]' : 'text-[var(--color-text-muted)]'}`}>
           <Icon size={15} strokeWidth={1.8} />
         </div>
         <input
-          type={type} value={value} onChange={onChange} placeholder={placeholder}
-          onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-          style={{
-            width: '100%', padding: '11px 40px 11px 38px',
-            background: 'var(--surface2)', border: `1px solid ${error ? '#EF4444' : focused ? 'var(--primary)' : 'var(--border)'}`,
-            borderRadius: 10, fontSize: 14, color: 'var(--text-h)', fontFamily: 'var(--font)',
-            outline: 'none', transition: 'border-color 0.2s, box-shadow 0.2s',
-            boxShadow: focused ? (error ? '0 0 0 3px rgba(239,68,68,0.12)' : '0 0 0 3px rgba(59,130,246,0.12)') : 'none',
-          }}
+          type={type}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          className={[
+            'w-full py-[11px] pl-[38px] pr-10 bg-[var(--color-surface2)] rounded-[10px] text-sm text-[var(--color-text-h)] outline-none transition-all duration-200',
+            error
+              ? 'border border-[#EF4444] shadow-[0_0_0_3px_rgba(239,68,68,0.12)]'
+              : focused
+              ? 'border border-[#3B82F6] shadow-[0_0_0_3px_rgba(59,130,246,0.12)]'
+              : 'border border-[var(--color-border)]',
+          ].join(' ')}
         />
-        {right && <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)' }}>{right}</div>}
+        {right && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2">{right}</div>
+        )}
       </div>
       <AnimatePresence>
         {error && (
-          <motion.div initial={{ opacity: 0, y: -4, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }} exit={{ opacity: 0, y: -4, height: 0 }} transition={{ duration: 0.2 }}
-            style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6, fontSize: 12, color: '#EF4444', fontWeight: 500 }}>
+          <motion.div
+            initial={{ opacity: 0, y: -4, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, y: -4, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="flex items-center gap-[5px] mt-1.5 text-xs text-[#EF4444] font-medium"
+          >
             <AlertCircle size={12} /> {error}
           </motion.div>
         )}
@@ -84,8 +96,12 @@ interface OAuthBtnProps {
 
 function OAuthBtn({ logo, label, onClick }: OAuthBtnProps) {
   return (
-    <motion.button whileHover={{ y: -1, boxShadow: 'var(--shadow-md)' }} whileTap={{ scale: 0.98 }} onClick={onClick}
-      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, padding: '10px 16px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: 'var(--text-h)', fontFamily: 'var(--font)', transition: 'all 0.2s ease' }}>
+    <motion.button
+      whileHover={{ y: -1 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onClick}
+      className="flex-1 flex items-center justify-center gap-[9px] py-2.5 px-4 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[10px] cursor-pointer text-[13.5px] font-semibold text-[var(--color-text-h)] transition-all duration-200 hover:border-[var(--color-border2)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
+    >
       {logo}
       {label}
     </motion.button>
@@ -102,7 +118,7 @@ const GoogleLogo = () => (
 );
 
 const GithubLogo = () => (
-  <FaGithub size={16} style={{ color: 'var(--text-h)' }} />
+  <FaGithub size={16} className="text-[var(--color-text-h)]" />
 );
 
 export default function Login() {
@@ -179,16 +195,25 @@ export default function Login() {
   if (success) {
     return (
       <AuthLayout>
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ textAlign: 'center' }}>
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
-            style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
+            className="w-16 h-16 rounded-full bg-[rgba(16,185,129,0.15)] border border-[rgba(16,185,129,0.3)] flex items-center justify-center mx-auto mb-6"
+          >
             <Check size={28} color="#10B981" strokeWidth={2.5} />
           </motion.div>
-          <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-h)', marginBottom: 10, letterSpacing: '-0.02em' }}>Welcome back!</h2>
-          <p style={{ fontSize: 14, color: 'var(--text)', marginBottom: 28 }}>You're signed in. Redirecting to your workspace…</p>
-          <div style={{ width: '100%', height: 3, background: 'var(--border)', borderRadius: 99, overflow: 'hidden' }}>
-            <motion.div initial={{ width: 0 }} animate={{ width: '100%' }} transition={{ duration: 1.5, ease: 'easeInOut' }}
-              style={{ height: '100%', background: 'linear-gradient(90deg, var(--primary), var(--accent))', borderRadius: 99 }} />
+          <h2 className="text-2xl font-extrabold text-[var(--color-text-h)] mb-2.5 tracking-[-0.02em]">Welcome back!</h2>
+          <p className="text-sm text-[var(--color-text-body)] mb-7">You're signed in. Redirecting to your workspace…</p>
+          <div className="w-full h-[3px] bg-[var(--color-border)] rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: '100%' }}
+              transition={{ duration: 1.5, ease: 'easeInOut' }}
+              className="h-full rounded-full"
+              style={{ background: 'linear-gradient(90deg, #3B82F6, #06B6D4)' }}
+            />
           </div>
         </motion.div>
       </AuthLayout>
@@ -197,77 +222,103 @@ export default function Login() {
 
   return (
     <AuthLayout>
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-h)', letterSpacing: '-0.025em', marginBottom: 8 }}>
+      <div className="mb-7">
+        <h1 className="text-[26px] font-extrabold text-[var(--color-text-h)] tracking-[-0.025em] mb-2">
           Welcome back
         </h1>
-        <p style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.6 }}>
+        <p className="text-sm text-[var(--color-text-body)] leading-[1.6]">
           Sign in to continue to ScrumMind.
         </p>
       </div>
 
       <AnimatePresence>
         {apiError && (
-          <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, marginBottom: 18, fontSize: 13, color: '#EF4444', fontWeight: 500 }}>
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.25)] rounded-[10px] mb-[18px] text-[13px] text-[#EF4444] font-medium"
+          >
             <AlertCircle size={14} /> {apiError}
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+      <div className="flex gap-2.5 mb-5">
         <OAuthBtn logo={<GoogleLogo />} label="Continue with Google" onClick={() => { window.location.href = `${API_URL}/api/auth/google`; }} />
       </div>
-      <div style={{ marginBottom: 20 }}>
+      <div className="mb-5">
         <OAuthBtn logo={<GithubLogo />} label="Continue with GitHub" onClick={() => { window.location.href = `${API_URL}/api/auth/github`; }} />
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-        <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>or with email</span>
-        <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+      <div className="flex items-center gap-3 mb-5">
+        <div className="flex-1 h-px bg-[var(--color-border)]" />
+        <span className="text-[11px] text-[var(--color-text-muted)] font-semibold tracking-[0.06em] uppercase">or with email</span>
+        <div className="flex-1 h-px bg-[var(--color-border)]" />
       </div>
 
       <form onSubmit={handleSubmit} noValidate>
         <Field icon={Mail} label="Email" type="email" value={form.email} onChange={set('email')} placeholder="alex@company.com" error={errors.email} />
-        <Field icon={Lock} label="Password" type={showPw ? 'text' : 'password'} value={form.password} onChange={set('password')} placeholder="Your password" error={errors.password}
+        <Field
+          icon={Lock}
+          label="Password"
+          type={showPw ? 'text' : 'password'}
+          value={form.password}
+          onChange={set('password')}
+          placeholder="Your password"
+          error={errors.password}
           right={
-            <button type="button" onClick={() => setShowPw(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: 0 }}>
+            <button
+              type="button"
+              onClick={() => setShowPw(v => !v)}
+              className="bg-transparent border-none cursor-pointer text-[var(--color-text-muted)] flex p-0"
+            >
               {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           }
         />
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, marginTop: -4 }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-            <div onClick={() => setRemember(v => !v)} style={{ width: 17, height: 17, borderRadius: 5, border: `1.5px solid ${remember ? 'var(--primary)' : 'var(--border2)'}`, background: remember ? 'var(--primary)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', cursor: 'pointer', flexShrink: 0 }}>
+        <div className="flex items-center justify-between mb-5 -mt-1">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <div
+              onClick={() => setRemember(v => !v)}
+              className={`w-[17px] h-[17px] rounded-[5px] flex items-center justify-center transition-all duration-200 cursor-pointer shrink-0 ${remember ? 'bg-[#3B82F6] border-[1.5px] border-[#3B82F6]' : 'bg-transparent border-[1.5px] border-[var(--color-border2)]'}`}
+            >
               {remember && <Check size={10} color="#fff" strokeWidth={3} />}
             </div>
-            <span style={{ fontSize: 13, color: 'var(--text)', userSelect: 'none' }}>Remember me</span>
+            <span className="text-[13px] text-[var(--color-text-body)] select-none">Remember me</span>
           </label>
-          <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', fontSize: 13, fontWeight: 600, fontFamily: 'var(--font)', padding: 0 }}>
+          <button
+            type="button"
+            className="bg-transparent border-none cursor-pointer text-[#3B82F6] text-[13px] font-semibold p-0"
+          >
             Forgot password?
           </button>
         </div>
 
-        <motion.button type="submit" whileHover={!loading ? { scale: 1.01 } : {}} whileTap={!loading ? { scale: 0.99 } : {}}
+        <motion.button
+          type="submit"
+          whileHover={!loading ? { scale: 1.01 } : {}}
+          whileTap={!loading ? { scale: 0.99 } : {}}
           disabled={loading}
-          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'var(--font)', letterSpacing: '-0.01em', boxShadow: '0 4px 16px rgba(59,130,246,0.35)', transition: 'all 0.2s', opacity: loading ? 0.8 : 1 }}>
+          className={`w-full flex items-center justify-center gap-2 py-3 bg-[#3B82F6] text-white border-none rounded-[10px] text-[15px] font-bold cursor-pointer tracking-[-0.01em] shadow-[0_4px_16px_rgba(59,130,246,0.35)] transition-all duration-200 ${loading ? 'opacity-80 cursor-not-allowed' : 'hover:bg-[#2563EB]'}`}
+        >
           {loading
-            ? <><Loader size={16} style={{ animation: 'spin 1s linear infinite' }} /> Signing in…</>
+            ? <><Loader size={16} className="animate-spin" /> Signing in…</>
             : <>Sign In <ArrowRight size={15} /></>
           }
         </motion.button>
       </form>
 
-      <p style={{ textAlign: 'center', fontSize: 13.5, color: 'var(--text-muted)', marginTop: 24 }}>
+      <p className="text-center text-[13.5px] text-[var(--color-text-muted)] mt-6">
         Don't have an account?{' '}
-        <button onClick={() => navigate('/signup')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', fontWeight: 700, fontSize: 13.5, fontFamily: 'var(--font)', padding: 0 }}>
+        <button
+          onClick={() => navigate('/signup')}
+          className="bg-transparent border-none cursor-pointer text-[#3B82F6] font-bold text-[13.5px] p-0"
+        >
           Create one
         </button>
       </p>
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </AuthLayout>
   );
 }
