@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-// FormData sends arrays as JSON strings — coerce them back to arrays
 const jsonArray = z.union([
   z.array(z.unknown()),
   z.string().transform((s) => { try { return JSON.parse(s); } catch { return []; } }),
@@ -14,6 +13,15 @@ export const createTeamSchema = z.object({
   working_days:     jsonArray.pipe(z.array(z.coerce.number().int().min(0).max(6))).default([1,2,3,4,5]),
   daily_scrum_time: z.string().regex(/^\d{2}:\d{2}$/).default('09:00'),
   invite_emails:    jsonArray.pipe(z.array(z.string().email())).default([]),
+});
+
+export const updateTeamSchema = z.object({
+  name:             z.string().trim().min(3).max(50).optional(),
+  description:      z.string().max(500).optional().nullable(),
+  color:            z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  timezone:         z.string().optional(),
+  working_days:     jsonArray.pipe(z.array(z.coerce.number().int().min(0).max(6))).optional(),
+  daily_scrum_time: z.string().regex(/^\d{2}:\d{2}$/).optional(),
 });
 
 export const inviteMembersSchema = z.object({

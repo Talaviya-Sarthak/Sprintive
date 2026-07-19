@@ -219,12 +219,12 @@ export default function SignUp() {
             <Check size={28} color="#10B981" strokeWidth={2.5} />
           </motion.div>
           <h2 className="text-2xl font-extrabold text-[var(--color-text-h)] mb-2.5 tracking-[-0.02em]">Account created!</h2>
-          <p className="text-sm text-[var(--color-text-body)] mb-7">Welcome to ScrumMind. Your workspace is ready.</p>
+          <p className="text-sm text-[var(--color-text-body)] mb-7">Welcome to Sprintive. Your workspace is ready.</p>
           <button
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/dashboard')}
             className="w-full flex items-center justify-center gap-2 py-3 bg-[#3B82F6] text-white font-bold text-[15px] rounded-[10px] border-none cursor-pointer hover:bg-[#2563EB] transition-colors"
           >
-            Continue to Login
+            Go to Dashboard
           </button>
         </motion.div>
       </AuthLayout>

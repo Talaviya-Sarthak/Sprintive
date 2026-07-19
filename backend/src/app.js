@@ -11,6 +11,7 @@ import { errorHandler }      from './middleware/error.middleware.js';
 import authRoutes            from './routes/auth.routes.js';
 import teamRoutes            from './routes/team.routes.js';
 import meetingRoutes         from './routes/meeting.routes.js';
+import profileRoutes         from './routes/profile.routes.js';
 
 const app = express();
 
@@ -23,6 +24,24 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+// Middleware to parse JSON fields from multipart FormData
+app.use((req, res, next) => {
+  if (req.is('multipart/form-data')) {
+    // Process JSON fields sent in FormData
+    for (const [key, value] of Object.entries(req.body || {})) {
+      if (typeof value === 'string' && (value.startsWith('[') || value.startsWith('{'))) {
+        try {
+          req.body[key] = JSON.parse(value);
+        } catch {
+          // Leave as string if not valid JSON
+        }
+      }
+    }
+  }
+  next();
+});
+
 app.use(httpLogger);
 app.use(globalLimiter);
 app.use('/uploads', express.static('uploads'));
@@ -37,6 +56,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth',     authRoutes);
 app.use('/api/teams',    teamRoutes);
 app.use('/api/meetings', meetingRoutes);
+app.use('/api/profile',  profileRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

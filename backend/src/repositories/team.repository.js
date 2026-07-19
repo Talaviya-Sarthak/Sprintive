@@ -1,31 +1,27 @@
 import pool from '../config/database.js';
 import { randomUUID } from 'crypto';
 
-function generateInviteCode() {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let suffix = '';
-  for (let i = 0; i < 6; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
-  return `SPR-${suffix}`;
-}
-
 export const teamRepository = {
   async create({ name, description, avatar_url, color, timezone, working_days, daily_scrum_time, created_by }, client) {
     const db = client ?? pool;
-    let invite_code;
-    let attempts = 0;
-    // Collision-safe invite code generation
-    while (attempts < 10) {
-      invite_code = generateInviteCode();
-      const { rows: existing } = await db.query(
-        'SELECT 1 FROM teams WHERE invite_code = $1', [invite_code]
-      );
-      if (existing.length === 0) break;
-      attempts++;
-    }
+    
+    // Ensure working_days is an array of integers
+    const workingDaysArray = Array.isArray(working_days) 
+      ? working_days.map(d => parseInt(d, 10))
+      : [1, 2, 3, 4, 5];
+    
+    // Ensure daily_scrum_time is in HH:MM:SS format
+    const scrum_time = daily_scrum_time.match(/^\d{2}:\d{2}$/) 
+      ? `${daily_scrum_time}:00` 
+      : daily_scrum_time;
+    
+    // Generate invite code in format: SPR-XXXXXX
+    const inviteCode = 'SPR-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    
     const { rows } = await db.query(
       `INSERT INTO teams (name, description, avatar_url, color, timezone, working_days, daily_scrum_time, created_by, invite_code)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
-      [name, description ?? null, avatar_url ?? null, color, timezone, working_days, daily_scrum_time, created_by, invite_code]
+       VALUES ($1,$2,$3,$4,$5,$6::int[],$7::TIME,$8,$9) RETURNING *`,
+      [name, description ?? null, avatar_url ?? null, color, timezone, workingDaysArray, scrum_time, created_by, inviteCode]
     );
     return rows[0];
   },
@@ -40,6 +36,51 @@ export const teamRepository = {
     return rows[0] ?? null;
   },
 
+  async findByUser(userId) {
+    const { rows } = await pool.query(
+      `SELECT t.*, u.full_name AS creator_name,
+              (SELECT COUNT(*) FROM team_members WHERE team_id = t.id) AS member_count,
+              tm.role AS my_role
+       FROM team_members tm
+       JOIN teams t ON t.id = tm.team_id
+       JOIN users u ON u.id = t.created_by
+       WHERE tm.user_id = $1
+       ORDER BY t.created_at DESC`,
+      [userId]
+    );
+    return rows;
+  },
+
+  async update(id, fields) {
+    const allowed = ['name','description','avatar_url','color','timezone','working_days','daily_scrum_time'];
+    const sets = [];
+    const vals = [];
+    let idx = 1;
+    for (const [k, v] of Object.entries(fields)) {
+      if (allowed.includes(k)) {
+        if (k === 'working_days' && Array.isArray(v)) {
+          // Cast working_days array to PostgreSQL int[] type
+          sets.push(`${k}=$${idx++}::int[]`);
+          vals.push(v.map(d => parseInt(d, 10)));
+        } else {
+          sets.push(`${k}=$${idx++}`);
+          vals.push(v);
+        }
+      }
+    }
+    if (!sets.length) return null;
+    vals.push(id);
+    const { rows } = await pool.query(
+      `UPDATE teams SET ${sets.join(',')}, updated_at=NOW() WHERE id=$${idx} RETURNING *`,
+      vals
+    );
+    return rows[0] ?? null;
+  },
+
+  async delete(id) {
+    await pool.query(`DELETE FROM teams WHERE id=$1`, [id]);
+  },
+
   async addMember(team_id, user_id, role = 'developer', client) {
     const db = client ?? pool;
     const { rows } = await db.query(
@@ -48,6 +89,34 @@ export const teamRepository = {
       [team_id, user_id, role]
     );
     return rows[0];
+  },
+
+  async removeMember(team_id, user_id) {
+    await pool.query(
+      `DELETE FROM team_members WHERE team_id=$1 AND user_id=$2`,
+      [team_id, user_id]
+    );
+  },
+
+  async getMembers(team_id) {
+    const { rows } = await pool.query(
+      `SELECT tm.id, tm.team_id, tm.user_id, tm.role, tm.joined_at,
+              u.full_name, u.email, u.avatar_url
+       FROM team_members tm
+       JOIN users u ON u.id = tm.user_id
+       WHERE tm.team_id = $1
+       ORDER BY tm.joined_at ASC`,
+      [team_id]
+    );
+    return rows;
+  },
+
+  async getMemberRole(team_id, user_id) {
+    const { rows } = await pool.query(
+      `SELECT role FROM team_members WHERE team_id=$1 AND user_id=$2`,
+      [team_id, user_id]
+    );
+    return rows[0]?.role ?? null;
   },
 
   async createWithOwner({ name, description, avatar_url, color, timezone, working_days, daily_scrum_time, created_by }) {
@@ -77,6 +146,24 @@ export const teamRepository = {
     return rows.length > 0;
   },
 
+  async countOwnedTeams(user_id) {
+    const { rows } = await pool.query(
+      `SELECT COUNT(*) AS cnt FROM teams WHERE created_by=$1`,
+      [user_id]
+    );
+    return parseInt(rows[0].cnt, 10);
+  },
+
+  async countJoinedTeams(user_id) {
+    const { rows } = await pool.query(
+      `SELECT COUNT(*) AS cnt FROM team_members tm
+       JOIN teams t ON t.id = tm.team_id
+       WHERE tm.user_id=$1 AND t.created_by <> $1`,
+      [user_id]
+    );
+    return parseInt(rows[0].cnt, 10);
+  },
+
   async createInvitation({ team_id, invited_by, email }) {
     const token = randomUUID();
     const { rows } = await pool.query(
@@ -101,6 +188,18 @@ export const teamRepository = {
     return rows[0] ?? null;
   },
 
+  async getTeamInvitations(team_id) {
+    const { rows } = await pool.query(
+      `SELECT i.*, u.full_name AS inviter_name
+       FROM invitations i
+       JOIN users u ON u.id = i.invited_by
+       WHERE i.team_id = $1
+       ORDER BY i.created_at DESC`,
+      [team_id]
+    );
+    return rows;
+  },
+
   async updateInvitationStatus(token, status) {
     const { rows } = await pool.query(
       `UPDATE invitations SET status=$1 WHERE token=$2 RETURNING *`,
@@ -114,5 +213,13 @@ export const teamRepository = {
       `UPDATE invitations SET status='expired'
        WHERE status='pending' AND expires_at < NOW()`
     );
+  },
+
+  async findPendingInvitationByEmail(team_id, email) {
+    const { rows } = await pool.query(
+      `SELECT * FROM invitations WHERE team_id=$1 AND email=$2 AND status='pending'`,
+      [team_id, email]
+    );
+    return rows[0] ?? null;
   },
 };

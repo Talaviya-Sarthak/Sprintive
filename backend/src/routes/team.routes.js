@@ -3,17 +3,38 @@ import multer             from 'multer';
 import { teamController } from '../controllers/team.controller.js';
 import { requireAuth }    from '../middleware/auth.middleware.js';
 
-const router  = Router();
-const upload  = multer({ dest: 'uploads/', limits: { fileSize: 2 * 1024 * 1024 } });
+const router = Router();
+const upload = multer({ dest: 'uploads/', limits: { fileSize: 2 * 1024 * 1024 } });
 
 router.use(requireAuth);
 
-router.post('/',                    upload.single('avatar'), teamController.createTeam);
-router.post('/invite',              teamController.inviteMembers);
-router.post('/invite-link',         teamController.generateInviteLink);
-router.get('/invite/:token',        teamController.getInvitePreview);
-router.post('/join',                teamController.acceptInvitation);
-router.post('/reject',              teamController.rejectInvitation);
-router.get('/:id',                  teamController.getTeam);
+// Dashboard
+router.get('/dashboard',                  teamController.getDashboard);
+
+// My teams list
+router.get('/',                           teamController.getMyTeams);
+
+// Create team
+router.post('/',                          upload.single('avatar'), teamController.createTeam);
+
+// Invitation preview (public-ish — auth still required to accept)
+router.get('/invite/:token',              teamController.getInvitePreview);
+
+// Accept / reject invitation
+router.post('/join',                      teamController.acceptInvitation);
+router.post('/reject',                    teamController.rejectInvitation);
+
+// Team CRUD
+router.get('/:id',                        teamController.getTeam);
+router.patch('/:id',                      upload.single('avatar'), teamController.updateTeam);
+router.delete('/:id',                     teamController.deleteTeam);
+
+// Members
+router.get('/:id/members',               teamController.getMembers);
+router.delete('/:id/members/:memberId',  teamController.removeMember);
+
+// Invitations
+router.post('/:id/invite',               teamController.inviteMembers);
+router.get('/:id/invitations',           teamController.getInvitations);
 
 export default router;

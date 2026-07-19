@@ -3,6 +3,16 @@ export interface User {
   full_name: string;
   email: string;
   avatar_url?: string;
+  phone?: string;
+  company?: string;
+  designation?: string;
+  bio?: string;
+  country?: string;
+  timezone?: string;
+  plan?: 'free' | 'pro';
+  email_verified?: boolean;
+  auth_provider?: string;
+  created_at?: string;
 }
 
 export interface Team {
@@ -17,8 +27,22 @@ export interface Team {
   created_by: string;
   creator_name?: string;
   creator_avatar?: string;
-  member_count?: number;
+  member_count?: number | string;
+  my_role?: TeamMemberRole;
   created_at: string;
+}
+
+export type TeamMemberRole = 'scrum_master' | 'developer' | 'product_owner' | 'observer';
+
+export interface TeamMember {
+  id: string;
+  team_id: string;
+  user_id: string;
+  role: TeamMemberRole;
+  joined_at: string;
+  full_name: string;
+  email: string;
+  avatar_url?: string;
 }
 
 export interface Invitation {
@@ -32,8 +56,16 @@ export interface Invitation {
   email?: string;
   token: string;
   status: 'pending' | 'accepted' | 'rejected' | 'expired';
-  member_count?: number;
+  member_count?: number | string;
   expires_at: string;
+  created_at?: string;
+}
+
+export interface DashboardData {
+  owned_teams:  Team[];
+  joined_teams: Team[];
+  plan: 'free' | 'pro';
+  limits: { maxOwnedTeams: number; maxJoinedTeams: number };
 }
 
 export interface Meeting {
@@ -61,7 +93,6 @@ export interface Participant {
   role: 'host' | 'participant';
   joined_at: string;
   socketId?: string;
-  // live state
   isMuted?: boolean;
   isCameraOff?: boolean;
   isSpeaking?: boolean;

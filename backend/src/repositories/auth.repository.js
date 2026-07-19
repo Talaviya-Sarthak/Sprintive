@@ -168,3 +168,38 @@ export async function revokeAllUserTokens(userId) {
     [userId]
   );
 }
+
+/**
+ * Updates a user's profile fields.
+ */
+export async function updateUserProfile(userId, fields) {
+  const allowed = ['full_name','phone','company','designation','bio','country','timezone','avatar_url'];
+  const sets = [];
+  const vals = [];
+  let idx = 1;
+  for (const [k, v] of Object.entries(fields)) {
+    if (allowed.includes(k)) { sets.push(`${k}=$${idx++}`); vals.push(v); }
+  }
+  if (!sets.length) return null;
+  vals.push(userId);
+  const { rows } = await query(
+    `UPDATE users SET ${sets.join(',')}, updated_at=NOW() WHERE id=$${idx} RETURNING *`,
+    vals
+  );
+  return rows[0] ?? null;
+}
+
+/**
+ * Returns owned team count and joined (non-owned) team count for a user.
+ */
+export async function getUserTeamStats(userId) {
+  const { rows } = await query(
+    `SELECT
+       (SELECT COUNT(*) FROM teams WHERE created_by = $1) AS owned_count,
+       (SELECT COUNT(*) FROM team_members tm
+        JOIN teams t ON t.id = tm.team_id
+        WHERE tm.user_id = $1 AND t.created_by <> $1) AS joined_count`,
+    [userId]
+  );
+  return { ownedCount: parseInt(rows[0].owned_count, 10), joinedCount: parseInt(rows[0].joined_count, 10) };
+}
