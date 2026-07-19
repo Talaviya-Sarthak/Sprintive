@@ -6,6 +6,13 @@
 
 export const BCRYPT_ROUNDS = 12;
 
+export const PLAN_LIMITS = {
+  free: {
+    maxOwnedTeams:  2,
+    maxJoinedTeams: 1,
+  },
+};
+
 export const TOKEN_TYPES = {
   ACCESS:  'access',
   REFRESH: 'refresh',

@@ -2,6 +2,13 @@ import { logger } from '../utils/logger.js';
 import { sendError } from '../utils/response.js';
 import { HTTP_STATUS } from '../utils/constants.js';
 
+export class AppError extends Error {
+  constructor(message, statusCode = 500) {
+    super(message);
+    this.statusCode = statusCode;
+  }
+}
+
 /**
  * Centralized error-handling middleware.
  * Must be registered LAST in the Express middleware chain (4 arguments).

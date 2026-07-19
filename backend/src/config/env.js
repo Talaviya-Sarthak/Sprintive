@@ -1,11 +1,5 @@
 import 'dotenv/config';
 
-/**
- * Validates and exports all environment variables.
- * The app will crash at startup if any required variable is missing,
- * preventing silent misconfigurations in production.
- */
-
 const required = [
   'DATABASE_URL',
   'JWT_ACCESS_SECRET',
@@ -13,7 +7,6 @@ const required = [
 ];
 
 const missing = required.filter((key) => !process.env[key]);
-
 if (missing.length > 0) {
   console.error(`[env] Missing required environment variables: ${missing.join(', ')}`);
   process.exit(1);
@@ -38,4 +31,18 @@ export const env = {
   githubClientSecret: process.env.GITHUB_CLIENT_SECRET ?? '',
 
   frontendUrl:        process.env.FRONTEND_URL ?? 'http://localhost:5173',
+
+  // Cloudflare R2
+  r2AccountId:        process.env.R2_ACCOUNT_ID        ?? '',
+  r2AccessKeyId:      process.env.R2_ACCESS_KEY_ID     ?? '',
+  r2SecretAccessKey:  process.env.R2_SECRET_ACCESS_KEY ?? '',
+  r2BucketName:       process.env.R2_BUCKET_NAME       ?? 'sprintive-recordings',
+  r2PublicUrl:        process.env.R2_PUBLIC_URL         ?? '',
+
+  // SMTP
+  smtpHost:           process.env.SMTP_HOST            ?? '',
+  smtpPort:           parseInt(process.env.SMTP_PORT   ?? '587', 10),
+  smtpUser:           process.env.SMTP_USER            ?? '',
+  smtpPass:           process.env.SMTP_PASS            ?? '',
+  smtpFrom:           process.env.SMTP_FROM            ?? 'noreply@sprintive.app',
 };

@@ -1,28 +1,33 @@
-import { env } from './config/env.js';
+import { createServer } from 'http';
+import { Server }        from 'socket.io';
+import { env }           from './config/env.js';
 import { connectDatabase } from './config/database.js';
-import { logger } from './utils/logger.js';
-import app from './app.js';
+import { logger }        from './utils/logger.js';
+import app               from './app.js';
+import { initSocket }    from './socket/meeting.socket.js';
 
-/**
- * Starts the server only after a successful database connection.
- * This ensures the app never accepts traffic with a broken DB connection.
- */
 async function bootstrap() {
   try {
     await connectDatabase();
 
-    const server = app.listen(env.port, () => {
-      logger.info(`ScrumMind API running on port ${env.port} [${env.nodeEnv}]`);
+    const httpServer = createServer(app);
+    const io = new Server(httpServer, {
+      cors: {
+        origin:      env.frontendUrl,
+        credentials: true,
+      },
+    });
+
+    initSocket(io);
+
+    httpServer.listen(env.port, () => {
+      logger.info(`Sprintive API running on port ${env.port} [${env.nodeEnv}]`);
       logger.info(`Health check → http://localhost:${env.port}/health`);
     });
 
-    // ─── Graceful Shutdown ────────────────────────────────────────────────
     const shutdown = (signal) => {
       logger.info(`${signal} received — shutting down gracefully`);
-      server.close(() => {
-        logger.info('HTTP server closed');
-        process.exit(0);
-      });
+      httpServer.close(() => { logger.info('HTTP server closed'); process.exit(0); });
     };
 
     process.on('SIGTERM', () => shutdown('SIGTERM'));
