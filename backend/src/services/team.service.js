@@ -1,15 +1,15 @@
 import { teamRepository } from '../repositories/team.repository.js';
 import { AppError } from '../middleware/error.middleware.js';
+import { logger } from '../utils/logger.js';
 
 export const teamService = {
   async createTeam({ name, description, color, timezone, working_days, daily_scrum_time, invite_emails, avatar_url, userId }) {
-    const team = await teamRepository.create({
+    const team = await teamRepository.createWithOwner({
       name, description, avatar_url, color, timezone,
       working_days, daily_scrum_time, created_by: userId,
     });
 
-    // Add creator as scrum_master
-    await teamRepository.addMember(team.id, userId, 'scrum_master');
+    logger.info(`[teams] Team created — id=${team.id} name="${team.name}" owner=${userId} invite_code=${team.invite_code}`);
 
     // Create invitations for provided emails
     const invitations = await Promise.all(

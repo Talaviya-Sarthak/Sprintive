@@ -17,6 +17,7 @@ import Footer            from './components/Footer';
 import SignUp        from './pages/SignUp';
 import Login         from './pages/Login';
 import CreateTeam    from './pages/team/CreateTeam';
+import TeamDetails   from './pages/team/TeamDetails';
 import JoinTeam      from './pages/team/JoinTeam';
 import CreateMeeting from './pages/meeting/CreateMeeting';
 import MeetingLobby  from './pages/meeting/MeetingLobby';
@@ -51,6 +52,7 @@ export default function App() {
       <Route path="/signup"                element={<SignUp />} />
       <Route path="/login"                 element={<Login />} />
       <Route path="/teams/create"          element={<CreateTeam />} />
+      <Route path="/teams/:id"              element={<TeamDetails />} />
       <Route path="/join/:token"           element={<JoinTeam />} />
       <Route path="/meetings/create"       element={<CreateMeeting />} />
       <Route path="/meetings/:id"          element={<MeetingLobby />} />

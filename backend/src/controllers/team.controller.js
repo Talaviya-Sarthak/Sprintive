@@ -1,14 +1,23 @@
 import { teamService }        from '../services/team.service.js';
 import { createTeamSchema, inviteMembersSchema, joinTeamSchema } from '../validators/team.validator.js';
 import { env } from '../config/env.js';
+import { sendError } from '../utils/response.js';
+import { HTTP_STATUS } from '../utils/constants.js';
 
 export const teamController = {
   async createTeam(req, res, next) {
     try {
-      const body   = createTeamSchema.parse(req.body);
+      const parsed = createTeamSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return sendError(res, {
+          message: parsed.error.errors[0].message,
+          statusCode: HTTP_STATUS.BAD_REQUEST,
+          errors: parsed.error.errors.map((e) => ({ field: e.path.join('.'), message: e.message })),
+        });
+      }
       const avatar = req.file ? `/uploads/${req.file.filename}` : undefined;
-      const result = await teamService.createTeam({ ...body, avatar_url: avatar, userId: req.user.id });
-      res.status(201).json({ success: true, data: result });
+      const result = await teamService.createTeam({ ...parsed.data, avatar_url: avatar, userId: req.user.id });
+      res.status(201).json({ success: true, team: result.team, invitations: result.invitations });
     } catch (err) { next(err); }
   },
 

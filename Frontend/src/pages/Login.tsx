@@ -6,7 +6,7 @@ import { FaGithub } from 'react-icons/fa';
 import AuthLayout from '../components/AuthLayout';
 import type { LucideIcon } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000/api';
 
 interface LoginForm {
   email: string;
@@ -156,7 +156,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_URL}/api/auth/login`, {
+      const res = await fetch(`${API_URL}/auth/login`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -245,10 +245,10 @@ export default function Login() {
       </AnimatePresence>
 
       <div className="flex gap-2.5 mb-5">
-        <OAuthBtn logo={<GoogleLogo />} label="Continue with Google" onClick={() => { window.location.href = `${API_URL}/api/auth/google`; }} />
+        <OAuthBtn logo={<GoogleLogo />} label="Continue with Google" onClick={() => { window.location.href = `${API_URL}/auth/google`; }} />
       </div>
       <div className="mb-5">
-        <OAuthBtn logo={<GithubLogo />} label="Continue with GitHub" onClick={() => { window.location.href = `${API_URL}/api/auth/github`; }} />
+        <OAuthBtn logo={<GithubLogo />} label="Continue with GitHub" onClick={() => { window.location.href = `${API_URL}/auth/github`; }} />
       </div>
 
       <div className="flex items-center gap-3 mb-5">

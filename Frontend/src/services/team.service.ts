@@ -13,7 +13,7 @@ export const teamService = {
     form.append('invite_emails', JSON.stringify(payload.invite_emails));
     if (payload.avatar) form.append('avatar', payload.avatar);
     const { data } = await api.post('/teams', form, { headers: { 'Content-Type': 'multipart/form-data' } });
-    return data.data;
+    return { team: data.team, invitations: data.invitations ?? [] };
   },
 
   async getTeam(id: string): Promise<Team> {

@@ -6,7 +6,7 @@ import { FaGithub } from 'react-icons/fa';
 import AuthLayout from '../components/AuthLayout';
 import type { LucideIcon } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000/api';
 
 interface SignUpForm {
   name: string;
@@ -172,7 +172,7 @@ export default function SignUp() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_URL}/api/auth/signup`, {
+      const res = await fetch(`${API_URL}/auth/signup`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -366,8 +366,8 @@ export default function SignUp() {
       </div>
 
       <div className="flex gap-2.5 mb-6">
-        <OAuthBtn logo={<GoogleLogo />} label="Google" onClick={() => { window.location.href = `${API_URL}/api/auth/google`; }} />
-        <OAuthBtn logo={<GithubLogo />} label="GitHub" onClick={() => { window.location.href = `${API_URL}/api/auth/github`; }} />
+        <OAuthBtn logo={<GoogleLogo />} label="Google" onClick={() => { window.location.href = `${API_URL}/auth/google`; }} />
+        <OAuthBtn logo={<GithubLogo />} label="GitHub" onClick={() => { window.location.href = `${API_URL}/auth/github`; }} />
       </div>
 
       <p className="text-center text-[13.5px] text-[var(--color-text-muted)]">

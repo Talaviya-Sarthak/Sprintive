@@ -15,6 +15,7 @@ export default function CreateTeam() {
   const [loading, setLoading]     = useState(false);
   const [error, setError]         = useState('');
   const [avatarPreview, setPreview] = useState<string | null>(null);
+  const [createdTeamId, setCreatedTeamId] = useState<string | null>(null);
   const [inviteInput, setInviteInput] = useState('');
   const [generatedLink, setGeneratedLink] = useState('');
   const [copied, setCopied]       = useState(false);
@@ -57,22 +58,49 @@ export default function CreateTeam() {
   };
 
   const handleSubmit = async () => {
-    if (!form.name.trim()) { setError('Team name is required'); return; }
+    const trimmed = form.name.trim();
+    if (!trimmed) { setError('Team name is required'); return; }
+    if (trimmed.length < 3) { setError('Team name must be at least 3 characters'); return; }
+    if (trimmed.length > 50) { setError('Team name must be at most 50 characters'); return; }
     setLoading(true);
     setError('');
     try {
-      const { team } = await teamService.createTeam(form);
+      // If team was already created (e.g. user generated invite link first), just navigate
+      if (createdTeamId) { navigate(`/teams/${createdTeamId}`); return; }
+      const { team } = await teamService.createTeam({ ...form, name: trimmed });
+      setCreatedTeamId(team.id);
       navigate(`/teams/${team.id}`);
     } catch (err: unknown) {
-      setError((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to create team');
+      const errData = (err as { response?: { data?: { message?: string } } })?.response?.data;
+      setError(errData?.message ?? 'Failed to create team');
     } finally {
       setLoading(false);
     }
   };
 
   const handleGenerateLink = async () => {
-    // Placeholder — needs team_id after creation; shown in step 2 for UX demo
-    setGeneratedLink(`${window.location.origin}/join/demo-token-${Date.now()}`);
+    setError('');
+    try {
+      let teamId = createdTeamId;
+      // Create the team first if it hasn't been created yet
+      if (!teamId) {
+        const trimmed = form.name.trim();
+        if (!trimmed) { setError('Team name is required'); return; }
+        if (trimmed.length < 3) { setError('Team name must be at least 3 characters'); return; }
+        if (trimmed.length > 50) { setError('Team name must be at most 50 characters'); return; }
+        setLoading(true);
+        const { team } = await teamService.createTeam({ ...form, name: trimmed });
+        teamId = team.id;
+        setCreatedTeamId(teamId);
+        setLoading(false);
+      }
+      const { link } = await teamService.generateInviteLink(teamId);
+      setGeneratedLink(link);
+    } catch (err: unknown) {
+      setLoading(false);
+      const errData = (err as { response?: { data?: { message?: string } } })?.response?.data;
+      setError(errData?.message ?? 'Failed to generate invite link');
+    }
   };
 
   const copyLink = () => {
@@ -180,7 +208,7 @@ export default function CreateTeam() {
                   </div>
                 </div>
 
-                <button onClick={() => { if (!form.name.trim()) { setError('Team name is required'); return; } setError(''); setStep(2); }} className="w-full py-3 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white font-semibold text-sm transition-colors">
+                <button onClick={() => { const t = form.name.trim(); if (!t) { setError('Team name is required'); return; } if (t.length < 3) { setError('Team name must be at least 3 characters'); return; } setError(''); setStep(2); }} className="w-full py-3 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white font-semibold text-sm transition-colors">
                   Continue →
                 </button>
                 {error && <p className="text-red-400 text-sm text-center">{error}</p>}
