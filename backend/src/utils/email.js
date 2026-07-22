@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 
-import { env }   from '../config/env.js';
+import { env } from '../config/env.js';
 import { logger } from './logger.js';
 
 // Lazy transporter: created once, reused for all emails
@@ -13,25 +13,42 @@ let _transporter = null;
  */
 function getTransporter() {
   if (!_transporter) {
+    const port = Number(env.smtpPort);
+
     _transporter = nodemailer.createTransport({
       host: env.smtpHost,
-      port: env.smtpPort,
-      secure: env.smtpPort === 931 || env.smtpPort === 465,
-      auth: env.smtpUser && env.smtpPass ? { user: env.smtpUser, pass: env.smtpPass } : null,
+      port,
+      secure: port === 465,
+
+      // Force IPv4 (helps on Render with Gmail SMTP)
+      family: 4,
+
+      auth: {
+        user: env.smtpUser,
+        pass: env.smtpPass,
+      },
+
+      // Force STARTTLS
+      requireTLS: true,
+
       tls: {
-        // Gmail and most providers use self-signed certs on intermediate proxies — do not reject
         rejectUnauthorized: false,
       },
+
+      // Timeouts
+      dnsTimeout: 10000,
       connectionTimeout: 10000,
       greetingTimeout: 10000,
       socketTimeout: 10000,
+
+      // Debug logs
       logger: true,
-      debug: false,
+      debug: true,
     });
   }
+
   return _transporter;
 }
-
 /**
  * Verifies the SMTP connection at startup by calling transporter.verify().
  * Logs success or a detailed failure so Render logs show exactly what went wrong.
