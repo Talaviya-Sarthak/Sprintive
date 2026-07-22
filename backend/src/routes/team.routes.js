@@ -6,6 +6,9 @@ import { requireAuth }    from '../middleware/auth.middleware.js';
 const router = Router();
 const upload = multer({ dest: 'uploads/', limits: { fileSize: 2 * 1024 * 1024 } });
 
+// Invitation preview — public (no auth required)
+router.get('/invite/:token',              teamController.getInvitePreview);
+
 router.use(requireAuth);
 
 // Dashboard
@@ -17,10 +20,7 @@ router.get('/',                           teamController.getMyTeams);
 // Create team
 router.post('/',                          upload.single('avatar'), teamController.createTeam);
 
-// Invitation preview (public-ish — auth still required to accept)
-router.get('/invite/:token',              teamController.getInvitePreview);
-
-// Accept / reject invitation
+// Accept / reject invitation (auth required)
 router.post('/join',                      teamController.acceptInvitation);
 router.post('/reject',                    teamController.rejectInvitation);
 

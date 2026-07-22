@@ -1,5 +1,5 @@
 import { teamRepository }    from '../repositories/team.repository.js';
-import { findUserByEmail }   from '../repositories/auth.repository.js';
+import { findUserByEmail, findUserById } from '../repositories/auth.repository.js';
 import { AppError }          from '../middleware/error.middleware.js';
 import { sendInvitationEmail } from '../utils/email.js';
 import { logger }            from '../utils/logger.js';
@@ -147,6 +147,15 @@ export const teamService = {
   async acceptInvitation({ token, userId }) {
     const invitation = await this.validateInviteToken(token);
 
+    // Security: if the invitation has a target email, verify it matches the authenticated user
+    if (invitation.email) {
+      const user = await findUserById(userId);
+      if (!user) throw new AppError('User not found', 404);
+      if (user.email.toLowerCase() !== invitation.email.toLowerCase()) {
+        throw new AppError('This invitation was sent to a different email address.', 403);
+      }
+    }
+
     // Free plan: max 1 joined team
     const alreadyMember = await teamRepository.isMember(invitation.team_id, userId);
     if (!alreadyMember) {
@@ -154,10 +163,11 @@ export const teamService = {
       if (joinedCount >= PLAN_LIMITS.free.maxJoinedTeams) {
         throw new AppError('You have reached your free plan limit of 1 joined team. Upgrade to Pro to join more teams.', 403);
       }
-      await teamRepository.addMember(invitation.team_id, userId, 'developer');
     }
 
-    await teamRepository.updateInvitationStatus(token, 'accepted');
+    // Atomically add member + update invitation status
+    await teamRepository.acceptInvitation({ team_id: invitation.team_id, user_id: userId, token });
+
     const team = await teamRepository.findById(invitation.team_id);
     return team;
   },

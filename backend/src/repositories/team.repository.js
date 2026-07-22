@@ -200,6 +200,28 @@ export const teamRepository = {
     return rows;
   },
 
+  async acceptInvitation({ team_id, user_id, token }) {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(
+        `INSERT INTO team_members (team_id, user_id, role)
+         VALUES ($1, $2, 'developer') ON CONFLICT (team_id, user_id) DO NOTHING`,
+        [team_id, user_id]
+      );
+      await client.query(
+        `UPDATE invitations SET status='accepted' WHERE token=$1`,
+        [token]
+      );
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+  },
+
   async updateInvitationStatus(token, status) {
     const { rows } = await pool.query(
       `UPDATE invitations SET status=$1 WHERE token=$2 RETURNING *`,

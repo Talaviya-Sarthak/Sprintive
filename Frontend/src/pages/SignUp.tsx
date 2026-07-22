@@ -1,9 +1,10 @@
-import { useState, ChangeEvent, FormEvent } from 'react';
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, Lock, Eye, EyeOff, Check, X, Zap, AlertCircle, Loader } from 'lucide-react';
 import { FaGithub } from 'react-icons/fa';
 import AuthLayout from '../components/AuthLayout';
+import { useAuth } from '../context/AuthContext';
 import type { LucideIcon } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000/api';
@@ -140,6 +141,7 @@ const GithubLogo = () => <FaGithub size={16} className="text-[var(--color-text-h
 
 export default function SignUp() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [form, setForm] = useState<SignUpForm>({ name: '', email: '', password: '', confirm: '' });
   const [errors, setErrors] = useState<FieldErrors>({});
   const [showPw, setShowPw] = useState(false);
@@ -148,6 +150,15 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [apiError, setApiError] = useState('');
+
+  useEffect(() => {
+    if (!success) return;
+    const pending = sessionStorage.getItem('pending_invite');
+    if (pending) {
+      sessionStorage.removeItem('pending_invite');
+      navigate(`/join/${pending}`, { replace: true });
+    }
+  }, [success, navigate]);
 
   const score = strengthScore(form.password);
   const set = (k: keyof SignUpForm) => (e: ChangeEvent<HTMLInputElement>) =>
@@ -196,8 +207,7 @@ export default function SignUp() {
         return;
       }
 
-      localStorage.setItem('access_token',  data.data!.accessToken);
-      localStorage.setItem('refresh_token', data.data!.refreshToken);
+      await login(data.data!.accessToken, data.data!.refreshToken);
       setSuccess(true);
     } catch {
       setApiError('Unable to reach the server. Please check your connection.');
