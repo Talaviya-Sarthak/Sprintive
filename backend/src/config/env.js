@@ -46,3 +46,13 @@ export const env = {
   smtpPass:           process.env.SMTP_PASS            ?? '',
   smtpFrom:           process.env.SMTP_FROM            ?? 'noreply@sprintive.app',
 };
+
+// Warn about missing SMTP config on startup (do NOT block boot — API still works)
+if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  const missing = [];
+  if (!process.env.SMTP_HOST) missing.push('SMTP_HOST');
+  if (!process.env.SMTP_USER) missing.push('SMTP_USER');
+  if (!process.env.SMTP_PASS) missing.push('SMTP_PASS');
+  console.warn(`[env] SMTP email sending NOT configured — missing: ${missing.join(', ')}`);
+  console.warn('[env] Invitation emails will fail until these are set in Render env vars');
+}

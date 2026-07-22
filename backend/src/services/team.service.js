@@ -102,7 +102,9 @@ export const teamService = {
   },
 
   async _createAndSendInvitation({ team, email, invitedBy }) {
+    logger.info(`[teamService] Creating invitation for email=${email} team_id=${team.id}`);
     const inv = await teamRepository.createInvitation({ team_id: team.id, invited_by: invitedBy, email });
+    logger.info(`[teamService] Invitation created — id=${inv.id} token=${inv.token}`);
 
     // Fetch inviter name
     const { rows } = await import('../config/database.js').then(m =>
@@ -111,6 +113,8 @@ export const teamService = {
     const inviterName = rows?.[0]?.full_name ?? 'A team member';
 
     const acceptUrl = `${env.frontendUrl}/join/${inv.token}`;
+    logger.info(`[teamService] Sending invitation email to ${email} for team "${team.name}"`);
+
     await sendInvitationEmail({
       to:          email,
       inviterName,
@@ -120,6 +124,7 @@ export const teamService = {
       expiresAt:   inv.expires_at,
     });
 
+    logger.info(`[teamService] Invitation email sent successfully to ${email}`);
     return inv;
   },
 

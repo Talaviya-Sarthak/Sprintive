@@ -1,18 +1,75 @@
 import nodemailer from 'nodemailer';
-import { env } from '../config/env.js';
+
+import { env }   from '../config/env.js';
 import { logger } from './logger.js';
 
-const transporter = nodemailer.createTransport({
-  host:   env.smtpHost,
-  port:   env.smtpPort,
-  secure: env.smtpPort === 465,
-  auth:   { user: env.smtpUser, pass: env.smtpPass },
-});
+// Lazy transporter: created once, reused for all emails
+let _transporter = null;
+
+/**
+ * Returns a lazily initialised & verified Nodemailer transporter.
+ * The transporter is shared across all email sends to leverage
+ * Nodemailer's built-in connection pooling.
+ */
+function getTransporter() {
+  if (!_transporter) {
+    _transporter = nodemailer.createTransport({
+      host: env.smtpHost,
+      port: env.smtpPort,
+      secure: env.smtpPort === 931 || env.smtpPort === 465,
+      auth: env.smtpUser && env.smtpPass ? { user: env.smtpUser, pass: env.smtpPass } : null,
+      tls: {
+        // Gmail and most providers use self-signed certs on intermediate proxies — do not reject
+        rejectUnauthorized: false,
+      },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
+      logger: true,
+      debug: false,
+    });
+  }
+  return _transporter;
+}
+
+/**
+ * Verifies the SMTP connection at startup by calling transporter.verify().
+ * Logs success or a detailed failure so Render logs show exactly what went wrong.
+ */
+export async function verifySmtpConnection() {
+  if (!env.smtpHost || !env.smtpUser) {
+    logger.warn('[email] SMTP not configured — transporter verification SKIPPED');
+    logger.warn('[email] Set SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_FROM in environment variables');
+    return false;
+  }
+
+  try {
+    const transporter = getTransporter();
+    const success = await transporter.verify();
+    logger.info('[email] SMTP transporter verified successfully');
+    return true;
+  } catch (err) {
+    logger.error('[email] SMTP transporter verification FAILED', {
+      host: env.smtpHost,
+      port: env.smtpPort,
+      user: env.smtpUser ? `${env.smtpUser.slice(0, 3)}…` : '(empty)',
+      from: env.smtpFrom,
+      message: err.message,
+      code: err.code,
+      responseCode: err.responseCode,
+      command: err.command,
+      response: err.response,
+      stack: err.stack,
+    });
+    return false;
+  }
+}
 
 export async function sendInvitationEmail({ to, inviterName, teamName, teamColor, acceptUrl, expiresAt }) {
-  if (!env.smtpHost || !env.smtpUser) {
-    logger.warn('[email] SMTP not configured — skipping invitation email');
-    return;
+  if (!env.smtpHost || !env.smtpUser || !env.smtpPass) {
+    logger.warn('[email] SMTP not fully configured — cannot send invitation email');
+    logger.warn(`[email] Missing: ${!env.smtpHost ? 'SMTP_HOST ' : ''}${!env.smtpUser ? 'SMTP_USER ' : ''}${!env.smtpPass ? 'SMTP_PASS ' : ''}`);
+    throw new Error('Email sending is not configured. Contact the system administrator.');
   }
 
   const expiry = new Date(expiresAt).toLocaleDateString('en-US', {
@@ -50,15 +107,41 @@ export async function sendInvitationEmail({ to, inviterName, teamName, teamColor
 </body>
 </html>`;
 
+  logger.info(`[email] Sending invitation to ${to} for team "${teamName}"`);
+
   try {
-    await transporter.sendMail({
-      from:    `"Sprintive" <${env.smtpFrom}>`,
+    const transporter = getTransporter();
+    const info = await transporter.sendMail({
+      from: `"Sprintive" <${env.smtpFrom}>`,
       to,
       subject: `${inviterName} invited you to join ${teamName} on Sprintive`,
       html,
     });
-    logger.info(`[email] Invitation sent to ${to}`);
+
+    logger.info(`[email] Invitation sent to ${to} — messageId=${info.messageId}`);
   } catch (err) {
-    logger.error(`[email] Failed to send to ${to}:`, err.message);
+    logger.error('[email] Send invitation FAILED', {
+      to,
+      team: teamName,
+      message: err.message,
+      code: err.code,
+      responseCode: err.responseCode,
+      command: err.command,
+      response: err.response,
+      stack: err.stack,
+    });
+
+    // Map common SMTP errors to user-friendly messages
+    if (err.code === 'EAUTH') {
+      throw new Error('Email authentication failed. Check SMTP credentials.');
+    }
+    if (err.code === 'ESOCKET' || err.code === 'ETIMEDOUT') {
+      throw new Error(`Cannot connect to email server (${env.smtpHost}:${env.smtpPort}). Check SMTP host/port and firewall.`);
+    }
+    if (err.responseCode === 550) {
+      throw new Error(`Email address "${to}" was rejected by the mail server.`);
+    }
+
+    throw new Error(`Failed to send invitation email: ${err.message}`);
   }
 }
