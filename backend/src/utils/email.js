@@ -18,6 +18,8 @@ function getTransporter() {
     _transporter = nodemailer.createTransport({
       host: env.smtpHost,
       port,
+
+      // Port 465 = SSL/TLS, Port 587 = STARTTLS
       secure: port === 465,
 
       // Force IPv4 (helps on Render with Gmail SMTP)
@@ -32,16 +34,13 @@ function getTransporter() {
       requireTLS: true,
 
       tls: {
-        rejectUnauthorized: false,
       },
 
-      // Timeouts
       dnsTimeout: 10000,
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
+      name: "sprintive.onrender.com",
 
-      // Debug logs
+      // Connection timeouts
+
       logger: true,
       debug: true,
     });
