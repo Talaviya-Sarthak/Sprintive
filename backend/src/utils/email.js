@@ -19,27 +19,17 @@ function getTransporter() {
       host: env.smtpHost,
       port,
 
-      // Port 465 = SSL/TLS, Port 587 = STARTTLS
+      // 465 = SSL/TLS, 587 = STARTTLS
       secure: port === 465,
-
-      // Force IPv4 (helps on Render with Gmail SMTP)
-      family: 4,
 
       auth: {
         user: env.smtpUser,
         pass: env.smtpPass,
       },
 
-      // Force STARTTLS
-      requireTLS: true,
-
-      tls: {
-      },
-
-      dnsTimeout: 10000,
-      name: "sprintive.onrender.com",
-
-      // Connection timeouts
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
 
       logger: true,
       debug: true,
