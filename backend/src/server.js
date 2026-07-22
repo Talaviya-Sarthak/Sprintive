@@ -11,15 +11,15 @@ async function bootstrap() {
   try {
     await connectDatabase();
 
-    // Verify SMTP on startup; log success/failure but do NOT block boot
+    // Verify Brevo API on startup; log success/failure but do NOT block boot
     // so the API stays available even if email is temporarily down.
-    logger.info('[email] Verifying SMTP connection…');
-    const smtpOk = await verifySmtpConnection();
-    if (smtpOk) {
-      logger.info('[email] SMTP is ready — emails will be delivered');
+    logger.info('[email] Verifying Brevo API connection…');
+    const brevoOk = await verifySmtpConnection();
+    if (brevoOk) {
+      logger.info('[email] Brevo API is ready — emails will be delivered');
     } else {
-      logger.warn('[email] SMTP verification failed — invitation emails will NOT be sent');
-      logger.warn('[email] To fix: set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM in Render env vars');
+      logger.warn('[email] Brevo API verification failed — invitation emails will NOT be sent');
+      logger.warn('[email] To fix: set BREVO_API_KEY, BREVO_SENDER_EMAIL in Render env vars');
     }
 
     const httpServer = createServer(app);

@@ -1,79 +1,54 @@
-import nodemailer from 'nodemailer';
-
 import { env } from '../config/env.js';
 import { logger } from './logger.js';
 
-// Lazy transporter: created once, reused for all emails
-let _transporter = null;
+const BREVO_API_BASE = 'https://api.brevo.com/v3';
 
-/**
- * Returns a lazily initialised & verified Nodemailer transporter.
- * The transporter is shared across all email sends to leverage
- * Nodemailer's built-in connection pooling.
- */function getTransporter() {
-  if (!_transporter) {
-    const port = Number(env.smtpPort);
-
-    _transporter = nodemailer.createTransport({
-      host: env.smtpHost,
-      port,
-
-      // 465 = SSL/TLS, 587 = STARTTLS
-      secure: port === 465,
-
-      auth: {
-        user: env.smtpUser,
-        pass: env.smtpPass,
-      },
-
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
-
-      logger: true,
-      debug: true,
-    });
-  }
-
-  return _transporter;
+function getHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'api-key': env.brevoApiKey,
+  };
 }
-/**
- * Verifies the SMTP connection at startup by calling transporter.verify().
- * Logs success or a detailed failure so Render logs show exactly what went wrong.
- */
+
 export async function verifySmtpConnection() {
-  if (!env.smtpHost || !env.smtpUser) {
-    logger.warn('[email] SMTP not configured — transporter verification SKIPPED');
-    logger.warn('[email] Set SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_FROM in environment variables');
+  if (!env.brevoApiKey) {
+    logger.warn('[email] Brevo API key not configured — verification SKIPPED');
+    logger.warn('[email] Set BREVO_API_KEY, BREVO_SENDER_EMAIL in environment variables');
     return false;
   }
 
   try {
-    const transporter = getTransporter();
-    const success = await transporter.verify();
-    logger.info('[email] SMTP transporter verified successfully');
+    const response = await fetch(`${BREVO_API_BASE}/account`, {
+      method: 'GET',
+      headers: getHeaders(),
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      logger.error('[email] Brevo API verification FAILED', {
+        status: response.status,
+        statusText: response.statusText,
+        message: body.message || 'Unknown error',
+        code: body.code,
+      });
+      return false;
+    }
+
+    logger.info('[email] Brevo API connection verified successfully');
     return true;
   } catch (err) {
-    logger.error('[email] SMTP transporter verification FAILED', {
-      host: env.smtpHost,
-      port: env.smtpPort,
-      user: env.smtpUser ? `${env.smtpUser.slice(0, 3)}…` : '(empty)',
-      from: env.smtpFrom,
+    logger.error('[email] Brevo API verification error', {
       message: err.message,
-      code: err.code,
-      responseCode: err.responseCode,
-      command: err.command,
-      response: err.response,
-      stack: err.stack,
+      code: err.cause?.code || err.code,
     });
     return false;
   }
 }
 
 export async function sendInvitationEmail({ to, inviterName, teamName, teamColor, acceptUrl, expiresAt }) {
-  if (!env.smtpHost || !env.smtpUser || !env.smtpPass) {
-    logger.warn('[email] SMTP not fully configured — cannot send invitation email');
-    logger.warn(`[email] Missing: ${!env.smtpHost ? 'SMTP_HOST ' : ''}${!env.smtpUser ? 'SMTP_USER ' : ''}${!env.smtpPass ? 'SMTP_PASS ' : ''}`);
+  if (!env.brevoApiKey) {
+    logger.warn('[email] Brevo API key not configured — cannot send invitation email');
     throw new Error('Email sending is not configured. Contact the system administrator.');
   }
 
@@ -115,36 +90,67 @@ export async function sendInvitationEmail({ to, inviterName, teamName, teamColor
   logger.info(`[email] Sending invitation to ${to} for team "${teamName}"`);
 
   try {
-    const transporter = getTransporter();
-    const info = await transporter.sendMail({
-      from: `"Sprintive" <${env.smtpFrom}>`,
-      to,
-      subject: `${inviterName} invited you to join ${teamName} on Sprintive`,
-      html,
+    const response = await fetch(`${BREVO_API_BASE}/smtp/email`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        sender: {
+          name: env.brevoSenderName,
+          email: env.brevoSenderEmail,
+        },
+        to: [{ email: to }],
+        subject: `${inviterName} invited you to join ${teamName} on Sprintive`,
+        htmlContent: html,
+      }),
+      signal: AbortSignal.timeout(15000),
     });
 
-    logger.info(`[email] Invitation sent to ${to} — messageId=${info.messageId}`);
+    const body = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const message = body.message || response.statusText || 'Unknown error';
+      const code = body.code;
+
+      logger.error('[email] Send invitation FAILED', {
+        to,
+        team: teamName,
+        status: response.status,
+        code,
+        message,
+      });
+
+      if (response.status === 401 || code === 'unauthorized') {
+        throw new Error('Email authentication failed. Check Brevo API key.');
+      }
+      if (response.status === 429 || code === 'too_many_requests') {
+        throw new Error('Email rate limit exceeded. Try again later.');
+      }
+      if (response.status === 400 && typeof message === 'string' && message.toLowerCase().includes('invalid')) {
+        throw new Error(`Email address "${to}" was rejected by the email service.`);
+      }
+
+      throw new Error(`Failed to send invitation email: ${message}`);
+    }
+
+    logger.info(`[email] Invitation sent to ${to} — messageId=${body.messageId || 'N/A'}`);
   } catch (err) {
-    logger.error('[email] Send invitation FAILED', {
+    if (err.message.startsWith('Email ') || err.message.startsWith('Failed to send')) {
+      throw err;
+    }
+
+    logger.error('[email] Send invitation network error', {
       to,
       team: teamName,
       message: err.message,
-      code: err.code,
-      responseCode: err.responseCode,
-      command: err.command,
-      response: err.response,
-      stack: err.stack,
+      code: err.cause?.code || err.code,
+      type: err.type,
     });
 
-    // Map common SMTP errors to user-friendly messages
-    if (err.code === 'EAUTH') {
-      throw new Error('Email authentication failed. Check SMTP credentials.');
+    if (err.name === 'AbortError') {
+      throw new Error('Cannot connect to email service. Request timed out.');
     }
-    if (err.code === 'ESOCKET' || err.code === 'ETIMEDOUT') {
-      throw new Error(`Cannot connect to email server (${env.smtpHost}:${env.smtpPort}). Check SMTP host/port and firewall.`);
-    }
-    if (err.responseCode === 550) {
-      throw new Error(`Email address "${to}" was rejected by the mail server.`);
+    if (err.cause?.code === 'ECONNREFUSED' || err.cause?.code === 'ENOTFOUND' || err.cause?.code === 'ENETUNREACH') {
+      throw new Error('Cannot connect to email service. Check network connectivity.');
     }
 
     throw new Error(`Failed to send invitation email: ${err.message}`);

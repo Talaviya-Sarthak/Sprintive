@@ -39,20 +39,14 @@ export const env = {
   r2BucketName:       process.env.R2_BUCKET_NAME       ?? 'sprintive-recordings',
   r2PublicUrl:        process.env.R2_PUBLIC_URL         ?? '',
 
-  // SMTP
-  smtpHost:           process.env.SMTP_HOST            ?? '',
-  smtpPort:           parseInt(process.env.SMTP_PORT   ?? '587', 10),
-  smtpUser:           process.env.SMTP_USER            ?? '',
-  smtpPass:           process.env.SMTP_PASS            ?? '',
-  smtpFrom:           process.env.SMTP_FROM            ?? 'noreply@sprintive.app',
+  // Brevo Transactional Email API
+  brevoApiKey:        process.env.BREVO_API_KEY            ?? '',
+  brevoSenderEmail:   process.env.BREVO_SENDER_EMAIL       ?? 'noreply@sprintive.app',
+  brevoSenderName:    process.env.BREVO_SENDER_NAME        ?? 'Sprintive',
 };
 
-// Warn about missing SMTP config on startup (do NOT block boot — API still works)
-if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
-  const missing = [];
-  if (!process.env.SMTP_HOST) missing.push('SMTP_HOST');
-  if (!process.env.SMTP_USER) missing.push('SMTP_USER');
-  if (!process.env.SMTP_PASS) missing.push('SMTP_PASS');
-  console.warn(`[env] SMTP email sending NOT configured — missing: ${missing.join(', ')}`);
-  console.warn('[env] Invitation emails will fail until these are set in Render env vars');
+// Warn about missing Brevo config on startup (do NOT block boot — API still works)
+if (!process.env.BREVO_API_KEY) {
+  console.warn('[env] Brevo email sending NOT configured — missing: BREVO_API_KEY');
+  console.warn('[env] Invitation emails will fail until BREVO_API_KEY is set in Render env vars');
 }
