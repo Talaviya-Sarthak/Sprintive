@@ -1,26 +1,34 @@
 import net from "node:net";
 
-const socket = net.createConnection({
-  host: "smtp-relay.brevo.com",
-  port: 587,
-});
+async function test(port) {
+  return new Promise((resolve) => {
+    console.log(`Testing port ${port}...`);
 
-socket.setTimeout(10000);
+    const socket = net.createConnection({
+      host: "smtp-relay.brevo.com",
+      port,
+    });
 
-socket.on("connect", () => {
-  console.log("✅ Connected to Brevo SMTP");
-  socket.end();
-});
+    socket.setTimeout(10000);
 
-socket.on("data", (data) => {
-  console.log("SMTP:", data.toString());
-});
+    socket.on("connect", () => {
+      console.log(`✅ Connected on ${port}`);
+      socket.end();
+      resolve();
+    });
 
-socket.on("timeout", () => {
-  console.log("❌ TCP Timeout");
-  socket.destroy();
-});
+    socket.on("timeout", () => {
+      console.log(`❌ Timeout on ${port}`);
+      socket.destroy();
+      resolve();
+    });
 
-socket.on("error", (err) => {
-  console.log("❌ Error:", err);
-});
+    socket.on("error", (err) => {
+      console.log(`❌ Error on ${port}:`, err.code);
+      resolve();
+    });
+  });
+}
+
+await test(587);
+await test(465);
