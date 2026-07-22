@@ -10,8 +10,7 @@ let _transporter = null;
  * Returns a lazily initialised & verified Nodemailer transporter.
  * The transporter is shared across all email sends to leverage
  * Nodemailer's built-in connection pooling.
- */
-function getTransporter() {
+ */function getTransporter() {
   if (!_transporter) {
     const port = Number(env.smtpPort);
 
