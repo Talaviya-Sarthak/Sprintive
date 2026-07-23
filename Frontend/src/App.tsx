@@ -25,9 +25,13 @@ import JoinTeam      from './pages/team/JoinTeam';
 import Dashboard     from './pages/workspace/Dashboard';
 import TeamMembers   from './pages/team/TeamMembers';
 import TeamSettings  from './pages/team/TeamSettings';
-import CreateMeeting from './pages/meeting/CreateMeeting';
-import MeetingLobby  from './pages/meeting/MeetingLobby';
-import MeetingRoom   from './pages/meeting/MeetingRoom';
+import CreateMeeting     from './pages/meeting/CreateMeeting';
+import MeetingLobby      from './pages/meeting/MeetingLobby';
+import MeetingRoom       from './pages/meeting/MeetingRoom';
+import MeetingsPage      from './pages/meeting/MeetingsPage';
+import MeetingDetailsPage from './pages/meeting/MeetingDetailsPage';
+import MeetingRoomPage   from './pages/meeting/MeetingRoomPage';
+import MeetingSummaryPage from './pages/meeting/MeetingSummaryPage';
 
 function LandingPage() {
   const { theme, toggleTheme } = useTheme();
@@ -74,9 +78,15 @@ export default function App() {
       <Route path="/teams/:id/settings"    element={<ProtectedRoute><TeamSettings /></ProtectedRoute>} />
 
       {/* Meetings (protected) */}
-      <Route path="/meetings/create"       element={<ProtectedRoute><CreateMeeting /></ProtectedRoute>} />
-      <Route path="/meetings/:id"          element={<ProtectedRoute><MeetingLobby /></ProtectedRoute>} />
-      <Route path="/meetings/:id/room"     element={<ProtectedRoute><MeetingRoom /></ProtectedRoute>} />
+      <Route path="/meetings/create"                  element={<ProtectedRoute><CreateMeeting /></ProtectedRoute>} />
+      <Route path="/meetings/:id"                     element={<ProtectedRoute><MeetingLobby /></ProtectedRoute>} />
+      <Route path="/meetings/:id/room"                element={<ProtectedRoute><MeetingRoom /></ProtectedRoute>} />
+
+      {/* New Meeting Module Routes (protected) */}
+      <Route path="/teams/:teamId/meetings"           element={<ProtectedRoute><MeetingsPage /></ProtectedRoute>} />
+      <Route path="/teams/:teamId/meetings/:meetingId" element={<ProtectedRoute><MeetingDetailsPage /></ProtectedRoute>} />
+      <Route path="/meetings/:meetingId/live"         element={<ProtectedRoute><MeetingRoomPage /></ProtectedRoute>} />
+      <Route path="/meetings/:meetingId/summary"      element={<ProtectedRoute><MeetingSummaryPage /></ProtectedRoute>} />
     </Routes>
   );
 }

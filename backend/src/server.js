@@ -45,10 +45,11 @@ async function bootstrap() {
     process.on('SIGTERM', () => shutdown('SIGTERM'));
     process.on('SIGINT',  () => shutdown('SIGINT'));
 
-  } catch (err) {
-    logger.error('Failed to start server:', err.message);
+  } catch (error) {
+    console.error("SERVER STARTUP ERROR");
+    console.error(error);
     process.exit(1);
-  }
+}
 }
 
 bootstrap();

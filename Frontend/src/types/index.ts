@@ -68,16 +68,29 @@ export interface DashboardData {
   limits: { maxOwnedTeams: number; maxJoinedTeams: number };
 }
 
+
+export type MeetingStatus = 'scheduled' | 'active' | 'ended' | 'cancelled';
+export type MeetingType = 'daily_scrum' | 'sprint_planning' | 'review' | 'retrospective' | 'custom';
+
 export interface Meeting {
   id: string;
   team_id: string;
   team_name?: string;
   title: string;
+  description?: string;
   sprint_name?: string;
+  meeting_type: MeetingType;
   host_id: string;
   host_name?: string;
   host_avatar?: string;
-  status: 'scheduled' | 'active' | 'ended' | 'cancelled';
+  status: MeetingStatus;
+  date: string;
+  start_time: string;
+  end_time: string;
+  timezone: string;
+  duration_minutes: number;
+  agenda?: string[];
+  participant_count: number;
   started_at?: string;
   ended_at?: string;
   created_at: string;
@@ -90,7 +103,7 @@ export interface Participant {
   full_name: string;
   avatar_url?: string;
   email: string;
-  role: 'host' | 'participant';
+  role: 'host' | 'participant' | 'co-host';
   joined_at: string;
   socketId?: string;
   isMuted?: boolean;
@@ -137,8 +150,48 @@ export interface CreateTeamPayload {
   avatar?: File;
 }
 
+export interface MeetingAgendaItem {
+  id: string;
+  text: string;
+  duration_minutes?: number;
+}
+
+export interface MeetingParticipant {
+  id: string;
+  user_id: string;
+  full_name: string;
+  avatar_url?: string;
+  email: string;
+  role: 'host' | 'co-host' | 'participant';
+  joined_at?: string;
+  is_muted?: boolean;
+  is_camera_off?: boolean;
+  is_speaking?: boolean;
+}
+
+export interface MeetingSummary {
+  id: string;
+  meeting_id: string;
+  duration_minutes: number;
+  attendance_count: number;
+  total_participants: number;
+  transcript: string;
+  ai_summary: string;
+  action_items: { id: string; text: string; assignee?: string; status: 'pending' | 'done' }[];
+  tickets_generated: { id: string; title: string; status: string }[];
+  created_at: string;
+}
+
 export interface CreateMeetingPayload {
   team_id: string;
   title: string;
   sprint_name?: string;
+  description?: string;
+  meeting_type?: MeetingType;
+  date?: string;
+  start_time?: string;
+  end_time?: string;
+  timezone?: string;
+  participant_ids?: string[];
+  agenda?: string[];
 }

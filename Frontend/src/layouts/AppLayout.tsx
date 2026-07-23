@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { NavLink, useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, LayoutDashboard, Users, Settings, User, LogOut, ChevronDown, Menu, X } from 'lucide-react';
+import { Brain, LayoutDashboard, Users, Settings, User, LogOut, ChevronDown, Menu, X, Calendar } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
@@ -30,6 +30,7 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
     { to: `/teams/${teamId}`,          icon: LayoutDashboard, label: 'Overview'  },
     { to: `/teams/${teamId}/members`,  icon: Users,           label: 'Members'   },
     { to: `/teams/${teamId}/settings`, icon: Settings,        label: 'Settings'  },
+    { to: `/teams/${teamId}/meetings`, icon: Calendar,        label: 'Meetings'  },
   ] : [];
 
   const sidebar = (
