@@ -1,6 +1,7 @@
 import { Router }         from 'express';
 import multer             from 'multer';
 import { teamController } from '../controllers/team.controller.js';
+import { meetingController } from '../controllers/meeting.controller.js';
 import { requireAuth }    from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -36,5 +37,8 @@ router.delete('/:id/members/:memberId',  teamController.removeMember);
 // Invitations
 router.post('/:id/invite',               teamController.inviteMembers);
 router.get('/:id/invitations',           teamController.getInvitations);
+
+// Team meetings
+router.get('/:teamId/meetings',          meetingController.getTeamMeetings);
 
 export default router;

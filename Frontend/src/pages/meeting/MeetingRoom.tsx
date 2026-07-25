@@ -279,6 +279,7 @@ export default function MeetingRoom() {
           meetingStatus={meeting?.status ?? 'scheduled'}
           unreadCount={unreadCount}
           sidebarTab={sidebarTab}
+          isConnected={true}
           onToggleMic={handleToggleMic}
           onToggleCamera={handleToggleCam}
           onToggleScreen={handleScreenShare}

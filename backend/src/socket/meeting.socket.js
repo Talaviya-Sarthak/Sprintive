@@ -14,7 +14,14 @@ export function initSocket(io) {
     if (!token) return next(new Error('Authentication required'));
     try {
       const payload = jwt.verify(token, env.jwtAccessSecret);
-      socket.user = payload;
+      // Map JWT payload fields to socket.user (JWT uses 'sub' for user id)
+      socket.user = {
+        id:         payload.sub,
+        email:      payload.email || '',
+        full_name:  payload.full_name || '',
+        avatar_url: payload.avatar_url || '',
+        role:       payload.role || 'participant',
+      };
       next();
     } catch {
       next(new Error('Invalid token'));
@@ -33,16 +40,57 @@ export function initSocket(io) {
         if (!rooms.has(room)) rooms.set(room, new Set());
         rooms.get(room).add(socket.id);
 
-        await meetingService.joinMeeting(meetingId, user.id);
+        const result = await meetingService.joinMeeting(meetingId, user.id);
+        const meetingData = result?.meeting || null;
+        const dbParticipants = result?.participants || [];
 
+        // Broadcast to OTHERS that a new participant joined
         socket.to(room).emit('participant:joined', {
-          userId:   user.id,
-          name:     user.full_name,
-          avatar:   user.avatar_url,
-          socketId: socket.id,
+          id:         dbParticipants.find(p => p.user_id === user.id)?.id || socket.id,
+          meeting_id: meetingId,
+          user_id:    user.id,
+          full_name:  user.full_name,
+          avatar_url: user.avatar_url,
+          email:      user.email,
+          role:       user.role || 'participant',
+          joined_at:  new Date().toISOString(),
+          socketId:   socket.id,
         });
 
-        socket.emit('meeting:joined', { meetingId, socketId: socket.id });
+        // Gather existing participants (with their socketIds) for the new joiner
+        const existingParticipants = [];
+        const roomSocketsSet = io.sockets.adapter.rooms.get(room);
+        if (roomSocketsSet) {
+          for (const sid of roomSocketsSet) {
+            if (sid !== socket.id) {
+              const sock = io.sockets.sockets.get(sid);
+              if (sock?.user) {
+                const dbp = dbParticipants.find(p => p.user_id === sock.user.id);
+                existingParticipants.push({
+                  id:           dbp?.id || sid,
+                  meeting_id:   meetingId,
+                  user_id:      sock.user.id,
+                  full_name:    sock.user.full_name,
+                  avatar_url:   sock.user.avatar_url,
+                  email:        sock.user.email,
+                  role:         sock.user.role || 'participant',
+                  joined_at:    dbp?.joined_at || new Date().toISOString(),
+                  socketId:     sid,
+                  isMuted:      dbp?.is_muted ?? false,
+                  isCameraOff:  dbp?.is_camera_off ?? false,
+                  isSpeaking:   dbp?.is_speaking ?? false,
+                });
+              }
+            }
+          }
+        }
+
+        socket.emit('meeting:joined', {
+          meetingId,
+          socketId: socket.id,
+          participants: existingParticipants,
+          meeting: meetingData,
+        });
       } catch (err) {
         socket.emit('error', { message: err.message });
       }
@@ -67,7 +115,12 @@ export function initSocket(io) {
         io.to(room).emit('meeting:ended', {
           meeting:    result.meeting,
           transcript: result.transcript,
+          summary:    result.summary,
         });
+        // Kick everyone out after a short delay
+        setTimeout(() => {
+          io.to(room).emit('meeting:redirect', { url: `/meetings/${meetingId}/summary` });
+        }, 2000);
       } catch (err) {
         socket.emit('error', { message: err.message });
       }
@@ -95,6 +148,32 @@ export function initSocket(io) {
       } catch (err) {
         socket.emit('error', { message: err.message });
       }
+    });
+
+    // ── Media state sync ──────────────────────────────────────────────────────
+    socket.on('toggle-camera', ({ meetingId, cameraOff }) => {
+      const room = getRoomKey(meetingId);
+      socket.to(room).emit('camera-state-changed', { userId: user.id, socketId: socket.id, cameraOff });
+    });
+
+    socket.on('toggle-mic', ({ meetingId, muted }) => {
+      const room = getRoomKey(meetingId);
+      socket.to(room).emit('microphone-state-changed', { userId: user.id, socketId: socket.id, muted });
+    });
+
+    socket.on('raise-hand', ({ meetingId }) => {
+      const room = getRoomKey(meetingId);
+      socket.to(room).emit('hand-raised', { userId: user.id, fullName: user.full_name });
+    });
+
+    socket.on('screen-share-start', ({ meetingId }) => {
+      const room = getRoomKey(meetingId);
+      socket.to(room).emit('screen-share-state', { userId: user.id, socketId: socket.id, sharing: true });
+    });
+
+    socket.on('screen-share-stop', ({ meetingId }) => {
+      const room = getRoomKey(meetingId);
+      socket.to(room).emit('screen-share-state', { userId: user.id, socketId: socket.id, sharing: false });
     });
 
     // ── WebRTC signaling ──────────────────────────────────────────────────────

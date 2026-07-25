@@ -7,24 +7,102 @@ import path                  from 'path';
 const TRANSCRIPTS_DIR = path.resolve('storage/transcripts');
 
 export const meetingService = {
-  async createMeeting({ team_id, title, sprint_name, userId }) {
+  async createMeeting({ team_id, title, description, sprint_name, meeting_type, date, start_time, end_time, timezone, duration_minutes, agenda, userId }) {
     const isMember = await teamRepository.isMember(team_id, userId);
     if (!isMember) throw new AppError('You are not a member of this team', 403);
 
-    const meeting = await meetingRepository.create({ team_id, title, sprint_name, host_id: userId });
-    return meeting;
+    let scheduled_start = null;
+    let scheduled_end = null;
+
+    if (date && start_time) {
+      const offset = timezone ? getNumericTimezoneOffset(timezone, date) : '';
+      scheduled_start = new Date(`${date}T${start_time}:00${offset}`);
+      if (Number.isNaN(scheduled_start.getTime())) {
+        throw new AppError('Invalid meeting start date or time.', 422);
+      }
+    }
+    if (date && end_time) {
+      const offset = timezone ? getNumericTimezoneOffset(timezone, date) : '';
+      scheduled_end = new Date(`${date}T${end_time}:00${offset}`);
+      if (Number.isNaN(scheduled_end.getTime())) {
+        throw new AppError('Invalid meeting end date or time.', 422);
+      }
+    }
+
+    if (!duration_minutes && scheduled_start && scheduled_end) {
+      duration_minutes = Math.round((scheduled_end - scheduled_start) / 60000);
+    }
+
+    const meeting = await meetingRepository.create({
+      team_id, title, description, sprint_name, meeting_type,
+      host_id: userId,
+      scheduled_start, scheduled_end, timezone, duration_minutes, agenda,
+    });
+
+    // Auto-add creator as participant
+    await meetingRepository.addParticipant(meeting.id, userId, 'host');
+
+    return this.transformMeeting(meeting);
   },
 
   async getMeeting(id) {
     const meeting = await meetingRepository.findById(id);
     if (!meeting) throw new AppError('Meeting not found', 404);
-    return meeting;
+    return this.transformMeeting(meeting);
   },
 
-  async getTeamMeetings(team_id, userId) {
+  async getTeamMeetings(team_id, userId, filters = {}) {
     const isMember = await teamRepository.isMember(team_id, userId);
     if (!isMember) throw new AppError('You are not a member of this team', 403);
-    return meetingRepository.findByTeam(team_id);
+
+    const result = await meetingRepository.findByTeam(team_id, filters);
+    return {
+      meetings: result.meetings.map(m => this.transformMeeting(m)),
+      total: result.total,
+    };
+  },
+
+  async updateMeeting(meeting_id, userId, data) {
+    const meeting = await meetingRepository.findById(meeting_id);
+    if (!meeting) throw new AppError('Meeting not found', 404);
+    if (meeting.host_id !== userId) throw new AppError('Only the host can update the meeting', 403);
+
+    const fields = {};
+
+    if (data.title !== undefined) fields.title = data.title;
+    if (data.description !== undefined) fields.description = data.description;
+    if (data.sprint_name !== undefined) fields.sprint_name = data.sprint_name;
+    if (data.meeting_type !== undefined) fields.meeting_type = data.meeting_type;
+    if (data.timezone !== undefined) fields.timezone = data.timezone;
+    if (data.duration_minutes !== undefined) fields.duration_minutes = data.duration_minutes;
+    if (data.agenda !== undefined) fields.agenda = data.agenda;
+
+    if (data.date && data.start_time) {
+      const offset = data.timezone ? getNumericTimezoneOffset(data.timezone, data.date) : '';
+      fields.scheduled_start = new Date(`${data.date}T${data.start_time}:00${offset}`);
+      if (Number.isNaN(fields.scheduled_start.getTime())) {
+        throw new AppError('Invalid meeting start date or time.', 422);
+      }
+    }
+    if (data.date && data.end_time) {
+      const offset = data.timezone ? getNumericTimezoneOffset(data.timezone, data.date) : '';
+      fields.scheduled_end = new Date(`${data.date}T${data.end_time}:00${offset}`);
+      if (Number.isNaN(fields.scheduled_end.getTime())) {
+        throw new AppError('Invalid meeting end date or time.', 422);
+      }
+    }
+
+    const updated = await meetingRepository.update(meeting_id, fields);
+    if (!updated) throw new AppError('No changes applied', 400);
+    return this.transformMeeting(updated);
+  },
+
+  async deleteMeeting(meeting_id, userId) {
+    const meeting = await meetingRepository.findById(meeting_id);
+    if (!meeting) throw new AppError('Meeting not found', 404);
+    if (meeting.host_id !== userId) throw new AppError('Only the host can delete the meeting', 403);
+
+    await meetingRepository.remove(meeting_id);
   },
 
   async joinMeeting(meeting_id, userId) {
@@ -32,10 +110,9 @@ export const meetingService = {
     if (!meeting) throw new AppError('Meeting not found', 404);
     if (meeting.status === 'ended') throw new AppError('Meeting has ended', 400);
 
-    const role = meeting.host_id === userId ? 'host' : 'participant';
-    const participant = await meetingRepository.addParticipant(meeting_id, userId, role);
+    await meetingRepository.addParticipant(meeting_id, userId, 'participant');
     const participants = await meetingRepository.getParticipants(meeting_id);
-    return { meeting, participant, participants };
+    return { meeting: this.transformMeeting(meeting), participants };
   },
 
   async startMeeting(meeting_id, userId) {
@@ -45,7 +122,7 @@ export const meetingService = {
     if (meeting.status === 'active') throw new AppError('Meeting already started', 400);
 
     const updated = await meetingRepository.updateStatus(meeting_id, 'active', { started_at: new Date() });
-    return { meeting: updated };
+    return { meeting: this.transformMeeting(updated) };
   },
 
   async endMeeting(meeting_id, userId) {
@@ -55,22 +132,34 @@ export const meetingService = {
 
     const updated = await meetingRepository.updateStatus(meeting_id, 'ended', { ended_at: new Date() });
 
-    // Write transcript file
-    fs.mkdirSync(TRANSCRIPTS_DIR, { recursive: true });
-    const fileName = `${meeting_id}_${Date.now()}.txt`;
-    const filePath = path.join(TRANSCRIPTS_DIR, fileName);
-    const content  = `Transcript for meeting ${meeting_id}\nGenerated at: ${new Date().toISOString()}`;
-    fs.writeFileSync(filePath, content, 'utf8');
-
+    // Generate a mock transcript
+    const content = `Transcript for meeting ${meeting_id}\nGenerated at: ${new Date().toISOString()}\n\nThis is an AI-generated transcript placeholder.`;
     const transcript = await meetingRepository.saveTranscript({
       meeting_id,
-      transcript_path: filePath,
-      transcript_name: fileName,
+      content,
+      transcript_path: null,
+      transcript_name: null,
       transcript_size: Buffer.byteLength(content, 'utf8'),
-      duration:        null,
+      duration: null,
     });
 
-    return { meeting: updated, transcript };
+    // Generate a mock summary
+    const participants = await meetingRepository.getParticipants(meeting_id);
+    const summary = await meetingRepository.upsertSummary({
+      meeting_id,
+      duration_minutes: meeting.duration_minutes || 0,
+      attendance_count: participants.length,
+      total_participants: participants.length,
+      ai_summary: 'Meeting summary will be available once AI processing is complete.',
+      action_items: [],
+      tickets_generated: [],
+    });
+
+    return {
+      meeting: this.transformMeeting(updated),
+      transcript,
+      summary,
+    };
   },
 
   async leaveMeeting(meeting_id, userId) {
@@ -87,6 +176,28 @@ export const meetingService = {
     return t;
   },
 
+  async getSummary(meeting_id) {
+    const summary = await meetingRepository.getSummary(meeting_id);
+    if (!summary) {
+      // Return a mock summary if none exists yet
+      const meeting = await meetingRepository.findById(meeting_id);
+      if (!meeting) throw new AppError('Meeting not found', 404);
+
+      return {
+        id: null,
+        meeting_id,
+        duration_minutes: meeting.duration_minutes || 0,
+        attendance_count: 0,
+        total_participants: 0,
+        ai_summary: 'No summary available yet. The meeting summary will be generated after the meeting ends.',
+        action_items: [],
+        tickets_generated: [],
+        created_at: new Date().toISOString(),
+      };
+    }
+    return summary;
+  },
+
   async saveChat({ meeting_id, user_id, message }) {
     return meetingRepository.saveChat({ meeting_id, user_id, message });
   },
@@ -94,4 +205,83 @@ export const meetingService = {
   async getChats(meeting_id) {
     return meetingRepository.getChats(meeting_id);
   },
+
+  async getTeamMembers(team_id) {
+    return meetingRepository.getTeamMembers(team_id);
+  },
+
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+
+  transformMeeting(m) {
+    if (!m) return null;
+
+    let date = '';
+    let start_time = '';
+    let end_time = '';
+
+    if (m.scheduled_start) {
+      const s = new Date(m.scheduled_start);
+      date = s.toISOString().split('T')[0];
+      start_time = `${String(s.getHours()).padStart(2, '0')}:${String(s.getMinutes()).padStart(2, '0')}`;
+    }
+
+    if (m.scheduled_end) {
+      const e = new Date(m.scheduled_end);
+      end_time = `${String(e.getHours()).padStart(2, '0')}:${String(e.getMinutes()).padStart(2, '0')}`;
+    }
+
+    return {
+      id: m.id,
+      team_id: m.team_id,
+      team_name: m.team_name || '',
+      title: m.title,
+      description: m.description || '',
+      sprint_name: m.sprint_name || '',
+      meeting_type: m.meeting_type || 'daily_scrum',
+      host_id: m.host_id,
+      host_name: m.host_name || '',
+      host_avatar: m.host_avatar || '',
+      status: m.status,
+      date,
+      start_time,
+      end_time,
+      timezone: m.timezone || 'UTC',
+      duration_minutes: m.duration_minutes || 30,
+      agenda: Array.isArray(m.agenda) ? m.agenda : (typeof m.agenda === 'string' ? JSON.parse(m.agenda) : []),
+      participant_count: parseInt(m.participant_count) || 0,
+      started_at: m.started_at ? new Date(m.started_at).toISOString() : undefined,
+      ended_at: m.ended_at ? new Date(m.ended_at).toISOString() : undefined,
+      created_at: m.created_at ? new Date(m.created_at).toISOString() : new Date().toISOString(),
+    };
+  },
 };
+
+function getNumericTimezoneOffset(timezone, dateStr) {
+  try {
+    const refDate = dateStr ? new Date(dateStr + 'T12:00:00Z') : new Date();
+    const formatter = new Intl.DateTimeFormat('en', {
+      timeZone: timezone,
+      timeZoneName: 'longOffset',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hour12: false,
+    });
+    const parts = formatter.formatToParts(refDate);
+    const tzPart = parts.find(p => p.type === 'timeZoneName');
+    if (tzPart) {
+      const value = tzPart.value;
+      if (!value || value === 'GMT' || value === 'UTC') return '+00:00';
+      const normalized = value.replace(/^GMT/, '');
+      const m = normalized.match(/^([+-])(\d{1,2}):?(\d{2})?$/);
+      if (m) {
+        const sign = m[1];
+        const h = m[2].padStart(2, '0');
+        const min = (m[3] || '00').padStart(2, '0');
+        return `${sign}${h}:${min}`;
+      }
+    }
+  } catch {
+    // fallback
+  }
+  return '+00:00';
+}

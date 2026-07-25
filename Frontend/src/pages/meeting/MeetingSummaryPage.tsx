@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Clock, Users, CheckCircle, Circle, Download, LayoutDashboard } from 'lucide-react';
-import { useMeetingMockData } from '../../hooks/useMeetingMockData';
+import { useQuery } from '@tanstack/react-query';
+import { meetingService } from '../../services/meeting.service';
+import { useMeeting } from '../../hooks/useMeeting';
+import { useMeetingSummary } from '../../hooks/useMeetingSummary';
+import { useMeetingParticipants } from '../../hooks/useMeetingParticipants';
 import { MeetingStatusBadge, MeetingTypeBadge } from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
-import type { Meeting, MeetingSummary, MeetingParticipant } from '../../types';
+import type { MeetingSummary, MeetingParticipant } from '../../types';
 
 function formatDateLong(dateStr: string) {
   const d = new Date(dateStr + 'T00:00:00');
@@ -26,23 +29,17 @@ function getInitials(name: string) {
 export default function MeetingSummaryPage() {
   const { meetingId } = useParams<{ meetingId: string }>();
   const navigate = useNavigate();
-  const { getMeeting, getMeetingSummary, getParticipants } = useMeetingMockData();
 
-  const [meeting, setMeeting] = useState<Meeting | null>(null);
-  const [summary, setSummary] = useState<MeetingSummary | null>(null);
-  const [participants, setParticipants] = useState<MeetingParticipant[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: meeting, isLoading: meetingLoading } = useMeeting(meetingId);
+  const { data: summary, isLoading: summaryLoading } = useMeetingSummary(meetingId);
+  const { data: participants = [] } = useMeetingParticipants(meetingId);
+  const { data: transcriptData } = useQuery({
+    queryKey: ['transcript', meetingId],
+    queryFn: () => meetingService.getTranscript(meetingId!),
+    enabled: !!meetingId,
+  });
 
-  useEffect(() => {
-    if (!meetingId) return;
-    const m = getMeeting(meetingId);
-    const s = getMeetingSummary(meetingId);
-    const p = getParticipants(meetingId);
-    setMeeting(m);
-    setSummary(s);
-    setParticipants(p);
-    setLoading(false);
-  }, [meetingId]);
+  const loading = meetingLoading || summaryLoading;
 
   if (loading) {
     return (
@@ -52,16 +49,29 @@ export default function MeetingSummaryPage() {
     );
   }
 
-  if (!meeting || !summary) {
+  if (!meeting) {
     return (
       <div className="min-h-screen bg-[#0B1220] flex items-center justify-center p-4">
         <div className="text-center">
-          <p className="text-[#94A3B8] text-lg mb-4">Summary not available</p>
+          <p className="text-[#94A3B8] text-lg mb-4">Meeting not found</p>
           <Button onClick={() => navigate(-1)}>Go Back</Button>
         </div>
       </div>
     );
   }
+
+  const summaryData: MeetingSummary = summary || {
+    id: '',
+    meeting_id: meetingId || '',
+    duration_minutes: meeting.duration_minutes || 0,
+    attendance_count: participants.length,
+    total_participants: participants.length,
+    transcript: '',
+    ai_summary: 'No summary available yet.',
+    action_items: [],
+    tickets_generated: [],
+    created_at: '',
+  };
 
   return (
     <div className="min-h-screen bg-[#0B1220]">
@@ -90,22 +100,22 @@ export default function MeetingSummaryPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-[#111827] border border-white/8 rounded-xl p-4 text-center">
               <Clock size={18} className="text-[#3B82F6] mx-auto mb-2" />
-              <p className="text-2xl font-bold text-[#F8FAFC]">{summary.duration_minutes}</p>
+              <p className="text-2xl font-bold text-[#F8FAFC]">{summaryData.duration_minutes}</p>
               <p className="text-xs text-[#475569]">Minutes</p>
             </div>
             <div className="bg-[#111827] border border-white/8 rounded-xl p-4 text-center">
               <Users size={18} className="text-[#3B82F6] mx-auto mb-2" />
-              <p className="text-2xl font-bold text-[#F8FAFC]">{summary.attendance_count}/{summary.total_participants}</p>
+              <p className="text-2xl font-bold text-[#F8FAFC]">{summaryData.attendance_count}/{summaryData.total_participants}</p>
               <p className="text-xs text-[#475569]">Attendance</p>
             </div>
             <div className="bg-[#111827] border border-white/8 rounded-xl p-4 text-center">
               <CheckCircle size={18} className="text-green-400 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-[#F8FAFC]">{summary.action_items.filter(a => a.status === 'done').length}/{summary.action_items.length}</p>
+              <p className="text-2xl font-bold text-[#F8FAFC]">{summaryData.action_items.filter(a => a.status === 'done').length}/{summaryData.action_items.length}</p>
               <p className="text-xs text-[#475569]">Action Items</p>
             </div>
             <div className="bg-[#111827] border border-white/8 rounded-xl p-4 text-center">
               <LayoutDashboard size={18} className="text-[#8B5CF6] mx-auto mb-2" />
-              <p className="text-2xl font-bold text-[#F8FAFC]">{summary.tickets_generated.length}</p>
+              <p className="text-2xl font-bold text-[#F8FAFC]">{summaryData.tickets_generated.length}</p>
               <p className="text-xs text-[#475569]">Tickets</p>
             </div>
           </div>
@@ -113,7 +123,7 @@ export default function MeetingSummaryPage() {
           <div className="bg-[#111827] border border-white/8 rounded-2xl p-5">
             <h3 className="text-base font-bold text-[#F8FAFC] mb-3">Participants ({participants.length})</h3>
             <div className="flex flex-wrap gap-3">
-              {participants.map(p => (
+              {participants.map((p: MeetingParticipant) => (
                 <div key={p.id} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#0d1117] border border-white/6">
                   <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#06B6D4] flex items-center justify-center text-white text-[10px] font-bold">
                     {getInitials(p.full_name)}
@@ -131,18 +141,18 @@ export default function MeetingSummaryPage() {
               <div className="w-6 h-6 rounded-lg bg-[#8B5CF6]/20 flex items-center justify-center text-[#8B5CF6] shrink-0 mt-0.5">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
               </div>
-              <p className="text-sm text-[#CBD5E1] leading-relaxed">{summary.ai_summary}</p>
+              <p className="text-sm text-[#CBD5E1] leading-relaxed">{summaryData.ai_summary}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-[#111827] border border-white/8 rounded-2xl p-5">
               <h3 className="text-base font-bold text-[#F8FAFC] mb-3">Action Items</h3>
-              {summary.action_items.length === 0 ? (
+              {summaryData.action_items.length === 0 ? (
                 <p className="text-sm text-[#475569]">No action items</p>
               ) : (
                 <div className="space-y-2">
-                  {summary.action_items.map(item => (
+                  {summaryData.action_items.map((item: any) => (
                     <div key={item.id} className="flex items-start gap-2.5 p-2.5 rounded-xl bg-[#0d1117] border border-white/6">
                       {item.status === 'done'
                         ? <CheckCircle size={16} className="text-green-400 mt-0.5 shrink-0" />
@@ -164,11 +174,11 @@ export default function MeetingSummaryPage() {
 
             <div className="bg-[#111827] border border-white/8 rounded-2xl p-5">
               <h3 className="text-base font-bold text-[#F8FAFC] mb-3">Tickets Generated</h3>
-              {summary.tickets_generated.length === 0 ? (
+              {summaryData.tickets_generated.length === 0 ? (
                 <p className="text-sm text-[#475569]">No tickets generated</p>
               ) : (
                 <div className="space-y-2">
-                  {summary.tickets_generated.map(ticket => (
+                  {summaryData.tickets_generated.map((ticket: any) => (
                     <div key={ticket.id} className="flex items-center gap-2.5 p-2.5 rounded-xl bg-[#0d1117] border border-white/6">
                       <div className={`w-2 h-2 rounded-full ${
                         ticket.status === 'open' ? 'bg-[#3B82F6]' :
@@ -183,12 +193,14 @@ export default function MeetingSummaryPage() {
             </div>
           </div>
 
-          <div className="bg-[#111827] border border-white/8 rounded-2xl p-5">
-            <h3 className="text-base font-bold text-[#F8FAFC] mb-3">Transcript</h3>
-            <div className="bg-[#0d1117] border border-white/6 rounded-xl p-4 max-h-64 overflow-y-auto">
-              <pre className="text-sm text-[#CBD5E1] whitespace-pre-wrap font-sans leading-relaxed">{summary.transcript}</pre>
+          {transcriptData?.content && (
+            <div className="bg-[#111827] border border-white/8 rounded-2xl p-5">
+              <h3 className="text-base font-bold text-[#F8FAFC] mb-3">Transcript</h3>
+              <div className="bg-[#0d1117] border border-white/6 rounded-xl p-4 max-h-64 overflow-y-auto">
+                <pre className="text-sm text-[#CBD5E1] whitespace-pre-wrap font-sans leading-relaxed">{transcriptData.content}</pre>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
             <Button variant="secondary" onClick={() => navigate(`/teams/${meeting.team_id}/meetings`)}>

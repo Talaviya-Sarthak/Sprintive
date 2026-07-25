@@ -1,6 +1,6 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Sprintive — Complete Database Schema (latest state)
--- Migrations applied: 001 → 004
+-- Migrations applied: 001 → 008
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
@@ -111,32 +111,43 @@ CREATE TRIGGER trg_invitations_updated_at BEFORE UPDATE ON invitations FOR EACH 
 -- ─── MEETINGS ─────────────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS meetings (
-  id          UUID           PRIMARY KEY DEFAULT gen_random_uuid(),
-  team_id     UUID           NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
-  title       VARCHAR(200)   NOT NULL,
-  sprint_name VARCHAR(100),
-  host_id     UUID           NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-  status      meeting_status NOT NULL DEFAULT 'scheduled',
-  started_at  TIMESTAMPTZ,
-  ended_at    TIMESTAMPTZ,
-  created_at  TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
-  updated_at  TIMESTAMPTZ    NOT NULL DEFAULT NOW()
+  id               UUID           PRIMARY KEY DEFAULT gen_random_uuid(),
+  team_id          UUID           NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+  title            VARCHAR(200)   NOT NULL,
+  description      TEXT,
+  sprint_name      VARCHAR(100),
+  meeting_type     VARCHAR(30)    NOT NULL DEFAULT 'daily_scrum',
+  host_id          UUID           NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+  status           meeting_status NOT NULL DEFAULT 'scheduled',
+  agenda           JSONB          DEFAULT '[]'::jsonb,
+  scheduled_start  TIMESTAMPTZ,
+  scheduled_end    TIMESTAMPTZ,
+  timezone         VARCHAR(60)    NOT NULL DEFAULT 'UTC',
+  duration_minutes INTEGER        NOT NULL DEFAULT 30,
+  started_at       TIMESTAMPTZ,
+  ended_at         TIMESTAMPTZ,
+  created_at       TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ    NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_meetings_team   ON meetings (team_id);
-CREATE INDEX IF NOT EXISTS idx_meetings_host   ON meetings (host_id);
-CREATE INDEX IF NOT EXISTS idx_meetings_status ON meetings (status);
+CREATE INDEX IF NOT EXISTS idx_meetings_team           ON meetings (team_id);
+CREATE INDEX IF NOT EXISTS idx_meetings_host           ON meetings (host_id);
+CREATE INDEX IF NOT EXISTS idx_meetings_status         ON meetings (status);
+CREATE INDEX IF NOT EXISTS idx_meetings_meeting_type   ON meetings (meeting_type);
+CREATE INDEX IF NOT EXISTS idx_meetings_scheduled_start ON meetings (scheduled_start);
+CREATE INDEX IF NOT EXISTS idx_meetings_timezone        ON meetings (timezone);
 CREATE TRIGGER trg_meetings_updated_at BEFORE UPDATE ON meetings FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- ─── MEETING PARTICIPANTS ─────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS meeting_participants (
-  id         UUID             PRIMARY KEY DEFAULT gen_random_uuid(),
-  meeting_id UUID             NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
-  user_id    UUID             NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  role       participant_role NOT NULL DEFAULT 'participant',
-  joined_at  TIMESTAMPTZ      NOT NULL DEFAULT NOW(),
-  left_at    TIMESTAMPTZ,
+  id                UUID             PRIMARY KEY DEFAULT gen_random_uuid(),
+  meeting_id        UUID             NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+  user_id           UUID             NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role              participant_role NOT NULL DEFAULT 'participant',
+  attendance_status VARCHAR(20)      NOT NULL DEFAULT 'pending',
+  joined_at         TIMESTAMPTZ      NOT NULL DEFAULT NOW(),
+  left_at           TIMESTAMPTZ,
   UNIQUE (meeting_id, user_id)
 );
 
@@ -171,11 +182,59 @@ CREATE TABLE IF NOT EXISTS meeting_invitations (
 CREATE TABLE IF NOT EXISTS meeting_transcripts (
   id               UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
   meeting_id       UUID         NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
-  transcript_path  TEXT         NOT NULL,
-  transcript_name  VARCHAR(255) NOT NULL,
+  content          TEXT,
+  transcript_path  TEXT,
+  transcript_name  VARCHAR(255),
   transcript_size  INTEGER      NOT NULL DEFAULT 0,
   duration         INTEGER,
   created_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_transcripts_meeting ON meeting_transcripts (meeting_id);
+
+-- ─── MEETING SUMMARIES ────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS meeting_summaries (
+  id                 UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  meeting_id         UUID        NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+  duration_minutes   INTEGER     NOT NULL DEFAULT 0,
+  attendance_count   INTEGER     NOT NULL DEFAULT 0,
+  total_participants INTEGER     NOT NULL DEFAULT 0,
+  ai_summary         TEXT,
+  action_items       JSONB       DEFAULT '[]'::jsonb,
+  tickets_generated  JSONB       DEFAULT '[]'::jsonb,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_meeting_summaries_meeting ON meeting_summaries (meeting_id);
+
+CREATE TRIGGER trg_meeting_summaries_updated_at
+  BEFORE UPDATE ON meeting_summaries
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- ─── MEETING RECORDINGS ───────────────────────────────────────────────────────
+
+DO $$ BEGIN
+  CREATE TYPE recording_status AS ENUM ('processing', 'ready', 'failed');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+CREATE TABLE IF NOT EXISTS meeting_recordings (
+  id            UUID             PRIMARY KEY DEFAULT gen_random_uuid(),
+  meeting_id    UUID             NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+  created_by    UUID             NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+  recording_url TEXT,
+  duration      INTEGER,
+  status        recording_status NOT NULL DEFAULT 'processing',
+  started_at    TIMESTAMPTZ      NOT NULL DEFAULT NOW(),
+  ended_at      TIMESTAMPTZ,
+  created_at    TIMESTAMPTZ      NOT NULL DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ      NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_recordings_meeting ON meeting_recordings (meeting_id);
+
+CREATE TRIGGER trg_recordings_updated_at
+  BEFORE UPDATE ON meeting_recordings
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();

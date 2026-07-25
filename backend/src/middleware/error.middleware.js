@@ -1,3 +1,4 @@
+import { ZodError } from 'zod';
 import { logger } from '../utils/logger.js';
 import { sendError } from '../utils/response.js';
 import { HTTP_STATUS } from '../utils/constants.js';
@@ -35,6 +36,19 @@ export function errorHandler(err, req, res, next) {
     return sendError(res, {
       message:    'Invalid token. Please log in again.',
       statusCode: HTTP_STATUS.UNAUTHORIZED,
+    });
+  }
+
+  // Zod: validation error
+  if (err instanceof ZodError) {
+    const errors = err.errors.map((e) => ({
+      field:   e.path.join('.'),
+      message: e.message,
+    }));
+    return sendError(res, {
+      message:    'Validation failed',
+      statusCode: HTTP_STATUS.UNPROCESSABLE_ENTITY,
+      errors,
     });
   }
 

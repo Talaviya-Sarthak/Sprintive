@@ -2,7 +2,13 @@ import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import AppLayout from '../../layouts/AppLayout';
-import { useMeetingMockData } from '../../hooks/useMeetingMockData';
+import { useMeetings } from '../../hooks/useMeetings';
+import { useCreateMeeting } from '../../hooks/useCreateMeeting';
+import { useUpdateMeeting } from '../../hooks/useUpdateMeeting';
+import { useDeleteMeeting } from '../../hooks/useDeleteMeeting';
+import { useTeamMembers } from '../../hooks/useTeamMembers';
+import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
 import MeetingHeader from '../../components/meeting/MeetingHeader';
 import MeetingList from '../../components/meeting/MeetingList';
 import UpcomingMeetingCard from '../../components/meeting/UpcomingMeetingCard';
@@ -12,34 +18,72 @@ import EditMeetingModal from '../../components/meeting/EditMeetingModal';
 import DeleteMeetingDialog from '../../components/meeting/DeleteMeetingDialog';
 import { MeetingCardSkeleton } from '../../components/ui/Skeleton';
 import type { Meeting } from '../../types';
-
-const currentUserId = 'u1';
+import type { CreateMeetingPayload } from '../../types';
 
 export default function MeetingsPage() {
   const { teamId } = useParams<{ teamId: string }>();
-  const {
-    meetings, upcoming, ongoing, completed,
-    search, setSearch, statusFilter, setStatusFilter,
-    typeFilter, setTypeFilter,
-    getTeamMembers, createMeeting, updateMeeting, deleteMeeting,
-  } = useMeetingMockData(teamId);
+  const { showToast } = useToast();
+  const { user } = useAuth();
+
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+
+  const { data: grouped, isLoading, isError, refetch } = useMeetings(teamId, { search, status: statusFilter, meeting_type: typeFilter });
+  const createMutation = useCreateMeeting(teamId);
+  const updateMutation = useUpdateMeeting(teamId);
+  const deleteMutation = useDeleteMeeting(teamId);
+  const { data: teamMembers = [] } = useTeamMembers(teamId);
+
+  const meetings = grouped?.all || [];
+  const upcoming = grouped?.upcoming || [];
+  const ongoing = grouped?.ongoing || [];
+  const completed = grouped?.completed || [];
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editMeeting, setEditMeeting] = useState<Meeting | null>(null);
   const [deleteMeetingData, setDeleteMeetingData] = useState<Meeting | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'upcoming' | 'ongoing' | 'completed'>('all');
-  const [loading] = useState(false);
 
-  const teamMembers = getTeamMembers();
-
-  const handleCreate = (data: Partial<Meeting>) => createMeeting(data);
-  const handleUpdate = (data: Partial<Meeting>) => {
-    if (editMeeting) updateMeeting(editMeeting.id, data);
+  const handleCreate = async (data: Partial<Meeting>) => {
+    try {
+      const payload: CreateMeetingPayload = {
+        team_id: teamId!,
+        title: data.title || '',
+        description: data.description,
+        meeting_type: data.meeting_type,
+        date: data.date,
+        start_time: data.start_time,
+        end_time: data.end_time,
+        timezone: data.timezone,
+        agenda: data.agenda,
+      };
+      await createMutation.mutateAsync(payload);
+      showToast('Meeting created successfully', 'success');
+    } catch {
+      showToast('Failed to create meeting', 'error');
+    }
   };
-  const handleDelete = () => {
-    if (deleteMeetingData) {
-      deleteMeeting(deleteMeetingData.id);
+
+  const handleUpdate = async (data: Partial<Meeting>) => {
+    if (!editMeeting) return;
+    try {
+      await updateMutation.mutateAsync({ id: editMeeting.id, data });
+      setEditMeeting(null);
+      showToast('Meeting updated successfully', 'success');
+    } catch {
+      showToast('Failed to update meeting', 'error');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteMeetingData) return;
+    try {
+      await deleteMutation.mutateAsync(deleteMeetingData.id);
       setDeleteMeetingData(null);
+      showToast('Meeting deleted successfully', 'success');
+    } catch {
+      showToast('Failed to delete meeting', 'error');
     }
   };
 
@@ -63,10 +107,10 @@ export default function MeetingsPage() {
           description="Manage and join your team meetings"
           search={search}
           onSearchChange={setSearch}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          typeFilter={typeFilter}
-          onTypeFilterChange={setTypeFilter}
+          statusFilter={statusFilter as any}
+          onStatusFilterChange={setStatusFilter as any}
+          typeFilter={typeFilter as any}
+          onTypeFilterChange={setTypeFilter as any}
           onCreateClick={() => setShowCreateModal(true)}
         />
 
@@ -91,25 +135,32 @@ export default function MeetingsPage() {
           ))}
         </div>
 
-        {loading ? (
+        {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 4 }).map((_, i) => <MeetingCardSkeleton key={i} />)}
+          </div>
+        ) : isError ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <p className="text-[#94A3B8] text-sm mb-3">Failed to load meetings</p>
+            <button onClick={() => refetch()} className="px-4 py-2 rounded-xl bg-[#3B82F6] text-white text-sm font-semibold">
+              Try Again
+            </button>
           </div>
         ) : (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             {activeTab === 'upcoming' && upcoming.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                {upcoming.map(m => <UpcomingMeetingCard key={m.id} meeting={m} />)}
+                {upcoming.map((m: Meeting) => <UpcomingMeetingCard key={m.id} meeting={m} />)}
               </div>
             )}
             {activeTab === 'completed' && completed.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                {completed.map(m => <PastMeetingCard key={m.id} meeting={m} />)}
+                {completed.map((m: Meeting) => <PastMeetingCard key={m.id} meeting={m} />)}
               </div>
             )}
             <MeetingList
               meetings={filteredByTab}
-              currentUserId={currentUserId}
+              currentUserId={user?.id || ''}
               onEdit={setEditMeeting}
               onDelete={setDeleteMeetingData}
             />
@@ -136,6 +187,7 @@ export default function MeetingsPage() {
           onClose={() => setDeleteMeetingData(null)}
           onConfirm={handleDelete}
           meetingTitle={deleteMeetingData?.title ?? ''}
+          loading={deleteMutation.isPending}
         />
       </div>
     </AppLayout>

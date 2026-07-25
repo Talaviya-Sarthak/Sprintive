@@ -6,17 +6,20 @@ interface ToolbarButtonProps {
   onClick: () => void;
   active?: boolean;
   danger?: boolean;
+  disabled?: boolean;
   badge?: number;
 }
 
-function ToolbarButton({ icon, label, onClick, active, danger, badge }: ToolbarButtonProps) {
+function ToolbarButton({ icon, label, onClick, active, danger, disabled, badge }: ToolbarButtonProps) {
   return (
     <motion.button
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      onClick={onClick}
+      whileHover={disabled ? {} : { scale: 1.05 }}
+      whileTap={disabled ? {} : { scale: 0.95 }}
+      onClick={disabled ? undefined : onClick}
       title={label}
+      disabled={disabled}
       className={`relative flex flex-col items-center gap-1 px-4 py-2.5 rounded-2xl transition-all duration-200 group ${
+        disabled ? 'opacity-40 cursor-not-allowed' :
         danger
           ? 'bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white'
           : active
@@ -43,6 +46,7 @@ interface Props {
   meetingStatus: string;
   unreadCount: number;
   sidebarTab: string | null;
+  isConnected: boolean;
   onToggleMic: () => void;
   onToggleCamera: () => void;
   onToggleScreen: () => void;
@@ -55,7 +59,7 @@ interface Props {
 
 export default function MeetingToolbar({
   isMuted, isCameraOff, isScreenSharing, isHost, meetingStatus,
-  unreadCount, sidebarTab,
+  unreadCount, sidebarTab, isConnected,
   onToggleMic, onToggleCamera, onToggleScreen,
   onToggleParticipants, onToggleChat,
   onStartMeeting, onEndMeeting, onLeave,
@@ -121,6 +125,7 @@ export default function MeetingToolbar({
           label="Start"
           onClick={onStartMeeting}
           active
+          disabled={!isConnected}
         />
       )}
 
@@ -130,6 +135,7 @@ export default function MeetingToolbar({
           label="End"
           onClick={onEndMeeting}
           danger
+          disabled={!isConnected}
         />
       )}
 
