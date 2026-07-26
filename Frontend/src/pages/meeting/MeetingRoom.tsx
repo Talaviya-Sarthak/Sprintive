@@ -145,6 +145,7 @@ export default function MeetingRoom() {
       isMuted,
       isCameraOff,
       isSpeaking: activeSpeakerId === userId,
+      stream: stream ?? undefined,
     },
     ...participants.filter((p) => p.user_id !== userId),
   ];

@@ -64,17 +64,27 @@ export default function MeetingRoomPage() {
         })));
       })
       .catch(() => {})
-      .finally(() => setLoading(false));
-    return () => reset();
+      .finally(() => {
+        setLoading(false);
+      });
+    return () => {
+      reset();
+    };
   }, [meetingId]);
 
   // Set local stream on video and socket
   useEffect(() => {
     if (stream) {
+      console.log(`[ROOM] Stream effect — setting local stream`, { streamId: stream.id, vTracks: stream.getVideoTracks().length, aTracks: stream.getAudioTracks().length, hasRef: !!localVideoRef.current });
       setLocalStream(stream);
-      if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+        console.log(`[ROOM] localVideoRef srcObject set directly`);
+      } else {
+        console.log(`[ROOM] localVideoRef is null — will rely on ParticipantCard`);
+      }
     }
-  }, [stream, loading]);
+  }, [stream]);
 
   // Sync initial camera/mic state to all participants on connect + stream ready
   useEffect(() => {
@@ -140,6 +150,7 @@ export default function MeetingRoomPage() {
       isMuted,
       isCameraOff,
       isSpeaking: activeSpeakerId === userId,
+      stream: stream ?? undefined,
     },
     ...participants.filter((p) => p.user_id !== userId),
   ];

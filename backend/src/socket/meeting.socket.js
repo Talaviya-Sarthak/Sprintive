@@ -8,13 +8,11 @@ const rooms = new Map();
 function getRoomKey(meetingId) { return `meeting:${meetingId}`; }
 
 export function initSocket(io) {
-  // Auth middleware
   io.use((socket, next) => {
     const token = socket.handshake.auth?.token;
     if (!token) return next(new Error('Authentication required'));
     try {
       const payload = jwt.verify(token, env.jwtAccessSecret);
-      // Map JWT payload fields to socket.user (JWT uses 'sub' for user id)
       socket.user = {
         id:         payload.sub,
         email:      payload.email || '',
@@ -23,7 +21,7 @@ export function initSocket(io) {
         role:       payload.role || 'participant',
       };
       next();
-    } catch {
+    } catch (err) {
       next(new Error('Invalid token'));
     }
   });
@@ -31,7 +29,6 @@ export function initSocket(io) {
   io.on('connection', (socket) => {
     const user = socket.user;
 
-    // ── meeting:join ──────────────────────────────────────────────────────────
     socket.on('meeting:join', async ({ meetingId }) => {
       try {
         const room = getRoomKey(meetingId);
@@ -44,8 +41,7 @@ export function initSocket(io) {
         const meetingData = result?.meeting || null;
         const dbParticipants = result?.participants || [];
 
-        // Broadcast to OTHERS that a new participant joined
-        socket.to(room).emit('participant:joined', {
+        const joinPayload = {
           id:         dbParticipants.find(p => p.user_id === user.id)?.id || socket.id,
           meeting_id: meetingId,
           user_id:    user.id,
@@ -55,9 +51,9 @@ export function initSocket(io) {
           role:       user.role || 'participant',
           joined_at:  new Date().toISOString(),
           socketId:   socket.id,
-        });
+        };
+        socket.to(room).emit('participant:joined', joinPayload);
 
-        // Gather existing participants (with their socketIds) for the new joiner
         const existingParticipants = [];
         const roomSocketsSet = io.sockets.adapter.rooms.get(room);
         if (roomSocketsSet) {
@@ -96,7 +92,6 @@ export function initSocket(io) {
       }
     });
 
-    // ── meeting:start ─────────────────────────────────────────────────────────
     socket.on('meeting:start', async ({ meetingId }) => {
       try {
         const result = await meetingService.startMeeting(meetingId, user.id);
@@ -107,7 +102,6 @@ export function initSocket(io) {
       }
     });
 
-    // ── meeting:end ───────────────────────────────────────────────────────────
     socket.on('meeting:end', async ({ meetingId }) => {
       try {
         const result = await meetingService.endMeeting(meetingId, user.id);
@@ -117,7 +111,6 @@ export function initSocket(io) {
           transcript: result.transcript,
           summary:    result.summary,
         });
-        // Kick everyone out after a short delay
         setTimeout(() => {
           io.to(room).emit('meeting:redirect', { url: `/meetings/${meetingId}/summary` });
         }, 2000);
@@ -126,7 +119,6 @@ export function initSocket(io) {
       }
     });
 
-    // ── meeting:leave ─────────────────────────────────────────────────────────
     socket.on('meeting:leave', async ({ meetingId }) => {
       const room = getRoomKey(meetingId);
       await meetingService.leaveMeeting(meetingId, user.id).catch(() => {});
@@ -135,7 +127,6 @@ export function initSocket(io) {
       socket.to(room).emit('participant:left', { userId: user.id, socketId: socket.id });
     });
 
-    // ── chat:send ─────────────────────────────────────────────────────────────
     socket.on('chat:send', async ({ meetingId, message }) => {
       try {
         const chat = await meetingService.saveChat({ meeting_id: meetingId, user_id: user.id, message });
@@ -150,7 +141,6 @@ export function initSocket(io) {
       }
     });
 
-    // ── Media state sync ──────────────────────────────────────────────────────
     socket.on('toggle-camera', ({ meetingId, cameraOff }) => {
       const room = getRoomKey(meetingId);
       socket.to(room).emit('camera-state-changed', { userId: user.id, socketId: socket.id, cameraOff });
@@ -176,7 +166,6 @@ export function initSocket(io) {
       socket.to(room).emit('screen-share-state', { userId: user.id, socketId: socket.id, sharing: false });
     });
 
-    // ── WebRTC signaling ──────────────────────────────────────────────────────
     socket.on('webrtc:offer', ({ meetingId, targetSocketId, offer }) => {
       io.to(targetSocketId).emit('webrtc:offer', { fromSocketId: socket.id, offer });
     });
@@ -189,7 +178,6 @@ export function initSocket(io) {
       io.to(targetSocketId).emit('webrtc:candidate', { fromSocketId: socket.id, candidate });
     });
 
-    // ── disconnect ────────────────────────────────────────────────────────────
     socket.on('disconnect', () => {
       rooms.forEach((sockets, room) => {
         if (sockets.has(socket.id)) {

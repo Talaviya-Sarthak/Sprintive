@@ -9,14 +9,19 @@ export function useMediaDevices() {
 
   useEffect(() => {
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-      .then((s) => { streamRef.current = s; setStream(s); })
+      .then((s) => {
+        streamRef.current = s;
+        setStream(s);
+      })
       .catch((err) => {
         if (err.name === 'NotAllowedError') setError('Camera/mic permission denied. Please allow access in your browser settings.');
         else if (err.name === 'NotFoundError') setError('No camera or microphone found.');
         else if (err.name === 'NotReadableError') setError('Camera or microphone is in use by another app.');
         else setError('Camera/mic access denied: ' + err.message);
       });
-    return () => { streamRef.current?.getTracks().forEach((t) => t.stop()); };
+    return () => {
+      streamRef.current?.getTracks().forEach((t) => { t.stop(); });
+    };
   }, []);
 
   const toggleMic = useCallback(() => {

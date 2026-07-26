@@ -11,19 +11,36 @@ interface Props {
 export default function ParticipantCard({ participant, isActive, videoRef }: Props) {
   const initials = participant.full_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
   const internalRef = useRef<HTMLVideoElement | null>(null);
+  const isLocal = !!videoRef;
+  const showVideo = !participant.isCameraOff && (!!participant.stream || isLocal);
 
-  // Merged callback ref: updates both the parent ref (local) and internal ref (remote),
-  // and attaches stream immediately when the element mounts.
+  console.log(`[CARD] ${participant.full_name} (${isLocal ? 'local' : 'remote'}) showVideo=${showVideo} hasStream=${!!participant.stream} camOff=${participant.isCameraOff}`);
+
   const handleVideoRef = useCallback((el: HTMLVideoElement | null) => {
     internalRef.current = el;
     if (videoRef) (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = el;
-    if (el && participant.stream) el.srcObject = participant.stream;
+    if (el && participant.stream) {
+      console.log(`[CARD] srcObject assigned ${participant.full_name} via ref streamId=${participant.stream.id} vTracks=${participant.stream.getVideoTracks().length}`);
+      el.srcObject = participant.stream;
+      el.play().then(() => {
+        console.log(`[CARD] play success ${participant.full_name} rect=${JSON.stringify(el.getBoundingClientRect())} vw=${el.videoWidth}x${el.videoHeight}`);
+      }).catch((e) => {
+        console.log(`[CARD] play blocked ${participant.full_name}: ${e.message}`);
+      });
+    }
   }, [videoRef, participant.stream]);
 
-  // Fallback: attach stream when it arrives after the element has already mounted.
   useEffect(() => {
     const el = videoRef?.current || internalRef.current;
-    if (el && participant.stream) el.srcObject = participant.stream;
+    if (el && participant.stream) {
+      console.log(`[CARD] srcObject assigned ${participant.full_name} via effect streamId=${participant.stream.id} vTracks=${participant.stream.getVideoTracks().length}`);
+      el.srcObject = participant.stream;
+      el.play().then(() => {
+        console.log(`[CARD] play success ${participant.full_name} rect=${JSON.stringify(el.getBoundingClientRect())} vw=${el.videoWidth}x${el.videoHeight}`);
+      }).catch((e) => {
+        console.log(`[CARD] play blocked ${participant.full_name}: ${e.message}`);
+      });
+    }
   }, [participant.stream]);
 
   return (
