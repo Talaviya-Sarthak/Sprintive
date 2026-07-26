@@ -49,19 +49,25 @@ export default function MeetingRoomPage() {
       .then(([m, c, p]) => {
         setMeeting(m);
         setChats(c);
-        setParticipants((p || []).map((rp: any) => ({
-          id: rp.id,
-          meeting_id: rp.meeting_id,
-          user_id: rp.user_id,
-          full_name: rp.full_name,
-          avatar_url: rp.avatar_url,
-          email: rp.email,
-          role: rp.role,
-          joined_at: rp.joined_at,
-          isMuted: rp.is_muted ?? false,
-          isCameraOff: rp.is_camera_off ?? false,
-          isSpeaking: rp.is_speaking ?? false,
-        })));
+        const existing = useMeetingStore.getState().participants;
+        setParticipants((p || []).map((rp: any) => {
+          const ep = existing.find(x => x.user_id === rp.user_id);
+          return {
+            id: rp.id,
+            meeting_id: rp.meeting_id,
+            user_id: rp.user_id,
+            full_name: rp.full_name,
+            avatar_url: rp.avatar_url,
+            email: rp.email,
+            role: rp.role,
+            joined_at: rp.joined_at,
+            isMuted: rp.is_muted ?? ep?.isMuted ?? false,
+            isCameraOff: rp.is_camera_off ?? ep?.isCameraOff ?? false,
+            isSpeaking: rp.is_speaking ?? ep?.isSpeaking ?? false,
+            stream: ep?.stream ?? undefined,
+            socketId: ep?.socketId ?? rp.socketId,
+          };
+        }));
       })
       .catch(() => {})
       .finally(() => {
@@ -75,13 +81,9 @@ export default function MeetingRoomPage() {
   // Set local stream on video and socket
   useEffect(() => {
     if (stream) {
-      console.log(`[ROOM] Stream effect — setting local stream`, { streamId: stream.id, vTracks: stream.getVideoTracks().length, aTracks: stream.getAudioTracks().length, hasRef: !!localVideoRef.current });
       setLocalStream(stream);
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
-        console.log(`[ROOM] localVideoRef srcObject set directly`);
-      } else {
-        console.log(`[ROOM] localVideoRef is null — will rely on ParticipantCard`);
       }
     }
   }, [stream]);

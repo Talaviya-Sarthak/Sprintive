@@ -29,7 +29,6 @@ export function useMeetingSocket(meetingId: string | undefined) {
     }
 
     const hasStream = !!localStreamRef.current;
-    console.log(`[DIAG] getOrCreatePeer socket=${socketId} init=${isInitiator} hasStream=${hasStream}`);
 
     const pc = new RTCPeerConnection({
       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
@@ -42,12 +41,10 @@ export function useMeetingSocket(meetingId: string | undefined) {
     if (localStream) {
       for (const track of localStream.getTracks()) {
         pc.addTrack(track, localStream);
-        console.log(`[DIAG] addTrack kind=${track.kind} id=${track.id}`);
       }
     } else {
       for (const kind of ['video', 'audio'] as const) {
         pc.addTransceiver(kind, { direction: 'sendrecv' });
-        console.log(`[DIAG] addTransceiver kind=${kind} (placeholder)`);
       }
     }
 
@@ -57,9 +54,7 @@ export function useMeetingSocket(meetingId: string | undefined) {
       }
     };
 
-    pc.onconnectionstatechange = () => {
-      console.log(`[DIAG] connectionState ${pc.connectionState} for socket=${socketId}`);
-    };
+    pc.onconnectionstatechange = () => {};
 
     pc.onnegotiationneeded = async () => {
       if (!isInitiator) return;
@@ -69,7 +64,6 @@ export function useMeetingSocket(meetingId: string | undefined) {
         if (pc.signalingState !== 'stable') return;
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        console.log(`[DIAG] offer created for socket=${socketId}`);
         socketRef.current?.emit('webrtc:offer', { meetingId, targetSocketId: socketId, offer: pc.localDescription });
       } catch (err) {
         console.error('Negotiation error:', err);
@@ -82,21 +76,15 @@ export function useMeetingSocket(meetingId: string | undefined) {
       const videoTracks = stream?.getVideoTracks().length ?? 0;
       const audioTracks = stream?.getAudioTracks().length ?? 0;
       const uidFromMap = socketUserMap.current.get(socketId);
-      console.log(`[DIAG] ontrack socket=${socketId} kind=${e.track?.kind} streamId=${stream?.id} vTracks=${videoTracks} aTracks=${audioTracks} uidFromMap=${uidFromMap}`);
       let uid = uidFromMap;
       if (!uid) {
         const p = useMeetingStore.getState().participants.find(p => p.socketId === socketId);
         if (p) uid = p.user_id;
-        console.log(`[DIAG] ontrack — fallback store lookup uid=${uid}`);
       }
-      const storeParticipants = useMeetingStore.getState().participants.map(p => ({ uid: p.user_id, name: p.full_name, hasStream: !!p.stream }));
-      console.log(`[DIAG] ontrack — store participants:`, JSON.stringify(storeParticipants));
       if (uid) {
         updateParticipant(uid, { stream });
-        console.log(`[DIAG] ontrack — updateParticipant called for uid=${uid}`);
       } else {
         pendingStreams.current.set(socketId, stream);
-        console.log(`[DIAG] ontrack — queued pending stream for socket=${socketId}`);
       }
     };
 
@@ -143,7 +131,6 @@ export function useMeetingSocket(meetingId: string | undefined) {
     });
 
     socket.on('meeting:joined', (data: { meetingId: string; socketId: string; participants: Participant[]; meeting?: Meeting }) => {
-      console.log(`[DIAG] meeting:joined socketId=${data.socketId} participants=${data.participants.length}`);
       if (data.meeting) setMeeting(data.meeting);
       for (const p of data.participants) {
         if (p.socketId) {
@@ -159,7 +146,6 @@ export function useMeetingSocket(meetingId: string | undefined) {
     });
 
     socket.on('participant:joined', (p: Participant & { socketId: string }) => {
-      console.log(`[DIAG] participant:joined userId=${p.user_id} socketId=${p.socketId}`);
       socketUserMap.current.set(p.socketId, p.user_id);
 
       const ps = pendingStreams.current.get(p.socketId);
@@ -222,33 +208,25 @@ export function useMeetingSocket(meetingId: string | undefined) {
     });
 
     socket.on('webrtc:offer', async ({ fromSocketId, offer }: { fromSocketId: string; offer: RTCSessionDescriptionInit }) => {
-      console.log(`[DIAG] webrtc:offer from ${fromSocketId}`);
       const pc = getOrCreatePeer(fromSocketId, false);
 
-      console.log(`[DIAG] before setRemote sigState=${pc.signalingState} senders=${pc.getSenders().length}`);
       if (pc.signalingState !== 'stable') {
         await pc.setLocalDescription({ type: 'rollback' });
-        console.log(`[DIAG] rollback done sigState=${pc.signalingState}`);
       }
 
       await pc.setRemoteDescription(offer);
-      console.log(`[DIAG] setRemote done sigState=${pc.signalingState}`);
 
       const answer = await pc.createAnswer();
-      console.log(`[DIAG] createAnswer done`);
 
       await pc.setLocalDescription(answer);
-      console.log(`[DIAG] setLocal answer done sigState=${pc.signalingState}`);
 
       socket.emit('webrtc:answer', { targetSocketId: fromSocketId, answer });
     });
 
     socket.on('webrtc:answer', async ({ fromSocketId, answer }: { fromSocketId: string; answer: RTCSessionDescriptionInit }) => {
-      console.log(`[DIAG] webrtc:answer from ${fromSocketId}`);
       const pc = peerConnections.current.get(fromSocketId);
       if (pc) {
         await pc.setRemoteDescription(answer);
-        console.log(`[DIAG] setRemote answer done sigState=${pc.signalingState} connState=${pc.connectionState}`);
       }
     });
 
@@ -320,7 +298,6 @@ export function useMeetingSocket(meetingId: string | undefined) {
   }, [meetingId]);
 
   const setLocalStream = useCallback((stream: MediaStream) => {
-    console.log(`[DIAG] setLocalStream called streamId=${stream.id} pcCount=${peerConnections.current.size}`);
     localStreamRef.current = stream;
     const tracks = stream.getTracks();
     const trackMap = new Map(tracks.map(t => [t.kind, t]));
@@ -329,17 +306,14 @@ export function useMeetingSocket(meetingId: string | undefined) {
       // replaceTrack on existing senders (no renegotiation needed)
       pc.getSenders().forEach(sender => {
         if (trackMap.has(sender.track?.kind)) {
-          console.log(`[DIAG] replaceTrack sender kind=${sender.track?.kind} for socket=${socketId}`);
           sender.replaceTrack(trackMap.get(sender.track!.kind)!);
           trackMap.delete(sender.track!.kind);
         }
       });
 
-      // Activate senders that were created without a track (stream wasn't ready)
       pc.getTransceivers().forEach(t => {
         const kind = t.receiver?.track?.kind;
         if (kind && trackMap.has(kind)) {
-          console.log(`[DIAG] replaceTrack transceiver kind=${kind} for socket=${socketId}`);
           t.sender.replaceTrack(trackMap.get(kind)!);
           trackMap.delete(kind);
         }

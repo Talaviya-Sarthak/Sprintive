@@ -11,35 +11,26 @@ interface Props {
 export default function ParticipantCard({ participant, isActive, videoRef }: Props) {
   const initials = participant.full_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
   const internalRef = useRef<HTMLVideoElement | null>(null);
+  const playedStreams = useRef<Set<string>>(new Set());
   const isLocal = !!videoRef;
-  const showVideo = !participant.isCameraOff && (!!participant.stream || isLocal);
-
-  console.log(`[CARD] ${participant.full_name} (${isLocal ? 'local' : 'remote'}) showVideo=${showVideo} hasStream=${!!participant.stream} camOff=${participant.isCameraOff}`);
+  const showVideo = participant.isCameraOff !== true && (!!participant.stream || isLocal);
 
   const handleVideoRef = useCallback((el: HTMLVideoElement | null) => {
     internalRef.current = el;
     if (videoRef) (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = el;
-    if (el && participant.stream) {
-      console.log(`[CARD] srcObject assigned ${participant.full_name} via ref streamId=${participant.stream.id} vTracks=${participant.stream.getVideoTracks().length}`);
-      el.srcObject = participant.stream;
-      el.play().then(() => {
-        console.log(`[CARD] play success ${participant.full_name} rect=${JSON.stringify(el.getBoundingClientRect())} vw=${el.videoWidth}x${el.videoHeight}`);
-      }).catch((e) => {
-        console.log(`[CARD] play blocked ${participant.full_name}: ${e.message}`);
-      });
-    }
-  }, [videoRef, participant.stream]);
+  }, [videoRef]);
 
   useEffect(() => {
     const el = videoRef?.current || internalRef.current;
     if (el && participant.stream) {
-      console.log(`[CARD] srcObject assigned ${participant.full_name} via effect streamId=${participant.stream.id} vTracks=${participant.stream.getVideoTracks().length}`);
-      el.srcObject = participant.stream;
-      el.play().then(() => {
-        console.log(`[CARD] play success ${participant.full_name} rect=${JSON.stringify(el.getBoundingClientRect())} vw=${el.videoWidth}x${el.videoHeight}`);
-      }).catch((e) => {
-        console.log(`[CARD] play blocked ${participant.full_name}: ${e.message}`);
-      });
+      if (el.srcObject !== participant.stream) {
+        el.srcObject = participant.stream;
+      }
+      const sid = participant.stream.id;
+      if (!playedStreams.current.has(sid)) {
+        playedStreams.current.add(sid);
+        el.play().catch(() => {});
+      }
     }
   }, [participant.stream]);
 
@@ -54,7 +45,7 @@ export default function ParticipantCard({ participant, isActive, videoRef }: Pro
       }`}
     >
       {/* Video: uses merged callback ref that handles both local and remote */}
-      {!participant.isCameraOff && (participant.stream || videoRef) ? (
+      {participant.isCameraOff !== true && (participant.stream || videoRef) ? (
         <video
           ref={handleVideoRef}
           autoPlay
