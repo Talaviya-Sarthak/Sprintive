@@ -11,7 +11,6 @@ import Benefits          from './components/Benefits';
 import Pricing           from './components/Pricing';
 import Testimonials      from './components/Testimonials';
 import FAQ               from './components/FAQ';
-import FinalCTA          from './components/FinalCTA';
 import Footer            from './components/Footer';
 import ProtectedRoute    from './components/ProtectedRoute';
 
@@ -53,12 +52,10 @@ function LandingPage() {
           <Features />
           <HowItWorks />
           <DashboardShowcase />
-          <Benefits />
           <Pricing />
           <Testimonials />
           <TrustedBy />
           <FAQ />
-          <FinalCTA />
         </main>
         <Footer />
       </div>
