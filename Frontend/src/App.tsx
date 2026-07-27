@@ -6,7 +6,6 @@ import TrustedBy         from './components/TrustedBy';
 import Features          from './components/Features';
 import HowItWorks        from './components/HowItWorks';
 import DashboardShowcase from './components/DashboardShowcase';
-import Benefits          from './components/Benefits';
 import Pricing           from './components/Pricing';
 import Testimonials      from './components/Testimonials';
 import FAQ               from './components/FAQ';
@@ -15,6 +14,8 @@ import ProtectedRoute    from './components/ProtectedRoute';
 
 import SignUp        from './pages/SignUp';
 import Login         from './pages/Login';
+import Contact       from './pages/Contact';
+import About         from './pages/About';
 import AuthCallback  from './pages/AuthCallback';
 import Profile       from './pages/Profile';
 import CreateTeam    from './pages/team/CreateTeam';
@@ -66,6 +67,8 @@ export default function App() {
     <Routes>
       {/* Public routes */}
       <Route path="/"                      element={<LandingPage />} />
+      <Route path="/contact"               element={<Contact />} />
+      <Route path="/about"                 element={<About />} />
       <Route path="/signup"                element={<SignUp />} />
       <Route path="/login"                 element={<Login />} />
       <Route path="/auth/callback"         element={<AuthCallback />} />

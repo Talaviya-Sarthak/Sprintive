@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 
 // Balanced set of prominent tech engineering companies with monochrome SVG vectors
@@ -119,15 +118,15 @@ export default function TrustedBy() {
               <div
                 className="
                   flex items-center gap-3 px-5 py-2.5 
-                  bg-white text-black border-2 border-black rounded-[4px]
+                  bg-[#111111] text-white border-2 border-white rounded-[4px]
                   shadow-[3.5px_3.5px_0px_0px_#F97316]
                   select-none whitespace-nowrap
                 "
               >
-                <div className="text-[#F97316] shrink-0">
+                <div className="text-white shrink-0">
                   {company.svg}
                 </div>
-                <span className="text-xs font-bold uppercase tracking-wider text-black">
+                <span className="text-xs font-bold uppercase tracking-wider text-white">
                   {company.name}
                 </span>
               </div>

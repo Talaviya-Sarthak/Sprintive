@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion';
-import { Sparkles } from 'lucide-react';
 import { BreakableCard } from './ui/features-card';
 
 interface Feature {

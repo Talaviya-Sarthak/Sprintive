@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Monitor } from 'lucide-react';
 import { Button } from './ui/Button';
 
 type TabName = 'Kanban Board' | 'Meeting Room' | 'Meeting Summary' | 'Sprint Analytics' | 'Calendar' | 'Team Chat';

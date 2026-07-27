@@ -1,15 +1,20 @@
 import { Brain, MessageSquare } from 'lucide-react';
 
+interface FooterLink {
+  label: string;
+  href: string;
+}
+
 interface FooterCol {
   title: string;
-  links: string[];
+  links: FooterLink[];
 }
 
 const cols: FooterCol[] = [
-  { title: 'Product', links: ['Features', 'Pricing', 'Roadmap', 'Integrations'] },
-  { title: 'Company', links: ['About', 'Blog', 'Contact', 'Careers'] },
-  { title: 'Resources', links: ['Documentation', 'Help Center', 'API', 'Community'] },
-  { title: 'Legal', links: ['Privacy', 'Terms', 'Cookies'] },
+  { title: 'Product', links: [{ label: 'Features', href: '/#features' }, { label: 'Pricing', href: '/#pricing' }, { label: 'Roadmap', href: '#' }, { label: 'Integrations', href: '#' }] },
+  { title: 'Company', links: [{ label: 'About', href: '/about' }, { label: 'Blog', href: '#' }, { label: 'Contact', href: '/contact' }, { label: 'Careers', href: '#' }] },
+  { title: 'Resources', links: [{ label: 'Documentation', href: '#' }, { label: 'Help Center', href: '#' }, { label: 'API', href: '#' }, { label: 'Community', href: '#' }] },
+  { title: 'Legal', links: [{ label: 'Privacy', href: '#' }, { label: 'Terms', href: '#' }, { label: 'Cookies', href: '#' }] },
 ];
 
 function GithubIcon({ size = 14 }: { size?: number }) {
@@ -95,12 +100,12 @@ export default function Footer() {
                 </h4>
                 <ul className="space-y-2.5 list-none p-0 m-0">
                   {col.links.map((link) => (
-                    <li key={link}>
+                    <li key={link.label}>
                       <a
-                        href="#"
+                        href={link.href}
                         className="text-xs text-[#A1A1AA] hover:text-[#F97316] transition-colors duration-150 block text-decoration-none"
                       >
-                        {link}
+                        {link.label}
                       </a>
                     </li>
                   ))}
