@@ -1,26 +1,27 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #3B82F6;
-  --color-primary-hover: #2563EB;
-  --color-accent: #06B6D4;
+  --color-primary: #F97316;
+  --color-primary-hover: #EA580C;
+  --color-accent: #FDBA74;
   --color-success: #10B981;
   --color-warning: #F59E0B;
 
-  --color-bg: #0B1220;
-  --color-bg2: #111827;
-  --color-bg3: #1F2937;
-  --color-surface: #111827;
-  --color-surface2: #1E293B;
+  --color-bg: #050505;
+  --color-bg2: #0A0A0C;
+  --color-bg3: #141417;
+  --color-surface: #0F0F10;
+  --color-surface2: #171719;
 
-  --color-border: rgba(255,255,255,0.07);
-  --color-border2: rgba(255,255,255,0.12);
+  --color-border: #262626;
+  --color-border2: #333333;
 
   --color-text-h: #F8FAFC;
   --color-text-body: #CBD5E1;
   --color-text-muted: #94A3B8;
 
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Bebas Neue', 'Oswald', sans-serif;
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -45,6 +46,10 @@
     transition: background 220ms cubic-bezier(0.4,0,0.2,1), color 220ms cubic-bezier(0.4,0,0.2,1);
   }
 
+  .font-display {
+    font-family: var(--font-display);
+  }
+
   .light body {
     background-color: #FFFFFF;
     color: #475569;
@@ -56,8 +61,8 @@
   }
 
   ::selection {
-    background: rgba(59,130,246,0.2);
-    color: #3B82F6;
+    background: rgba(249,115,22,0.25);
+    color: #F97316;
   }
 
   ::-webkit-scrollbar { width: 5px; }
@@ -82,3 +87,17 @@
   --color-text-body: #475569;
   --color-text-muted: #64748B;
 }
+
+@keyframes carousel {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-carousel {
+  animation: carousel 35s linear infinite;
+}
+

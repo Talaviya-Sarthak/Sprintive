@@ -37,7 +37,7 @@ export default function Testimonials() {
   const visible = [0, 1, 2].map(offset => testimonials[(current + offset) % testimonials.length]);
 
   return (
-    <section id="testimonials" className="py-28 max-sm:py-18 bg-[var(--color-bg2)]">
+    <section id="testimonials" className="py-28 max-sm:py-18 bg-transparent">
       <div className="max-w-[1160px] mx-auto px-8 max-sm:px-5">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -45,17 +45,17 @@ export default function Testimonials() {
           viewport={{ once: true }}
           className="text-center mb-14"
         >
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-[5px] bg-[rgba(59,130,246,0.12)] border border-[rgba(59,130,246,0.25)] rounded-full text-[11px] font-semibold text-[#3B82F6] uppercase tracking-[0.07em] mb-5">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-[5px] bg-[rgba(249,115,22,0.1)] border border-[rgba(249,115,22,0.25)] rounded-full text-[11px] font-semibold text-[#F97316] uppercase tracking-[0.07em] mb-5">
             <Quote size={11} /> Testimonials
           </div>
           <h2 className="text-[clamp(28px,3.8vw,46px)] font-extrabold text-[var(--color-text-h)] leading-[1.12] tracking-[-0.025em] mb-4">
             Loved by Agile Teams<br />
-            <span className="bg-gradient-to-r from-[#3B82F6] to-[#06B6D4] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#F97316] to-[#FDBA74] bg-clip-text text-transparent">
               Worldwide
             </span>
           </h2>
           <p className="text-[clamp(15px,1.8vw,17px)] text-[var(--color-text-body)] max-w-[560px] mx-auto leading-[1.75]">
-            Join hundreds of teams who've transformed their Agile workflow with ScrumMind.
+            Join hundreds of teams who've transformed their Agile workflow with Sprintive.
           </p>
         </motion.div>
 

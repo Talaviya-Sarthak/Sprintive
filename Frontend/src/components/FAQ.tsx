@@ -22,7 +22,7 @@ export default function FAQ() {
   const [open, setOpen] = useState<number | null>(null);
 
   return (
-    <section id="contact" className="py-28 max-sm:py-18">
+    <section id="contact" className="py-28 max-sm:py-18 bg-transparent">
       <div className="max-w-[760px] mx-auto px-8 max-sm:px-5">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -30,17 +30,17 @@ export default function FAQ() {
           viewport={{ once: true }}
           className="text-center mb-14"
         >
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-[5px] bg-[rgba(59,130,246,0.12)] border border-[rgba(59,130,246,0.25)] rounded-full text-[11px] font-semibold text-[#3B82F6] uppercase tracking-[0.07em] mb-5">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-[5px] bg-[rgba(249,115,22,0.1)] border border-[rgba(249,115,22,0.25)] rounded-full text-[11px] font-semibold text-[#F97316] uppercase tracking-[0.07em] mb-5">
             <HelpCircle size={11} /> FAQ
           </div>
           <h2 className="text-[clamp(28px,3.8vw,46px)] font-extrabold text-[var(--color-text-h)] leading-[1.12] tracking-[-0.025em] mb-4">
             Frequently Asked<br />
-            <span className="bg-gradient-to-r from-[#3B82F6] to-[#06B6D4] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#F97316] to-[#FDBA74] bg-clip-text text-transparent">
               Questions
             </span>
           </h2>
           <p className="text-[clamp(15px,1.8vw,17px)] text-[var(--color-text-body)] max-w-[560px] mx-auto leading-[1.75]">
-            Everything you need to know about ScrumMind.
+            Everything you need to know about Sprintive.
           </p>
         </motion.div>
 
@@ -55,7 +55,7 @@ export default function FAQ() {
               className={[
                 'bg-[var(--color-surface)] rounded-xl overflow-hidden transition-all duration-200',
                 open === i
-                  ? 'border border-[rgba(59,130,246,0.35)] shadow-[0_0_0_1px_rgba(59,130,246,0.15),0_8px_32px_rgba(59,130,246,0.12)]'
+                  ? 'border border-[rgba(249,115,22,0.35)] shadow-[0_0_0_1px_rgba(249,115,22,0.15),0_8px_32px_rgba(249,115,22,0.12)]'
                   : 'border border-[var(--color-border)]',
               ].join(' ')}
             >

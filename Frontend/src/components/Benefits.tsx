@@ -57,7 +57,7 @@ const benefits: Benefit[] = [
 
 export default function Benefits() {
   return (
-    <section className="py-28 max-sm:py-18">
+    <section className="py-28 max-sm:py-18 bg-transparent">
       <div className="max-w-[1160px] mx-auto px-8 max-sm:px-5">
         <motion.div
           initial={{ opacity: 0, y: 24 }}

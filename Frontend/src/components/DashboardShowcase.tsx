@@ -235,7 +235,7 @@ const mockups: Record<TabName, React.ReactElement> = {
 export default function DashboardShowcase() {
   const [active, setActive] = useState<TabName>('Kanban Board');
   return (
-    <section className="py-28 max-sm:py-18 bg-[var(--color-bg2)]">
+    <section className="py-28 max-sm:py-18 bg-transparent">
       <div className="max-w-[1160px] mx-auto px-8 max-sm:px-5">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -243,17 +243,17 @@ export default function DashboardShowcase() {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-[5px] bg-[rgba(59,130,246,0.12)] border border-[rgba(59,130,246,0.25)] rounded-full text-[11px] font-semibold text-[#3B82F6] uppercase tracking-[0.07em] mb-5">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-[5px] bg-[rgba(249,115,22,0.1)] border border-[rgba(249,115,22,0.25)] rounded-full text-[11px] font-semibold text-[#F97316] uppercase tracking-[0.07em] mb-5">
             <Monitor size={11} /> Dashboard
           </div>
           <h2 className="text-[clamp(28px,3.8vw,46px)] font-extrabold text-[var(--color-text-h)] leading-[1.12] tracking-[-0.025em] mb-4">
             Everything in One<br />
-            <span className="bg-gradient-to-r from-[#3B82F6] to-[#06B6D4] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#F97316] to-[#FDBA74] bg-clip-text text-transparent">
               Unified Workspace
             </span>
           </h2>
           <p className="text-[clamp(15px,1.8vw,17px)] text-[var(--color-text-body)] max-w-[560px] mx-auto leading-[1.75]">
-            Switch between views to see how ScrumMind keeps your entire team in sync.
+            Switch between views to see how Sprintive keeps your entire team in sync.
           </p>
         </motion.div>
 
@@ -266,7 +266,7 @@ export default function DashboardShowcase() {
               className={[
                 'px-4 py-[7px] rounded-lg border text-[13px] cursor-pointer transition-all duration-200 tracking-[-0.01em]',
                 active === tab
-                  ? 'border-[#3B82F6] bg-[rgba(59,130,246,0.12)] text-[#3B82F6] font-semibold'
+                  ? 'border-[#F97316] bg-[rgba(249,115,22,0.12)] text-[#F97316] font-semibold'
                   : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-body)] font-medium hover:border-[var(--color-border2)]',
               ].join(' ')}
             >

@@ -1,48 +1,137 @@
+import React from 'react';
 import { motion } from 'framer-motion';
 
-interface Company {
-  name: string;
-  icon: string;
-}
-
-const companies: Company[] = [
-  { name: 'TechStartup',  icon: '⚡' },
-  { name: 'EnterpriseX',  icon: '🏢' },
-  { name: 'RemoteFirst',  icon: '🌍' },
-  { name: 'ProductLab',   icon: '🔬' },
-  { name: 'ScaleUp',      icon: '📈' },
-  { name: 'DevForge',     icon: '⚙️' },
-  { name: 'CloudBase',    icon: '☁️' },
-  { name: 'AgileHQ',      icon: '🎯' },
+// Balanced set of prominent tech engineering companies with monochrome SVG vectors
+const LOGOS = [
+  {
+    name: 'Google',
+    svg: (
+      <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+        <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Microsoft',
+    svg: (
+      <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+        <path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zM24 11.4H12.6V0H24v11.4z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'GitHub',
+    svg: (
+      <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Vercel',
+    svg: (
+      <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+        <path d="M24 22.5D12 1.5 12 1.5 0 22.5h24z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Amazon',
+    svg: (
+      <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+        <path d="M13.988 16.59c-2.3 1.69-5.61 2.58-8.52 2.58-4.08 0-7.78-1.51-10.58-4.04-.23-.2-.04-.47.23-.32 3.01 1.67 6.69 2.58 10.42 2.58 2.58 0 5.41-.6 8.04-1.92.39-.2.75.25.41.62zm1.26-1.52c-.32-.42-2.12-.2-2.93-.09-.25.04-.29-.18-.07-.33 1.45-1.01 3.84-.72 4.12-.37.28.36-.12 2.76-1.48 3.91-.21.18-.42.08-.33-.16.3-.77.9-2.54.69-2.96zM13.72 1.8c.45.6.85 1.52.85 2.56 0 2.21-1.39 3.52-3.32 3.52-1.39 0-2.33-.87-2.33-2.14 0-1.78 1.49-2.67 3.86-2.67.33 0 .66.02.94.06V3.1c0-1.04-.6-1.63-1.78-1.63-1.02 0-1.76.38-2.36.93-.15.13-.3.12-.38-.05l-.46-.86c-.08-.15-.05-.3.09-.43C9.72.33 11.02 0 12.65 0c2.3 0 3.73 1.05 3.73 3.32v4.8c0 1.07.41 1.54.85 2.05.12.14.1.34-.05.45l-.94.75c-.14.11-.34.09-.45-.04l-.62-.77c-.45.54-1.12.98-2.19.98-1.74 0-3.03-1.07-3.03-2.73 0-1.99 1.61-2.95 4.34-2.95.27 0 .54.01.78.04V4.36c0-1.34-.73-1.99-2.02-1.99-1.04 0-1.77.38-2.29.84-.13.12-.29.11-.38-.04l-.4-.69c-.08-.14-.04-.31.09-.43C11.53 1.34 12.62 1 13.72 1.8z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Slack',
+    svg: (
+      <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+        <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Figma',
+    svg: (
+      <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+        <path d="M8 24c2.208 0 4-1.792 4-4v-4H8c-2.208 0-4 1.792-4 4s1.792 4 4 4zM4 12c0-2.208 1.792-4 4-4h4v8H8c-2.208 0-4-1.792-4-4zm0-8c0-2.208 1.792-4 4-4h4v8H8c-2.208 0-4-1.792-4-4zm8-4h4c2.208 0 4 1.792 4 4s-1.792 4-4 4h-4V0zm4 16c2.208 0 4-1.792 4-4s-1.792-4-4-4c-2.208 0-4 1.792-4 4s1.792 4 4 4z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Stripe',
+    svg: (
+      <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+        <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C17.747.666 15.187 0 12.35 0 6.643 0 2.72 3.018 2.72 7.74c0 6.136 7.842 6.46 7.842 9.479 0 1.054-.849 1.547-2.31 1.547-2.34 0-5.111-1.127-6.848-2.091l-.946 5.672C2.474 23.36 5.568 24 8.784 24c6.092 0 10.19-2.923 10.19-7.835 0-6.526-7.998-6.726-7.998-9.529 0-.012 3.003.514 3.003 2.514z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'OpenAI',
+    svg: (
+      <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+        <path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.796.796 0 0 0 .394-.686v-6.74l2.025 1.17a.784.784 0 0 1 .397.592v5.795a4.493 4.493 0 0 1-4.86 4.748zm-8.88-3.97a4.484 4.484 0 0 1-.536-3.006l.147.087 4.778 2.759a.796.796 0 0 0 .792 0l5.836-3.37v2.34a.79.79 0 0 1-.314.643l-5.018 2.897a4.49 4.49 0 0 1-5.685-1.744zm-1.47-9.42a4.475 4.475 0 0 1 2.34-1.966v5.698a.79.79 0 0 0 .395.687l5.836 3.37-2.025 1.17a.79.79 0 0 1-.79 0l-5.018-2.897A4.492 4.492 0 0 1 2.91 9.04zm13.716-2.584l-4.78-2.76a.796.796 0 0 0-.792 0L5.218 7.066l-2.025-1.17a.79.79 0 0 1-.397-.591V.51A4.493 4.493 0 0 1 7.656 0a4.476 4.476 0 0 1 2.876 1.04l-.141.081-4.779 2.758a.796.796 0 0 0-.394.686v6.74l-2.025-1.17a.784.784 0 0 1-.397-.592zm4.453 5.438a4.485 4.485 0 0 1 .536 3.006l-.147-.087-4.778-2.759a.796.796 0 0 0-.792 0L8.76 15.474v-2.34a.79.79 0 0 1 .314-.643l5.018-2.897a4.49 4.49 0 0 1 5.685 1.744zm1.47 9.42a4.475 4.475 0 0 1-2.34 1.966V10.14a.79.79 0 0 0-.395-.687L13.79 6.083l2.025-1.17a.79.79 0 0 1 .79 0l5.018 2.897a4.492 4.492 0 0 1 .747 7.073z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Atlassian',
+    svg: (
+      <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+        <path d="M11.378 12.446c-.279.43-.889 1.488-1.572 2.651l-4.298 7.378c-.287.49-.074.877.473.865l5.127-.123c.367-.008.775-.246.974-.58l3.197-5.385-3.901-4.806zM11.896 0c-.394 0-.828.262-1.026.623L4.992 11.23c-.31.564-.099 1.05.47 1.082l5.144.295c.367.02.836-.184 1.042-.508l3.753-5.892L11.896 0z" />
+      </svg>
+    ),
+  },
 ];
+
+// Duplicate logo list to guarantee a seamless, infinite loop without gaps
+const CAROUSEL_ITEMS = [...LOGOS, ...LOGOS];
 
 export default function TrustedBy() {
   return (
-    <section className="py-14 border-t border-[var(--color-border)] border-b bg-[var(--color-bg2)]">
+    <section className="py-20 max-sm:py-14 bg-transparent relative overflow-hidden">
       <div className="max-w-[1160px] mx-auto px-8 max-sm:px-5">
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
+        {/* Section Heading */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center text-xs font-semibold text-[var(--color-text-muted)] tracking-[0.1em] uppercase mb-8"
+          transition={{ duration: 0.5 }}
+          className="text-center mb-12"
         >
-          Trusted by 500+ teams worldwide
-        </motion.p>
+          <h3 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[var(--color-text-h)] tracking-tight leading-snug max-w-2xl mx-auto">
+            Our Clients
+          </h3>
+          <h5>We are trusted by world's most innovative teams </h5>
+        </motion.div>
+      </div>
 
-        <div className="flex gap-2.5 flex-wrap justify-center items-center">
-          {companies.map((c, i) => (
-            <motion.div
-              key={c.name}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.06 }}
-              whileHover={{ y: -2 }}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[10px] cursor-default transition-all duration-200 hover:border-[var(--color-border2)] shadow-[0_1px_3px_rgba(0,0,0,0.4),0_1px_2px_rgba(0,0,0,0.3)]"
+      {/* Infinite Logo Carousel Track Container */}
+      <div className="w-full overflow-hidden py-4">
+        <div className="flex w-max animate-carousel prefers-reduced-motion:animate-none">
+          {CAROUSEL_ITEMS.map((company, index) => (
+            <div
+              key={`${company.name}-${index}`}
+              className="px-3"
             >
-              <span className="text-base">{c.icon}</span>
-              <span className="text-[13px] font-semibold text-[var(--color-text-body)] whitespace-nowrap">{c.name}</span>
-            </motion.div>
+              {/* Neo-Brutalist Elevated Card with Hard Offset Back Layer */}
+              <div
+                className="
+                  flex items-center gap-3 px-5 py-2.5 
+                  bg-white text-black border-2 border-black rounded-[4px]
+                  shadow-[3.5px_3.5px_0px_0px_#F97316]
+                  select-none whitespace-nowrap
+                "
+              >
+                <div className="text-[#F97316] shrink-0">
+                  {company.svg}
+                </div>
+                <span className="text-xs font-bold uppercase tracking-wider text-black">
+                  {company.name}
+                </span>
+              </div>
+            </div>
           ))}
         </div>
       </div>

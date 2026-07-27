@@ -5,26 +5,13 @@ import { Zap, Calendar, ArrowRight } from 'lucide-react';
 export default function FinalCTA() {
   const navigate = useNavigate();
   return (
-    <section className="py-28 max-sm:py-18 bg-[var(--color-bg2)] relative overflow-hidden">
+    <section className="py-28 max-sm:py-18 bg-transparent relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
         <motion.div
-          animate={{ scale: [1, 1.08, 1], opacity: [0.6, 1, 0.6] }}
+          animate={{ scale: [1, 1.08, 1], opacity: [0.5, 0.8, 0.5] }}
           transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute w-[60%] h-[80%] rounded-full top-[10%] left-[20%]"
-          style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%)' }}
-        />
-        <motion.div
-          animate={{ scale: [1.08, 1, 1.08], opacity: [0.4, 0.7, 0.4] }}
-          transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute w-[40%] h-[60%] rounded-full bottom-[5%] right-[15%]"
-          style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.06) 0%, transparent 70%)' }}
-        />
-        <div
-          className="absolute inset-0 opacity-50"
-          style={{
-            backgroundImage: 'linear-gradient(var(--color-border) 1px, transparent 1px), linear-gradient(90deg, var(--color-border) 1px, transparent 1px)',
-            backgroundSize: '64px 64px',
-          }}
+          className="absolute w-[60%] h-[80%] rounded-full top-[10%] left-[20%] blur-[120px]"
+          style={{ background: 'radial-gradient(circle, rgba(249,115,22,0.12) 0%, transparent 70%)' }}
         />
       </div>
 
@@ -35,13 +22,13 @@ export default function FinalCTA() {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-[5px] bg-[rgba(59,130,246,0.12)] border border-[rgba(59,130,246,0.25)] rounded-full text-[11px] font-semibold text-[#3B82F6] uppercase tracking-[0.07em] mb-6">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-[5px] bg-[rgba(249,115,22,0.1)] border border-[rgba(249,115,22,0.25)] rounded-full text-[11px] font-semibold text-[#F97316] uppercase tracking-[0.07em] mb-6">
             🚀 Get Started Today
           </div>
 
           <h2 className="text-[clamp(30px,4.5vw,56px)] font-extrabold text-[var(--color-text-h)] leading-[1.1] tracking-[-0.03em] mb-5">
             Ready to Let AI Run<br />
-            <span className="bg-gradient-to-r from-[#3B82F6] to-[#06B6D4] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#F97316] to-[#FDBA74] bg-clip-text text-transparent">
               Your Scrum Meetings?
             </span>
           </h2>
@@ -55,14 +42,14 @@ export default function FinalCTA() {
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => navigate('/signup')}
-              className="inline-flex items-center gap-2 px-7 py-[13px] bg-[#3B82F6] text-white font-semibold text-[15px] rounded-xl border-none cursor-pointer transition-all duration-200 hover:bg-[#2563EB] shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_12px_rgba(59,130,246,0.3)] tracking-[-0.01em]"
+              className="inline-flex items-center gap-2 px-7 py-[13px] bg-[#F97316] text-white font-semibold text-[15px] rounded-xl border-none cursor-pointer transition-all duration-200 hover:bg-[#EA580C] shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_14px_rgba(249,115,22,0.3)] tracking-[-0.01em]"
             >
               <Zap size={16} /> Start Free Trial <ArrowRight size={15} />
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              className="inline-flex items-center gap-2 px-7 py-[13px] bg-transparent text-[var(--color-text-h)] font-semibold text-[15px] rounded-xl border border-[var(--color-border2)] cursor-pointer transition-all duration-200 hover:bg-[var(--color-surface2)] hover:border-[#3B82F6] hover:text-[#3B82F6] tracking-[-0.01em]"
+              className="inline-flex items-center gap-2 px-7 py-[13px] bg-transparent text-[var(--color-text-h)] font-semibold text-[15px] rounded-xl border border-[var(--color-border2)] cursor-pointer transition-all duration-200 hover:bg-[var(--color-surface2)] hover:border-[#F97316] hover:text-[#F97316] tracking-[-0.01em]"
             >
               <Calendar size={16} /> Schedule Demo
             </motion.button>

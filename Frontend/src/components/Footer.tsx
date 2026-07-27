@@ -31,17 +31,17 @@ const socials: Social[] = [
 
 export default function Footer() {
   return (
-    <footer className="border-t border-[var(--color-border)] bg-[var(--color-bg2)] pt-[72px] pb-8">
+    <footer className="bg-transparent pt-[72px] pb-8">
       <div className="max-w-[1160px] mx-auto px-8 max-sm:px-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(4,1fr)] gap-10 mb-14">
 
           <div>
             <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-8 h-8 rounded-[9px] bg-[#3B82F6] flex items-center justify-center shadow-[0_2px_8px_rgba(59,130,246,0.35)] shrink-0">
+              <div className="w-8 h-8 rounded-[9px] bg-[#F97316] flex items-center justify-center shadow-[0_2px_10px_rgba(249,115,22,0.35)] shrink-0">
                 <Brain size={17} color="#fff" strokeWidth={2.2} />
               </div>
               <span className="text-[17px] font-bold text-[var(--color-text-h)] tracking-[-0.03em]">
-                Scrum<span className="text-[#3B82F6]">Mind</span>
+                Sprin<span className="text-[#F97316]">tive</span>
               </span>
             </div>
             <p className="text-[13.5px] text-[var(--color-text-body)] leading-[1.7] mb-[22px] max-w-[220px]">
@@ -54,7 +54,7 @@ export default function Footer() {
                   href={href}
                   whileHover={{ y: -2 }}
                   aria-label={label}
-                  className="w-[34px] h-[34px] rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] no-underline transition-all duration-200 hover:border-[rgba(59,130,246,0.4)] hover:text-[#3B82F6] hover:bg-[rgba(59,130,246,0.12)]"
+                  className="w-[34px] h-[34px] rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)] no-underline transition-all duration-200 hover:border-[rgba(249,115,22,0.4)] hover:text-[#F97316] hover:bg-[rgba(249,115,22,0.12)]"
                 >
                   <Icon size={15} />
                 </motion.a>

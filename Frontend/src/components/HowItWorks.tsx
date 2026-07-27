@@ -21,7 +21,7 @@ const steps: Step[] = [
 
 export default function HowItWorks() {
   return (
-    <section id="how-it-works" className="py-28 max-sm:py-18 bg-[var(--color-bg2)]">
+    <section id="how-it-works" className="py-28 max-sm:py-18 bg-transparent">
       <div className="max-w-[1160px] mx-auto px-8 max-sm:px-5">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -29,12 +29,12 @@ export default function HowItWorks() {
           viewport={{ once: true }}
           className="text-center mb-18"
         >
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-[5px] bg-[rgba(59,130,246,0.12)] border border-[rgba(59,130,246,0.25)] rounded-full text-[11px] font-semibold text-[#3B82F6] uppercase tracking-[0.07em] mb-5">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-[5px] bg-[rgba(249,115,22,0.1)] border border-[rgba(249,115,22,0.25)] rounded-full text-[11px] font-semibold text-[#F97316] uppercase tracking-[0.07em] mb-5">
             🗺️ How It Works
           </div>
           <h2 className="text-[clamp(28px,3.8vw,46px)] font-extrabold text-[var(--color-text-h)] leading-[1.12] tracking-[-0.025em] mb-4">
             Everything You Need,<br />
-            <span className="bg-gradient-to-r from-[#3B82F6] to-[#06B6D4] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#F97316] to-[#FDBA74] bg-clip-text text-transparent">
               From Day One
             </span>
           </h2>
