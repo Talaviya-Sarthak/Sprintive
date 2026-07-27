@@ -24,36 +24,68 @@ const nodes: WorkflowNode[] = [
 
 export default function AIWorkflow() {
   return (
-    <section style={{ background: 'var(--bg3)', overflow: 'hidden' }}>
-      <div className="container">
-        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: 'center', marginBottom: 64 }}>
-          <div className="section-tag"><Cpu size={12} /> AI Architecture</div>
-          <h2 className="section-title">How the AI Pipeline<br /><span className="glow-text">Actually Works</span></h2>
-          <p className="section-sub">From raw audio to actionable sprint tasks — powered by state-of-the-art AI models.</p>
+    <section className="py-28 max-sm:py-18 bg-[var(--color-bg3)] overflow-hidden">
+      <div className="max-w-[1160px] mx-auto px-8 max-sm:px-5">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-16"
+        >
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-[5px] bg-[rgba(59,130,246,0.12)] border border-[rgba(59,130,246,0.25)] rounded-full text-[11px] font-semibold text-[#3B82F6] uppercase tracking-[0.07em] mb-5">
+            <Cpu size={12} /> AI Architecture
+          </div>
+          <h2 className="text-[clamp(28px,3.8vw,46px)] font-extrabold text-[var(--color-text-h)] leading-[1.12] tracking-[-0.025em] mb-4">
+            How the AI Pipeline<br />
+            <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%)' }}>
+              Actually Works
+            </span>
+          </h2>
+          <p className="text-[clamp(15px,1.8vw,17px)] text-[var(--color-text-body)] max-w-[560px] mx-auto leading-[1.75]">
+            From raw audio to actionable sprint tasks — powered by state-of-the-art AI models.
+          </p>
         </motion.div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
+        <div className="flex flex-col items-center">
           {nodes.map((node, i) => (
-            <div key={node.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div key={node.label} className="flex flex-col items-center">
               <motion.div
-                initial={{ opacity: 0, scale: 0.7 }} whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.08, duration: 0.5 }}
-                whileHover={{ scale: 1.06, boxShadow: `0 0 30px ${node.color}40` }}
-                style={{ background: 'var(--surface)', border: `1px solid ${node.color}40`, borderRadius: 16, padding: '16px 32px', display: 'flex', alignItems: 'center', gap: 14, minWidth: 240, transition: 'all 0.3s', cursor: 'default' }}>
-                <div style={{ width: 40, height: 40, borderRadius: 12, background: `${node.color}18`, border: `1px solid ${node.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
+                initial={{ opacity: 0, scale: 0.7 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08, duration: 0.5 }}
+                whileHover={{ scale: 1.06 }}
+                className="bg-[var(--color-surface)] rounded-2xl px-8 py-4 flex items-center gap-3.5 min-w-[240px] cursor-default transition-all duration-300"
+                style={{ border: `1px solid ${node.color}40` }}
+              >
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
+                  style={{ background: `${node.color}18`, border: `1px solid ${node.color}30` }}
+                >
                   {node.icon}
                 </div>
-                <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-h)' }}>{node.label}</span>
-                <div style={{ marginLeft: 'auto', width: 8, height: 8, borderRadius: '50%', background: node.color, boxShadow: `0 0 8px ${node.color}` }} />
+                <span className="text-[15px] font-bold text-[var(--color-text-h)]">{node.label}</span>
+                <div
+                  className="ml-auto w-2 h-2 rounded-full"
+                  style={{ background: node.color, boxShadow: `0 0 8px ${node.color}` }}
+                />
               </motion.div>
 
               {i < nodes.length - 1 && (
                 <motion.div
-                  initial={{ scaleY: 0 }} whileInView={{ scaleY: 1 }} viewport={{ once: true }}
+                  initial={{ scaleY: 0 }}
+                  whileInView={{ scaleY: 1 }}
+                  viewport={{ once: true }}
                   transition={{ delay: i * 0.08 + 0.3, duration: 0.4 }}
-                  style={{ width: 2, height: 28, background: `linear-gradient(to bottom, ${node.color}, ${nodes[i + 1].color})`, opacity: 0.6, transformOrigin: 'top' }}>
-                  <motion.div animate={{ y: [0, 20, 0] }} transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.1 }}
-                    style={{ width: 6, height: 6, borderRadius: '50%', background: node.color, margin: '0 auto', marginTop: 4, boxShadow: `0 0 6px ${node.color}` }} />
+                  className="w-0.5 h-7 opacity-60 origin-top relative"
+                  style={{ background: `linear-gradient(to bottom, ${node.color}, ${nodes[i + 1].color})` }}
+                >
+                  <motion.div
+                    animate={{ y: [0, 20, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.1 }}
+                    className="w-1.5 h-1.5 rounded-full absolute left-1/2 -translate-x-1/2 mt-1"
+                    style={{ background: node.color, boxShadow: `0 0 6px ${node.color}` }}
+                  />
                 </motion.div>
               )}
             </div>

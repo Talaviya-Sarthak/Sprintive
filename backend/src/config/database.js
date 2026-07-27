@@ -13,14 +13,9 @@ const { Pool } = pg;
 // rejectUnauthorized:false here to accept Neon's managed TLS certificate.
 const pool = new Pool({
   connectionString: env.databaseUrl,
-  ssl: { rejectUnauthorized: false },
   max: 10,
-  idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 5_000,
-});
-
-pool.on('error', (err) => {
-  console.error('[db] Unexpected pool error:', err.message);
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
 });
 
 /**

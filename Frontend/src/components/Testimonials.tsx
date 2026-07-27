@@ -37,41 +37,62 @@ export default function Testimonials() {
   const visible = [0, 1, 2].map(offset => testimonials[(current + offset) % testimonials.length]);
 
   return (
-    <section id="testimonials" className="section-alt">
-      <div className="container">
-        <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: 'center', marginBottom: 56 }}>
-          <div className="section-tag"><Quote size={11} /> Testimonials</div>
-          <h2 className="section-title">Loved by Agile Teams<br /><span className="glow-text">Worldwide</span></h2>
-          <p className="section-sub">Join hundreds of teams who've transformed their Agile workflow with ScrumMind.</p>
+    <section id="testimonials" className="py-28 max-sm:py-18 bg-[var(--color-bg2)]">
+      <div className="max-w-[1160px] mx-auto px-8 max-sm:px-5">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-14"
+        >
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-[5px] bg-[rgba(59,130,246,0.12)] border border-[rgba(59,130,246,0.25)] rounded-full text-[11px] font-semibold text-[#3B82F6] uppercase tracking-[0.07em] mb-5">
+            <Quote size={11} /> Testimonials
+          </div>
+          <h2 className="text-[clamp(28px,3.8vw,46px)] font-extrabold text-[var(--color-text-h)] leading-[1.12] tracking-[-0.025em] mb-4">
+            Loved by Agile Teams<br />
+            <span className="bg-gradient-to-r from-[#3B82F6] to-[#06B6D4] bg-clip-text text-transparent">
+              Worldwide
+            </span>
+          </h2>
+          <p className="text-[clamp(15px,1.8vw,17px)] text-[var(--color-text-body)] max-w-[560px] mx-auto leading-[1.75]">
+            Join hundreds of teams who've transformed their Agile workflow with ScrumMind.
+          </p>
         </motion.div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }} className="testimonial-grid">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <AnimatePresence mode="popLayout">
             {visible.map((t, i) => (
-              <motion.div key={`${t.name}-${current}`}
+              <motion.div
+                key={`${t.name}-${current}`}
                 initial={{ opacity: 0, y: 24, scale: 0.97 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -16, scale: 0.97 }}
                 transition={{ duration: 0.35, delay: i * 0.07 }}
-                whileHover={{ y: -6, boxShadow: 'var(--shadow-md)' }}
-                className="card"
-                style={{ padding: '24px', position: 'relative', overflow: 'hidden' }}
+                whileHover={{ y: -6, boxShadow: '0 4px 16px rgba(0,0,0,0.4),0 2px 6px rgba(0,0,0,0.3)' }}
+                className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 relative overflow-hidden transition-all duration-200 hover:border-[var(--color-border2)]"
               >
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${t.color}, transparent)` }} />
+                <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: `linear-gradient(90deg, ${t.color}, transparent)` }} />
 
-                <div style={{ display: 'flex', gap: 3, marginBottom: 14 }}>
-                  {Array.from({ length: t.rating }).map((_, j) => <Star key={j} size={13} color="#F59E0B" fill="#F59E0B" />)}
+                <div className="flex gap-[3px] mb-3.5">
+                  {Array.from({ length: t.rating }).map((_, j) => (
+                    <Star key={j} size={13} color="#F59E0B" fill="#F59E0B" />
+                  ))}
                 </div>
 
-                <p style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.72, marginBottom: 20, fontStyle: 'italic' }}>
+                <p className="text-sm text-[var(--color-text-body)] leading-[1.72] mb-5 italic">
                   "{t.quote}"
                 </p>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0, background: `linear-gradient(135deg, ${t.color}, ${t.color}99)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff' }}>{t.avatar}</div>
+                <div className="flex items-center gap-[11px]">
+                  <div
+                    className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-[13px] font-bold text-white"
+                    style={{ background: `linear-gradient(135deg, ${t.color}, ${t.color}99)` }}
+                  >
+                    {t.avatar}
+                  </div>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-h)', letterSpacing: '-0.01em' }}>{t.name}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 1 }}>{t.role} · {t.company}</div>
+                    <div className="text-sm font-bold text-[var(--color-text-h)] tracking-[-0.01em]">{t.name}</div>
+                    <div className="text-xs text-[var(--color-text-muted)] mt-px">{t.role} · {t.company}</div>
                   </div>
                 </div>
               </motion.div>
@@ -79,24 +100,38 @@ export default function Testimonials() {
           </AnimatePresence>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 14, marginTop: 32 }}>
-          <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }} onClick={prev}
-            style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--surface)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-h)', transition: 'all 0.2s' }}>
+        <div className="flex justify-center items-center gap-3.5 mt-8">
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+            onClick={prev}
+            className="w-9 h-9 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] cursor-pointer flex items-center justify-center text-[var(--color-text-h)] transition-all duration-200 hover:border-[var(--color-border2)]"
+          >
             <ChevronLeft size={16} />
           </motion.button>
-          <div style={{ display: 'flex', gap: 6 }}>
+          <div className="flex gap-1.5">
             {testimonials.map((_, i) => (
-              <button key={i} onClick={() => { setAuto(false); setCurrent(i); }}
-                style={{ width: i === current ? 20 : 7, height: 7, borderRadius: 99, background: i === current ? 'var(--primary)' : 'var(--border)', border: 'none', cursor: 'pointer', transition: 'all 0.3s ease', padding: 0 }} />
+              <button
+                key={i}
+                onClick={() => { setAuto(false); setCurrent(i); }}
+                className="h-[7px] rounded-full border-none cursor-pointer transition-all duration-300 p-0"
+                style={{
+                  width: i === current ? 20 : 7,
+                  background: i === current ? '#3B82F6' : 'var(--color-border)',
+                }}
+              />
             ))}
           </div>
-          <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }} onClick={next}
-            style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--surface)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-h)', transition: 'all 0.2s' }}>
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+            onClick={next}
+            className="w-9 h-9 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] cursor-pointer flex items-center justify-center text-[var(--color-text-h)] transition-all duration-200 hover:border-[var(--color-border2)]"
+          >
             <ChevronRight size={16} />
           </motion.button>
         </div>
       </div>
-      <style>{`@media (max-width: 768px) { .testimonial-grid { grid-template-columns: 1fr !important; } .testimonial-grid > *:not(:first-child) { display: none; } }`}</style>
     </section>
   );
 }

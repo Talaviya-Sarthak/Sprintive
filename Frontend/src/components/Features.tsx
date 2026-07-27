@@ -26,38 +26,53 @@ const features: Feature[] = [
 
 export default function Features() {
   return (
-    <section id="features">
-      <div className="container">
+    <section id="features" className="py-28 max-sm:py-18">
+      <div className="max-w-[1160px] mx-auto px-8 max-sm:px-5">
         <motion.div
-          initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }} style={{ textAlign: 'center', marginBottom: 64 }}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-16"
         >
-          <div className="section-tag"><Sparkles size={11} /> Features</div>
-          <h2 className="section-title">Everything Your Agile Team<br /><span className="glow-text">Will Ever Need</span></h2>
-          <p className="section-sub">One platform that replaces your meeting tool, note-taking app, project tracker, and analytics dashboard.</p>
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-[5px] bg-[rgba(59,130,246,0.12)] border border-[rgba(59,130,246,0.25)] rounded-full text-[11px] font-semibold text-[#3B82F6] uppercase tracking-[0.07em] mb-5">
+            <Sparkles size={11} /> Features
+          </div>
+          <h2 className="text-[clamp(28px,3.8vw,46px)] font-extrabold text-[var(--color-text-h)] leading-[1.12] tracking-[-0.025em] mb-4">
+            Everything Your Agile Team<br />
+            <span className="bg-gradient-to-r from-[#3B82F6] to-[#06B6D4] bg-clip-text text-transparent">
+              Will Ever Need
+            </span>
+          </h2>
+          <p className="text-[clamp(15px,1.8vw,17px)] text-[var(--color-text-body)] max-w-[560px] mx-auto leading-[1.75]">
+            One platform that replaces your meeting tool, note-taking app, project tracker, and analytics dashboard.
+          </p>
         </motion.div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(272px, 1fr))', gap: 16 }}>
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(272px,1fr))] gap-4">
           {features.map((f, i) => {
             const Icon = f.icon;
             return (
-              <motion.div key={f.title}
-                initial={{ opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.05, duration: 0.5 }}
-                whileHover={{ y: -4, boxShadow: 'var(--shadow-md)' }}
-                className="card"
-                style={{ padding: '24px', cursor: 'default', position: 'relative', overflow: 'hidden' }}
+              <motion.div
+                key={f.title}
+                initial={{ opacity: 0, y: 32 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.05, duration: 0.5 }}
+                whileHover={{ y: -4, boxShadow: '0 4px 16px rgba(0,0,0,0.4),0 2px 6px rgba(0,0,0,0.3)' }}
+                className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 cursor-default relative overflow-hidden transition-all duration-200 hover:border-[var(--color-border2)]"
               >
-                <div style={{ position: 'absolute', top: 0, right: 0, width: 64, height: 64, background: `radial-gradient(circle at top right, ${f.color}18, transparent)`, borderRadius: '0 12px 0 64px' }} />
-
-                <div style={{ width: 44, height: 44, borderRadius: 11, background: `${f.color}14`, border: `1px solid ${f.color}28`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                <div
+                  className="absolute top-0 right-0 w-16 h-16 rounded-[0_12px_0_64px]"
+                  style={{ background: `radial-gradient(circle at top right, ${f.color}18, transparent)` }}
+                />
+                <div
+                  className="w-11 h-11 rounded-[11px] flex items-center justify-center mb-4"
+                  style={{ background: `${f.color}14`, border: `1px solid ${f.color}28` }}
+                >
                   <Icon size={20} color={f.color} strokeWidth={1.8} />
                 </div>
-
-                <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-h)', marginBottom: 8, letterSpacing: '-0.01em' }}>
-                  {f.title}
-                </h3>
-                <p style={{ fontSize: 13.5, color: 'var(--text)', lineHeight: 1.65 }}>{f.desc}</p>
+                <h3 className="text-[15px] font-bold text-[var(--color-text-h)] mb-2 tracking-[-0.01em]">{f.title}</h3>
+                <p className="text-[13.5px] text-[var(--color-text-body)] leading-[1.65]">{f.desc}</p>
               </motion.div>
             );
           })}

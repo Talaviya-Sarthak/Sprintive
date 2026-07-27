@@ -1,11 +1,5 @@
 import 'dotenv/config';
 
-/**
- * Validates and exports all environment variables.
- * The app will crash at startup if any required variable is missing,
- * preventing silent misconfigurations in production.
- */
-
 const required = [
   'DATABASE_URL',
   'JWT_ACCESS_SECRET',
@@ -13,7 +7,6 @@ const required = [
 ];
 
 const missing = required.filter((key) => !process.env[key]);
-
 if (missing.length > 0) {
   console.error(`[env] Missing required environment variables: ${missing.join(', ')}`);
   process.exit(1);
@@ -38,4 +31,22 @@ export const env = {
   githubClientSecret: process.env.GITHUB_CLIENT_SECRET ?? '',
 
   frontendUrl:        process.env.FRONTEND_URL ?? 'http://localhost:5173',
+
+  // Cloudflare R2
+  r2AccountId:        process.env.R2_ACCOUNT_ID        ?? '',
+  r2AccessKeyId:      process.env.R2_ACCESS_KEY_ID     ?? '',
+  r2SecretAccessKey:  process.env.R2_SECRET_ACCESS_KEY ?? '',
+  r2BucketName:       process.env.R2_BUCKET_NAME       ?? 'sprintive-recordings',
+  r2PublicUrl:        process.env.R2_PUBLIC_URL         ?? '',
+
+  // Brevo Transactional Email API
+  brevoApiKey:        process.env.BREVO_API_KEY            ?? '',
+  brevoSenderEmail:   process.env.BREVO_SENDER_EMAIL       ?? 'noreply@sprintive.app',
+  brevoSenderName:    process.env.BREVO_SENDER_NAME        ?? 'Sprintive',
 };
+
+// Warn about missing Brevo config on startup (do NOT block boot — API still works)
+if (!process.env.BREVO_API_KEY) {
+  console.warn('[env] Brevo email sending NOT configured — missing: BREVO_API_KEY');
+  console.warn('[env] Invitation emails will fail until BREVO_API_KEY is set in Render env vars');
+}

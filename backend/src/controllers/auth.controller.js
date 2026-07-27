@@ -1,5 +1,6 @@
 import { env } from '../config/env.js';
 import * as authService from '../services/auth.service.js';
+import { teamRepository } from '../repositories/team.repository.js';
 import { sendSuccess, sendError } from '../utils/response.js';
 import { HTTP_STATUS } from '../utils/constants.js';
 
@@ -71,10 +72,11 @@ export async function refresh(req, res, next) {
  */
 export async function getMe(req, res, next) {
   try {
-    const user = await authService.getCurrentUser(req.user.id);
+    const user  = await authService.getCurrentUser(req.user.id);
+    const teams = await teamRepository.findByUser(req.user.id);
     return sendSuccess(res, {
       message: 'User profile retrieved.',
-      data:    { user },
+      data:    { user, teams },
     });
   } catch (err) {
     next(err);
