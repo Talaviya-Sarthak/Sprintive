@@ -3,8 +3,6 @@ import { NavLink, useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, LayoutDashboard, Users, Settings, User, LogOut, ChevronDown, Menu, X, Calendar } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
-import { Sun, Moon } from 'lucide-react';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -13,7 +11,6 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children, teamId }: AppLayoutProps) {
   const { user, teams, logout } = useAuth();
-  const { theme, toggleTheme }  = useTheme();
   const navigate  = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [teamMenuOpen, setTeamMenuOpen] = useState(false);
@@ -139,14 +136,6 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
           <User size={16} />
           Profile
         </NavLink>
-
-        <button
-          onClick={toggleTheme}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[#94A3B8] hover:bg-white/5 hover:text-[#F8FAFC] transition-colors"
-        >
-          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-        </button>
 
         <button
           onClick={handleLogout}

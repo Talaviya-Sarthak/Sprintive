@@ -6,10 +6,10 @@ interface FooterCol {
 }
 
 const cols: FooterCol[] = [
-  { title: 'Product',   links: ['Features', 'Pricing', 'Roadmap', 'Integrations'] },
-  { title: 'Company',   links: ['About', 'Blog', 'Contact', 'Careers'] },
+  { title: 'Product', links: ['Features', 'Pricing', 'Roadmap', 'Integrations'] },
+  { title: 'Company', links: ['About', 'Blog', 'Contact', 'Careers'] },
   { title: 'Resources', links: ['Documentation', 'Help Center', 'API', 'Community'] },
-  { title: 'Legal',     links: ['Privacy', 'Terms', 'Cookies'] },
+  { title: 'Legal', links: ['Privacy', 'Terms', 'Cookies'] },
 ];
 
 function GithubIcon({ size = 14 }: { size?: number }) {

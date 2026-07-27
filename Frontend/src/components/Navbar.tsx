@@ -1,26 +1,16 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Brain, Menu, X, Sun, Moon, Zap } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
+import { Brain, Menu, X, Zap } from 'lucide-react';
 import { Button } from './ui/Button';
 
 const links = ['Home', 'Features', 'How It Works', 'Pricing', 'Testimonials', 'FAQ'];
-const ids   = ['hero', 'features', 'how-it-works', 'pricing', 'testimonials', 'contact'];
+const ids = ['hero', 'features', 'how-it-works', 'pricing', 'testimonials', 'contact'];
 
-interface NavbarProps {
-  theme?: string;
-  toggleTheme?: () => void;
-}
-
-export default function Navbar({ theme: themeProp, toggleTheme: toggleProp }: NavbarProps) {
-  const ctx = (() => { try { return useTheme(); } catch { return null; } })();
-  const theme       = ctx ? ctx.theme       : themeProp;
-  const toggleTheme = ctx ? ctx.toggleTheme : toggleProp;
-
+export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
-  const [open,     setOpen]     = useState(false);
-  const [active,   setActive]   = useState('hero');
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState('hero');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -86,15 +76,6 @@ export default function Navbar({ theme: themeProp, toggleTheme: toggleProp }: Na
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2.5">
-          <Button
-            variant="icon"
-            size="icon"
-            onClick={toggleTheme}
-            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-          >
-            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-          </Button>
-
           <Button
             variant="neutral"
             size="default"

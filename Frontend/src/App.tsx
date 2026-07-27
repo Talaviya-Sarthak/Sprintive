@@ -1,5 +1,4 @@
 import { Routes, Route } from 'react-router-dom';
-import { useTheme } from './context/ThemeContext';
 
 import Navbar            from './components/Navbar';
 import Hero              from './components/Hero';
@@ -33,7 +32,6 @@ import MeetingRoomPage   from './pages/meeting/MeetingRoomPage';
 import MeetingSummaryPage from './pages/meeting/MeetingSummaryPage';
 
 function LandingPage() {
-  const { theme, toggleTheme } = useTheme();
   return (
     <div className="bg-[#050505] text-[#A1A1AA] min-h-screen relative overflow-x-hidden selection:bg-[#F97316]/25 selection:text-[#F97316]">
       {/* Continuous Global Technical Grid Canvas (across every public section) */}
@@ -46,7 +44,7 @@ function LandingPage() {
       />
 
       <div className="relative z-10">
-        <Navbar theme={theme} toggleTheme={toggleTheme} />
+        <Navbar />
         <main className="bg-transparent">
           <Hero />
           <Features />

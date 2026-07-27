@@ -13,12 +13,12 @@ interface Testimonial {
 }
 
 const testimonials: Testimonial[] = [
-  { name: 'Priya Sharma',   role: 'Product Manager',  company: 'TechStartup', avatar: 'PS', quote: 'Sprintive saves us nearly 8 hours every week. The AI-generated meeting summaries are incredibly accurate and our team actually reads them.', rating: 5 },
-  { name: 'Marcus Chen',    role: 'Scrum Master',      company: 'EnterpriseX', avatar: 'MC', quote: 'The AI-generated tasks are incredibly accurate. It catches things that even I miss during standups. Our sprint completion rate went from 70% to 94%.', rating: 5 },
-  { name: 'Sarah Johnson',  role: 'Engineering Lead',  company: 'RemoteFirst', avatar: 'SJ', quote: 'We completely stopped writing meeting notes manually. The AI understands context so well that it even identifies implicit blockers from the conversation.', rating: 5 },
-  { name: 'Arjun Patel',    role: 'Founder & CEO',     company: 'ProductLab',  avatar: 'AP', quote: "It feels like having an AI project manager on the team. Sprintive has transformed how we run Agile. I can't imagine going back to manual processes.", rating: 5 },
-  { name: 'Emma Rodriguez', role: 'VP Engineering',    company: 'ScaleUp',     avatar: 'ER', quote: 'The Kanban board updates automatically after every standup. Our developers love it because they spend zero time on ticket management now.', rating: 5 },
-  { name: 'David Kim',      role: 'CTO',               company: 'DevForge',    avatar: 'DK', quote: "Enterprise security was our main concern. Sprintive's SOC 2 compliance and end-to-end encryption gave us the confidence to roll it out company-wide.", rating: 5 },
+  { name: 'Priya Sharma', role: 'Product Manager', company: 'TechStartup', avatar: 'PS', quote: 'Sprintive saves us nearly 8 hours every week. The AI-generated meeting summaries are incredibly accurate and our team actually reads them.', rating: 5 },
+  { name: 'Marcus Chen', role: 'Scrum Master', company: 'EnterpriseX', avatar: 'MC', quote: 'The AI-generated tasks are incredibly accurate. It catches things that even I miss during standups. Our sprint completion rate went from 70% to 94%.', rating: 5 },
+  { name: 'Sarah Johnson', role: 'Engineering Lead', company: 'RemoteFirst', avatar: 'SJ', quote: 'We completely stopped writing meeting notes manually. The AI understands context so well that it even identifies implicit blockers from the conversation.', rating: 5 },
+  { name: 'Arjun Patel', role: 'Founder & CEO', company: 'ProductLab', avatar: 'AP', quote: "It feels like having an AI project manager on the team. Sprintive has transformed how we run Agile. I can't imagine going back to manual processes.", rating: 5 },
+  { name: 'Emma Rodriguez', role: 'VP Engineering', company: 'ScaleUp', avatar: 'ER', quote: 'The Kanban board updates automatically after every standup. Our developers love it because they spend zero time on ticket management now.', rating: 5 },
+  { name: 'David Kim', role: 'CTO', company: 'DevForge', avatar: 'DK', quote: "Enterprise security was our main concern. Sprintive's SOC 2 compliance and end-to-end encryption gave us the confidence to roll it out company-wide.", rating: 5 },
 ];
 
 export default function Testimonials() {
@@ -131,11 +131,10 @@ export default function Testimonials() {
                 key={i}
                 onClick={() => { setAuto(false); setCurrent(i); }}
                 aria-label={`Go to slide ${i + 1}`}
-                className={`h-2 rounded-[2px] cursor-pointer transition-all duration-200 border-none p-0 ${
-                  i === current
+                className={`h-2 rounded-[2px] cursor-pointer transition-all duration-200 border-none p-0 ${i === current
                     ? 'w-6 bg-[#F97316]'
                     : 'w-2 bg-[#262626] hover:bg-[#A1A1AA]'
-                }`}
+                  }`}
               />
             ))}
           </div>

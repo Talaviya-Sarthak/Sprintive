@@ -55,9 +55,8 @@ function LiveWorkflowDemo() {
             {['Alex (Lead)', 'Sam (Dev)', 'Priya (PM)', 'David (QA)'].map((name, i) => (
               <div
                 key={name}
-                className={`p-1.5 rounded-[3px] border flex items-center gap-1.5 ${
-                  i === 0 ? 'bg-[#241A14] border-[#F97316]/40' : 'bg-[#111111] border-[#262626]'
-                }`}
+                className={`p-1.5 rounded-[3px] border flex items-center gap-1.5 ${i === 0 ? 'bg-[#241A14] border-[#F97316]/40' : 'bg-[#111111] border-[#262626]'
+                  }`}
               >
                 <div className="w-4.5 h-4.5 rounded-full bg-[#F97316] text-white font-black text-[8px] flex items-center justify-center shrink-0">
                   {name[0]}
@@ -218,24 +217,24 @@ export default function Hero() {
             {/* Editorial Display Typography Stack */}
             <motion.h1
               {...fadeUp(0.08)}
-              className="font-display uppercase tracking-tight text-white mb-5 select-none"
+              className="uppercase text-white mb-6 select-none"
             >
-              <span className="block text-[clamp(32px,3.8vw,50px)] font-semibold tracking-wider text-slate-200 leading-[1.02]">
-                AI THAT RUNS YOUR
+              <span className="block font-sans text-[clamp(36px,4.5vw,62px)] font-extrabold text-white tracking-tight leading-[0.95] mb-1">
+                AI FOR
               </span>
-              <span className="block text-[clamp(76px,10vw,135px)] leading-[0.85] font-black text-[#F97316] drop-shadow-[0_4px_35px_rgba(249,115,22,0.3)] my-1">
+              <span className="block font-display text-[clamp(105px,13.5vw,175px)] font-black text-[#F97316] leading-[0.8] tracking-tight my-1.5">
                 SCRUM
               </span>
-              <span className="block text-[clamp(32px,3.8vw,50px)] font-semibold tracking-wider text-slate-200 leading-[1.05]">
-                MEETINGS & SPRINTS.
+              <span className="block font-sans text-[clamp(36px,4.5vw,62px)] font-extrabold text-white tracking-tight leading-[0.95] mt-1">
+                TEAMS.
               </span>
             </motion.h1>
 
             <motion.p
               {...fadeUp(0.16)}
-              className="text-[clamp(15px,1.5vw,17px)] text-[#A1A1AA] leading-[1.65] mb-7 max-w-[500px] font-normal"
+              className="font-mono text-[clamp(13px,1.2vw,15px)] text-[#CBD5E1] tracking-wide leading-[1.7] mb-8 max-w-[440px] font-normal"
             >
-              Sprintive unifies meetings, tasks, and sprint management into one intelligence hub — so every standup ends with automated summaries, clear ownership, and zero friction.
+              AI meeting intelligence that turns conversations into organized sprints.
             </motion.p>
 
             {/* Hero CTA Action Buttons */}

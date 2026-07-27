@@ -1,8 +1,7 @@
 import { ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Brain, Sun, Moon, Users, CheckSquare, BarChart3, MessageSquare } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
+import { Brain, Users, CheckSquare, BarChart3, MessageSquare } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface FloatingCardProps {
@@ -135,7 +134,6 @@ interface AuthLayoutProps {
 }
 
 export default function AuthLayout({ children }: AuthLayoutProps) {
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   return (
@@ -150,14 +148,6 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
           >
             ← Back to home
           </button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={toggleTheme}
-            className="bg-[var(--color-surface2)] border border-[var(--color-border)] rounded-lg w-[34px] h-[34px] cursor-pointer text-[var(--color-text-muted)] flex items-center justify-center"
-          >
-            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-          </motion.button>
         </div>
 
         <div className="flex-1 flex items-center justify-center p-8">

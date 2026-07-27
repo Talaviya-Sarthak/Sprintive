@@ -73,9 +73,8 @@ function MicroPreview({ type }: { type: PipelineStep['previewType'] }) {
             key={i}
             animate={{ scale: [1, 1.25, 1], opacity: [0.6, 1, 0.6] }}
             transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.3 }}
-            className={`w-4 h-4 rounded-full border border-black flex items-center justify-center text-[8px] font-black text-white ${
-              i === 0 ? 'bg-[#F97316]' : 'bg-[#262626]'
-            }`}
+            className={`w-4 h-4 rounded-full border border-black flex items-center justify-center text-[8px] font-black text-white ${i === 0 ? 'bg-[#F97316]' : 'bg-[#262626]'
+              }`}
           >
             {String.fromCharCode(65 + i)}
           </motion.div>
@@ -136,7 +135,7 @@ function MicroPreview({ type }: { type: PipelineStep['previewType'] }) {
           <motion.div
             key={i}
             initial={{ opacity: 0, x: -6 }}
-            animate={{ opacity: [0.3, 1, 1], x: [ -6, 0, 0] }}
+            animate={{ opacity: [0.3, 1, 1], x: [-6, 0, 0] }}
             transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.6 }}
             className="flex items-center gap-2"
           >

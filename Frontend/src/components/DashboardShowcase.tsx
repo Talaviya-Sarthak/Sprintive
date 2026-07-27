@@ -8,14 +8,14 @@ type TabName = 'Kanban Board' | 'Meeting Room' | 'Meeting Summary' | 'Sprint Ana
 const tabs: TabName[] = ['Kanban Board', 'Meeting Room', 'Meeting Summary', 'Sprint Analytics', 'Calendar', 'Team Chat'];
 
 interface KanbanTask { t: string; p: 'High' | 'Med' | 'Low'; }
-interface KanbanCol  { title: string; color: string; tasks: KanbanTask[]; }
+interface KanbanCol { title: string; color: string; tasks: KanbanTask[]; }
 
 function KanbanMockup() {
   const cols: KanbanCol[] = [
-    { title: 'Backlog',     color: '#A1A1AA', tasks: [{ t: 'User Auth', p: 'High' }, { t: 'API Design', p: 'Med' }, { t: 'DB Schema', p: 'Low' }] },
+    { title: 'Backlog', color: '#A1A1AA', tasks: [{ t: 'User Auth', p: 'High' }, { t: 'API Design', p: 'Med' }, { t: 'DB Schema', p: 'Low' }] },
     { title: 'In Progress', color: '#F97316', tasks: [{ t: 'Dashboard UI', p: 'High' }, { t: 'Meeting API', p: 'High' }] },
-    { title: 'Review',      color: '#F59E0B', tasks: [{ t: 'Login Flow', p: 'Med' }] },
-    { title: 'Done',        color: '#10B981', tasks: [{ t: 'Setup CI/CD', p: 'Low' }, { t: 'DB Migrations', p: 'Med' }] },
+    { title: 'Review', color: '#F59E0B', tasks: [{ t: 'Login Flow', p: 'Med' }] },
+    { title: 'Done', color: '#10B981', tasks: [{ t: 'Setup CI/CD', p: 'Low' }, { t: 'DB Migrations', p: 'Med' }] },
   ];
   const pColor: Record<'High' | 'Med' | 'Low', string> = { High: '#EF4444', Med: '#F59E0B', Low: '#10B981' };
   return (
@@ -85,12 +85,12 @@ interface TranscriptLine { speaker: string; time: string; text: string; tag: str
 
 function TranscriptMockup() {
   const lines: TranscriptLine[] = [
-    { speaker: 'Alex',    time: '09:01', text: "Yesterday I finished the authentication module. Today I'll work on the dashboard.", tag: null },
-    { speaker: 'Summary', time: '09:01', text: 'Action item: Complete dashboard — Assigned to Alex',                              tag: '✅ Action' },
-    { speaker: 'Sam',     time: '09:02', text: "I'm blocked on the payment flow. Need access from the DevOps team.",               tag: null },
-    { speaker: 'Summary', time: '09:02', text: 'Blocker noted: Payment access — Owner: DevOps team',                              tag: '🚫 Blocker' },
-    { speaker: 'Jordan',  time: '09:03', text: 'Sprint review is on Friday. Reporting module must be done by Thursday.',           tag: null },
-    { speaker: 'Summary', time: '09:03', text: 'Deadline: Reporting module — Due: Thursday EOD',                                  tag: '📅 Deadline' },
+    { speaker: 'Alex', time: '09:01', text: "Yesterday I finished the authentication module. Today I'll work on the dashboard.", tag: null },
+    { speaker: 'Summary', time: '09:01', text: 'Action item: Complete dashboard — Assigned to Alex', tag: '✅ Action' },
+    { speaker: 'Sam', time: '09:02', text: "I'm blocked on the payment flow. Need access from the DevOps team.", tag: null },
+    { speaker: 'Summary', time: '09:02', text: 'Blocker noted: Payment access — Owner: DevOps team', tag: '🚫 Blocker' },
+    { speaker: 'Jordan', time: '09:03', text: 'Sprint review is on Friday. Reporting module must be done by Thursday.', tag: null },
+    { speaker: 'Summary', time: '09:03', text: 'Deadline: Reporting module — Due: Thursday EOD', tag: '📅 Deadline' },
   ];
   return (
     <div className="flex flex-col gap-2">
@@ -158,23 +158,22 @@ function CalendarMockup() {
       <div className="flex justify-between items-center mb-3">
         <span className="text-xs font-bold text-white uppercase tracking-wider">January 2026</span>
         <div className="flex gap-1.5">
-          {['‹','›'].map(c => (
+          {['‹', '›'].map(c => (
             <button key={c} className="bg-[#141417] border border-[#262626] rounded-[3px] px-2 py-0.5 text-white text-xs cursor-pointer hover:border-[#F97316] transition-colors">{c}</button>
           ))}
         </div>
       </div>
       <div className="grid grid-cols-7 gap-1">
-        {['S','M','T','W','T','F','S'].map((d,i) => (
+        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
           <div key={i} className="text-center text-[10px] font-mono text-[#A1A1AA] font-bold py-1">{d}</div>
         ))}
         {days.map(d => (
           <div
             key={d}
-            className={`text-center text-xs py-1.5 px-1 rounded-[3px] font-mono cursor-default border ${
-              d === 15 ? 'bg-[#F97316] text-white font-bold border-black' :
-              meetings.includes(d) ? 'bg-[#F97316]/10 text-[#F97316] font-bold border-[#F97316]/30' :
-              'text-zinc-400 border-transparent bg-[#141417]'
-            }`}
+            className={`text-center text-xs py-1.5 px-1 rounded-[3px] font-mono cursor-default border ${d === 15 ? 'bg-[#F97316] text-white font-bold border-black' :
+                meetings.includes(d) ? 'bg-[#F97316]/10 text-[#F97316] font-bold border-[#F97316]/30' :
+                  'text-zinc-400 border-transparent bg-[#141417]'
+              }`}
           >
             {d}
             {meetings.includes(d) && d !== 15 && (
@@ -191,12 +190,12 @@ interface ChatMsg { user: string; msg: string; time: string; self: boolean; }
 
 function ChatMockup() {
   const msgs: ChatMsg[] = [
-    { user: 'Alex',   msg: 'Just pushed the auth fix 🚀',                     time: '09:15', self: false },
-    { user: 'Sam',    msg: "Great! I'll start the review now",                 time: '09:16', self: false },
-    { user: 'You',    msg: "AI created 3 tickets from today's standup",        time: '09:17', self: true  },
-    { user: 'Bot',    msg: '✅ Sprint board updated. 3 new tasks assigned.',   time: '09:17', self: false },
-    { user: 'Jordan', msg: 'Can we move the sprint review to 3pm?',            time: '09:20', self: false },
-    { user: 'You',    msg: "Sure, I'll update the calendar",                   time: '09:21', self: true  },
+    { user: 'Alex', msg: 'Just pushed the auth fix 🚀', time: '09:15', self: false },
+    { user: 'Sam', msg: "Great! I'll start the review now", time: '09:16', self: false },
+    { user: 'You', msg: "AI created 3 tickets from today's standup", time: '09:17', self: true },
+    { user: 'Bot', msg: '✅ Sprint board updated. 3 new tasks assigned.', time: '09:17', self: false },
+    { user: 'Jordan', msg: 'Can we move the sprint review to 3pm?', time: '09:20', self: false },
+    { user: 'You', msg: "Sure, I'll update the calendar", time: '09:21', self: true },
   ];
   return (
     <div className="flex flex-col gap-3">
@@ -228,12 +227,12 @@ function ChatMockup() {
 }
 
 const mockups: Record<TabName, React.ReactElement> = {
-  'Kanban Board':    <KanbanMockup />,
-  'Meeting Room':    <MeetingMockup />,
+  'Kanban Board': <KanbanMockup />,
+  'Meeting Room': <MeetingMockup />,
   'Meeting Summary': <TranscriptMockup />,
-  'Sprint Analytics':<AnalyticsMockup />,
-  'Calendar':        <CalendarMockup />,
-  'Team Chat':       <ChatMockup />,
+  'Sprint Analytics': <AnalyticsMockup />,
+  'Calendar': <CalendarMockup />,
+  'Team Chat': <ChatMockup />,
 };
 
 export default function DashboardShowcase() {

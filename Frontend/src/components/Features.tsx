@@ -8,12 +8,12 @@ interface Feature {
 }
 
 const features: Feature[] = [
-  { title: 'Video Meetings',     desc: 'Host standups, planning sessions, and retros directly in Sprintive — no extra tools needed.' },
-  { title: 'Auto Recording',     desc: 'Every meeting is recorded and stored so your team can revisit any discussion at any time.' },
-  { title: 'AI Summaries',       desc: 'Get clean, organized meeting summaries with key points and decisions automatically highlighted.' },
-  { title: 'Smart Tasks',        desc: 'Extract action items, responsibilities, and deadlines directly from meeting conversations.' },
-  { title: 'Sprint Analytics',   desc: "Visual dashboards tracking team progress, sprint velocity, and upcoming milestones." },
-  { title: 'Team Chat',          desc: 'Stay connected between meetings with threaded discussions tied directly to tasks and sprints.' },
+  { title: 'Video Meetings', desc: 'Host standups, planning sessions, and retros directly in Sprintive — no extra tools needed.' },
+  { title: 'Auto Recording', desc: 'Every meeting is recorded and stored so your team can revisit any discussion at any time.' },
+  { title: 'AI Summaries', desc: 'Get clean, organized meeting summaries with key points and decisions automatically highlighted.' },
+  { title: 'Smart Tasks', desc: 'Extract action items, responsibilities, and deadlines directly from meeting conversations.' },
+  { title: 'Sprint Analytics', desc: "Visual dashboards tracking team progress, sprint velocity, and upcoming milestones." },
+  { title: 'Team Chat', desc: 'Stay connected between meetings with threaded discussions tied directly to tasks and sprints.' },
 ];
 
 export default function Features() {
