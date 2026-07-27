@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@layer utilities {
+  .shadow-neo {
+    box-shadow: 4px 4px 0px 0px #F97316;
+  }
+}
+
 @theme {
   --color-primary: #F97316;
   --color-primary-hover: #EA580C;
@@ -97,7 +103,29 @@
   }
 }
 
+@keyframes debris-fall {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0, 100px) rotate(180deg);
+  }
+}
+
+@keyframes hover-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-1deg); }
+  75% { transform: rotate(1deg); }
+}
+
 .animate-carousel {
   animation: carousel 35s linear infinite;
 }
+
+.shadow-neo {
+  box-shadow: 4px 4px 0px 0px #F97316;
+}
+
 

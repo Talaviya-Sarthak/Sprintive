@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Brain, Menu, X, Sun, Moon, Zap } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-import { Button } from '@/components/ui/Button';
+import { Button } from './ui/Button';
 
 const links = ['Home', 'Features', 'How It Works', 'Pricing', 'Testimonials', 'FAQ'];
 const ids   = ['hero', 'features', 'how-it-works', 'pricing', 'testimonials', 'contact'];

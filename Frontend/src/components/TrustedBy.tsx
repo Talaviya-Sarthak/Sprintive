@@ -31,7 +31,7 @@ const LOGOS = [
     name: 'Vercel',
     svg: (
       <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-        <path d="M24 22.5D12 1.5 12 1.5 0 22.5h24z" />
+        <path d="M24 22.5L12 1.5L0 22.5h24z" />
       </svg>
     ),
   },
