@@ -1,42 +1,28 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { UserMinus, Mail, Clock, Check, X, RefreshCw } from 'lucide-react';
+import { UserMinus, Mail, Clock, Check, RefreshCw, Plus } from 'lucide-react';
 import { teamService } from '../../services/team.service';
 import { useAuth } from '../../context/AuthContext';
 import AppLayout from '../../layouts/AppLayout';
+import { AppTable, AppButton, AppInput, AppBadge, AppTabs } from '../../components/app-ui';
 import type { TeamMember, Invitation } from '../../types';
 
-const ROLE_COLORS: Record<string, string> = {
-  scrum_master:  'text-[#3B82F6] bg-[#3B82F6]/10',
-  developer:     'text-[#10B981] bg-[#10B981]/10',
-  product_owner: 'text-[#8B5CF6] bg-[#8B5CF6]/10',
-  observer:      'text-[#94A3B8] bg-white/5',
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  pending:  'text-[#F59E0B] bg-[#F59E0B]/10',
-  accepted: 'text-[#10B981] bg-[#10B981]/10',
-  rejected: 'text-red-400 bg-red-500/10',
-  expired:  'text-[#475569] bg-white/5',
-};
-
 export default function TeamMembers() {
-  const { id }  = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
 
-  const [members, setMembers]         = useState<TeamMember[]>([]);
+  const [members, setMembers] = useState<TeamMember[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
-  const [loading, setLoading]         = useState(true);
-  const [tab, setTab]                 = useState<'members' | 'invitations'>('members');
-  const [removingId, setRemovingId]   = useState<string | null>(null);
-  const [error, setError]             = useState('');
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<'members' | 'invitations'>('members');
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [error, setError] = useState('');
 
   // Invite
-  const [inviteEmail, setInviteEmail]     = useState('');
-  const [inviting, setInviting]           = useState(false);
-  const [inviteMsg, setInviteMsg]         = useState('');
-  const [inviteErr, setInviteErr]         = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviting, setInviting] = useState(false);
+  const [inviteMsg, setInviteMsg] = useState('');
+  const [inviteErr, setInviteErr] = useState('');
 
   const [isOwner, setIsOwner] = useState(false);
 
@@ -54,11 +40,16 @@ export default function TeamMembers() {
         const inv = await teamService.getInvitations(id);
         setInvitations(inv);
       }
-    } catch { setError('Failed to load members.'); }
-    finally { setLoading(false); }
+    } catch {
+      setError('Failed to load members.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { load(); }, [id]);
+  useEffect(() => {
+    load();
+  }, [id]);
 
   const handleRemove = async (memberId: string) => {
     setRemovingId(memberId);
@@ -66,14 +57,24 @@ export default function TeamMembers() {
       await teamService.removeMember(id!, memberId);
       setMembers(prev => prev.filter(m => m.user_id !== memberId));
     } catch (e: unknown) {
-      setError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to remove member');
-    } finally { setRemovingId(null); }
+      setError(
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          'Failed to remove member'
+      );
+    } finally {
+      setRemovingId(null);
+    }
   };
 
   const handleInvite = async () => {
     const email = inviteEmail.trim().toLowerCase();
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setInviteErr('Enter a valid email'); return; }
-    setInviting(true); setInviteErr(''); setInviteMsg('');
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setInviteErr('Enter a valid email');
+      return;
+    }
+    setInviting(true);
+    setInviteErr('');
+    setInviteMsg('');
     try {
       await teamService.inviteMembers(id!, [email]);
       setInviteMsg(`Invitation sent to ${email}`);
@@ -81,116 +82,195 @@ export default function TeamMembers() {
       const inv = await teamService.getInvitations(id!);
       setInvitations(inv);
     } catch (e: unknown) {
-      setInviteErr((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to send invitation');
-    } finally { setInviting(false); }
+      setInviteErr(
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          'Failed to send invitation'
+      );
+    } finally {
+      setInviting(false);
+    }
   };
 
-  if (loading) return (
-    <AppLayout teamId={id}>
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-[#3B82F6]/30 border-t-[#3B82F6] rounded-full animate-spin" />
-      </div>
-    </AppLayout>
-  );
+  if (loading)
+    return (
+      <AppLayout teamId={id}>
+        <div className="flex items-center justify-center h-64">
+          <div className="w-7 h-7 border-2 border-[#F97316]/30 border-t-[#F97316] rounded-full animate-spin" />
+        </div>
+      </AppLayout>
+    );
+
+  const memberColumns = [
+    {
+      key: 'user',
+      header: 'Member',
+      render: (m: TeamMember) => (
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#F97316] to-[#EA580C] flex items-center justify-center text-white text-[10px] font-bold shrink-0 overflow-hidden shadow-xs">
+            {m.avatar_url ? (
+              <img src={m.avatar_url} className="w-full h-full object-cover" alt="" />
+            ) : (
+              m.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+            )}
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-[#F8FAFC]">
+              {m.full_name} {m.user_id === user?.id && <span className="text-[#64748B] font-normal text-[10px]">(you)</span>}
+            </p>
+            <p className="text-[10px] text-[#64748B]">{m.email}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'role',
+      header: 'Role',
+      render: (m: TeamMember) => (
+        <AppBadge
+          variant={
+            m.role === 'scrum_master'
+              ? 'orange'
+              : m.role === 'developer'
+              ? 'emerald'
+              : m.role === 'product_owner'
+              ? 'amber'
+              : 'neutral'
+          }
+          size="xs"
+        >
+          {m.role.replace('_', ' ')}
+        </AppBadge>
+      ),
+    },
+    {
+      key: 'actions',
+      header: '',
+      className: 'text-right',
+      render: (m: TeamMember) =>
+        isOwner && m.user_id !== user?.id ? (
+          <AppButton
+            variant="danger"
+            size="xs"
+            onClick={() => handleRemove(m.user_id)}
+            disabled={removingId === m.user_id}
+          >
+            <UserMinus size={12} />
+          </AppButton>
+        ) : null,
+    },
+  ];
+
+  const invitationColumns = [
+    {
+      key: 'email',
+      header: 'Invited Email',
+      render: (inv: Invitation) => (
+        <div className="flex items-center gap-2">
+          <Mail size={12} className="text-[#64748B]" />
+          <span className="text-xs font-semibold text-[#F8FAFC]">{inv.email ?? 'Link invitation'}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'expires',
+      header: 'Expires',
+      render: (inv: Invitation) => (
+        <span className="text-[11px] text-[#64748B]">
+          {new Date(inv.expires_at).toLocaleDateString()}
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (inv: Invitation) => (
+        <AppBadge
+          variant={
+            inv.status === 'accepted' ? 'emerald' : inv.status === 'pending' ? 'amber' : 'neutral'
+          }
+          size="xs"
+        >
+          {inv.status}
+        </AppBadge>
+      ),
+    },
+  ];
 
   return (
     <AppLayout teamId={id}>
-      <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-[#F8FAFC]">Team Members</h1>
-          <button onClick={load} className="text-[#475569] hover:text-[#94A3B8] transition-colors"><RefreshCw size={16} /></button>
+      <div className="p-5 md:p-8 max-w-4xl mx-auto space-y-5">
+        <div className="flex items-center justify-between pb-4 border-b border-[#181A26]">
+          <div>
+            <h1 className="text-xl font-bold text-[#F8FAFC] tracking-tight">Team Members</h1>
+            <p className="text-xs text-[#94A3B8] mt-0.5">Manage workspace access, roles, and invitations</p>
+          </div>
+          <AppButton variant="icon" size="sm" onClick={load}>
+            <RefreshCw size={13} />
+          </AppButton>
         </div>
 
-        {error && <p className="text-red-400 text-sm">{error}</p>}
+        {error && <p className="text-red-400 text-xs">{error}</p>}
 
-        {/* Tabs */}
         {isOwner && (
-          <div className="flex gap-1 bg-[#0d1117] rounded-xl p-1 w-fit">
-            {(['members', 'invitations'] as const).map(t => (
-              <button key={t} onClick={() => setTab(t)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${tab === t ? 'bg-[#111827] text-[#F8FAFC]' : 'text-[#475569] hover:text-[#94A3B8]'}`}>
-                {t} {t === 'invitations' && `(${invitations.filter(i => i.status === 'pending').length})`}
-              </button>
-            ))}
-          </div>
+          <AppTabs
+            items={[
+              { id: 'members', label: 'Members', count: members.length },
+              {
+                id: 'invitations',
+                label: 'Invitations',
+                count: invitations.filter(i => i.status === 'pending').length,
+              },
+            ]}
+            activeId={tab}
+            onChange={id => setTab(id as any)}
+          />
         )}
 
-        {/* Members tab */}
         {tab === 'members' && (
-          <div className="bg-[#111827] border border-white/8 rounded-2xl overflow-hidden">
-            {members.map((m, i) => (
-              <motion.div key={m.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
-                className="flex items-center gap-3 px-5 py-4 border-b border-white/5 last:border-0">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#06B6D4] flex items-center justify-center text-white text-xs font-bold shrink-0 overflow-hidden">
-                  {m.avatar_url ? <img src={m.avatar_url} className="w-full h-full object-cover" alt="" /> : m.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#F8FAFC] truncate">
-                    {m.full_name} {m.user_id === user?.id && <span className="text-[#475569] font-normal text-xs">(you)</span>}
-                  </p>
-                  <p className="text-xs text-[#475569] truncate">{m.email}</p>
-                </div>
-                <span className={`text-xs px-2.5 py-1 rounded-full font-medium capitalize shrink-0 ${ROLE_COLORS[m.role] ?? 'text-[#94A3B8] bg-white/5'}`}>
-                  {m.role.replace('_', ' ')}
-                </span>
-                {isOwner && m.user_id !== user?.id && (
-                  <button onClick={() => handleRemove(m.user_id)} disabled={removingId === m.user_id}
-                    className="ml-2 p-1.5 rounded-lg text-[#475569] hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-40">
-                    {removingId === m.user_id
-                      ? <span className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin block" />
-                      : <UserMinus size={15} />}
-                  </button>
-                )}
-              </motion.div>
-            ))}
-          </div>
+          <AppTable
+            columns={memberColumns}
+            data={members}
+            keyExtractor={m => m.id}
+            emptyMessage="No team members found."
+          />
         )}
 
-        {/* Invitations tab */}
         {tab === 'invitations' && isOwner && (
           <div className="space-y-4">
-            {/* Send invite */}
-            <div className="bg-[#111827] border border-white/8 rounded-2xl p-5">
-              <h3 className="text-sm font-semibold text-[#F8FAFC] mb-3 flex items-center gap-2"><Mail size={14} /> Send Invitation</h3>
-              <div className="flex gap-2">
-                <input value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleInvite()}
+            <div className="bg-[#11131C] border border-[#1E2232] rounded-xl p-4 space-y-2.5">
+              <h3 className="text-xs font-mono font-semibold text-[#F8FAFC] uppercase tracking-wider flex items-center gap-2">
+                <Mail size={13} className="text-[#F97316]" /> Send Invitation
+              </h3>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <AppInput
+                  value={inviteEmail}
+                  onChange={e => setInviteEmail(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleInvite()}
                   placeholder="colleague@company.com"
-                  className="flex-1 bg-[#0d1117] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-[#F8FAFC] placeholder-[#475569] outline-none focus:border-[#3B82F6] transition-colors" />
-                <button onClick={handleInvite} disabled={inviting}
-                  className="px-4 py-2.5 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] disabled:opacity-60 text-white text-sm font-semibold transition-colors">
-                  {inviting ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin block" /> : 'Send'}
-                </button>
+                />
+                <AppButton variant="primary" size="sm" onClick={handleInvite} loading={inviting}>
+                  <Plus size={13} className="mr-1" /> Send
+                </AppButton>
               </div>
-              {inviteErr && <p className="text-red-400 text-xs mt-2">{inviteErr}</p>}
-              {inviteMsg && <p className="text-green-400 text-xs mt-2 flex items-center gap-1"><Check size={12} /> {inviteMsg}</p>}
+              {inviteErr && <p className="text-red-400 text-xs">{inviteErr}</p>}
+              {inviteMsg && (
+                <p className="text-emerald-400 text-xs flex items-center gap-1">
+                  <Check size={12} /> {inviteMsg}
+                </p>
+              )}
             </div>
 
-            {/* Invitation list */}
-            <div className="bg-[#111827] border border-white/8 rounded-2xl overflow-hidden">
-              {invitations.length === 0
-                ? <p className="text-[#475569] text-sm text-center py-8">No invitations sent yet.</p>
-                : invitations.map((inv, i) => (
-                  <motion.div key={inv.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
-                    className="flex items-center gap-3 px-5 py-4 border-b border-white/5 last:border-0">
-                    <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center shrink-0">
-                      <Mail size={14} className="text-[#475569]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-[#F8FAFC] truncate">{inv.email ?? 'Link invitation'}</p>
-                      <p className="text-xs text-[#475569] flex items-center gap-1 mt-0.5">
-                        <Clock size={10} /> Expires {new Date(inv.expires_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium capitalize shrink-0 ${STATUS_COLORS[inv.status] ?? 'text-[#94A3B8] bg-white/5'}`}>
-                      {inv.status}
-                    </span>
-                  </motion.div>
-                ))
-              }
-            </div>
+            <AppTable
+              columns={invitationColumns}
+              data={invitations}
+              keyExtractor={i => i.id}
+              emptyMessage="No pending invitations."
+            />
           </div>
         )}
       </div>
     </AppLayout>
   );
 }
+
+

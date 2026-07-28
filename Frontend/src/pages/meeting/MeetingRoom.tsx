@@ -153,14 +153,18 @@ export default function MeetingRoom() {
                    allParticipants.length <= 4  ? 'grid-cols-2' : 'grid-cols-3';
 
   return (
-    <div className="h-screen bg-[#080c14] flex flex-col overflow-hidden">
+    <div className="h-screen bg-[#08090E] flex flex-col overflow-hidden text-[#CBD5E1]">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-white/6 bg-[#0d1117]/80 backdrop-blur-sm flex-shrink-0">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-[#1E202C] bg-[#090A0F]/90 backdrop-blur-md flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-[#3B82F6] animate-pulse" />
+          <div className="w-2 h-2 rounded-full bg-[#F97316] animate-pulse" />
           <div>
-            <h1 className="text-sm font-semibold text-[#F8FAFC] leading-none">{meeting?.title ?? 'Meeting'}</h1>
-            {meeting?.sprint_name && <p className="text-[11px] text-[#475569] mt-0.5">{meeting.sprint_name}</p>}
+            <h1 className="text-xs md:text-sm font-semibold text-[#F8FAFC] leading-none">
+              {meeting?.title ?? 'Meeting Room'}
+            </h1>
+            {meeting?.sprint_name && (
+              <p className="text-[10px] text-[#64748B] font-mono mt-0.5">{meeting.sprint_name}</p>
+            )}
           </div>
         </div>
 
@@ -168,24 +172,38 @@ export default function MeetingRoom() {
           {/* Recording indicator */}
           {recording && recording.status === 'processing' && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20">
-              <motion.div className="w-1.5 h-1.5 rounded-full bg-red-500" animate={{ opacity: [1, 0.3, 1] }} transition={{ repeat: Infinity, duration: 1.2 }} />
-              <span className="text-[11px] text-red-400 font-medium">REC</span>
+              <motion.div
+                className="w-1.5 h-1.5 rounded-full bg-red-500"
+                animate={{ opacity: [1, 0.3, 1] }}
+                transition={{ repeat: Infinity, duration: 1.2 }}
+              />
+              <span className="text-[10px] text-red-400 font-mono font-semibold">REC</span>
             </div>
           )}
 
           {/* Timer */}
           <MeetingTimer startedAt={meeting?.started_at} />
 
-          {/* AI placeholder */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#8B5CF6]/10 border border-[#8B5CF6]/20">
-            <svg className="w-3 h-3 text-[#8B5CF6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
-            <span className="text-[11px] text-[#8B5CF6] font-medium">AI Notes</span>
+          {/* AI Live Intelligence Indicator */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F97316]/10 border border-[#F97316]/25">
+            <svg
+              className="w-3 h-3 text-[#F97316]"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+            <span className="text-[10px] font-mono text-[#F97316] font-semibold uppercase">
+              AI Active
+            </span>
           </div>
 
-          {/* Connection */}
-          <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-            <span className="text-[11px] text-[#475569]">Connected</span>
+          {/* Connection status */}
+          <div className="hidden sm:flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span className="text-[11px] text-[#64748B]">Connected</span>
           </div>
         </div>
       </div>
@@ -215,27 +233,35 @@ export default function MeetingRoom() {
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: 320, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="border-l border-white/6 bg-[#0d1117] flex flex-col overflow-hidden flex-shrink-0"
+              transition={{ type: 'spring', stiffness: 350, damping: 35 }}
+              className="border-l border-[#1E202C] bg-[#090A0F] flex flex-col overflow-hidden flex-shrink-0"
             >
               {/* Sidebar tabs */}
-              <div className="flex border-b border-white/6">
+              <div className="flex border-b border-[#1E202C]">
                 {(['participants', 'chat', 'notes'] as const).map((tab) => (
                   <button
                     key={tab}
-                    onClick={() => { setSidebarTab(tab); if (tab === 'chat') resetUnread(); }}
-                    className={`flex-1 py-3 text-xs font-semibold capitalize transition-colors relative ${
-                      sidebarTab === tab ? 'text-[#3B82F6]' : 'text-[#475569] hover:text-[#94A3B8]'
+                    onClick={() => {
+                      setSidebarTab(tab);
+                      if (tab === 'chat') resetUnread();
+                    }}
+                    className={`flex-1 py-3 text-xs font-semibold capitalize transition-colors relative cursor-pointer ${
+                      sidebarTab === tab
+                        ? 'text-[#F97316]'
+                        : 'text-[#64748B] hover:text-[#CBD5E1]'
                     }`}
                   >
                     {tab}
                     {tab === 'chat' && unreadCount > 0 && (
-                      <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#3B82F6] text-white text-[9px] font-bold flex items-center justify-center">
+                      <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#F97316] text-white text-[9px] font-bold flex items-center justify-center">
                         {unreadCount}
                       </span>
                     )}
                     {sidebarTab === tab && (
-                      <motion.div layoutId="sidebar-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3B82F6]" />
+                      <motion.div
+                        layoutId="sidebar-tab"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#F97316]"
+                      />
                     )}
                   </button>
                 ))}
@@ -255,12 +281,25 @@ export default function MeetingRoom() {
                 )}
                 {sidebarTab === 'notes' && (
                   <div className="flex flex-col items-center justify-center h-full gap-3 p-6 text-center">
-                    <div className="w-12 h-12 rounded-xl bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 flex items-center justify-center">
-                      <svg className="w-6 h-6 text-[#8B5CF6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                    <div className="w-10 h-10 rounded-xl bg-[#F97316]/10 border border-[#F97316]/20 flex items-center justify-center">
+                      <svg
+                        className="w-5 h-5 text-[#F97316]"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={1.5}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                        />
+                      </svg>
                     </div>
-                    <p className="text-sm font-semibold text-[#F8FAFC]">AI Live Notes</p>
-                    <p className="text-xs text-[#475569]">AI-generated notes will appear here during the meeting.</p>
-                    <span className="px-3 py-1 rounded-full bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 text-[#8B5CF6] text-xs">Coming Soon</span>
+                    <p className="text-xs font-semibold text-[#F8FAFC]">AI Live Notes</p>
+                    <p className="text-[11px] text-[#64748B]">
+                      Extracted action items and blockers will stream here live.
+                    </p>
                   </div>
                 )}
               </div>
@@ -270,7 +309,7 @@ export default function MeetingRoom() {
       </div>
 
       {/* ── Toolbar ── */}
-      <div className="flex justify-center pb-6 pt-3 flex-shrink-0">
+      <div className="flex justify-center pb-5 pt-2 flex-shrink-0">
         <MeetingToolbar
           isMuted={isMuted}
           isCameraOff={isCameraOff}

@@ -127,6 +127,10 @@ export default function SignUp() {
     if (!form.name.trim()) e.name = 'Full name is required';
     if (!form.email.includes('@')) e.email = 'Enter a valid email address';
     if (form.password.length < 8) e.password = 'Password must be at least 8 characters';
+    if (!/[A-Z]/.test(form.password)) e.password = 'Password must contain at least one uppercase letter';
+    if (!/[a-z]/.test(form.password)) e.password = 'Password must contain at least one lowercase letter';
+    if (!/[0-9]/.test(form.password)) e.password = 'Password must contain at least one number';
+    if (!/[^A-Za-z0-9]/.test(form.password)) e.password = 'Password must contain at least one special character';
     if (form.password !== form.confirm) e.confirm = 'Passwords do not match';
     return e;
   };
@@ -144,13 +148,14 @@ export default function SignUp() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_URL}/auth/register`, {
+      const res = await fetch(`${API_URL}/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: form.name.trim(),
+          full_name: form.name.trim(),
           email: form.email.trim().toLowerCase(),
           password: form.password,
+          confirm_password: form.confirm,
         }),
       });
 
@@ -160,7 +165,8 @@ export default function SignUp() {
         if (data.errors && data.errors.length > 0) {
           const fe: FieldErrors = {};
           data.errors.forEach(({ field, message }) => {
-            fe[field] = message;
+            const mappedField = field === 'full_name' ? 'name' : field === 'confirm_password' ? 'confirm' : field;
+            fe[mappedField] = message;
           });
           setErrors(fe);
         } else {
@@ -179,6 +185,7 @@ export default function SignUp() {
       setLoading(false);
     }
   };
+
 
   if (success && !authLoading) {
     return (

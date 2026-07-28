@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, Users } from 'lucide-react';
+import { Calendar, Clock, Users, ArrowRight } from 'lucide-react';
 import type { Meeting } from '../../types';
 import { MeetingStatusBadge, MeetingTypeBadge } from '../ui/Badge';
-import Button from '../ui/Button';
+import { AppCard, AppButton, AppBadge } from '../app-ui';
 
 interface MeetingCardProps {
   meeting: Meeting;
@@ -18,7 +18,7 @@ function formatDate(dateStr: string) {
   const tomorrow = new Date(today.getTime() + 86400000);
   if (d.toDateString() === today.toDateString()) return 'Today';
   if (d.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 function formatTime(time: string) {
@@ -39,96 +39,82 @@ export default function MeetingCard({ meeting, currentUserId, onEdit, onDelete }
   const owner = isOwner(meeting, currentUserId);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -2 }}
-      className="group bg-[#111827] border border-white/8 rounded-2xl p-5 hover:border-white/16 transition-all"
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1.5">
-            <MeetingTypeBadge type={meeting.meeting_type} />
-            {meeting.sprint_name && (
-              <span className="text-[11px] text-[#475569] font-medium">({meeting.sprint_name})</span>
+    <AppCard
+      hoverable
+      title={
+        <div className="flex items-center gap-2">
+          <MeetingTypeBadge type={meeting.meeting_type} />
+          {meeting.sprint_name && (
+            <span className="text-[10px] text-[#64748B] font-mono">{meeting.sprint_name}</span>
+          )}
+        </div>
+      }
+      action={<MeetingStatusBadge status={meeting.status} size="sm" />}
+      footer={
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#F97316] to-[#EA580C] flex items-center justify-center text-white text-[9px] font-bold shrink-0">
+              {getInitials(meeting.host_name ?? 'Host')}
+            </div>
+            <span className="text-xs text-[#CBD5E1] font-medium">{meeting.host_name}</span>
+          </div>
+
+          <div className="flex items-center gap-1">
+            {meeting.status === 'active' && (
+              <AppButton
+                variant="primary"
+                size="xs"
+                onClick={() => navigate(`/meetings/${meeting.id}/live`)}
+              >
+                Join Live
+              </AppButton>
+            )}
+            <AppButton
+              variant="secondary"
+              size="xs"
+              onClick={() => navigate(`/meetings/${meeting.id}`)}
+            >
+              <span>Details</span>
+              <ArrowRight size={11} className="ml-1" />
+            </AppButton>
+            {owner && (
+              <>
+                <AppButton variant="ghost" size="xs" onClick={() => onEdit?.(meeting)}>
+                  Edit
+                </AppButton>
+                <AppButton variant="danger" size="xs" onClick={() => onDelete?.(meeting)}>
+                  Delete
+                </AppButton>
+              </>
             )}
           </div>
-          <h3 className="text-base font-bold text-[#F8FAFC] truncate group-hover:text-[#3B82F6] transition-colors">
-            {meeting.title}
-          </h3>
-          {meeting.description && (
-            <p className="text-sm text-[#94A3B8] mt-1 line-clamp-2">{meeting.description}</p>
-          )}
         </div>
-        <MeetingStatusBadge status={meeting.status} size="md" />
-      </div>
+      }
+    >
+      <div>
+        <h3
+          onClick={() => navigate(`/meetings/${meeting.id}`)}
+          className="text-xs font-bold text-[#F8FAFC] truncate hover:text-[#F97316] transition-colors cursor-pointer"
+        >
+          {meeting.title}
+        </h3>
+        {meeting.description && (
+          <p className="text-[11px] text-[#94A3B8] mt-0.5 line-clamp-1">{meeting.description}</p>
+        )}
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 text-xs text-[#94A3B8]">
-        <div className="flex items-center gap-1.5">
-          <Calendar size={13} />
-          <span>{formatDate(meeting.date)}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Clock size={13} />
-          <span>{formatTime(meeting.start_time)} - {formatTime(meeting.end_time)}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Clock size={13} />
-          <span>{meeting.duration_minutes} min</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Users size={13} />
-          <span>{meeting.participant_count} participants</span>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2.5 text-[11px] text-[#64748B]">
+          <span className="flex items-center gap-1">
+            <Calendar size={12} className="text-[#F97316]" /> {formatDate(meeting.date)}
+          </span>
+          <span className="flex items-center gap-1">
+            <Clock size={12} /> {formatTime(meeting.start_time)} - {formatTime(meeting.end_time)}
+          </span>
+          <span className="flex items-center gap-1">
+            <Users size={12} /> {meeting.participant_count}
+          </span>
         </div>
       </div>
-
-      <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/6">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#06B6D4] flex items-center justify-center text-white text-xs font-bold shrink-0">
-            {getInitials(meeting.host_name ?? 'Host')}
-          </div>
-          <div>
-            <p className="text-sm font-medium text-[#F8FAFC]">{meeting.host_name}</p>
-            <p className="text-[11px] text-[#475569]">Organizer</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate(`/meetings/${meeting.id}`)}
-          >
-            View Details
-          </Button>
-          {meeting.status === 'active' && (
-            <Button
-              variant="gradient"
-              size="sm"
-              onClick={() => navigate(`/meetings/${meeting.id}/live`)}
-            >
-              Join
-            </Button>
-          )}
-          {owner && (
-            <>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => onEdit?.(meeting)}
-              >
-                Edit
-              </Button>
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={() => onDelete?.(meeting)}
-              >
-                Delete
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-    </motion.div>
+    </AppCard>
   );
 }
+

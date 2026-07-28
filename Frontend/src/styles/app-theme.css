@@ -1,0 +1,59 @@
+/* ==========================================================================
+   SPRINTIVE INTERNAL APPLICATION DESIGN SYSTEM (SaaS Theme)
+   Neutral-first, charcoal/graphite surfaces, high information density.
+   ========================================================================== */
+
+:root {
+  /* Surface Scale */
+  --app-bg: #08090E;
+  --app-surface-subtle: #0C0D14;
+  --app-surface-card: #11131C;
+  --app-surface-hover: #171A26;
+  --app-surface-active: #1F2333;
+
+  /* Border Scale */
+  --app-border: #1B1E2B;
+  --app-border-subtle: #151722;
+  --app-border-focus: #F97316;
+
+  /* Text Colors */
+  --app-text-primary: #F8FAFC;
+  --app-text-secondary: #94A3B8;
+  --app-text-muted: #64748B;
+  --app-text-dim: #475569;
+
+  /* Accent Colors (Used 10% max) */
+  --app-accent-orange: #F97316;
+  --app-accent-orange-hover: #EA580C;
+  --app-accent-orange-subtle: rgba(249, 115, 22, 0.12);
+  --app-accent-orange-border: rgba(249, 115, 22, 0.25);
+
+  --app-accent-blue: #3B82F6;
+  --app-accent-green: #10B981;
+  --app-accent-amber: #F59E0B;
+  --app-accent-red: #EF4444;
+
+  /* Shadows & Elevation */
+  --app-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --app-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+  --app-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.6);
+}
+
+/* Custom Scrollbar for Internal App */
+.app-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.app-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
+}
+
+.app-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.18);
+}

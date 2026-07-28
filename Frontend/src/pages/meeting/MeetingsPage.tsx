@@ -1,66 +1,113 @@
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { teamService } from '../../services/team.service';
+import { meetingService } from '../../services/meeting.service';
+import { useAuth } from '../../context/AuthContext';
 import AppLayout from '../../layouts/AppLayout';
-import { useMeetingMockData } from '../../hooks/useMeetingMockData';
+import MeetingCard from '../../components/meeting/MeetingCard';
 import MeetingHeader from '../../components/meeting/MeetingHeader';
-import MeetingList from '../../components/meeting/MeetingList';
-import UpcomingMeetingCard from '../../components/meeting/UpcomingMeetingCard';
-import PastMeetingCard from '../../components/meeting/PastMeetingCard';
 import CreateMeetingModal from '../../components/meeting/CreateMeetingModal';
 import EditMeetingModal from '../../components/meeting/EditMeetingModal';
 import DeleteMeetingDialog from '../../components/meeting/DeleteMeetingDialog';
-import { MeetingCardSkeleton } from '../../components/ui/Skeleton';
-import type { Meeting } from '../../types';
-
-const currentUserId = 'u1';
+import { AppTabs } from '../../components/app-ui';
+import type { Meeting, MeetingStatus, MeetingType } from '../../types';
 
 export default function MeetingsPage() {
-  const { teamId } = useParams<{ teamId: string }>();
-  const {
-    meetings, upcoming, ongoing, completed,
-    search, setSearch, statusFilter, setStatusFilter,
-    typeFilter, setTypeFilter,
-    getTeamMembers, createMeeting, updateMeeting, deleteMeeting,
-  } = useMeetingMockData(teamId);
+  const { id: teamId } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [teamName, setTeamName] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // Filters
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<MeetingStatus | 'all'>('all');
+  const [typeFilter, setTypeFilter] = useState<MeetingType | 'all'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'upcoming' | 'live' | 'completed'>('all');
+
+  // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editMeeting, setEditMeeting] = useState<Meeting | null>(null);
-  const [deleteMeetingData, setDeleteMeetingData] = useState<Meeting | null>(null);
-  const [activeTab, setActiveTab] = useState<'all' | 'upcoming' | 'ongoing' | 'completed'>('all');
-  const [loading] = useState(false);
+  const [deleteMeeting, setDeleteMeeting] = useState<Meeting | null>(null);
 
-  const teamMembers = getTeamMembers();
-
-  const handleCreate = (data: Partial<Meeting>) => createMeeting(data);
-  const handleUpdate = (data: Partial<Meeting>) => {
-    if (editMeeting) updateMeeting(editMeeting.id, data);
-  };
-  const handleDelete = () => {
-    if (deleteMeetingData) {
-      deleteMeeting(deleteMeetingData.id);
-      setDeleteMeetingData(null);
+  const fetchMeetings = async () => {
+    if (!teamId) return;
+    try {
+      const data = await teamService.getTeamMeetings(teamId);
+      setMeetings(data);
+    } catch {
+      setError('Failed to load meetings');
     }
   };
 
-  const tabs = [
-    { key: 'all', label: 'All', count: meetings.length },
-    { key: 'upcoming', label: 'Upcoming', count: upcoming.length },
-    { key: 'ongoing', label: 'Live', count: ongoing.length },
-    { key: 'completed', label: 'Completed', count: completed.length },
-  ] as const;
+  useEffect(() => {
+    if (!teamId) return;
+    setLoading(true);
+    Promise.all([teamService.getTeam(teamId), teamService.getTeamMeetings(teamId)])
+      .then(([t, m]) => {
+        setTeamName(t.name);
+        setMeetings(m);
+      })
+      .catch(() => setError('Failed to load page data'))
+      .finally(() => setLoading(false));
+  }, [teamId]);
 
-  const filteredByTab = activeTab === 'all' ? meetings
-    : activeTab === 'upcoming' ? upcoming
-    : activeTab === 'ongoing' ? ongoing
-    : completed;
+  // Tab filtering logic
+  const now = new Date();
+  const filteredByTab = meetings.filter(m => {
+    if (activeTab === 'live') return m.status === 'active';
+    if (activeTab === 'completed') return m.status === 'ended';
+    if (activeTab === 'upcoming') {
+      return m.status === 'scheduled' && new Date(`${m.date}T${m.start_time}`) >= now;
+    }
+    return true;
+  });
+
+  // Header controls filtering
+  const finalFiltered = filteredByTab.filter(m => {
+    if (statusFilter !== 'all' && m.status !== statusFilter) return false;
+    if (typeFilter !== 'all' && m.meeting_type !== typeFilter) return false;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      const matchTitle = m.title.toLowerCase().includes(q);
+      const matchSprint = m.sprint_name?.toLowerCase().includes(q) ?? false;
+      if (!matchTitle && !matchSprint) return false;
+    }
+    return true;
+  });
+
+  const tabItems = [
+    { id: 'all', label: 'All', count: meetings.length },
+    {
+      id: 'upcoming',
+      label: 'Upcoming',
+      count: meetings.filter(
+        m => m.status === 'scheduled' && new Date(`${m.date}T${m.start_time}`) >= now
+      ).length,
+    },
+    { id: 'live', label: 'Live', count: meetings.filter(m => m.status === 'active').length },
+    { id: 'completed', label: 'Completed', count: meetings.filter(m => m.status === 'ended').length },
+  ];
+
+  if (loading) {
+    return (
+      <AppLayout teamId={teamId}>
+        <div className="flex items-center justify-center h-64">
+          <div className="w-7 h-7 border-2 border-[#F97316]/30 border-t-[#F97316] rounded-full animate-spin" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout teamId={teamId}>
-      <div className="p-4 md:p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
+      <div className="p-5 md:p-8 max-w-6xl mx-auto space-y-5">
         <MeetingHeader
-          title="Meetings"
-          description="Manage and join your team meetings"
+          title={`${teamName} Meetings`}
+          description="Schedule, join live scrum sessions, and view AI meeting logs."
           search={search}
           onSearchChange={setSearch}
           statusFilter={statusFilter}
@@ -70,73 +117,64 @@ export default function MeetingsPage() {
           onCreateClick={() => setShowCreateModal(true)}
         />
 
-        <div className="flex gap-1 p-1 rounded-xl bg-[#0d1117] border border-white/6 w-fit">
-          {tabs.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === tab.key
-                  ? 'bg-[#3B82F6] text-white shadow-sm'
-                  : 'text-[#94A3B8] hover:text-[#F8FAFC]'
-              }`}
-            >
-              {tab.label}
-              {tab.count > 0 && (
-                <span className={`ml-1.5 text-xs ${activeTab === tab.key ? 'text-white/70' : 'text-[#475569]'}`}>
-                  ({tab.count})
-                </span>
-              )}
-            </button>
-          ))}
+        <div className="flex items-center justify-between">
+          <AppTabs
+            items={tabItems}
+            activeId={activeTab}
+            onChange={id => setActiveTab(id as any)}
+          />
         </div>
 
-        {loading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 4 }).map((_, i) => <MeetingCardSkeleton key={i} />)}
+        {error && <p className="text-red-400 text-xs">{error}</p>}
+
+        {finalFiltered.length === 0 ? (
+          <div className="bg-[#11131C] border border-[#1E2232] rounded-xl p-10 text-center">
+            <p className="text-xs text-[#64748B]">No meetings match your filter criteria.</p>
           </div>
         ) : (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            {activeTab === 'upcoming' && upcoming.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                {upcoming.map(m => <UpcomingMeetingCard key={m.id} meeting={m} />)}
-              </div>
-            )}
-            {activeTab === 'completed' && completed.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                {completed.map(m => <PastMeetingCard key={m.id} meeting={m} />)}
-              </div>
-            )}
-            <MeetingList
-              meetings={filteredByTab}
-              currentUserId={currentUserId}
-              onEdit={setEditMeeting}
-              onDelete={setDeleteMeetingData}
-            />
-          </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            {finalFiltered.map(meeting => (
+              <MeetingCard
+                key={meeting.id}
+                meeting={meeting}
+                currentUserId={user?.id ?? ''}
+                onEdit={m => setEditMeeting(m)}
+                onDelete={m => setDeleteMeeting(m)}
+              />
+            ))}
+          </div>
         )}
 
-        <CreateMeetingModal
-          open={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-          onCreate={handleCreate}
-          teamMembers={teamMembers}
-        />
+        {/* Modals */}
+        {showCreateModal && (
+          <CreateMeetingModal
+            teamId={teamId!}
+            onClose={() => setShowCreateModal(false)}
+            onCreated={fetchMeetings}
+          />
+        )}
+        {editMeeting && (
+          <EditMeetingModal
+            meeting={editMeeting}
+            onClose={() => setEditMeeting(null)}
+            onUpdated={fetchMeetings}
+          />
+        )}
+        {deleteMeeting && (
+          <DeleteMeetingDialog
+            open={!!deleteMeeting}
+            onClose={() => setDeleteMeeting(null)}
+            onConfirm={async () => {
+              if (deleteMeeting) {
+                await meetingService.deleteMeeting(deleteMeeting.id);
+                setDeleteMeeting(null);
+                fetchMeetings();
+              }
+            }}
+            meetingTitle={deleteMeeting.title}
+          />
+        )}
 
-        <EditMeetingModal
-          open={!!editMeeting}
-          onClose={() => setEditMeeting(null)}
-          onUpdate={handleUpdate}
-          meeting={editMeeting}
-          teamMembers={teamMembers}
-        />
-
-        <DeleteMeetingDialog
-          open={!!deleteMeetingData}
-          onClose={() => setDeleteMeetingData(null)}
-          onConfirm={handleDelete}
-          meetingTitle={deleteMeetingData?.title ?? ''}
-        />
       </div>
     </AppLayout>
   );
