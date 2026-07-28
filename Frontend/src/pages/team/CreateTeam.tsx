@@ -261,7 +261,7 @@ export default function CreateTeam() {
                   />
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <button onClick={() => setStep(1)} className="flex-1 py-3 rounded-xl bg-white/6 hover:bg-white/10 text-[#CBD5E1] font-semibold text-sm transition-colors">← Back</button>
                   <button onClick={() => setStep(3)} className="flex-1 py-3 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white font-semibold text-sm transition-colors">Continue →</button>
                 </div>
@@ -317,7 +317,7 @@ export default function CreateTeam() {
 
                 {error && <p className="text-red-400 text-sm">{error}</p>}
 
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <button onClick={() => setStep(2)} className="flex-1 py-3 rounded-xl bg-white/6 hover:bg-white/10 text-[#CBD5E1] font-semibold text-sm transition-colors">← Back</button>
                   <button
                     onClick={handleSubmit}

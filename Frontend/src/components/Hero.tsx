@@ -213,7 +213,7 @@ export default function Hero() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-center">
 
           {/* Left Column: Headline & Action CTAs */}
-          <div className="md:pl-6 lg:pl-10">
+          <div className="md:pl-6 lg:pl-10 text-center md:text-left flex flex-col items-center md:items-start">
             {/* Editorial Display Typography Stack */}
             <motion.h1
               {...fadeUp(0.08)}
@@ -222,7 +222,7 @@ export default function Hero() {
               <span className="block font-sans text-[clamp(36px,4.5vw,62px)] font-extrabold text-white tracking-tight leading-[0.95] mb-1">
                 AI FOR
               </span>
-              <span className="block font-display text-[clamp(105px,13.5vw,175px)] font-black text-[#F97316] leading-[0.8] tracking-tight my-1.5">
+              <span className="block font-display text-[clamp(90px,13.5vw,175px)] font-black text-[#F97316] leading-[0.8] tracking-tight my-1.5">
                 SCRUM
               </span>
               <span className="block font-sans text-[clamp(36px,4.5vw,62px)] font-extrabold text-white tracking-tight leading-[0.95] mt-1">
@@ -238,12 +238,12 @@ export default function Hero() {
             </motion.p>
 
             {/* Hero CTA Action Buttons */}
-            <motion.div {...fadeUp(0.24)} className="flex gap-3.5 flex-wrap items-center">
+            <motion.div {...fadeUp(0.24)} className="flex gap-3.5 flex-wrap items-center justify-center md:justify-start w-full sm:w-auto">
               <Button
                 variant="orange"
                 size="lg"
                 onClick={() => navigate('/signup')}
-                className="gap-2 text-xs py-3 px-7"
+                className="gap-2 text-xs py-3 px-7 max-sm:w-full max-sm:justify-center"
               >
                 <Zap size={15} strokeWidth={2.5} /> Start Free Trial
               </Button>
@@ -251,7 +251,7 @@ export default function Hero() {
               <Button
                 variant="neutral"
                 size="lg"
-                className="gap-2 text-xs py-3 px-7"
+                className="gap-2 text-xs py-3 px-7 max-sm:w-full max-sm:justify-center"
               >
                 <Play size={15} strokeWidth={2.5} /> Watch Demo
               </Button>
