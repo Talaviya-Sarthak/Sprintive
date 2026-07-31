@@ -48,11 +48,15 @@ export const meetingService = {
   },
 
   async getParticipants(id: string): Promise<Participant[]> {
-    const { data } = await api.get(`/meetings/${id}/join`);
+    const { data } = await api.post(`/meetings/${id}/join`);
     return data.data?.participants ?? [];
   },
 
   async leaveMeeting(id: string): Promise<void> {
     await api.post(`/meetings/${id}/leave`).catch(() => {});
+  },
+
+  async deleteMeeting(id: string): Promise<void> {
+    await api.delete(`/meetings/${id}`);
   },
 };

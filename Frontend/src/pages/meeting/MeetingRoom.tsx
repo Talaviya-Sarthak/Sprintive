@@ -31,21 +31,25 @@ export default function MeetingRoom() {
     setSidebarTab, resetUnread, reset,
   } = useMeetingStore();
 
-  const { stream, toggleMic, toggleCamera: toggleCam, startScreenShare } = useMediaDevices();
-  const { sendChat, startMeeting, endMeeting, setLocalStream } = useMeetingSocket(id);
+  const { stream, stopMedia, toggleMic, toggleCamera: toggleCam, startScreenShare } = useMediaDevices();
+  const { sendChat, startMeeting, endMeeting, leaveMeeting: leaveSocket, setLocalStream } = useMeetingSocket(id);
 
   const [endedData, setEndedData] = useState<{ meeting: Meeting; recording: Recording; transcript: Transcript } | null>(null);
 
-  const token   = localStorage.getItem('access_token') ?? '';
+  const token = localStorage.getItem('access_token') ?? '';
   const payload = parseJwt(token);
-  const userId  = payload.id ?? payload.sub ?? '';
-  const isHost  = meeting?.host_id === userId;
+  const userId = payload.id ?? payload.sub ?? '';
+  const isHost = meeting?.host_id === userId;
 
   useEffect(() => {
     if (!id) return;
-    meetingService.getMeeting(id).then(setMeeting);
-    meetingService.getChats(id).then(setChats);
-    meetingService.getParticipants?.(id)?.then(setParticipants).catch(() => {});
+    meetingService.joinMeeting(id).then((res) => {
+      setMeeting(res.meeting);
+      setParticipants(res.participants ?? []);
+    }).catch(() => {
+      meetingService.getMeeting(id).then(setMeeting).catch(() => {});
+    });
+    meetingService.getChats(id).then(setChats).catch(() => {});
     return () => reset();
   }, [id]);
 
@@ -70,9 +74,11 @@ export default function MeetingRoom() {
     endMeeting((data) => setEndedData(data));
   };
 
-  const handleLeave = async () => {
-    if (id) await meetingService.leaveMeeting?.(id).catch(() => {});
-    navigate(-1);
+  const handleLeave = () => {
+    stopMedia();
+    leaveSocket();
+    if (id) meetingService.leaveMeeting?.(id).catch(() => {});
+    navigate('/dashboard');
   };
 
   const handleToggleSidebar = (tab: 'participants' | 'chat') => {
@@ -145,6 +151,7 @@ export default function MeetingRoom() {
       isMuted,
       isCameraOff,
       isSpeaking: activeSpeakerId === userId,
+      stream: stream ?? undefined,
     },
     ...participants.filter((p) => p.user_id !== userId),
   ];
@@ -216,7 +223,7 @@ export default function MeetingRoom() {
             <AnimatePresence>
               {allParticipants.map((p) => (
                 <ParticipantCard
-                  key={p.user_id}
+                  key={p.id}
                   participant={p}
                   isActive={activeSpeakerId === p.user_id}
                   videoRef={p.user_id === userId ? localVideoRef : undefined}

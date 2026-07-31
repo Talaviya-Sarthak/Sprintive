@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { teamService } from '../../services/team.service';
 import { meetingService } from '../../services/meeting.service';
 import { useAuth } from '../../context/AuthContext';
@@ -13,8 +13,7 @@ import { AppTabs } from '../../components/app-ui';
 import type { Meeting, MeetingStatus, MeetingType } from '../../types';
 
 export default function MeetingsPage() {
-  const { id: teamId } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const { teamId } = useParams<{ teamId: string }>();
   const { user } = useAuth();
 
   const [meetings, setMeetings] = useState<Meeting[]>([]);
@@ -22,13 +21,11 @@ export default function MeetingsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Filters
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<MeetingStatus | 'all'>('all');
   const [typeFilter, setTypeFilter] = useState<MeetingType | 'all'>('all');
   const [activeTab, setActiveTab] = useState<'all' | 'upcoming' | 'live' | 'completed'>('all');
 
-  // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editMeeting, setEditMeeting] = useState<Meeting | null>(null);
   const [deleteMeeting, setDeleteMeeting] = useState<Meeting | null>(null);
@@ -36,7 +33,7 @@ export default function MeetingsPage() {
   const fetchMeetings = async () => {
     if (!teamId) return;
     try {
-      const data = await teamService.getTeamMeetings(teamId);
+      const data = await meetingService.getMeetings(teamId);
       setMeetings(data);
     } catch {
       setError('Failed to load meetings');
@@ -46,7 +43,8 @@ export default function MeetingsPage() {
   useEffect(() => {
     if (!teamId) return;
     setLoading(true);
-    Promise.all([teamService.getTeam(teamId), teamService.getTeamMeetings(teamId)])
+    setError('');
+    Promise.all([teamService.getTeam(teamId), meetingService.getMeetings(teamId)])
       .then(([t, m]) => {
         setTeamName(t.name);
         setMeetings(m);
@@ -55,21 +53,16 @@ export default function MeetingsPage() {
       .finally(() => setLoading(false));
   }, [teamId]);
 
-  // Tab filtering logic
-  const now = new Date();
   const filteredByTab = meetings.filter(m => {
     if (activeTab === 'live') return m.status === 'active';
-    if (activeTab === 'completed') return m.status === 'ended';
-    if (activeTab === 'upcoming') {
-      return m.status === 'scheduled' && new Date(`${m.date}T${m.start_time}`) >= now;
-    }
+    if (activeTab === 'completed') return m.status === 'ended' || m.status === 'cancelled';
+    if (activeTab === 'upcoming') return m.status === 'scheduled';
     return true;
   });
 
-  // Header controls filtering
   const finalFiltered = filteredByTab.filter(m => {
     if (statusFilter !== 'all' && m.status !== statusFilter) return false;
-    if (typeFilter !== 'all' && m.meeting_type !== typeFilter) return false;
+    if (typeFilter !== 'all' && (m.meeting_type ?? 'daily_scrum') !== typeFilter) return false;
     if (search.trim()) {
       const q = search.toLowerCase();
       const matchTitle = m.title.toLowerCase().includes(q);
@@ -81,15 +74,9 @@ export default function MeetingsPage() {
 
   const tabItems = [
     { id: 'all', label: 'All', count: meetings.length },
-    {
-      id: 'upcoming',
-      label: 'Upcoming',
-      count: meetings.filter(
-        m => m.status === 'scheduled' && new Date(`${m.date}T${m.start_time}`) >= now
-      ).length,
-    },
+    { id: 'upcoming', label: 'Upcoming', count: meetings.filter(m => m.status === 'scheduled').length },
     { id: 'live', label: 'Live', count: meetings.filter(m => m.status === 'active').length },
-    { id: 'completed', label: 'Completed', count: meetings.filter(m => m.status === 'ended').length },
+    { id: 'completed', label: 'Completed', count: meetings.filter(m => m.status === 'ended' || m.status === 'cancelled').length },
   ];
 
   if (loading) {
@@ -121,7 +108,7 @@ export default function MeetingsPage() {
           <AppTabs
             items={tabItems}
             activeId={activeTab}
-            onChange={id => setActiveTab(id as any)}
+            onChange={id => setActiveTab(id as typeof activeTab)}
           />
         </div>
 
@@ -145,36 +132,38 @@ export default function MeetingsPage() {
           </div>
         )}
 
-        {/* Modals */}
-        {showCreateModal && (
-          <CreateMeetingModal
-            teamId={teamId!}
-            onClose={() => setShowCreateModal(false)}
-            onCreated={fetchMeetings}
-          />
-        )}
-        {editMeeting && (
-          <EditMeetingModal
-            meeting={editMeeting}
-            onClose={() => setEditMeeting(null)}
-            onUpdated={fetchMeetings}
-          />
-        )}
+        <CreateMeetingModal
+          open={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onCreate={async (data) => {
+            if (!teamId) return;
+            await meetingService.createMeeting({ ...data, team_id: teamId } as any);
+            fetchMeetings();
+          }}
+          teamMembers={[]}
+        />
+        <EditMeetingModal
+          open={!!editMeeting}
+          meeting={editMeeting}
+          onClose={() => setEditMeeting(null)}
+          onUpdate={async () => {
+            setEditMeeting(null);
+            fetchMeetings();
+          }}
+          teamMembers={[]}
+        />
         {deleteMeeting && (
           <DeleteMeetingDialog
             open={!!deleteMeeting}
             onClose={() => setDeleteMeeting(null)}
             onConfirm={async () => {
-              if (deleteMeeting) {
-                await meetingService.deleteMeeting(deleteMeeting.id);
-                setDeleteMeeting(null);
-                fetchMeetings();
-              }
+              await meetingService.deleteMeeting(deleteMeeting.id);
+              setDeleteMeeting(null);
+              fetchMeetings();
             }}
             meetingTitle={deleteMeeting.title}
           />
         )}
-
       </div>
     </AppLayout>
   );

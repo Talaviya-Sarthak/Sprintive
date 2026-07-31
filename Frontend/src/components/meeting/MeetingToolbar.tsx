@@ -6,22 +6,26 @@ interface ToolbarButtonProps {
   onClick: () => void;
   active?: boolean;
   danger?: boolean;
+  disabled?: boolean;
   badge?: number;
 }
 
-function ToolbarButton({ icon, label, onClick, active, danger, badge }: ToolbarButtonProps) {
+function ToolbarButton({ icon, label, onClick, active, danger, disabled, badge }: ToolbarButtonProps) {
   return (
     <motion.button
-      whileHover={{ scale: 1.04 }}
-      whileTap={{ scale: 0.96 }}
-      onClick={onClick}
-      title={label}
-      className={`relative flex flex-col items-center gap-1 px-3.5 py-2 rounded-xl transition-all duration-150 cursor-pointer ${
-        danger
-          ? 'bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white'
+      whileHover={disabled ? undefined : { scale: 1.04 }}
+      whileTap={disabled ? undefined : { scale: 0.96 }}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      title={disabled ? `${label} (Unsupported in current environment)` : label}
+      className={`relative flex flex-col items-center gap-1 px-3.5 py-2 rounded-xl transition-all duration-150 ${
+        disabled
+          ? 'bg-[#141722]/50 text-[#475569] border border-[#232636]/50 cursor-not-allowed opacity-50'
+          : danger
+          ? 'bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white cursor-pointer'
           : active
-          ? 'bg-[#F97316]/15 text-[#F97316] border border-[#F97316]/30'
-          : 'bg-[#141722] hover:bg-[#1C1F2E] text-[#94A3B8] hover:text-[#F8FAFC] border border-[#232636]'
+          ? 'bg-[#F97316]/15 text-[#F97316] border border-[#F97316]/30 cursor-pointer'
+          : 'bg-[#141722] hover:bg-[#1C1F2E] text-[#94A3B8] hover:text-[#F8FAFC] border border-[#232636] cursor-pointer'
       }`}
     >
       <span className="w-4.5 h-4.5">{icon}</span>
@@ -152,6 +156,17 @@ export default function MeetingToolbar({
         onClick={onToggleChat}
         active={sidebarTab === 'chat'}
         badge={unreadCount}
+      />
+
+      <ToolbarButton
+        icon={
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <circle cx="12" cy="12" r="6" fill="currentColor" />
+          </svg>
+        }
+        label="Record"
+        onClick={() => {}}
+        disabled
       />
 
       <div className="w-px h-6 bg-[#1E202C] mx-1" />

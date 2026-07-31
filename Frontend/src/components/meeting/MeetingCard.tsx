@@ -1,9 +1,8 @@
-import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, Users, ArrowRight } from 'lucide-react';
-import type { Meeting } from '../../types';
+import type { Meeting, MeetingType } from '../../types';
 import { MeetingStatusBadge, MeetingTypeBadge } from '../ui/Badge';
-import { AppCard, AppButton, AppBadge } from '../app-ui';
+import { AppCard, AppButton } from '../app-ui';
 
 interface MeetingCardProps {
   meeting: Meeting;
@@ -12,8 +11,23 @@ interface MeetingCardProps {
   onDelete?: (meeting: Meeting) => void;
 }
 
-function formatDate(dateStr: string) {
-  const d = new Date(dateStr + 'T00:00:00');
+function getMeetingDateValue(meeting: Meeting) {
+  return meeting.date ?? meeting.started_at ?? meeting.created_at;
+}
+
+function getMeetingStartValue(meeting: Meeting) {
+  return meeting.start_time ?? meeting.started_at ?? meeting.created_at;
+}
+
+function getMeetingEndValue(meeting: Meeting) {
+  return meeting.end_time ?? meeting.ended_at;
+}
+
+function formatDate(value?: string) {
+  if (!value) return 'Date TBD';
+  const d = value.includes('T') ? new Date(value) : new Date(`${value}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return 'Date TBD';
+
   const today = new Date();
   const tomorrow = new Date(today.getTime() + 86400000);
   if (d.toDateString() === today.toDateString()) return 'Today';
@@ -21,11 +35,28 @@ function formatDate(dateStr: string) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function formatTime(time: string) {
-  const [h, m] = time.split(':').map(Number);
+function formatTime(value?: string) {
+  if (!value) return null;
+
+  if (value.includes('T')) {
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return null;
+    return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
+
+  const [h, m = 0] = value.split(':').map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
   const ampm = h >= 12 ? 'PM' : 'AM';
   const hour = h % 12 || 12;
   return `${hour}:${m.toString().padStart(2, '0')} ${ampm}`;
+}
+
+function formatTimeRange(meeting: Meeting) {
+  const start = formatTime(getMeetingStartValue(meeting));
+  const end = formatTime(getMeetingEndValue(meeting));
+  if (start && end) return `${start} - ${end}`;
+  if (start) return start;
+  return 'Time TBD';
 }
 
 function getInitials(name: string) {
@@ -37,13 +68,15 @@ const isOwner = (meeting: Meeting, userId: string) => meeting.host_id === userId
 export default function MeetingCard({ meeting, currentUserId, onEdit, onDelete }: MeetingCardProps) {
   const navigate = useNavigate();
   const owner = isOwner(meeting, currentUserId);
+  const meetingType = (meeting.meeting_type ?? 'daily_scrum') as MeetingType;
+  const hostName = meeting.host_name ?? 'Host';
 
   return (
     <AppCard
       hoverable
       title={
         <div className="flex items-center gap-2">
-          <MeetingTypeBadge type={meeting.meeting_type} />
+          <MeetingTypeBadge type={meetingType} />
           {meeting.sprint_name && (
             <span className="text-[10px] text-[#64748B] font-mono">{meeting.sprint_name}</span>
           )}
@@ -52,11 +85,11 @@ export default function MeetingCard({ meeting, currentUserId, onEdit, onDelete }
       action={<MeetingStatusBadge status={meeting.status} size="sm" />}
       footer={
         <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#F97316] to-[#EA580C] flex items-center justify-center text-white text-[9px] font-bold shrink-0">
-              {getInitials(meeting.host_name ?? 'Host')}
+              {getInitials(hostName)}
             </div>
-            <span className="text-xs text-[#CBD5E1] font-medium">{meeting.host_name}</span>
+            <span className="text-xs text-[#CBD5E1] font-medium truncate">{hostName}</span>
           </div>
 
           <div className="flex items-center gap-1">
@@ -104,17 +137,16 @@ export default function MeetingCard({ meeting, currentUserId, onEdit, onDelete }
 
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2.5 text-[11px] text-[#64748B]">
           <span className="flex items-center gap-1">
-            <Calendar size={12} className="text-[#F97316]" /> {formatDate(meeting.date)}
+            <Calendar size={12} className="text-[#F97316]" /> {formatDate(getMeetingDateValue(meeting))}
           </span>
           <span className="flex items-center gap-1">
-            <Clock size={12} /> {formatTime(meeting.start_time)} - {formatTime(meeting.end_time)}
+            <Clock size={12} /> {formatTimeRange(meeting)}
           </span>
           <span className="flex items-center gap-1">
-            <Users size={12} /> {meeting.participant_count}
+            <Users size={12} /> {meeting.participant_count ?? 0}
           </span>
         </div>
       </div>
     </AppCard>
   );
 }
-

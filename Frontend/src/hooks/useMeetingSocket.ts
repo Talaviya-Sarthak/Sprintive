@@ -116,5 +116,15 @@ export function useMeetingSocket(meetingId: string | undefined) {
     localStreamRef.current = stream;
   }, []);
 
-  return { socket: socketRef.current, sendChat, startMeeting, endMeeting, setLocalStream };
+  const leaveMeeting = useCallback(() => {
+    if (socketRef.current) {
+      socketRef.current.emit('meeting:leave', { meetingId });
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+    peerConnections.current.forEach((pc) => pc.close());
+    peerConnections.current.clear();
+  }, [meetingId]);
+
+  return { socket: socketRef.current, sendChat, startMeeting, endMeeting, leaveMeeting, setLocalStream };
 }

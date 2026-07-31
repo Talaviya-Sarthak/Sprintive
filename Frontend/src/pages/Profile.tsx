@@ -23,7 +23,7 @@ interface ProfileFormData extends Partial<User> {
 }
 
 export default function Profile() {
-  const { user, refreshUser } = useAuth();
+  const { refreshUser } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 

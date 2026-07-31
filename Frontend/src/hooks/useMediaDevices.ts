@@ -30,5 +30,11 @@ export function useMediaDevices() {
     } catch { return null; }
   };
 
-  return { stream, isMuted, isCameraOff, error, toggleMic, toggleCamera, startScreenShare };
+  const stopMedia = () => {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    setStream(null);
+  };
+
+  return { stream, isMuted, isCameraOff, error, toggleMic, toggleCamera, startScreenShare, stopMedia };
 }

@@ -343,7 +343,7 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
           <div className="flex items-center gap-2">
             {/* New Meeting CTA */}
             <button
-              onClick={() => navigate('/meetings/create')}
+              onClick={() => navigate(teamId ? `/meetings/create?team_id=${teamId}` : '/meetings/create')}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold text-xs transition-all shadow-xs cursor-pointer"
             >
               <Plus size={13} />

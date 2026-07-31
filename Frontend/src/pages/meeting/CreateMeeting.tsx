@@ -1,88 +1,205 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Video, ArrowLeft } from 'lucide-react';
 import { meetingService } from '../../services/meeting.service';
+import { useAuth } from '../../context/AuthContext';
+import AppLayout from '../../layouts/AppLayout';
+import { AppButton, AppInput, AppSelect } from '../../components/app-ui';
+import type { MeetingType } from '../../types';
+
+const MEETING_TYPES: { value: MeetingType; label: string }[] = [
+  { value: 'daily_scrum', label: 'Daily Scrum' },
+  { value: 'sprint_planning', label: 'Sprint Planning' },
+  { value: 'review', label: 'Sprint Review' },
+  { value: 'retrospective', label: 'Retrospective' },
+  { value: 'custom', label: 'Custom Meeting' },
+];
 
 export default function CreateMeeting() {
-  const navigate      = useNavigate();
-  const [params]      = useSearchParams();
-  const defaultTeamId = params.get('team_id') ?? '';
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const { teams } = useAuth();
+  
+  const queryTeamId = params.get('team_id') ?? '';
+  const initialTeamId = queryTeamId || (teams.length > 0 ? teams[0].id : '');
 
-  const [form, setForm] = useState({ team_id: defaultTeamId, title: '', sprint_name: '' });
+  const [form, setForm] = useState({
+    team_id: initialTeamId,
+    title: '',
+    description: '',
+    meeting_type: 'daily_scrum' as MeetingType,
+    date: new Date().toISOString().split('T')[0],
+    start_time: '10:00',
+    end_time: '10:30',
+    sprint_name: '',
+  });
+
   const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState('');
+  const [error, setError] = useState('');
 
-  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
+  useEffect(() => {
+    if (!form.team_id && teams.length > 0) {
+      setForm(f => ({ ...f, team_id: teams[0].id }));
+    }
+  }, [teams]);
+
+  const setField = (key: string, value: string) => {
+    setForm(f => ({ ...f, [key]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.team_id || !form.title.trim()) { setError('Team and title are required'); return; }
+    if (!form.team_id) {
+      setError('Please select a team workspace');
+      return;
+    }
+    if (!form.title.trim()) {
+      setError('Meeting title is required');
+      return;
+    }
+
     setLoading(true);
+    setError('');
+
     try {
       const meeting = await meetingService.createMeeting({
         team_id: form.team_id,
-        title: form.title,
-        sprint_name: form.sprint_name || undefined,
+        title: form.title.trim(),
+        description: form.description.trim() || undefined,
+        meeting_type: form.meeting_type,
+        date: form.date,
+        start_time: form.start_time,
+        end_time: form.end_time,
+        sprint_name: form.sprint_name.trim() || undefined,
       });
-      navigate(`/meetings/${meeting.id}`);
+
+      // Smooth navigation to the created meeting details or team meetings page
+      if (meeting?.id) {
+        navigate(`/meetings/${meeting.id}`);
+      } else {
+        navigate(`/teams/${form.team_id}/meetings`);
+      }
     } catch (err: unknown) {
-      setError((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to create meeting');
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setError(msg ?? 'Failed to create meeting. Please check inputs.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#0B1220] flex items-center justify-center p-4">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
-        <div className="mb-6 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#3B82F6]/10 border border-[#3B82F6]/20 text-[#3B82F6] text-xs font-semibold mb-4">
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M3 8a2 2 0 00-2 2v4a2 2 0 002 2h9a2 2 0 002-2v-4a2 2 0 00-2-2H3z"/></svg>
-            New Meeting
-          </div>
-          <h1 className="text-2xl font-bold text-[#F8FAFC]">Schedule a Meeting</h1>
-        </div>
+    <AppLayout teamId={form.team_id}>
+      <div className="p-5 md:p-8 max-w-3xl mx-auto space-y-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-1.5 text-xs text-[#94A3B8] hover:text-[#F8FAFC] transition-colors cursor-pointer"
+        >
+          <ArrowLeft size={14} /> Back
+        </button>
 
-        <form onSubmit={handleSubmit} className="bg-[#111827] border border-white/8 rounded-2xl p-6 space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-[#CBD5E1] mb-2">Team ID</label>
-            <input
-              value={form.team_id}
-              onChange={(e) => set('team_id', e.target.value)}
-              placeholder="Team UUID"
-              className="w-full bg-[#0d1117] border border-white/10 rounded-xl px-4 py-3 text-[#F8FAFC] placeholder-[#475569] text-sm outline-none focus:border-[#3B82F6] transition-colors"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-[#CBD5E1] mb-2">Meeting Title *</label>
-            <input
-              value={form.title}
-              onChange={(e) => set('title', e.target.value)}
-              placeholder="e.g. Daily Scrum — Sprint 12"
-              className="w-full bg-[#0d1117] border border-white/10 rounded-xl px-4 py-3 text-[#F8FAFC] placeholder-[#475569] text-sm outline-none focus:border-[#3B82F6] transition-colors"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-[#CBD5E1] mb-2">Sprint Name</label>
-            <input
-              value={form.sprint_name}
-              onChange={(e) => set('sprint_name', e.target.value)}
-              placeholder="e.g. Sprint 12"
-              className="w-full bg-[#0d1117] border border-white/10 rounded-xl px-4 py-3 text-[#F8FAFC] placeholder-[#475569] text-sm outline-none focus:border-[#3B82F6] transition-colors"
-            />
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+          <div className="border-b border-[#181A26] pb-5">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#F97316]/10 border border-[#F97316]/20 text-[#F97316] text-xs font-mono font-semibold mb-3">
+              <Video size={12} /> NEW MEETING SESSION
+            </div>
+            <h1 className="text-xl md:text-2xl font-bold text-[#F8FAFC] tracking-tight">
+              Schedule & Start Meeting
+            </h1>
+            <p className="text-[#94A3B8] text-xs mt-1">
+              Set up your Agile Scrum meeting with AI voice recording, automated transcripts, and task generation.
+            </p>
           </div>
 
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+          <form onSubmit={handleSubmit} className="space-y-5 bg-[#11131C] border border-[#1E2232] rounded-xl p-6 shadow-sm">
+            {teams.length > 0 ? (
+              <AppSelect
+                label="Target Workspace / Team *"
+                value={form.team_id}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setField('team_id', e.target.value)}
+                options={teams.map(t => ({ value: t.id, label: t.name }))}
+              />
+            ) : (
+              <div className="bg-[#171A26] border border-[#232738] rounded-lg p-4 text-center space-y-2">
+                <p className="text-xs text-[#94A3B8]">You need to create a Team first before scheduling meetings.</p>
+                <AppButton variant="primary" size="xs" onClick={() => navigate('/teams/create')}>
+                  Create Team First
+                </AppButton>
+              </div>
+            )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] disabled:opacity-60 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2"
-          >
-            {loading ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Creating...</> : 'Create Meeting'}
-          </button>
-        </form>
-      </motion.div>
-    </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <AppInput
+                label="Meeting Title *"
+                placeholder="e.g. Daily Standup — Sprint 14"
+                value={form.title}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setField('title', e.target.value)}
+              />
+
+              <AppSelect
+                label="Meeting Type"
+                value={form.meeting_type}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setField('meeting_type', e.target.value)}
+                options={MEETING_TYPES}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <AppInput
+                label="Date *"
+                type="date"
+                value={form.date}
+                onChange={e => setField('date', e.target.value)}
+              />
+
+              <AppInput
+                label="Start Time *"
+                type="time"
+                value={form.start_time}
+                onChange={e => setField('start_time', e.target.value)}
+              />
+
+              <AppInput
+                label="End Time *"
+                type="time"
+                value={form.end_time}
+                onChange={e => setField('end_time', e.target.value)}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <AppInput
+                label="Sprint Name (Optional)"
+                placeholder="e.g. Sprint 14"
+                value={form.sprint_name}
+                onChange={e => setField('sprint_name', e.target.value)}
+              />
+
+              <AppInput
+                label="Description / Context (Optional)"
+                placeholder="Brief agenda or focus points..."
+                value={form.description}
+                onChange={e => setField('description', e.target.value)}
+              />
+            </div>
+
+            {error && (
+              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium">
+                {error}
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#181A26]">
+              <AppButton variant="secondary" size="sm" type="button" onClick={() => navigate(-1)}>
+                Cancel
+              </AppButton>
+              <AppButton variant="primary" size="sm" type="submit" loading={loading} disabled={teams.length === 0}>
+                Schedule Meeting
+              </AppButton>
+            </div>
+          </form>
+        </motion.div>
+      </div>
+    </AppLayout>
   );
 }

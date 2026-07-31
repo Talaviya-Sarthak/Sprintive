@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Users, Clock, Globe, Calendar, Plus, Mail, Check, Trash2, ArrowRight } from 'lucide-react';
+import { Users, Clock, Calendar, Mail, Trash2, Video, Settings } from 'lucide-react';
 import { teamService } from '../../services/team.service';
 import { useAuth } from '../../context/AuthContext';
 import AppLayout from '../../layouts/AppLayout';
+import { AppButton, AppBadge, AppInput } from '../../components/app-ui';
 import type { Team, TeamMember } from '../../types';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -38,14 +38,14 @@ export default function TeamOverview() {
         setTeam(t);
         setMembers(m);
       })
-      .catch(() => setError('Team not found or access denied.'))
+      .catch(() => setError('Team workspace not found or access denied.'))
       .finally(() => setLoading(false));
   }, [id]);
 
   const handleInvite = async () => {
     const email = inviteEmail.trim().toLowerCase();
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setInviteError('Enter a valid email');
+      setInviteError('Enter a valid email address');
       return;
     }
     setInviting(true);
@@ -53,7 +53,7 @@ export default function TeamOverview() {
     setInviteSuccess('');
     try {
       await teamService.inviteMembers(id!, [email]);
-      setInviteSuccess(`Invitation sent to ${email}`);
+      setInviteSuccess(`Invitation dispatched to ${email}`);
       setInviteEmail('');
     } catch (e: unknown) {
       setInviteError(
@@ -85,7 +85,7 @@ export default function TeamOverview() {
     }
   };
 
-  if (loading)
+  if (loading) {
     return (
       <AppLayout teamId={id}>
         <div className="flex items-center justify-center h-64">
@@ -93,225 +93,187 @@ export default function TeamOverview() {
         </div>
       </AppLayout>
     );
+  }
 
-  if (error || !team)
+  if (error || !team) {
     return (
       <AppLayout teamId={id}>
         <div className="flex flex-col items-center justify-center h-64 gap-4">
-          <p className="text-red-400 text-sm">{error || 'Team not found'}</p>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="px-4 py-2 rounded-lg bg-[#F97316] text-white text-xs font-semibold"
-          >
-            Back to Dashboard
-          </button>
+          <p className="text-xs text-red-400 font-medium">{error || 'Team not found'}</p>
+          <AppButton variant="secondary" size="sm" onClick={() => navigate('/dashboard')}>
+            Return to Dashboard
+          </AppButton>
         </div>
       </AppLayout>
     );
+  }
 
-  const workingDays = (team.working_days as number[]).map(d => DAYS[d]).join(', ');
+  const workingDayNames = ((team.working_days as number[]) || [1, 2, 3, 4, 5])
+    .map(d => DAYS[d])
+    .join(', ');
 
   return (
     <AppLayout teamId={id}>
-      <div className="p-5 md:p-8 max-w-4xl mx-auto space-y-6">
-        {/* Team Header Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-[#12141D] border border-[#232636] rounded-xl overflow-hidden shadow-sm"
-        >
-          <div className="p-6 flex flex-col sm:flex-row items-start justify-between gap-5">
-            <div className="flex items-start gap-4">
-              <div
-                className="w-14 h-14 rounded-xl flex items-center justify-center text-white text-xl font-bold shrink-0 overflow-hidden shadow-sm"
-                style={{ background: team.avatar_url ? 'transparent' : team.color }}
-              >
-                {team.avatar_url ? (
-                  <img src={team.avatar_url} className="w-full h-full object-cover" alt="" />
-                ) : (
-                  team.name[0].toUpperCase()
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-bold text-[#F8FAFC]">{team.name}</h1>
-                  <span className="px-2 py-0.5 rounded-full bg-[#181B28] border border-[#232636] text-[10px] font-mono font-semibold text-[#F97316]">
-                    SCRUM WORKSPACE
-                  </span>
-                </div>
-                {team.description && (
-                  <p className="text-[#94A3B8] text-xs mt-1 leading-relaxed">{team.description}</p>
-                )}
-
-                <div className="flex flex-wrap gap-4 mt-3 pt-3 border-t border-[#1C1F2E] text-xs text-[#64748B]">
-                  <span className="flex items-center gap-1.5 font-medium">
-                    <Users size={13} className="text-[#F97316]" /> {Number(team.member_count ?? 1)}{' '}
-                    members
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Globe size={13} /> {team.timezone}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Clock size={13} /> Daily scrum {team.daily_scrum_time}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Calendar size={13} /> {workingDays}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {isOwner && (
-              <button
-                onClick={() => navigate(`/teams/${id}/settings`)}
-                className="shrink-0 px-3 py-1.5 rounded-lg bg-[#181B28] hover:bg-[#1E2232] border border-[#232636] text-[#CBD5E1] text-xs font-semibold transition-colors cursor-pointer"
-              >
-                Settings
-              </button>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Members Preview Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="bg-[#12141D] border border-[#232636] rounded-xl p-5"
-        >
-          <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#1C1F2E]">
-            <h2 className="text-xs font-mono font-semibold text-[#F8FAFC] uppercase tracking-wider">
-              Members ({members.length})
-            </h2>
-            <button
-              onClick={() => navigate(`/teams/${id}/members`)}
-              className="text-xs text-[#F97316] font-semibold hover:underline flex items-center gap-1 cursor-pointer"
+      <div className="p-5 md:p-8 max-w-6xl mx-auto space-y-6">
+        {/* Workspace Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-[#181A26]">
+          <div className="flex items-center gap-4">
+            <div
+              className="w-14 h-14 rounded-xl flex items-center justify-center text-white text-xl font-bold border border-[#232738] shrink-0"
+              style={{ background: team.color || '#F97316' }}
             >
-              <span>View all</span>
-              <ArrowRight size={12} />
-            </button>
-          </div>
-
-          <div className="space-y-1">
-            {members.slice(0, 5).map(m => (
-              <div
-                key={m.id}
-                className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-[#181B28] transition-colors"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#F97316] to-[#EA580C] flex items-center justify-center text-white text-[10px] font-bold shrink-0 overflow-hidden">
-                    {m.avatar_url ? (
-                      <img src={m.avatar_url} className="w-full h-full object-cover" alt="" />
-                    ) : (
-                      m.full_name
-                        .split(' ')
-                        .map(n => n[0])
-                        .join('')
-                        .slice(0, 2)
-                        .toUpperCase()
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-[#F8FAFC] truncate">
-                      {m.full_name}{' '}
-                      {m.user_id === user?.id && (
-                        <span className="text-[#64748B] font-normal">(you)</span>
-                      )}
-                    </p>
-                    <p className="text-[10px] text-[#64748B] truncate">{m.email}</p>
-                  </div>
-                </div>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#181B28] border border-[#232636] text-[#94A3B8] font-medium capitalize shrink-0">
-                  {m.role.replace('_', ' ')}
-                </span>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Invite Section (Owner only) */}
-        {isOwner && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-[#12141D] border border-[#232636] rounded-xl p-5"
-          >
-            <h2 className="text-xs font-mono font-semibold text-[#F8FAFC] uppercase tracking-wider mb-3 flex items-center gap-2">
-              <Mail size={14} className="text-[#F97316]" /> Invite Team Members
-            </h2>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <input
-                value={inviteEmail}
-                onChange={e => setInviteEmail(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleInvite()}
-                placeholder="colleague@company.com"
-                className="flex-1 bg-[#090A0F] border border-[#232636] rounded-lg px-3.5 py-2 text-xs text-[#F8FAFC] placeholder-[#64748B] outline-none focus:border-[#F97316] transition-colors"
-              />
-              <button
-                onClick={handleInvite}
-                disabled={inviting}
-                className="px-4 py-2 rounded-lg bg-[#F97316] hover:bg-[#EA580C] disabled:opacity-60 text-white text-xs font-semibold transition-all shadow-sm shadow-[#F97316]/20 flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
-              >
-                {inviting ? (
-                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <Plus size={14} />
-                )}
-                <span>Send Invite</span>
-              </button>
-            </div>
-            {inviteError && <p className="text-red-400 text-xs mt-2">{inviteError}</p>}
-            {inviteSuccess && (
-              <p className="text-emerald-400 text-xs mt-2 flex items-center gap-1">
-                <Check size={12} /> {inviteSuccess}
-              </p>
-            )}
-          </motion.div>
-        )}
-
-        {/* Danger Zone (Owner only) */}
-        {isOwner && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="bg-[#12141D] border border-red-500/20 rounded-xl p-5"
-          >
-            <h2 className="text-xs font-mono font-semibold text-red-400 uppercase tracking-wider mb-1">
-              Danger Zone
-            </h2>
-            <p className="text-xs text-[#64748B] mb-4">
-              Deleting this workspace will permanently destroy all meeting records, transcripts, and sprint tasks.
-            </p>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                  confirmDelete
-                    ? 'bg-red-600 text-white hover:bg-red-700'
-                    : 'bg-red-500/15 text-red-400 border border-red-500/25 hover:bg-red-500 hover:text-white'
-                }`}
-              >
-                <Trash2 size={13} />
-                <span>
-                  {deleting ? 'Deleting…' : confirmDelete ? 'Confirm Delete Workspace' : 'Delete Team Workspace'}
-                </span>
-              </button>
-              {confirmDelete && !deleting && (
-                <button
-                  onClick={() => setConfirmDelete(false)}
-                  className="text-xs text-[#64748B] hover:text-[#CBD5E1] transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
+              {team.avatar_url ? (
+                <img src={team.avatar_url} className="w-full h-full object-cover rounded-xl" alt={team.name} />
+              ) : (
+                team.name[0].toUpperCase()
               )}
             </div>
-          </motion.div>
-        )}
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl md:text-2xl font-bold text-[#F8FAFC] tracking-tight">{team.name}</h1>
+                <AppBadge variant={isOwner ? 'orange' : 'neutral'} size="xs">
+                  {isOwner ? 'Owner' : 'Member'}
+                </AppBadge>
+              </div>
+              <p className="text-[#94A3B8] text-xs mt-0.5 max-w-xl">
+                {team.description || 'Agile Scrum workspace & meeting intelligence environment'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <AppButton variant="primary" size="sm" onClick={() => navigate(`/meetings/create?team_id=${team.id}`)}>
+              <Video size={13} className="mr-1" /> New Meeting
+            </AppButton>
+            <AppButton variant="secondary" size="sm" onClick={() => navigate(`/teams/${team.id}/meetings`)}>
+              <Calendar size={13} className="mr-1" /> Meeting Logs
+            </AppButton>
+            {isOwner && (
+              <AppButton variant="ghost" size="sm" onClick={() => navigate(`/teams/${team.id}/settings`)}>
+                <Settings size={13} />
+              </AppButton>
+            )}
+          </div>
+        </div>
+
+        {/* Content Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left 2 Cols: Stats & Members */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="bg-[#11131C] border border-[#1E2232] rounded-xl p-3.5">
+                <div className="flex items-center justify-between text-[#64748B] mb-1">
+                  <span className="text-[10px] font-mono uppercase font-semibold">Teammates</span>
+                  <Users size={14} className="text-[#F97316]" />
+                </div>
+                <div className="text-xl font-bold text-[#F8FAFC]">{members.length}</div>
+                <span className="text-[10px] text-[#64748B] block mt-0.5">Active Engineers</span>
+              </div>
+
+              <div className="bg-[#11131C] border border-[#1E2232] rounded-xl p-3.5">
+                <div className="flex items-center justify-between text-[#64748B] mb-1">
+                  <span className="text-[10px] font-mono uppercase font-semibold">Daily Scrum</span>
+                  <Clock size={14} className="text-amber-400" />
+                </div>
+                <div className="text-xl font-bold text-[#F8FAFC]">{team.daily_scrum_time || '09:00'}</div>
+                <span className="text-[10px] text-[#64748B] block mt-0.5">{team.timezone || 'UTC'}</span>
+              </div>
+
+              <div className="bg-[#11131C] border border-[#1E2232] rounded-xl p-3.5 col-span-2 sm:col-span-1">
+                <div className="flex items-center justify-between text-[#64748B] mb-1">
+                  <span className="text-[10px] font-mono uppercase font-semibold">Sprint Days</span>
+                  <Calendar size={14} className="text-emerald-400" />
+                </div>
+                <div className="text-xs font-semibold text-[#F8FAFC] truncate mt-1">{workingDayNames}</div>
+                <span className="text-[10px] text-emerald-400 block mt-0.5">Active Cadence</span>
+              </div>
+            </div>
+
+            {/* Team Members List */}
+            <div className="bg-[#11131C] border border-[#1E2232] rounded-xl p-5 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#181A26]">
+                <h2 className="text-xs font-mono font-semibold text-[#94A3B8] uppercase tracking-wider">
+                  Team Members ({members.length})
+                </h2>
+                <AppButton variant="ghost" size="xs" onClick={() => navigate(`/teams/${team.id}/members`)}>
+                  Manage Members
+                </AppButton>
+              </div>
+
+              <div className="space-y-2.5">
+                {members.map(m => (
+                  <div
+                    key={m.user_id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-[#171A26] border border-[#232738]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-[#F97316]/10 border border-[#F97316]/20 flex items-center justify-center text-[#F97316] font-bold text-xs">
+                        {m.full_name?.[0] ?? 'U'}
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-[#F8FAFC]">{m.full_name}</p>
+                        <p className="text-[10px] text-[#64748B]">{m.email}</p>
+                      </div>
+                    </div>
+                    <AppBadge variant={(m.role as string) === 'owner' ? 'orange' : 'neutral'} size="xs">
+                      {m.role}
+                    </AppBadge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Col: Invite & Workspace Actions */}
+          <div className="space-y-6">
+            {/* Invite Teammates Card */}
+            <div className="bg-[#11131C] border border-[#1E2232] rounded-xl p-5 space-y-4">
+              <div>
+                <h2 className="text-xs font-mono font-semibold text-[#94A3B8] uppercase tracking-wider">
+                  Invite Teammates
+                </h2>
+                <p className="text-xs text-[#64748B] mt-0.5">Send immediate email invitations to join workspace.</p>
+              </div>
+
+              <div className="space-y-2">
+                <AppInput
+                  placeholder="colleague@company.com"
+                  value={inviteEmail}
+                  onChange={e => setInviteEmail(e.target.value)}
+                />
+                {inviteError && <p className="text-[10px] text-red-400">{inviteError}</p>}
+                {inviteSuccess && <p className="text-[10px] text-emerald-400">{inviteSuccess}</p>}
+                <AppButton variant="primary" size="xs" className="w-full justify-center" loading={inviting} onClick={handleInvite}>
+                  <Mail size={13} className="mr-1" /> Send Invitation
+                </AppButton>
+              </div>
+            </div>
+
+            {/* Owner Workspace Danger Zone */}
+            {isOwner && (
+              <div className="bg-[#11131C] border border-red-500/20 rounded-xl p-5 space-y-3">
+                <h2 className="text-xs font-mono font-semibold text-red-400 uppercase tracking-wider">
+                  Danger Zone
+                </h2>
+                <p className="text-[11px] text-[#64748B]">
+                  Permanently delete this team workspace, meeting records, and sprint task histories.
+                </p>
+                <AppButton
+                  variant="danger"
+                  size="xs"
+                  className="w-full justify-center"
+                  loading={deleting}
+                  onClick={handleDelete}
+                >
+                  <Trash2 size={13} className="mr-1" />
+                  {confirmDelete ? 'Confirm Permanent Delete' : 'Delete Workspace'}
+                </AppButton>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </AppLayout>
   );
 }
-

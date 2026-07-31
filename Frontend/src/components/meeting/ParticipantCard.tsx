@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import type { Participant } from '../../types';
 
@@ -9,6 +10,14 @@ interface Props {
 
 export default function ParticipantCard({ participant, isActive, videoRef }: Props) {
   const initials = participant.full_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
+  const internalVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    const targetRef = videoRef ?? internalVideoRef;
+    if (targetRef.current && participant.stream) {
+      targetRef.current.srcObject = participant.stream;
+    }
+  }, [participant.stream, participant.isCameraOff, videoRef]);
 
   return (
     <motion.div
@@ -23,11 +32,11 @@ export default function ParticipantCard({ participant, isActive, videoRef }: Pro
       {/* Video */}
       {!participant.isCameraOff && participant.stream ? (
         <video
-          ref={videoRef}
+          ref={videoRef ?? internalVideoRef}
           autoPlay
           playsInline
-          muted={participant.role === 'host'}
-          className="w-full h-full object-cover"
+          muted={participant.id === 'local' || participant.role === 'host'}
+          className="w-full h-full object-cover scale-x-[-1]"
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#1a1f2e] to-[#0d1117]">

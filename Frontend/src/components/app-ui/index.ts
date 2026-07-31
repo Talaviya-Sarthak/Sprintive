@@ -5,3 +5,5 @@ export * from './AppBadge';
 export * from './AppTabs';
 export * from './AppTable';
 export * from './AppModal';
+export * from './AppSelect';
+

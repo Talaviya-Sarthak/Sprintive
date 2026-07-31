@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Users, ArrowRight, Mail, Zap, Calendar, Activity, CheckCircle2 } from 'lucide-react';
+import { Plus, Users, ArrowRight, Mail, Calendar, Activity, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import AppLayout from '../../layouts/AppLayout';
 import { AppCard, AppButton, AppBadge } from '../../components/app-ui';
