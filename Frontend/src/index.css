@@ -2,38 +2,49 @@
 @import "./styles/app-theme.css";
 
 @layer utilities {
-  .shadow-neo {
-    box-shadow: 4px 4px 0px 0px #F97316;
+  .dash-card {
+    background-color: #141417;
+    border: 1px solid #27272a;
+    border-radius: 0.75rem;
+  }
+  .dash-card:hover {
+    border-color: #3f3f46;
+  }
+  .dash-border {
+    border-color: #27272a;
+  }
+  .dash-border-subtle {
+    border-color: #1f1f23;
   }
 }
 
 @theme {
-  --color-primary: #F97316;
-  --color-primary-hover: #EA580C;
-  --color-accent: #FDBA74;
+  --color-primary: #f4f4f5;
+  --color-primary-hover: #e4e4e7;
+  --color-accent: #a1a1aa;
   --color-success: #10B981;
   --color-warning: #F59E0B;
 
-  --color-bg: #050505;
-  --color-bg2: #0A0A0C;
+  --color-bg: #09090b;
+  --color-bg2: #0c0c0e;
   --color-bg3: #141417;
-  --color-surface: #0F0F10;
-  --color-surface2: #171719;
+  --color-surface: #121215;
+  --color-surface2: #18181b;
 
-  --color-border: #262626;
-  --color-border2: #333333;
+  --color-border: #27272a;
+  --color-border2: #3f3f46;
 
-  --color-text-h: #F8FAFC;
-  --color-text-body: #CBD5E1;
-  --color-text-muted: #94A3B8;
+  --color-text-h: #f4f4f5;
+  --color-text-body: #a1a1aa;
+  --color-text-muted: #71717a;
 
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-display: 'Bebas Neue', 'Oswald', sans-serif;
+  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
 
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
 }
 
 @layer base {
@@ -125,8 +136,4 @@
 
 .animate-carousel {
   animation: carousel 35s linear infinite;
-}
-
-.shadow-neo {
-  box-shadow: 4px 4px 0px 0px #F97316;
 }

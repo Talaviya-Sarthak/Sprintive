@@ -73,12 +73,13 @@ export default function MeetingCard({ meeting, currentUserId, onEdit, onDelete }
 
   return (
     <AppCard
+      variant="dashboard"
       hoverable
       title={
         <div className="flex items-center gap-2">
           <MeetingTypeBadge type={meetingType} />
           {meeting.sprint_name && (
-            <span className="text-[10px] text-[#64748B] font-mono">{meeting.sprint_name}</span>
+            <span className="text-[10px] text-[#71717a] font-mono">{meeting.sprint_name}</span>
           )}
         </div>
       }
@@ -86,24 +87,24 @@ export default function MeetingCard({ meeting, currentUserId, onEdit, onDelete }
       footer={
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#F97316] to-[#EA580C] flex items-center justify-center text-white text-[9px] font-bold shrink-0">
+            <div className="w-5 h-5 rounded-full bg-[#1c1c21] border border-[#27272a] flex items-center justify-center text-[#f4f4f5] text-[9px] font-semibold shrink-0">
               {getInitials(hostName)}
             </div>
-            <span className="text-xs text-[#CBD5E1] font-medium truncate">{hostName}</span>
+            <span className="text-xs text-[#a1a1aa] font-medium truncate">{hostName}</span>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             {meeting.status === 'active' && (
               <AppButton
-                variant="primary"
+                variant="mono"
                 size="xs"
-                onClick={() => navigate(`/meetings/${meeting.id}/live`)}
+                onClick={() => navigate(`/meetings/${meeting.id}/lobby`)}
               >
                 Join Live
               </AppButton>
             )}
             <AppButton
-              variant="secondary"
+              variant="mono-outline"
               size="xs"
               onClick={() => navigate(`/meetings/${meeting.id}`)}
             >
@@ -112,7 +113,7 @@ export default function MeetingCard({ meeting, currentUserId, onEdit, onDelete }
             </AppButton>
             {owner && (
               <>
-                <AppButton variant="ghost" size="xs" onClick={() => onEdit?.(meeting)}>
+                <AppButton variant="mono-ghost" size="xs" onClick={() => onEdit?.(meeting)}>
                   Edit
                 </AppButton>
                 <AppButton variant="danger" size="xs" onClick={() => onDelete?.(meeting)}>
@@ -127,17 +128,17 @@ export default function MeetingCard({ meeting, currentUserId, onEdit, onDelete }
       <div>
         <h3
           onClick={() => navigate(`/meetings/${meeting.id}`)}
-          className="text-xs font-bold text-[#F8FAFC] truncate hover:text-[#F97316] transition-colors cursor-pointer"
+          className="text-xs font-semibold text-[#f4f4f5] truncate hover:text-white transition-colors cursor-pointer"
         >
           {meeting.title}
         </h3>
         {meeting.description && (
-          <p className="text-[11px] text-[#94A3B8] mt-0.5 line-clamp-1">{meeting.description}</p>
+          <p className="text-[11px] text-[#a1a1aa] mt-0.5 line-clamp-1">{meeting.description}</p>
         )}
 
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2.5 text-[11px] text-[#64748B]">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2.5 text-[11px] text-[#71717a]">
           <span className="flex items-center gap-1">
-            <Calendar size={12} className="text-[#F97316]" /> {formatDate(getMeetingDateValue(meeting))}
+            <Calendar size={12} className="text-[#a1a1aa]" /> {formatDate(getMeetingDateValue(meeting))}
           </span>
           <span className="flex items-center gap-1">
             <Clock size={12} /> {formatTimeRange(meeting)}

@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 export interface AppBadgeProps {
-  variant?: 'neutral' | 'orange' | 'emerald' | 'amber' | 'blue' | 'purple' | 'red';
+  variant?: 'neutral' | 'orange' | 'emerald' | 'amber' | 'blue' | 'purple' | 'red' | 'mono';
   size?: 'xs' | 'sm';
   children: React.ReactNode;
   pulse?: boolean;
@@ -12,6 +12,7 @@ export function AppBadge({ variant = 'neutral', size = 'xs', children, pulse = f
 
   const variantStyles: Record<string, string> = {
     neutral: 'bg-[#171A26] text-[#94A3B8] border-[#232738]',
+    mono: 'bg-[#1f1f23] text-[#a1a1aa] border-[#27272a]',
     orange: 'bg-[#F97316]/10 text-[#F97316] border-[#F97316]/25',
     emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25',
     amber: 'bg-amber-500/10 text-amber-400 border-amber-500/25',

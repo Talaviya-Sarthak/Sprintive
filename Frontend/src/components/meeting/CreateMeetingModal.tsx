@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import Modal from '../ui/Modal';
-import Input, { Select, TextArea } from '../ui/Input';
-import Button from '../ui/Button';
+import { AppModal, AppInput, AppSelect, AppButton } from '../app-ui';
 import type { Meeting, MeetingType } from '../../types';
 
 interface CreateMeetingModalProps {
@@ -20,7 +18,7 @@ const meetingTypes: { value: MeetingType; label: string }[] = [
 ];
 
 const timezones = [
-  'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
+  'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
   'Europe/London', 'Europe/Berlin', 'Europe/Paris', 'Asia/Tokyo', 'Asia/Shanghai', 'Asia/Kolkata',
 ];
 
@@ -31,7 +29,7 @@ export default function CreateMeetingModal({ open, onClose, onCreate, teamMember
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [timezone, setTimezone] = useState('America/New_York');
+  const [timezone, setTimezone] = useState('UTC');
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [agendaItems, setAgendaItems] = useState<string[]>(['']);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -43,7 +41,7 @@ export default function CreateMeetingModal({ open, onClose, onCreate, teamMember
     if (!startTime) errs.startTime = 'Start time is required';
     if (!endTime) errs.endTime = 'End time is required';
     if (startTime && endTime && startTime >= endTime) errs.endTime = 'End time must be after start time';
-    if (selectedParticipants.length === 0) errs.participants = 'Select at least one participant';
+    if (teamMembers.length > 0 && selectedParticipants.length === 0) errs.participants = 'Select at least one participant';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -74,7 +72,7 @@ export default function CreateMeetingModal({ open, onClose, onCreate, teamMember
     setDate('');
     setStartTime('');
     setEndTime('');
-    setTimezone('America/New_York');
+    setTimezone('UTC');
     setSelectedParticipants([]);
     setAgendaItems(['']);
     setErrors({});
@@ -95,17 +93,17 @@ export default function CreateMeetingModal({ open, onClose, onCreate, teamMember
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Create Meeting" maxWidth="max-w-2xl">
+    <AppModal open={open} onClose={onClose} title="Create Meeting Session" maxWidth="max-w-2xl">
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
+          <AppInput
             label="Meeting Title *"
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder="e.g. Daily Scrum — Sprint 14"
             error={errors.title}
           />
-          <Select
+          <AppSelect
             label="Meeting Type"
             value={meetingType}
             onChange={e => setMeetingType(e.target.value as MeetingType)}
@@ -113,30 +111,29 @@ export default function CreateMeetingModal({ open, onClose, onCreate, teamMember
           />
         </div>
 
-        <TextArea
-          label="Description"
+        <AppInput
+          label="Description / Context"
           value={description}
           onChange={e => setDescription(e.target.value)}
-          placeholder="Meeting description..."
-          rows={2}
+          placeholder="Brief agenda or focus points..."
         />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Input
+          <AppInput
             label="Date *"
             type="date"
             value={date}
             onChange={e => setDate(e.target.value)}
             error={errors.date}
           />
-          <Input
+          <AppInput
             label="Start Time *"
             type="time"
             value={startTime}
             onChange={e => setStartTime(e.target.value)}
             error={errors.startTime}
           />
-          <Input
+          <AppInput
             label="End Time *"
             type="time"
             value={endTime}
@@ -145,36 +142,38 @@ export default function CreateMeetingModal({ open, onClose, onCreate, teamMember
           />
         </div>
 
-        <Select
+        <AppSelect
           label="Timezone"
           value={timezone}
           onChange={e => setTimezone(e.target.value)}
           options={timezones.map(tz => ({ value: tz, label: tz }))}
         />
 
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-[#CBD5E1]">Participants *</label>
-          {errors.participants && <p className="text-xs text-red-400">{errors.participants}</p>}
-          <div className="flex flex-wrap gap-2">
-            {teamMembers.map(member => (
-              <button
-                key={member.user_id}
-                type="button"
-                onClick={() => toggleParticipant(member.user_id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
-                  selectedParticipants.includes(member.user_id)
-                    ? 'bg-[#3B82F6]/20 text-[#3B82F6] border-[#3B82F6]/30'
-                    : 'bg-white/5 text-[#94A3B8] border-white/10 hover:bg-white/10'
-                }`}
-              >
-                {member.full_name}
-              </button>
-            ))}
+        {teamMembers.length > 0 && (
+          <div className="space-y-2">
+            <label className="block text-xs font-mono font-medium text-[#71717a] uppercase tracking-wider">Participants *</label>
+            {errors.participants && <p className="text-xs text-red-400 font-medium">{errors.participants}</p>}
+            <div className="flex flex-wrap gap-2">
+              {teamMembers.map(member => (
+                <button
+                  key={member.user_id}
+                  type="button"
+                  onClick={() => toggleParticipant(member.user_id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                    selectedParticipants.includes(member.user_id)
+                      ? 'bg-[#1c1c21] text-[#f4f4f5] border-[#27272a]'
+                      : 'bg-[#141417] text-[#71717a] border-[#27272a] hover:text-[#f4f4f5]'
+                  }`}
+                >
+                  {member.full_name}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-[#CBD5E1]">Agenda</label>
+          <label className="block text-xs font-mono font-medium text-[#71717a] uppercase tracking-wider">Agenda Items</label>
           <div className="space-y-2">
             {agendaItems.map((item, index) => (
               <div key={index} className="flex items-center gap-2">
@@ -182,26 +181,30 @@ export default function CreateMeetingModal({ open, onClose, onCreate, teamMember
                   value={item}
                   onChange={e => updateAgendaItem(index, e.target.value)}
                   placeholder={`Agenda item ${index + 1}`}
-                  className="flex-1 bg-[#0d1117] border border-white/10 rounded-lg px-3 py-2 text-sm text-[#CBD5E1] placeholder-[#475569] outline-none focus:border-[#3B82F6] transition-colors"
+                  className="flex-1 bg-[#141417] border border-[#27272a] rounded-lg px-3 py-2 text-xs text-[#f4f4f5] placeholder-[#71717a] outline-none focus:border-[#3f3f46] transition-colors"
                 />
                 {agendaItems.length > 1 && (
-                  <button type="button" onClick={() => removeAgendaItem(index)} className="text-red-400 hover:text-red-300 p-1">
+                  <button type="button" onClick={() => removeAgendaItem(index)} className="text-red-400 hover:text-red-300 p-1 cursor-pointer">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 )}
               </div>
             ))}
           </div>
-          <button type="button" onClick={addAgendaItem} className="text-xs text-[#3B82F6] hover:text-[#60A5FA] font-medium">
+          <button type="button" onClick={addAgendaItem} className="text-xs text-[#f4f4f5] hover:underline font-medium cursor-pointer">
             + Add agenda item
           </button>
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-2 border-t border-white/6">
-          <Button variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button type="submit">Create Meeting</Button>
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#1f1f23]">
+          <AppButton variant="mono-outline" size="sm" type="button" onClick={onClose}>
+            Cancel
+          </AppButton>
+          <AppButton variant="mono" size="sm" type="submit">
+            Create Meeting
+          </AppButton>
         </div>
       </form>
-    </Modal>
+    </AppModal>
   );
 }

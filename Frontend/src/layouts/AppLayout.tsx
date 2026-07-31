@@ -61,46 +61,45 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
   ];
 
   const sidebar = (
-    <div className="flex flex-col h-full bg-[#0C0D14] border-r border-[#1E2232] w-[230px] select-none">
+    <div className="flex flex-col h-full bg-[#0c0c0e] border-r border-[#1f1f23] w-[265px] select-none">
       {/* Brand Header */}
-      <div className="flex items-center justify-between px-3.5 py-3 border-b border-[#181A26]">
+      <div className="flex items-center justify-between px-4 py-3.5 border-b border-[#1f1f23]">
         <div
           onClick={() => navigate('/dashboard')}
-          className="flex items-center gap-2 cursor-pointer group"
+          className="flex items-center gap-2.5 cursor-pointer group"
         >
-          <div className="w-6 h-6 rounded-md bg-[#F97316] flex items-center justify-center shadow-xs">
-            <Brain size={14} color="#ffffff" strokeWidth={2.2} />
+          <div className="w-7 h-7 rounded-lg bg-[#1c1c21] border border-[#27272a] flex items-center justify-center shadow-xs">
+            <Brain size={15} className="text-[#f4f4f5]" strokeWidth={2.2} />
           </div>
-          <span className="text-sm font-bold text-[#F8FAFC] tracking-tight">
-            Sprin<span className="text-[#F97316]">tive</span>
+          <span className="text-sm font-semibold text-[#f4f4f5] tracking-tight">
+            Sprintive
           </span>
         </div>
 
-        <span className="text-[9px] font-mono font-semibold text-[#F97316] bg-[#F97316]/10 px-1.5 py-0.2 rounded border border-[#F97316]/20">
+        <span className="text-[10px] font-mono font-medium text-[#a1a1aa] bg-[#1c1c21] px-2 py-0.5 rounded-md border border-[#27272a]">
           PRO
         </span>
       </div>
 
       {/* Team Switcher Dropdown */}
-      <div className="px-2.5 py-2.5 border-b border-[#181A26] relative">
+      <div className="px-3 py-3 border-b border-[#1f1f23] relative">
         <button
           onClick={() => setTeamMenuOpen(v => !v)}
-          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md bg-[#12141D] hover:bg-[#181B28] border border-[#1E2232] transition-all text-left cursor-pointer"
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#141417] hover:bg-[#18181b] border border-[#27272a] transition-all text-left cursor-pointer"
         >
           <div
-            className="w-5 h-5 rounded flex items-center justify-center text-white text-[10px] font-bold shrink-0 shadow-xs"
-            style={{ background: currentTeam?.color ?? '#F97316' }}
+            className="w-5.5 h-5.5 rounded-md flex items-center justify-center text-[#f4f4f5] text-[11px] font-bold shrink-0 bg-[#27272a]"
           >
             {currentTeam?.name?.[0]?.toUpperCase() ?? 'S'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-semibold text-[#F8FAFC] truncate">
+            <p className="text-xs font-medium text-[#f4f4f5] truncate">
               {currentTeam?.name ?? 'Personal Workspace'}
             </p>
           </div>
           <ChevronDown
-            size={12}
-            className={`text-[#64748B] transition-transform duration-200 ${
+            size={13}
+            className={`text-[#71717a] transition-transform duration-200 ${
               teamMenuOpen ? 'rotate-180' : ''
             }`}
           />
@@ -112,9 +111,9 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
-              className="absolute left-2.5 right-2.5 top-full mt-1.5 p-1 bg-[#12141D] border border-[#1E2232] rounded-xl shadow-2xl z-50 space-y-0.5"
+              className="absolute left-3 right-3 top-full mt-1.5 p-1.5 bg-[#141417] border border-[#27272a] rounded-xl shadow-xl z-50 space-y-1"
             >
-              <div className="px-2 py-1 text-[9px] font-mono uppercase tracking-wider text-[#64748B] font-semibold">
+              <div className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-[#71717a] font-semibold">
                 Workspaces
               </div>
               <button
@@ -122,17 +121,17 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
                   navigate('/dashboard');
                   setTeamMenuOpen(false);
                 }}
-                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left text-xs transition-colors cursor-pointer ${
+                className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs transition-colors cursor-pointer ${
                   !teamId
-                    ? 'bg-[#181A26] text-[#F97316] font-semibold'
-                    : 'text-[#CBD5E1] hover:bg-[#181A26]'
+                    ? 'bg-[#1c1c21] text-[#f4f4f5] font-medium'
+                    : 'text-[#a1a1aa] hover:bg-[#18181b] hover:text-[#f4f4f5]'
                 }`}
               >
-                <div className="w-4.5 h-4.5 rounded bg-[#F97316]/15 text-[#F97316] text-[9px] font-bold flex items-center justify-center">
+                <div className="w-5 h-5 rounded-md bg-[#27272a] text-[#f4f4f5] text-[10px] font-bold flex items-center justify-center">
                   D
                 </div>
                 <span className="truncate">Main Dashboard</span>
-                {!teamId && <Check size={12} className="ml-auto" />}
+                {!teamId && <Check size={13} className="ml-auto text-[#f4f4f5]" />}
               </button>
 
               {teams.map(t => (
@@ -143,33 +142,32 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
                     setTeamMenuOpen(false);
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left text-xs transition-colors cursor-pointer ${
+                  className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs transition-colors cursor-pointer ${
                     t.id === teamId
-                      ? 'bg-[#181A26] text-[#F97316] font-semibold'
-                      : 'text-[#CBD5E1] hover:bg-[#181A26]'
+                      ? 'bg-[#1c1c21] text-[#f4f4f5] font-medium'
+                      : 'text-[#a1a1aa] hover:bg-[#18181b] hover:text-[#f4f4f5]'
                   }`}
                 >
                   <div
-                    className="w-4.5 h-4.5 rounded flex items-center justify-center text-white text-[9px] font-bold shrink-0"
-                    style={{ background: t.color }}
+                    className="w-5 h-5 rounded-md flex items-center justify-center text-[#f4f4f5] text-[10px] font-bold shrink-0 bg-[#27272a]"
                   >
                     {t.name[0].toUpperCase()}
                   </div>
                   <span className="truncate">{t.name}</span>
-                  {t.id === teamId && <Check size={12} className="ml-auto" />}
+                  {t.id === teamId && <Check size={13} className="ml-auto text-[#f4f4f5]" />}
                 </button>
               ))}
 
-              <div className="my-1 border-t border-[#181A26]" />
+              <div className="my-1 border-t border-[#1f1f23]" />
               <button
                 onClick={() => {
                   navigate('/teams/create');
                   setTeamMenuOpen(false);
                   setSidebarOpen(false);
                 }}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left text-xs text-[#94A3B8] hover:text-white hover:bg-[#181A26] transition-colors cursor-pointer"
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs text-[#a1a1aa] hover:text-[#f4f4f5] hover:bg-[#18181b] transition-colors cursor-pointer"
               >
-                <Plus size={12} />
+                <Plus size={13} />
                 <span>Create New Team</span>
               </button>
             </motion.div>
@@ -178,8 +176,8 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
       </div>
 
       {/* Main Navigation Links */}
-      <nav className="flex-1 px-2 py-2.5 space-y-0.5 overflow-y-auto app-scrollbar">
-        <div className="px-2 pb-1 text-[9px] font-mono uppercase tracking-wider text-[#64748B] font-semibold">
+      <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto app-scrollbar">
+        <div className="px-3 pb-1.5 text-[10px] font-mono uppercase tracking-wider text-[#71717a] font-semibold">
           Menu
         </div>
 
@@ -187,20 +185,20 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
           to="/dashboard"
           onClick={() => setSidebarOpen(false)}
           className={({ isActive }) =>
-            `flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
+            `flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all ${
               isActive
-                ? 'bg-[#181A26] text-[#F8FAFC] font-semibold border-l-2 border-[#F97316]'
-                : 'text-[#94A3B8] hover:bg-[#12141D] hover:text-[#F8FAFC]'
+                ? 'bg-[#1c1c21] text-[#f4f4f5]'
+                : 'text-[#a1a1aa] hover:bg-[#141417] hover:text-[#f4f4f5]'
             }`
           }
         >
-          <LayoutDashboard size={14} />
+          <LayoutDashboard size={16} />
           <span>Dashboard</span>
         </NavLink>
 
         {navItems.length > 0 && (
-          <div className="pt-2.5">
-            <div className="px-2 pb-1 text-[9px] font-mono uppercase tracking-wider text-[#64748B] font-semibold">
+          <div className="pt-3 space-y-1">
+            <div className="px-3 pb-1.5 text-[10px] font-mono uppercase tracking-wider text-[#71717a] font-semibold">
               Team Workspace
             </div>
             {navItems.map(({ to, icon: Icon, label }) => (
@@ -210,14 +208,14 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
                 end={label === 'Overview'}
                 onClick={() => setSidebarOpen(false)}
                 className={({ isActive }) =>
-                  `flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  `flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all ${
                     isActive
-                      ? 'bg-[#181A26] text-[#F8FAFC] font-semibold border-l-2 border-[#F97316]'
-                      : 'text-[#94A3B8] hover:bg-[#12141D] hover:text-[#F8FAFC]'
+                      ? 'bg-[#1c1c21] text-[#f4f4f5]'
+                      : 'text-[#a1a1aa] hover:bg-[#141417] hover:text-[#f4f4f5]'
                   }`
                 }
               >
-                <Icon size={14} />
+                <Icon size={16} />
                 <span>{label}</span>
               </NavLink>
             ))}
@@ -226,13 +224,13 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
       </nav>
 
       {/* User Footer Profile */}
-      <div className="px-2.5 py-2.5 border-t border-[#181A26] relative">
+      <div className="px-3 py-3 border-t border-[#1f1f23] relative">
         <div className="flex items-center justify-between">
           <div
             onClick={() => navigate('/profile')}
-            className="flex items-center gap-2 cursor-pointer flex-1 min-w-0 hover:opacity-90 transition-opacity"
+            className="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0 hover:opacity-90 transition-opacity"
           >
-            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#F97316] to-[#EA580C] flex items-center justify-center text-white text-[10px] font-bold shrink-0 shadow-xs overflow-hidden">
+            <div className="w-7 h-7 rounded-full bg-[#1c1c21] border border-[#27272a] flex items-center justify-center text-[#f4f4f5] text-xs font-semibold shrink-0 overflow-hidden">
               {user?.avatar_url ? (
                 <img src={user.avatar_url} className="w-full h-full object-cover" alt="" />
               ) : (
@@ -240,16 +238,16 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-semibold text-[#F8FAFC] truncate">{user?.full_name}</p>
-              <p className="text-[9px] text-[#64748B] truncate">{user?.email}</p>
+              <p className="text-xs font-medium text-[#f4f4f5] truncate">{user?.full_name}</p>
+              <p className="text-[10px] text-[#71717a] truncate">{user?.email}</p>
             </div>
           </div>
 
           <button
             onClick={() => setUserMenuOpen(v => !v)}
-            className="p-1 text-[#64748B] hover:text-[#F8FAFC] rounded-md hover:bg-[#181B28] transition-colors cursor-pointer"
+            className="p-1 text-[#71717a] hover:text-[#f4f4f5] rounded-md hover:bg-[#18181b] transition-colors cursor-pointer"
           >
-            <ChevronDown size={13} />
+            <ChevronDown size={14} />
           </button>
         </div>
 
@@ -259,23 +257,23 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 4 }}
-              className="absolute left-2.5 right-2.5 bottom-full mb-2 p-1 bg-[#12141D] border border-[#1E2232] rounded-xl shadow-2xl z-50 space-y-0.5"
+              className="absolute left-3 right-3 bottom-full mb-2 p-1.5 bg-[#141417] border border-[#27272a] rounded-xl shadow-xl z-50 space-y-1"
             >
               <button
                 onClick={() => {
                   navigate('/profile');
                   setUserMenuOpen(false);
                 }}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-[#CBD5E1] hover:bg-[#181A26] transition-colors cursor-pointer"
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs text-[#a1a1aa] hover:bg-[#18181b] hover:text-[#f4f4f5] transition-colors cursor-pointer"
               >
-                <User size={13} />
+                <User size={14} />
                 <span>View Profile</span>
               </button>
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
               >
-                <LogOut size={13} />
+                <LogOut size={14} />
                 <span>Sign Out</span>
               </button>
             </motion.div>
@@ -286,7 +284,7 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
   );
 
   return (
-    <div className="flex h-screen bg-[#08090E] text-[#CBD5E1] overflow-hidden">
+    <div className="flex h-screen bg-[#09090b] text-[#a1a1aa] overflow-hidden">
       {/* Desktop Sidebar */}
       <div className="hidden md:flex flex-shrink-0">{sidebar}</div>
 
@@ -298,13 +296,13 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/75 backdrop-blur-xs z-40 md:hidden"
+              className="fixed inset-0 bg-black/80 z-40 md:hidden"
               onClick={() => setSidebarOpen(false)}
             />
             <motion.div
-              initial={{ x: -230 }}
+              initial={{ x: -265 }}
               animate={{ x: 0 }}
-              exit={{ x: -230 }}
+              exit={{ x: -265 }}
               transition={{ type: 'spring', stiffness: 350, damping: 35 }}
               className="fixed left-0 top-0 bottom-0 z-50 md:hidden"
             >
@@ -317,24 +315,24 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
       {/* Main Content & Top Header Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* SaaS Top Header Bar */}
-        <header className="h-12 bg-[#0C0D14]/90 backdrop-blur-md border-b border-[#1E2232] px-4 flex items-center justify-between shrink-0 select-none z-30">
+        <header className="h-12 bg-[#0c0c0e]/90 backdrop-blur-md border-b border-[#1f1f23] px-4 flex items-center justify-between shrink-0 select-none z-30">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="md:hidden p-1 text-[#94A3B8] hover:text-white rounded-md hover:bg-[#181A26]"
+              className="md:hidden p-1 text-[#71717a] hover:text-[#f4f4f5] rounded-md hover:bg-[#18181b]"
             >
               <Menu size={16} />
             </button>
 
             {/* Quick Search */}
             <div className="relative hidden sm:flex items-center w-64 md:w-80">
-              <Search size={13} className="absolute left-2.5 text-[#64748B] pointer-events-none" />
+              <Search size={13} className="absolute left-2.5 text-[#71717a] pointer-events-none" />
               <input
                 type="text"
                 placeholder="Search meetings, tasks, team..."
-                className="w-full bg-[#12141D] border border-[#1E2232] rounded-md pl-8 pr-8 py-1 text-xs text-[#F8FAFC] placeholder-[#64748B] focus:outline-none focus:border-[#F97316] transition-colors"
+                className="w-full bg-[#141417] border border-[#27272a] rounded-lg pl-8 pr-8 py-1.5 text-xs text-[#f4f4f5] placeholder-[#71717a] focus:outline-none focus:border-[#3f3f46] transition-colors"
               />
-              <kbd className="absolute right-2 text-[9px] font-mono text-[#64748B] bg-[#171A26] px-1.5 py-0.2 rounded border border-[#232738]">
+              <kbd className="absolute right-2 text-[9px] font-mono text-[#71717a] bg-[#1c1c21] px-1.5 py-0.5 rounded border border-[#27272a]">
                 ⌘K
               </kbd>
             </div>
@@ -344,7 +342,7 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
             {/* New Meeting CTA */}
             <button
               onClick={() => navigate(teamId ? `/meetings/create?team_id=${teamId}` : '/meetings/create')}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold text-xs transition-all shadow-xs cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#f4f4f5] hover:bg-[#e4e4e7] text-[#09090b] font-semibold text-xs transition-all shadow-xs cursor-pointer"
             >
               <Plus size={13} />
               <span className="hidden sm:inline">New Meeting</span>
@@ -354,10 +352,10 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
             <div className="relative">
               <button
                 onClick={() => setNotificationsOpen(v => !v)}
-                className="relative p-1.5 rounded-md text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#171A26] transition-colors cursor-pointer"
+                className="relative p-1.5 rounded-lg text-[#71717a] hover:text-[#f4f4f5] hover:bg-[#18181b] transition-colors cursor-pointer"
               >
                 <Bell size={15} />
-                <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#F97316]" />
+                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#f4f4f5]" />
               </button>
 
               <AnimatePresence>
@@ -366,11 +364,11 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 4 }}
-                    className="absolute right-0 top-full mt-1.5 w-80 bg-[#12141D] border border-[#1E2232] rounded-xl shadow-2xl p-3 z-50 space-y-2"
+                    className="absolute right-0 top-full mt-1.5 w-80 bg-[#141417] border border-[#27272a] rounded-xl shadow-xl p-3 z-50 space-y-2"
                   >
-                    <div className="flex items-center justify-between pb-2 border-b border-[#181A26]">
-                      <span className="text-xs font-bold text-[#F8FAFC]">Notifications</span>
-                      <span className="text-[9px] font-mono text-[#F97316] font-semibold cursor-pointer">
+                    <div className="flex items-center justify-between pb-2 border-b border-[#1f1f23]">
+                      <span className="text-xs font-semibold text-[#f4f4f5]">Notifications</span>
+                      <span className="text-[10px] font-mono text-[#a1a1aa] hover:text-[#f4f4f5] cursor-pointer">
                         Mark all read
                       </span>
                     </div>
@@ -379,10 +377,10 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
                       {mockNotifications.map(n => (
                         <div
                           key={n.id}
-                          className="p-2 rounded-md hover:bg-[#181A26] transition-colors cursor-pointer text-xs"
+                          className="p-2 rounded-lg hover:bg-[#18181b] transition-colors cursor-pointer text-xs"
                         >
-                          <p className="font-medium text-[#F8FAFC]">{n.title}</p>
-                          <span className="text-[9px] text-[#64748B]">{n.time}</span>
+                          <p className="font-medium text-[#f4f4f5]">{n.title}</p>
+                          <span className="text-[9px] text-[#71717a]">{n.time}</span>
                         </div>
                       ))}
                     </div>
@@ -394,7 +392,7 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
         </header>
 
         {/* Dynamic Viewport Container */}
-        <main className="flex-1 overflow-y-auto bg-[#08090E] app-scrollbar">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-[#09090b] app-scrollbar">{children}</main>
       </div>
     </div>
   );

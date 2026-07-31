@@ -89,7 +89,7 @@ export default function TeamOverview() {
     return (
       <AppLayout teamId={id}>
         <div className="flex items-center justify-center h-64">
-          <div className="w-7 h-7 border-2 border-[#F97316]/30 border-t-[#F97316] rounded-full animate-spin" />
+          <div className="w-7 h-7 border-2 border-[#27272a] border-t-[#f4f4f5] rounded-full animate-spin" />
         </div>
       </AppLayout>
     );
@@ -100,7 +100,7 @@ export default function TeamOverview() {
       <AppLayout teamId={id}>
         <div className="flex flex-col items-center justify-center h-64 gap-4">
           <p className="text-xs text-red-400 font-medium">{error || 'Team not found'}</p>
-          <AppButton variant="secondary" size="sm" onClick={() => navigate('/dashboard')}>
+          <AppButton variant="mono-outline" size="sm" onClick={() => navigate('/dashboard')}>
             Return to Dashboard
           </AppButton>
         </div>
@@ -114,43 +114,42 @@ export default function TeamOverview() {
 
   return (
     <AppLayout teamId={id}>
-      <div className="p-5 md:p-8 max-w-6xl mx-auto space-y-6">
+      <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-8">
         {/* Workspace Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-[#181A26]">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[#1f1f23]">
           <div className="flex items-center gap-4">
             <div
-              className="w-14 h-14 rounded-xl flex items-center justify-center text-white text-xl font-bold border border-[#232738] shrink-0"
-              style={{ background: team.color || '#F97316' }}
+              className="w-14 h-14 rounded-2xl flex items-center justify-center text-[#f4f4f5] text-xl font-bold border border-[#27272a] shrink-0 bg-[#1c1c21]"
             >
               {team.avatar_url ? (
-                <img src={team.avatar_url} className="w-full h-full object-cover rounded-xl" alt={team.name} />
+                <img src={team.avatar_url} className="w-full h-full object-cover rounded-2xl" alt={team.name} />
               ) : (
                 team.name[0].toUpperCase()
               )}
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl md:text-2xl font-bold text-[#F8FAFC] tracking-tight">{team.name}</h1>
-                <AppBadge variant={isOwner ? 'orange' : 'neutral'} size="xs">
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-xl md:text-2xl font-semibold text-[#f4f4f5] tracking-tight">{team.name}</h1>
+                <AppBadge variant="mono" size="xs">
                   {isOwner ? 'Owner' : 'Member'}
                 </AppBadge>
               </div>
-              <p className="text-[#94A3B8] text-xs mt-0.5 max-w-xl">
+              <p className="text-[#a1a1aa] text-xs mt-1 max-w-xl">
                 {team.description || 'Agile Scrum workspace & meeting intelligence environment'}
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <AppButton variant="primary" size="sm" onClick={() => navigate(`/meetings/create?team_id=${team.id}`)}>
-              <Video size={13} className="mr-1" /> New Meeting
+          <div className="flex flex-wrap items-center gap-2.5">
+            <AppButton variant="mono" size="sm" onClick={() => navigate(`/meetings/create?team_id=${team.id}`)}>
+              <Video size={13} className="mr-1.5" /> New Meeting
             </AppButton>
-            <AppButton variant="secondary" size="sm" onClick={() => navigate(`/teams/${team.id}/meetings`)}>
-              <Calendar size={13} className="mr-1" /> Meeting Logs
+            <AppButton variant="mono-outline" size="sm" onClick={() => navigate(`/teams/${team.id}/meetings`)}>
+              <Calendar size={13} className="mr-1.5" /> Meeting Logs
             </AppButton>
             {isOwner && (
-              <AppButton variant="ghost" size="sm" onClick={() => navigate(`/teams/${team.id}/settings`)}>
-                <Settings size={13} />
+              <AppButton variant="mono-ghost" size="sm" onClick={() => navigate(`/teams/${team.id}/settings`)}>
+                <Settings size={14} />
               </AppButton>
             )}
           </div>
@@ -161,62 +160,62 @@ export default function TeamOverview() {
           {/* Left 2 Cols: Stats & Members */}
           <div className="lg:col-span-2 space-y-6">
             {/* Quick Stats Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <div className="bg-[#11131C] border border-[#1E2232] rounded-xl p-3.5">
-                <div className="flex items-center justify-between text-[#64748B] mb-1">
-                  <span className="text-[10px] font-mono uppercase font-semibold">Teammates</span>
-                  <Users size={14} className="text-[#F97316]" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="bg-[#141417] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-4">
+                <div className="flex items-center justify-between text-[#71717a] mb-2">
+                  <span className="text-[10px] font-mono uppercase font-medium tracking-wider">Teammates</span>
+                  <Users size={14} className="text-[#a1a1aa]" />
                 </div>
-                <div className="text-xl font-bold text-[#F8FAFC]">{members.length}</div>
-                <span className="text-[10px] text-[#64748B] block mt-0.5">Active Engineers</span>
+                <div className="text-2xl font-semibold text-[#f4f4f5] tracking-tight">{members.length}</div>
+                <span className="text-[11px] text-[#71717a] block mt-1">Active Engineers</span>
               </div>
 
-              <div className="bg-[#11131C] border border-[#1E2232] rounded-xl p-3.5">
-                <div className="flex items-center justify-between text-[#64748B] mb-1">
-                  <span className="text-[10px] font-mono uppercase font-semibold">Daily Scrum</span>
-                  <Clock size={14} className="text-amber-400" />
+              <div className="bg-[#141417] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-4">
+                <div className="flex items-center justify-between text-[#71717a] mb-2">
+                  <span className="text-[10px] font-mono uppercase font-medium tracking-wider">Daily Scrum</span>
+                  <Clock size={14} className="text-[#a1a1aa]" />
                 </div>
-                <div className="text-xl font-bold text-[#F8FAFC]">{team.daily_scrum_time || '09:00'}</div>
-                <span className="text-[10px] text-[#64748B] block mt-0.5">{team.timezone || 'UTC'}</span>
+                <div className="text-2xl font-semibold text-[#f4f4f5] tracking-tight">{team.daily_scrum_time || '09:00'}</div>
+                <span className="text-[11px] text-[#71717a] block mt-1">{team.timezone || 'UTC'}</span>
               </div>
 
-              <div className="bg-[#11131C] border border-[#1E2232] rounded-xl p-3.5 col-span-2 sm:col-span-1">
-                <div className="flex items-center justify-between text-[#64748B] mb-1">
-                  <span className="text-[10px] font-mono uppercase font-semibold">Sprint Days</span>
-                  <Calendar size={14} className="text-emerald-400" />
+              <div className="bg-[#141417] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-4 col-span-2 sm:col-span-1">
+                <div className="flex items-center justify-between text-[#71717a] mb-2">
+                  <span className="text-[10px] font-mono uppercase font-medium tracking-wider">Sprint Days</span>
+                  <Calendar size={14} className="text-[#a1a1aa]" />
                 </div>
-                <div className="text-xs font-semibold text-[#F8FAFC] truncate mt-1">{workingDayNames}</div>
-                <span className="text-[10px] text-emerald-400 block mt-0.5">Active Cadence</span>
+                <div className="text-xs font-semibold text-[#f4f4f5] truncate mt-1">{workingDayNames}</div>
+                <span className="text-[11px] text-[#a1a1aa] block mt-1">Active Cadence</span>
               </div>
             </div>
 
             {/* Team Members List */}
-            <div className="bg-[#11131C] border border-[#1E2232] rounded-xl p-5 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-[#181A26]">
-                <h2 className="text-xs font-mono font-semibold text-[#94A3B8] uppercase tracking-wider">
+            <div className="bg-[#141417] border border-[#27272a] rounded-xl p-6 space-y-4">
+              <div className="flex items-center justify-between pb-3.5 border-b border-[#1f1f23]">
+                <h2 className="text-xs font-mono font-semibold text-[#71717a] uppercase tracking-wider">
                   Team Members ({members.length})
                 </h2>
-                <AppButton variant="ghost" size="xs" onClick={() => navigate(`/teams/${team.id}/members`)}>
+                <AppButton variant="mono-ghost" size="xs" onClick={() => navigate(`/teams/${team.id}/members`)}>
                   Manage Members
                 </AppButton>
               </div>
 
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 {members.map(m => (
                   <div
                     key={m.user_id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-[#171A26] border border-[#232738]"
+                    className="flex items-center justify-between p-3.5 rounded-xl bg-[#18181b] border border-[#27272a]"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-[#F97316]/10 border border-[#F97316]/20 flex items-center justify-center text-[#F97316] font-bold text-xs">
+                      <div className="w-8 h-8 rounded-lg bg-[#1c1c21] border border-[#27272a] flex items-center justify-center text-[#f4f4f5] font-semibold text-xs">
                         {m.full_name?.[0] ?? 'U'}
                       </div>
                       <div>
-                        <p className="text-xs font-semibold text-[#F8FAFC]">{m.full_name}</p>
-                        <p className="text-[10px] text-[#64748B]">{m.email}</p>
+                        <p className="text-xs font-medium text-[#f4f4f5]">{m.full_name}</p>
+                        <p className="text-[10px] text-[#71717a]">{m.email}</p>
                       </div>
                     </div>
-                    <AppBadge variant={(m.role as string) === 'owner' ? 'orange' : 'neutral'} size="xs">
+                    <AppBadge variant="mono" size="xs">
                       {m.role}
                     </AppBadge>
                   </div>
@@ -228,15 +227,15 @@ export default function TeamOverview() {
           {/* Right Col: Invite & Workspace Actions */}
           <div className="space-y-6">
             {/* Invite Teammates Card */}
-            <div className="bg-[#11131C] border border-[#1E2232] rounded-xl p-5 space-y-4">
+            <div className="bg-[#141417] border border-[#27272a] rounded-xl p-6 space-y-4">
               <div>
-                <h2 className="text-xs font-mono font-semibold text-[#94A3B8] uppercase tracking-wider">
+                <h2 className="text-xs font-mono font-semibold text-[#71717a] uppercase tracking-wider">
                   Invite Teammates
                 </h2>
-                <p className="text-xs text-[#64748B] mt-0.5">Send immediate email invitations to join workspace.</p>
+                <p className="text-xs text-[#a1a1aa] mt-1">Send immediate email invitations to join workspace.</p>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <AppInput
                   placeholder="colleague@company.com"
                   value={inviteEmail}
@@ -244,19 +243,19 @@ export default function TeamOverview() {
                 />
                 {inviteError && <p className="text-[10px] text-red-400">{inviteError}</p>}
                 {inviteSuccess && <p className="text-[10px] text-emerald-400">{inviteSuccess}</p>}
-                <AppButton variant="primary" size="xs" className="w-full justify-center" loading={inviting} onClick={handleInvite}>
-                  <Mail size={13} className="mr-1" /> Send Invitation
+                <AppButton variant="mono" size="xs" className="w-full justify-center" loading={inviting} onClick={handleInvite}>
+                  <Mail size={13} className="mr-1.5" /> Send Invitation
                 </AppButton>
               </div>
             </div>
 
             {/* Owner Workspace Danger Zone */}
             {isOwner && (
-              <div className="bg-[#11131C] border border-red-500/20 rounded-xl p-5 space-y-3">
+              <div className="bg-[#141417] border border-red-500/20 rounded-xl p-6 space-y-3">
                 <h2 className="text-xs font-mono font-semibold text-red-400 uppercase tracking-wider">
                   Danger Zone
                 </h2>
-                <p className="text-[11px] text-[#64748B]">
+                <p className="text-[11px] text-[#71717a] leading-normal">
                   Permanently delete this team workspace, meeting records, and sprint task histories.
                 </p>
                 <AppButton
@@ -266,7 +265,7 @@ export default function TeamOverview() {
                   loading={deleting}
                   onClick={handleDelete}
                 >
-                  <Trash2 size={13} className="mr-1" />
+                  <Trash2 size={13} className="mr-1.5" />
                   {confirmDelete ? 'Confirm Permanent Delete' : 'Delete Workspace'}
                 </AppButton>
               </div>

@@ -89,7 +89,8 @@ export default function App() {
       {/* Meetings (protected) */}
       <Route path="/meetings/create"                  element={<ProtectedRoute><CreateMeeting /></ProtectedRoute>} />
       <Route path="/teams/:teamId/meetings/create"    element={<ProtectedRoute><CreateMeeting /></ProtectedRoute>} />
-      <Route path="/meetings/:id"                     element={<ProtectedRoute><MeetingLobby /></ProtectedRoute>} />
+      <Route path="/meetings/:meetingId"              element={<ProtectedRoute><MeetingDetailsPage /></ProtectedRoute>} />
+      <Route path="/meetings/:id/lobby"               element={<ProtectedRoute><MeetingLobby /></ProtectedRoute>} />
       <Route path="/meetings/:id/room"                element={<ProtectedRoute><MeetingRoom /></ProtectedRoute>} />
 
       {/* New Meeting Module Routes (protected) */}

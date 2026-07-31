@@ -66,22 +66,22 @@ export default function JoinTeam() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#08090E] flex items-center justify-center p-4">
-        <div className="w-7 h-7 border-2 border-[#F97316]/30 border-t-[#F97316] rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#09090b] flex items-center justify-center p-4">
+        <div className="w-7 h-7 border-2 border-[#27272a] border-t-[#f4f4f5] rounded-full animate-spin" />
       </div>
     );
   }
 
   if (error && !invitation) {
     return (
-      <div className="min-h-screen bg-[#08090E] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#09090b] flex items-center justify-center p-4">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-sm">
-          <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-3 text-red-400">
+          <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-3 text-red-400">
             <XCircle size={24} />
           </div>
-          <h2 className="text-lg font-bold text-[#F8FAFC] mb-1">Invitation Link Error</h2>
-          <p className="text-[#94A3B8] text-xs mb-5">{error}</p>
-          <AppButton variant="primary" size="sm" onClick={() => navigate('/')}>
+          <h2 className="text-lg font-semibold text-[#f4f4f5] mb-1">Invitation Link Error</h2>
+          <p className="text-[#a1a1aa] text-xs mb-5">{error}</p>
+          <AppButton variant="mono" size="sm" onClick={() => navigate('/')}>
             Return to Homepage
           </AppButton>
         </motion.div>
@@ -90,19 +90,19 @@ export default function JoinTeam() {
   }
 
   return (
-    <div className="min-h-screen bg-[#08090E] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#09090b] flex items-center justify-center p-4">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
-        <div className="bg-[#11131C] border border-[#1E2232] rounded-xl p-6 shadow-sm space-y-5 text-center">
-          <div className="w-14 h-14 rounded-xl bg-[#F97316]/10 border border-[#F97316]/20 flex items-center justify-center mx-auto text-[#F97316] font-bold text-xl">
+        <div className="bg-[#141417] border border-[#27272a] rounded-2xl p-6 shadow-sm space-y-5 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-[#1c1c21] border border-[#27272a] flex items-center justify-center mx-auto text-[#f4f4f5] font-bold text-xl">
             {invitation?.team_name?.[0]?.toUpperCase() ?? 'T'}
           </div>
 
           <div>
-            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#171A26] border border-[#232738] text-[10px] text-[#94A3B8] font-mono mb-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#1c1c21] border border-[#27272a] text-[10px] text-[#a1a1aa] font-mono mb-2">
               <ShieldCheck size={12} className="text-emerald-400" /> TEAM INVITATION
             </div>
-            <h1 className="text-xl font-bold text-[#F8FAFC]">Join {invitation?.team_name}</h1>
-            <p className="text-[#94A3B8] text-xs mt-1">
+            <h1 className="text-xl font-semibold text-[#f4f4f5]">Join {invitation?.team_name}</h1>
+            <p className="text-[#a1a1aa] text-xs mt-1 leading-normal">
               You have been invited to join this Scrum workspace and participate in meetings.
             </p>
           </div>
@@ -116,10 +116,10 @@ export default function JoinTeam() {
           {error && <p className="text-xs text-red-400 font-medium">{error}</p>}
 
           <div className="flex gap-3 pt-2">
-            <AppButton variant="secondary" size="sm" className="flex-1 justify-center" onClick={handleDecline}>
+            <AppButton variant="mono-outline" size="sm" className="flex-1 justify-center" onClick={handleDecline}>
               Decline
             </AppButton>
-            <AppButton variant="primary" size="sm" className="flex-1 justify-center" loading={joining} onClick={handleJoin}>
+            <AppButton variant="mono" size="sm" className="flex-1 justify-center" loading={joining} onClick={handleJoin}>
               {alreadyMember ? 'Open Workspace' : 'Accept & Join'}
             </AppButton>
           </div>

@@ -91,43 +91,48 @@ export default function MeetingRoom() {
     const dur = endedData.recording?.duration;
     const fmt = dur ? `${Math.floor(dur / 60)}m ${dur % 60}s` : 'N/A';
     return (
-      <div className="min-h-screen bg-[#0B1220] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#09090b] flex items-center justify-center p-4">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-lg">
-          <div className="bg-[#111827] border border-white/8 rounded-3xl p-8 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div className="bg-[#141417] border border-[#27272a] rounded-2xl p-8 text-center shadow-xl space-y-6">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto text-emerald-400">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
-            <h2 className="text-xl font-bold text-[#F8FAFC] mb-1">Meeting Ended</h2>
-            <p className="text-[#94A3B8] text-sm mb-6">Recording saved successfully</p>
+            <div>
+              <h2 className="text-xl font-semibold text-[#f4f4f5]">Meeting Ended</h2>
+              <p className="text-[#a1a1aa] text-xs mt-1">Recording saved successfully</p>
+            </div>
 
-            <div className="space-y-3 mb-6 text-left">
-              <div className="flex justify-between items-center p-3 rounded-xl bg-[#0d1117] border border-white/6">
-                <span className="text-xs text-[#475569]">Duration</span>
-                <span className="text-sm font-medium text-[#F8FAFC]">{fmt}</span>
+            <div className="space-y-3 text-left">
+              <div className="flex justify-between items-center p-3 rounded-xl bg-[#1c1c21] border border-[#27272a]">
+                <span className="text-xs text-[#71717a] font-mono">Duration</span>
+                <span className="text-xs font-semibold text-[#f4f4f5]">{fmt}</span>
               </div>
-              <div className="flex justify-between items-center p-3 rounded-xl bg-[#0d1117] border border-white/6">
-                <span className="text-xs text-[#475569]">Status</span>
-                <span className="text-xs px-2 py-1 rounded-full bg-green-500/15 text-green-400 font-semibold">Saved to R2</span>
+              <div className="flex justify-between items-center p-3 rounded-xl bg-[#1c1c21] border border-[#27272a]">
+                <span className="text-xs text-[#71717a] font-mono">Status</span>
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-medium">Saved to Storage</span>
               </div>
               {endedData.recording?.recording_url && (
-                <div className="p-3 rounded-xl bg-[#0d1117] border border-white/6">
-                  <p className="text-xs text-[#475569] mb-1">Recording URL</p>
-                  <p className="text-xs text-[#3B82F6] break-all">{endedData.recording.recording_url}</p>
+                <div className="p-3 rounded-xl bg-[#1c1c21] border border-[#27272a]">
+                  <p className="text-xs text-[#71717a] font-mono mb-1">Recording URL</p>
+                  <p className="text-xs text-[#f4f4f5] break-all">{endedData.recording.recording_url}</p>
                 </div>
               )}
             </div>
 
             {/* Transcript preview */}
-            <div className="text-left mb-6">
-              <p className="text-xs font-semibold text-[#94A3B8] mb-2 uppercase tracking-wider">Meeting Transcript</p>
-              <div className="bg-[#0d1117] border border-white/6 rounded-xl p-4 max-h-48 overflow-y-auto">
-                <pre className="text-xs text-[#CBD5E1] whitespace-pre-wrap font-sans leading-relaxed">
+            <div className="text-left">
+              <p className="text-xs font-mono font-semibold text-[#71717a] mb-2 uppercase tracking-wider">Meeting Transcript</p>
+              <div className="bg-[#1c1c21] border border-[#27272a] rounded-xl p-4 max-h-48 overflow-y-auto">
+                <pre className="text-xs text-[#a1a1aa] whitespace-pre-wrap font-sans leading-relaxed">
                   {endedData.transcript?.content}
                 </pre>
               </div>
             </div>
 
-            <button onClick={() => navigate(-1)} className="w-full py-3 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white font-semibold text-sm transition-colors">
+            <button
+              onClick={() => navigate(-1)}
+              className="w-full py-3 rounded-xl bg-[#f4f4f5] hover:bg-[#e4e4e7] text-[#09090b] font-semibold text-xs transition-colors cursor-pointer"
+            >
               Back to Dashboard
             </button>
           </div>
@@ -160,17 +165,17 @@ export default function MeetingRoom() {
                    allParticipants.length <= 4  ? 'grid-cols-2' : 'grid-cols-3';
 
   return (
-    <div className="h-screen bg-[#08090E] flex flex-col overflow-hidden text-[#CBD5E1]">
+    <div className="h-screen bg-[#09090b] flex flex-col overflow-hidden text-[#a1a1aa]">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-[#1E202C] bg-[#090A0F]/90 backdrop-blur-md flex-shrink-0">
+      <div className="flex items-center justify-between px-6 py-3.5 border-b border-[#27272a] bg-[#0c0c0e]/95 backdrop-blur-md flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-[#F97316] animate-pulse" />
+          <div className="w-2 h-2 rounded-full bg-[#f4f4f5] animate-pulse" />
           <div>
-            <h1 className="text-xs md:text-sm font-semibold text-[#F8FAFC] leading-none">
+            <h1 className="text-xs md:text-sm font-semibold text-[#f4f4f5] leading-none">
               {meeting?.title ?? 'Meeting Room'}
             </h1>
             {meeting?.sprint_name && (
-              <p className="text-[10px] text-[#64748B] font-mono mt-0.5">{meeting.sprint_name}</p>
+              <p className="text-[10px] text-[#71717a] font-mono mt-0.5">{meeting.sprint_name}</p>
             )}
           </div>
         </div>
@@ -192,9 +197,9 @@ export default function MeetingRoom() {
           <MeetingTimer startedAt={meeting?.started_at} />
 
           {/* AI Live Intelligence Indicator */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F97316]/10 border border-[#F97316]/25">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#1c1c21] border border-[#27272a]">
             <svg
-              className="w-3 h-3 text-[#F97316]"
+              className="w-3 h-3 text-[#f4f4f5]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -202,7 +207,7 @@ export default function MeetingRoom() {
             >
               <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
-            <span className="text-[10px] font-mono text-[#F97316] font-semibold uppercase">
+            <span className="text-[10px] font-mono text-[#f4f4f5] font-semibold uppercase">
               AI Active
             </span>
           </div>
@@ -210,7 +215,7 @@ export default function MeetingRoom() {
           {/* Connection status */}
           <div className="hidden sm:flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span className="text-[11px] text-[#64748B]">Connected</span>
+            <span className="text-[11px] text-[#71717a]">Connected</span>
           </div>
         </div>
       </div>
@@ -241,10 +246,10 @@ export default function MeetingRoom() {
               animate={{ width: 320, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 350, damping: 35 }}
-              className="border-l border-[#1E202C] bg-[#090A0F] flex flex-col overflow-hidden flex-shrink-0"
+              className="border-l border-[#27272a] bg-[#0c0c0e] flex flex-col overflow-hidden flex-shrink-0"
             >
               {/* Sidebar tabs */}
-              <div className="flex border-b border-[#1E202C]">
+              <div className="flex border-b border-[#27272a]">
                 {(['participants', 'chat', 'notes'] as const).map((tab) => (
                   <button
                     key={tab}
@@ -254,20 +259,20 @@ export default function MeetingRoom() {
                     }}
                     className={`flex-1 py-3 text-xs font-semibold capitalize transition-colors relative cursor-pointer ${
                       sidebarTab === tab
-                        ? 'text-[#F97316]'
-                        : 'text-[#64748B] hover:text-[#CBD5E1]'
+                        ? 'text-[#f4f4f5]'
+                        : 'text-[#71717a] hover:text-[#a1a1aa]'
                     }`}
                   >
                     {tab}
                     {tab === 'chat' && unreadCount > 0 && (
-                      <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#F97316] text-white text-[9px] font-bold flex items-center justify-center">
+                      <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#f4f4f5] text-[#09090b] text-[9px] font-bold flex items-center justify-center">
                         {unreadCount}
                       </span>
                     )}
                     {sidebarTab === tab && (
                       <motion.div
                         layoutId="sidebar-tab"
-                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#F97316]"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#f4f4f5]"
                       />
                     )}
                   </button>
@@ -288,9 +293,9 @@ export default function MeetingRoom() {
                 )}
                 {sidebarTab === 'notes' && (
                   <div className="flex flex-col items-center justify-center h-full gap-3 p-6 text-center">
-                    <div className="w-10 h-10 rounded-xl bg-[#F97316]/10 border border-[#F97316]/20 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-[#1c1c21] border border-[#27272a] flex items-center justify-center text-[#f4f4f5]">
                       <svg
-                        className="w-5 h-5 text-[#F97316]"
+                        className="w-5 h-5"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -303,8 +308,8 @@ export default function MeetingRoom() {
                         />
                       </svg>
                     </div>
-                    <p className="text-xs font-semibold text-[#F8FAFC]">AI Live Notes</p>
-                    <p className="text-[11px] text-[#64748B]">
+                    <p className="text-xs font-semibold text-[#f4f4f5]">AI Live Notes</p>
+                    <p className="text-[11px] text-[#71717a]">
                       Extracted action items and blockers will stream here live.
                     </p>
                   </div>

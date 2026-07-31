@@ -96,7 +96,7 @@ export default function TeamMembers() {
     return (
       <AppLayout teamId={id}>
         <div className="flex items-center justify-center h-64">
-          <div className="w-7 h-7 border-2 border-[#F97316]/30 border-t-[#F97316] rounded-full animate-spin" />
+          <div className="w-7 h-7 border-2 border-[#27272a] border-t-[#f4f4f5] rounded-full animate-spin" />
         </div>
       </AppLayout>
     );
@@ -104,33 +104,33 @@ export default function TeamMembers() {
 
   return (
     <AppLayout teamId={id}>
-      <div className="p-5 md:p-8 max-w-5xl mx-auto space-y-6">
+      <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-8">
         <button
           onClick={() => navigate(`/teams/${id}`)}
-          className="flex items-center gap-1.5 text-xs text-[#94A3B8] hover:text-[#F8FAFC] transition-colors cursor-pointer"
+          className="flex items-center gap-1.5 text-xs text-[#a1a1aa] hover:text-[#f4f4f5] transition-colors cursor-pointer"
         >
           <ArrowLeft size={14} /> Back to Team
         </button>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#181A26]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#1f1f23]">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-[#F8FAFC] tracking-tight">
+            <h1 className="text-xl md:text-2xl font-semibold text-[#f4f4f5] tracking-tight">
               Team Members & Invites
             </h1>
-            <p className="text-[#94A3B8] text-xs mt-0.5">
+            <p className="text-[#a1a1aa] text-xs mt-1">
               Manage workspace access, permissions, and pending invitations.
             </p>
           </div>
 
           {isOwner && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <AppInput
                 placeholder="colleague@company.com"
                 value={inviteEmail}
                 onChange={e => setInviteEmail(e.target.value)}
               />
-              <AppButton variant="primary" size="xs" loading={inviting} onClick={handleInvite}>
-                <Plus size={13} className="mr-1" /> Invite
+              <AppButton variant="mono" size="xs" loading={inviting} onClick={handleInvite}>
+                <Plus size={13} className="mr-1.5" /> Invite
               </AppButton>
             </div>
           )}
@@ -151,18 +151,19 @@ export default function TeamMembers() {
 
         {tab === 'members' ? (
           <AppTable
+            variant="dashboard"
             columns={[
               {
                 key: 'member',
                 header: 'Member',
                 render: (m: TeamMember) => (
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-[#F97316]/10 border border-[#F97316]/20 flex items-center justify-center text-[#F97316] font-bold text-xs">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-[#1c1c21] border border-[#27272a] flex items-center justify-center text-[#f4f4f5] font-semibold text-xs">
                       {m.full_name?.[0] ?? 'U'}
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-[#F8FAFC]">{m.full_name}</p>
-                      <p className="text-[10px] text-[#64748B]">{m.email}</p>
+                      <p className="text-xs font-medium text-[#f4f4f5]">{m.full_name}</p>
+                      <p className="text-[10px] text-[#71717a]">{m.email}</p>
                     </div>
                   </div>
                 ),
@@ -171,7 +172,7 @@ export default function TeamMembers() {
                 key: 'role',
                 header: 'Role',
                 render: (m: TeamMember) => (
-                  <AppBadge variant={(m.role as string) === 'owner' ? 'orange' : 'neutral'} size="xs">
+                  <AppBadge variant="mono" size="xs">
                     {m.role}
                   </AppBadge>
                 ),
@@ -182,13 +183,13 @@ export default function TeamMembers() {
                 render: (m: TeamMember) =>
                   isOwner && m.user_id !== user?.id ? (
                     <AppButton
-                      variant="ghost"
+                      variant="mono-ghost"
                       size="xs"
                       disabled={removingId === m.user_id}
                       onClick={() => handleRemove(m.user_id)}
                       className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
                     >
-                      <UserMinus size={13} />
+                      <UserMinus size={14} />
                     </AppButton>
                   ) : null,
               },
@@ -198,10 +199,11 @@ export default function TeamMembers() {
           />
         ) : (
           <AppTable
+            variant="dashboard"
             columns={[
-              { key: 'email', header: 'Invited Email', render: (i: Invitation) => <span className="font-mono text-xs text-[#F8FAFC]">{i.email}</span> },
-              { key: 'status', header: 'Status', render: (i: Invitation) => <AppBadge variant="amber" size="xs">{i.status}</AppBadge> },
-              { key: 'expires_at', header: 'Expires', render: (i: Invitation) => <span className="text-xs text-[#64748B]">{new Date(i.expires_at).toLocaleDateString()}</span> },
+              { key: 'email', header: 'Invited Email', render: (i: Invitation) => <span className="font-mono text-xs text-[#f4f4f5]">{i.email}</span> },
+              { key: 'status', header: 'Status', render: (i: Invitation) => <AppBadge variant="mono" size="xs">{i.status}</AppBadge> },
+              { key: 'expires_at', header: 'Expires', render: (i: Invitation) => <span className="text-xs text-[#71717a]">{new Date(i.expires_at).toLocaleDateString()}</span> },
             ]}
             data={invitations}
             keyExtractor={i => i.id}

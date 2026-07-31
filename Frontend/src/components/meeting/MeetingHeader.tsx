@@ -43,14 +43,14 @@ export default function MeetingHeader({
   onCreateClick,
 }: MeetingHeaderProps) {
   return (
-    <div className="space-y-4 pb-4 border-b border-[#181A26]">
+    <div className="space-y-4 pb-6 border-b border-[#1f1f23]">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-[#F8FAFC] tracking-tight">{title}</h1>
-          {description && <p className="text-xs text-[#94A3B8] mt-0.5">{description}</p>}
+          <h1 className="text-xl md:text-2xl font-semibold text-[#f4f4f5] tracking-tight">{title}</h1>
+          {description && <p className="text-xs text-[#a1a1aa] mt-1">{description}</p>}
         </div>
-        <AppButton variant="primary" size="sm" onClick={onCreateClick}>
-          <Plus size={14} className="mr-1" /> New Meeting
+        <AppButton variant="mono" size="sm" onClick={onCreateClick}>
+          <Plus size={14} className="mr-1.5" /> New Meeting
         </AppButton>
       </div>
 
@@ -65,7 +65,7 @@ export default function MeetingHeader({
           {search && (
             <button
               onClick={() => onSearchChange('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-white cursor-pointer"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#71717a] hover:text-[#f4f4f5] cursor-pointer"
             >
               <X size={12} />
             </button>
@@ -76,10 +76,10 @@ export default function MeetingHeader({
           <select
             value={statusFilter}
             onChange={e => onStatusFilterChange(e.target.value as MeetingStatus | 'all')}
-            className="bg-[#0C0D14] border border-[#1E2232] rounded-lg px-2.5 py-1.5 text-xs text-[#CBD5E1] outline-none focus:border-[#F97316] transition-colors cursor-pointer"
+            className="bg-[#141417] border border-[#27272a] rounded-lg px-3 py-2 text-xs text-[#f4f4f5] outline-none focus:border-[#3f3f46] transition-colors cursor-pointer"
           >
             {statusOptions.map(opt => (
-              <option key={opt.value} value={opt.value}>
+              <option key={opt.value} value={opt.value} className="bg-[#141417] text-[#f4f4f5]">
                 {opt.label}
               </option>
             ))}
@@ -88,10 +88,10 @@ export default function MeetingHeader({
           <select
             value={typeFilter}
             onChange={e => onTypeFilterChange(e.target.value as MeetingType | 'all')}
-            className="bg-[#0C0D14] border border-[#1E2232] rounded-lg px-2.5 py-1.5 text-xs text-[#CBD5E1] outline-none focus:border-[#F97316] transition-colors cursor-pointer"
+            className="bg-[#141417] border border-[#27272a] rounded-lg px-3 py-2 text-xs text-[#f4f4f5] outline-none focus:border-[#3f3f46] transition-colors cursor-pointer"
           >
             {typeOptions.map(opt => (
-              <option key={opt.value} value={opt.value}>
+              <option key={opt.value} value={opt.value} className="bg-[#141417] text-[#f4f4f5]">
                 {opt.label}
               </option>
             ))}

@@ -90,28 +90,28 @@ export default function CreateMeeting() {
 
   return (
     <AppLayout teamId={form.team_id}>
-      <div className="p-5 md:p-8 max-w-3xl mx-auto space-y-6">
+      <div className="p-6 md:p-10 max-w-3xl mx-auto space-y-8">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-1.5 text-xs text-[#94A3B8] hover:text-[#F8FAFC] transition-colors cursor-pointer"
+          className="flex items-center gap-1.5 text-xs text-[#a1a1aa] hover:text-[#f4f4f5] transition-colors cursor-pointer"
         >
           <ArrowLeft size={14} /> Back
         </button>
 
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-          <div className="border-b border-[#181A26] pb-5">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#F97316]/10 border border-[#F97316]/20 text-[#F97316] text-xs font-mono font-semibold mb-3">
-              <Video size={12} /> NEW MEETING SESSION
+          <div className="border-b border-[#1f1f23] pb-6">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#1c1c21] border border-[#27272a] text-[#f4f4f5] text-xs font-mono font-medium mb-3">
+              <Video size={13} /> NEW MEETING SESSION
             </div>
-            <h1 className="text-xl md:text-2xl font-bold text-[#F8FAFC] tracking-tight">
+            <h1 className="text-xl md:text-2xl font-semibold text-[#f4f4f5] tracking-tight">
               Schedule & Start Meeting
             </h1>
-            <p className="text-[#94A3B8] text-xs mt-1">
+            <p className="text-[#a1a1aa] text-xs mt-1">
               Set up your Agile Scrum meeting with AI voice recording, automated transcripts, and task generation.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5 bg-[#11131C] border border-[#1E2232] rounded-xl p-6 shadow-sm">
+          <form onSubmit={handleSubmit} className="space-y-6 bg-[#141417] border border-[#27272a] rounded-2xl p-6 shadow-sm">
             {teams.length > 0 ? (
               <AppSelect
                 label="Target Workspace / Team *"
@@ -120,9 +120,9 @@ export default function CreateMeeting() {
                 options={teams.map(t => ({ value: t.id, label: t.name }))}
               />
             ) : (
-              <div className="bg-[#171A26] border border-[#232738] rounded-lg p-4 text-center space-y-2">
-                <p className="text-xs text-[#94A3B8]">You need to create a Team first before scheduling meetings.</p>
-                <AppButton variant="primary" size="xs" onClick={() => navigate('/teams/create')}>
+              <div className="bg-[#18181b] border border-[#27272a] rounded-xl p-4 text-center space-y-2">
+                <p className="text-xs text-[#a1a1aa]">You need to create a Team first before scheduling meetings.</p>
+                <AppButton variant="mono" size="xs" onClick={() => navigate('/teams/create')}>
                   Create Team First
                 </AppButton>
               </div>
@@ -189,11 +189,11 @@ export default function CreateMeeting() {
               </div>
             )}
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#181A26]">
-              <AppButton variant="secondary" size="sm" type="button" onClick={() => navigate(-1)}>
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#1f1f23]">
+              <AppButton variant="mono-outline" size="sm" type="button" onClick={() => navigate(-1)}>
                 Cancel
               </AppButton>
-              <AppButton variant="primary" size="sm" type="submit" loading={loading} disabled={teams.length === 0}>
+              <AppButton variant="mono" size="sm" type="submit" loading={loading} disabled={teams.length === 0}>
                 Schedule Meeting
               </AppButton>
             </div>

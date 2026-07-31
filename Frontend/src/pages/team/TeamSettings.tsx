@@ -114,7 +114,7 @@ export default function TeamSettings() {
     return (
       <AppLayout teamId={id}>
         <div className="flex items-center justify-center h-64">
-          <div className="w-7 h-7 border-2 border-[#F97316]/30 border-t-[#F97316] rounded-full animate-spin" />
+          <div className="w-7 h-7 border-2 border-[#27272a] border-t-[#f4f4f5] rounded-full animate-spin" />
         </div>
       </AppLayout>
     );
@@ -122,29 +122,28 @@ export default function TeamSettings() {
 
   return (
     <AppLayout teamId={id}>
-      <div className="p-5 md:p-8 max-w-3xl mx-auto space-y-6">
+      <div className="p-6 md:p-10 max-w-3xl mx-auto space-y-8">
         <button
           onClick={() => navigate(`/teams/${id}`)}
-          className="flex items-center gap-1.5 text-xs text-[#94A3B8] hover:text-[#F8FAFC] transition-colors cursor-pointer"
+          className="flex items-center gap-1.5 text-xs text-[#a1a1aa] hover:text-[#f4f4f5] transition-colors cursor-pointer"
         >
           <ArrowLeft size={14} /> Back to Team
         </button>
 
-        <div className="pb-5 border-b border-[#181A26]">
-          <h1 className="text-xl md:text-2xl font-bold text-[#F8FAFC] tracking-tight">
+        <div className="pb-6 border-b border-[#1f1f23]">
+          <h1 className="text-xl md:text-2xl font-semibold text-[#f4f4f5] tracking-tight">
             Workspace Settings {team ? `— ${team.name}` : ''}
           </h1>
-          <p className="text-[#94A3B8] text-xs mt-0.5">
+          <p className="text-[#a1a1aa] text-xs mt-1">
             Configure team avatar, daily scrum schedules, and workspace parameters.
           </p>
         </div>
 
-        <form onSubmit={handleSave} className="bg-[#11131C] border border-[#1E2232] rounded-xl p-6 space-y-5 shadow-sm">
-          <div className="flex items-center gap-4 pb-4 border-b border-[#181A26]">
+        <form onSubmit={handleSave} className="bg-[#141417] border border-[#27272a] rounded-2xl p-6 space-y-6">
+          <div className="flex items-center gap-4 pb-4 border-b border-[#1f1f23]">
             <div className="relative group shrink-0">
               <div
-                className="w-16 h-16 rounded-xl flex items-center justify-center text-white text-xl font-bold border border-[#232738] overflow-hidden"
-                style={{ background: avatarUrl ? 'transparent' : color }}
+                className="w-16 h-16 rounded-2xl flex items-center justify-center text-[#f4f4f5] text-xl font-bold border border-[#27272a] overflow-hidden bg-[#1c1c21]"
               >
                 {avatarUrl ? (
                   <img src={avatarUrl} className="w-full h-full object-cover" alt="Avatar" />
@@ -152,14 +151,14 @@ export default function TeamSettings() {
                   name[0]?.toUpperCase() ?? 'T'
                 )}
               </div>
-              <label className="absolute inset-0 rounded-xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
-                <Camera size={16} className="text-white" />
+              <label className="absolute inset-0 rounded-2xl bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                <Camera size={16} className="text-[#f4f4f5]" />
                 <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
               </label>
             </div>
             <div>
-              <p className="text-xs font-semibold text-[#F8FAFC]">Team Avatar</p>
-              <p className="text-[10px] text-[#64748B] mt-0.5">
+              <p className="text-xs font-semibold text-[#f4f4f5]">Team Avatar</p>
+              <p className="text-[10px] text-[#71717a] mt-0.5">
                 {uploading ? 'Uploading avatar...' : 'Hover avatar box to upload custom image.'}
               </p>
             </div>
@@ -169,7 +168,7 @@ export default function TeamSettings() {
           <AppInput label="Description" value={description} onChange={e => setDescription(e.target.value)} />
 
           <div>
-            <label className="block text-xs font-semibold text-[#94A3B8] mb-2 uppercase tracking-wider font-mono">
+            <label className="block text-xs font-semibold text-[#71717a] mb-2 uppercase tracking-wider font-mono">
               Badge Color
             </label>
             <div className="flex gap-2 flex-wrap">
@@ -179,7 +178,7 @@ export default function TeamSettings() {
                   type="button"
                   onClick={() => setColor(c)}
                   className={`w-7 h-7 rounded-lg transition-transform ${
-                    color === c ? 'ring-2 ring-white ring-offset-2 ring-offset-[#11131C] scale-110' : 'opacity-80 hover:opacity-100'
+                    color === c ? 'ring-2 ring-[#f4f4f5] ring-offset-2 ring-offset-[#141417] scale-110' : 'opacity-80 hover:opacity-100'
                   }`}
                   style={{ background: c }}
                 />
@@ -190,7 +189,7 @@ export default function TeamSettings() {
           <AppInput label="Daily Scrum Time" type="time" value={dailyScrumTime} onChange={e => setDailyScrumTime(e.target.value)} />
 
           <div>
-            <label className="block text-xs font-semibold text-[#94A3B8] mb-2 uppercase tracking-wider font-mono">
+            <label className="block text-xs font-semibold text-[#71717a] mb-2 uppercase tracking-wider font-mono">
               Working Days
             </label>
             <div className="flex gap-2">
@@ -199,8 +198,10 @@ export default function TeamSettings() {
                   key={d.id}
                   type="button"
                   onClick={() => toggleDay(d.id)}
-                  className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
-                    workingDays.includes(d.id) ? 'bg-[#F97316] text-white' : 'bg-[#171A26] text-[#64748B]'
+                  className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
+                    workingDays.includes(d.id)
+                      ? 'bg-[#1c1c21] text-[#f4f4f5] border border-[#27272a]'
+                      : 'bg-[#18181b] text-[#71717a] border border-transparent'
                   }`}
                 >
                   {d.label}
@@ -212,9 +213,9 @@ export default function TeamSettings() {
           {error && <p className="text-xs text-red-400 font-medium">{error}</p>}
           {success && <p className="text-xs text-emerald-400 font-medium">{success}</p>}
 
-          <div className="flex justify-end pt-3 border-t border-[#181A26]">
-            <AppButton variant="primary" size="sm" type="submit" loading={saving}>
-              <Save size={13} className="mr-1" /> Save Settings
+          <div className="flex justify-end pt-4 border-t border-[#1f1f23]">
+            <AppButton variant="mono" size="sm" type="submit" loading={saving}>
+              <Save size={14} className="mr-1.5" /> Save Settings
             </AppButton>
           </div>
         </form>

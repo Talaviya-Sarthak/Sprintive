@@ -59,4 +59,9 @@ export const meetingService = {
   async deleteMeeting(id: string): Promise<void> {
     await api.delete(`/meetings/${id}`);
   },
+
+  async updateMeeting(id: string, payload: Partial<Meeting>): Promise<Meeting> {
+    const { data } = await api.put(`/meetings/${id}`, payload);
+    return data.data;
+  },
 };

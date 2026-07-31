@@ -10,21 +10,22 @@ function TeamCard({ team, onOpen }: { team: Team; onOpen: () => void }) {
   const memberCount = Number(team.member_count ?? 1);
   return (
     <AppCard
+      variant="dashboard"
       hoverable
       title={team.name}
       subtitle={team.description || 'Agile Scrum workspace & meeting intelligence'}
       action={
-        <AppBadge variant="neutral" size="xs">
+        <AppBadge variant="mono" size="xs">
           {(team.my_role ?? 'member').replace('_', ' ')}
         </AppBadge>
       }
       footer={
         <div className="flex items-center justify-between w-full">
-          <span className="flex items-center gap-1.5 text-xs text-[#94A3B8] font-medium">
-            <Users size={12} className="text-[#F97316]" /> {memberCount} member
+          <span className="flex items-center gap-1.5 text-xs text-[#a1a1aa] font-medium">
+            <Users size={13} className="text-[#71717a]" /> {memberCount} member
             {memberCount !== 1 ? 's' : ''}
           </span>
-          <AppButton variant="ghost" size="xs" onClick={onOpen}>
+          <AppButton variant="mono-ghost" size="xs" onClick={onOpen}>
             <span>Open Workspace</span>
             <ArrowRight size={12} className="ml-1" />
           </AppButton>
@@ -44,63 +45,63 @@ export default function Dashboard() {
 
   return (
     <AppLayout>
-      <div className="p-5 md:p-8 max-w-6xl mx-auto space-y-6">
+      <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#181A26]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#1f1f23]">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-[#F8FAFC] tracking-tight">
+            <h1 className="text-xl md:text-2xl font-semibold text-[#f4f4f5] tracking-tight">
               Welcome back, {user?.full_name?.split(' ')[0]} 👋
             </h1>
-            <p className="text-[#94A3B8] text-xs mt-0.5">
+            <p className="text-[#a1a1aa] text-xs mt-1">
               Overview of active teams, meeting intelligence, and sprint status.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             {canCreate && (
-              <AppButton variant="primary" size="sm" onClick={() => navigate('/teams/create')}>
-                <Plus size={13} className="mr-1" /> Create Team
+              <AppButton variant="mono" size="sm" onClick={() => navigate('/teams/create')}>
+                <Plus size={13} className="mr-1.5" /> Create Team
               </AppButton>
             )}
           </div>
         </div>
 
-        {/* Metric Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="bg-[#11131C] border border-[#1E2232] rounded-xl p-3.5">
-            <div className="flex items-center justify-between text-[#64748B] mb-1">
-              <span className="text-[10px] font-mono uppercase font-semibold">Active Teams</span>
-              <Users size={14} className="text-[#F97316]" />
+        {/* Stat Cards - Pure Monochromatic Modern SaaS */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-[#141417] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-4">
+            <div className="flex items-center justify-between text-[#71717a] mb-2">
+              <span className="text-[10px] font-mono uppercase font-medium tracking-wider">Active Teams</span>
+              <Users size={14} className="text-[#a1a1aa]" />
             </div>
-            <div className="text-xl font-bold text-[#F8FAFC]">{teams.length}</div>
-            <span className="text-[10px] text-[#64748B] block mt-0.5">Workspaces</span>
+            <div className="text-2xl font-semibold text-[#f4f4f5] tracking-tight">{teams.length}</div>
+            <span className="text-[11px] text-[#71717a] block mt-1">Workspaces</span>
           </div>
 
-          <div className="bg-[#11131C] border border-[#1E2232] rounded-xl p-3.5">
-            <div className="flex items-center justify-between text-[#64748B] mb-1">
-              <span className="text-[10px] font-mono uppercase font-semibold">AI Meetings</span>
-              <Calendar size={14} className="text-[#F97316]" />
+          <div className="bg-[#141417] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-4">
+            <div className="flex items-center justify-between text-[#71717a] mb-2">
+              <span className="text-[10px] font-mono uppercase font-medium tracking-wider">AI Meetings</span>
+              <Calendar size={14} className="text-[#a1a1aa]" />
             </div>
-            <div className="text-xl font-bold text-[#F8FAFC]">14</div>
-            <span className="text-[10px] text-emerald-400 block mt-0.5">Recorded & Synced</span>
+            <div className="text-2xl font-semibold text-[#f4f4f5] tracking-tight">14</div>
+            <span className="text-[11px] text-[#a1a1aa] block mt-1">Recorded & Synced</span>
           </div>
 
-          <div className="bg-[#11131C] border border-[#1E2232] rounded-xl p-3.5">
-            <div className="flex items-center justify-between text-[#64748B] mb-1">
-              <span className="text-[10px] font-mono uppercase font-semibold">Sprint Tasks</span>
-              <CheckCircle2 size={14} className="text-emerald-400" />
+          <div className="bg-[#141417] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-4">
+            <div className="flex items-center justify-between text-[#71717a] mb-2">
+              <span className="text-[10px] font-mono uppercase font-medium tracking-wider">Sprint Tasks</span>
+              <CheckCircle2 size={14} className="text-[#a1a1aa]" />
             </div>
-            <div className="text-xl font-bold text-[#F8FAFC]">38</div>
-            <span className="text-[10px] text-[#64748B] block mt-0.5">85% Sprint Progress</span>
+            <div className="text-2xl font-semibold text-[#f4f4f5] tracking-tight">38</div>
+            <span className="text-[11px] text-[#71717a] block mt-1">85% Sprint Progress</span>
           </div>
 
-          <div className="bg-[#11131C] border border-[#1E2232] rounded-xl p-3.5">
-            <div className="flex items-center justify-between text-[#64748B] mb-1">
-              <span className="text-[10px] font-mono uppercase font-semibold">AI Saved Time</span>
-              <Activity size={14} className="text-amber-400" />
+          <div className="bg-[#141417] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-4">
+            <div className="flex items-center justify-between text-[#71717a] mb-2">
+              <span className="text-[10px] font-mono uppercase font-medium tracking-wider">AI Saved Time</span>
+              <Activity size={14} className="text-[#a1a1aa]" />
             </div>
-            <div className="text-xl font-bold text-[#F8FAFC]">12.5h</div>
-            <span className="text-[10px] text-emerald-400 block mt-0.5">This Month</span>
+            <div className="text-2xl font-semibold text-[#f4f4f5] tracking-tight">12.5h</div>
+            <span className="text-[11px] text-[#a1a1aa] block mt-1">This Month</span>
           </div>
         </div>
 
@@ -109,21 +110,21 @@ export default function Dashboard() {
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-[#11131C] border border-[#1E2232] rounded-xl p-8 text-center"
+            className="bg-[#141417] border border-[#27272a] rounded-xl p-10 text-center"
           >
-            <div className="w-12 h-12 rounded-xl bg-[#F97316]/10 border border-[#F97316]/20 flex items-center justify-center mx-auto mb-3 text-[#F97316]">
+            <div className="w-12 h-12 rounded-xl bg-[#1c1c21] border border-[#27272a] flex items-center justify-center mx-auto mb-4 text-[#a1a1aa]">
               <Users size={20} />
             </div>
-            <h2 className="text-sm font-semibold text-[#F8FAFC] mb-1">No teams configured yet</h2>
-            <p className="text-[#94A3B8] text-xs mb-5 max-w-sm mx-auto">
+            <h2 className="text-sm font-semibold text-[#f4f4f5] mb-1">No teams configured yet</h2>
+            <p className="text-[#a1a1aa] text-xs mb-6 max-w-sm mx-auto leading-relaxed">
               Create your Scrum team workspace to start recording meetings and generating AI tasks.
             </p>
-            <div className="flex flex-col sm:flex-row gap-2 justify-center">
-              <AppButton variant="primary" size="sm" onClick={() => navigate('/teams/create')}>
-                <Plus size={14} className="mr-1" /> Create First Team
+            <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
+              <AppButton variant="mono" size="sm" onClick={() => navigate('/teams/create')}>
+                <Plus size={14} className="mr-1.5" /> Create First Team
               </AppButton>
-              <AppButton variant="secondary" size="sm" disabled>
-                <Mail size={14} className="mr-1" /> Waiting for invitation
+              <AppButton variant="mono-outline" size="sm" disabled>
+                <Mail size={14} className="mr-1.5" /> Waiting for invitation
               </AppButton>
             </div>
           </motion.div>
@@ -131,26 +132,26 @@ export default function Dashboard() {
 
         {/* Owned Teams */}
         {ownedTeams.length > 0 && (
-          <section className="space-y-3">
+          <section className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-[10px] font-mono font-semibold text-[#64748B] uppercase tracking-wider">
+              <h2 className="text-[10px] font-mono font-semibold text-[#71717a] uppercase tracking-wider">
                 Owned Workspaces ({ownedTeams.length})
               </h2>
               {canCreate ? (
                 <button
                   onClick={() => navigate('/teams/create')}
-                  className="flex items-center gap-1 text-xs text-[#F97316] font-semibold hover:underline cursor-pointer"
+                  className="flex items-center gap-1 text-xs text-[#f4f4f5] font-medium hover:underline cursor-pointer transition-colors"
                 >
                   <Plus size={12} /> New Team
                 </button>
               ) : (
-                <AppBadge variant="amber" size="xs">
+                <AppBadge variant="mono" size="xs">
                   Free plan limit reached
                 </AppBadge>
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {ownedTeams.map(t => (
                 <TeamCard key={t.id} team={t} onOpen={() => navigate(`/teams/${t.id}`)} />
               ))}
@@ -158,12 +159,12 @@ export default function Dashboard() {
               {canCreate && (
                 <button
                   onClick={() => navigate('/teams/create')}
-                  className="bg-[#11131C] border border-dashed border-[#1E2232] rounded-xl p-4 flex flex-col items-center justify-center gap-2 hover:border-[#F97316]/40 hover:bg-[#F97316]/5 transition-all min-h-[140px] cursor-pointer group"
+                  className="bg-[#141417] border border-dashed border-[#27272a] rounded-xl p-5 flex flex-col items-center justify-center gap-2.5 hover:border-[#3f3f46] hover:bg-[#18181b] transition-all min-h-[140px] cursor-pointer group"
                 >
-                  <div className="w-8 h-8 rounded-md bg-[#171A26] border border-[#232738] flex items-center justify-center text-[#64748B] group-hover:text-[#F97316] transition-colors">
+                  <div className="w-8 h-8 rounded-lg bg-[#1c1c21] border border-[#27272a] flex items-center justify-center text-[#71717a] group-hover:text-[#f4f4f5] transition-colors">
                     <Plus size={16} />
                   </div>
-                  <span className="text-xs text-[#94A3B8] font-medium group-hover:text-[#F8FAFC] transition-colors">
+                  <span className="text-xs text-[#a1a1aa] font-medium group-hover:text-[#f4f4f5] transition-colors">
                     Create New Team
                   </span>
                 </button>
@@ -174,11 +175,11 @@ export default function Dashboard() {
 
         {/* Joined Teams */}
         {joinedTeams.length > 0 && (
-          <section className="space-y-3 pt-2">
-            <h2 className="text-[10px] font-mono font-semibold text-[#64748B] uppercase tracking-wider">
+          <section className="space-y-4 pt-2">
+            <h2 className="text-[10px] font-mono font-semibold text-[#71717a] uppercase tracking-wider">
               Joined Workspaces ({joinedTeams.length})
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {joinedTeams.map(t => (
                 <TeamCard key={t.id} team={t} onOpen={() => navigate(`/teams/${t.id}`)} />
               ))}

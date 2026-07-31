@@ -9,21 +9,21 @@ export interface AppSelectProps extends React.SelectHTMLAttributes<HTMLSelectEle
 export const AppSelect = React.forwardRef<HTMLSelectElement, AppSelectProps>(
   ({ label, options, error, className = '', ...props }, ref) => {
     return (
-      <div className="w-full space-y-1">
+      <div className="w-full space-y-1.5">
         {label && (
-          <label className="block text-[11px] font-semibold text-[#CBD5E1] uppercase tracking-wider">
+          <label className="block text-[11px] font-mono font-medium text-[#71717a] uppercase tracking-wider">
             {label}
           </label>
         )}
         <select
           ref={ref}
-          className={`w-full bg-[#0C0D14] border border-[#1E2232] rounded-lg px-3 py-1.5 text-xs text-[#F8FAFC] outline-none focus:border-[#F97316] transition-colors ${
+          className={`w-full bg-[#141417] border border-[#27272a] rounded-lg px-3 py-2 text-xs text-[#f4f4f5] outline-none focus:border-[#3f3f46] focus:ring-1 focus:ring-[#3f3f46] transition-colors ${
             error ? 'border-red-500/50' : ''
           } ${className}`}
           {...props}
         >
           {options.map(opt => (
-            <option key={opt.value} value={opt.value} className="bg-[#11131C] text-[#F8FAFC]">
+            <option key={opt.value} value={opt.value} className="bg-[#141417] text-[#f4f4f5]">
               {opt.label}
             </option>
           ))}

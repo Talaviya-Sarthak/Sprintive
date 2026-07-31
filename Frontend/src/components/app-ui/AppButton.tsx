@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 export interface AppButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'icon' | 'danger' | 'success' | 'active';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'icon' | 'danger' | 'success' | 'active' | 'mono' | 'mono-outline' | 'mono-ghost';
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'icon';
   fullWidth?: boolean;
   loading?: boolean;
@@ -10,7 +10,7 @@ export interface AppButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEle
 export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
   ({ className = '', variant = 'secondary', size = 'sm', fullWidth, loading, children, disabled, ...props }, ref) => {
     const baseStyles =
-      'inline-flex items-center justify-center font-semibold rounded-md transition-all duration-120 ease-out select-none cursor-pointer disabled:opacity-50 disabled:pointer-events-none shrink-0 border';
+      'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 ease-out select-none cursor-pointer disabled:opacity-50 disabled:pointer-events-none shrink-0 border';
 
     const variantStyles: Record<string, string> = {
       // Modern Linear/GitHub styled button variants
@@ -28,6 +28,13 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
         'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500 hover:text-white active:scale-[0.98]',
       active:
         'bg-[#F97316]/10 text-[#F97316] border-[#F97316]/30 font-semibold',
+      // High-End Monochromatic Dark SaaS Variants
+      mono:
+        'bg-[#f4f4f5] text-[#09090b] border-[#f4f4f5] hover:bg-[#e4e4e7] font-semibold active:scale-[0.98]',
+      'mono-outline':
+        'bg-[#141417] text-[#f4f4f5] border-[#27272a] hover:bg-[#18181b] hover:border-[#3f3f46] active:scale-[0.98]',
+      'mono-ghost':
+        'bg-transparent text-[#a1a1aa] border-transparent hover:bg-[#1c1c21] hover:text-[#f4f4f5]',
     };
 
     const sizeStyles: Record<string, string> = {

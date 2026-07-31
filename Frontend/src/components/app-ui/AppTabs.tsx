@@ -14,21 +14,21 @@ export interface AppTabsProps {
 
 export function AppTabs({ items, activeId, onChange }: AppTabsProps) {
   return (
-    <div className="flex gap-1 p-0.5 rounded-lg bg-[#0C0D14] border border-[#1E2232] w-fit">
+    <div className="flex gap-1 p-1 rounded-xl bg-[#141417] border border-[#27272a] w-fit">
       {items.map(item => {
         const isActive = item.id === activeId;
         return (
           <button
             key={item.id}
             onClick={() => onChange(item.id)}
-            className={`relative px-3 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer select-none ${
-              isActive ? 'text-[#F8FAFC]' : 'text-[#64748B] hover:text-[#94A3B8]'
+            className={`relative px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer select-none ${
+              isActive ? 'text-[#f4f4f5]' : 'text-[#71717a] hover:text-[#a1a1aa]'
             }`}
           >
             {isActive && (
               <motion.div
                 layoutId="app-tab-active"
-                className="absolute inset-0 bg-[#171A26] rounded-md border border-[#262A3E] -z-1"
+                className="absolute inset-0 bg-[#1c1c21] rounded-lg border border-[#27272a] -z-1"
                 transition={{ type: 'spring', stiffness: 400, damping: 30 }}
               />
             )}
@@ -38,8 +38,8 @@ export function AppTabs({ items, activeId, onChange }: AppTabsProps) {
                 <span
                   className={`text-[10px] px-1.5 py-0.2 rounded-full ${
                     isActive
-                      ? 'bg-[#F97316]/15 text-[#F97316] font-semibold'
-                      : 'bg-[#181A26] text-[#64748B]'
+                      ? 'bg-[#27272a] text-[#f4f4f5] font-semibold'
+                      : 'bg-[#18181b] text-[#71717a]'
                   }`}
                 >
                   {item.count}

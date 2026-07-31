@@ -83,7 +83,7 @@ export default function MeetingsPage() {
     return (
       <AppLayout teamId={teamId}>
         <div className="flex items-center justify-center h-64">
-          <div className="w-7 h-7 border-2 border-[#F97316]/30 border-t-[#F97316] rounded-full animate-spin" />
+          <div className="w-7 h-7 border-2 border-[#27272a] border-t-[#f4f4f5] rounded-full animate-spin" />
         </div>
       </AppLayout>
     );
@@ -115,8 +115,8 @@ export default function MeetingsPage() {
         {error && <p className="text-red-400 text-xs">{error}</p>}
 
         {finalFiltered.length === 0 ? (
-          <div className="bg-[#11131C] border border-[#1E2232] rounded-xl p-10 text-center">
-            <p className="text-xs text-[#64748B]">No meetings match your filter criteria.</p>
+          <div className="bg-[#141417] border border-[#27272a] rounded-xl p-10 text-center">
+            <p className="text-xs text-[#71717a]">No meetings match your filter criteria.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">

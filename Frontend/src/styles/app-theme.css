@@ -5,24 +5,42 @@
 
 :root {
   /* Surface Scale */
-  --app-bg: #08090E;
-  --app-surface-subtle: #0C0D14;
-  --app-surface-card: #11131C;
-  --app-surface-hover: #171A26;
-  --app-surface-active: #1F2333;
+  --app-bg: #09090b;
+  --app-surface-subtle: #0c0c0e;
+  --app-surface-card: #141417;
+  --app-surface-hover: #1c1c21;
+  --app-surface-active: #27272a;
+
+  /* Dashboard Monochromatic Design System Tokens */
+  --dash-bg: #09090b;
+  --dash-surface-sidebar: #0c0c0e;
+  --dash-surface-card: #141417;
+  --dash-surface-hover: #18181b;
+  --dash-surface-active: #27272a;
+
+  /* Dashboard Border Scale */
+  --dash-border: #27272a;
+  --dash-border-subtle: #1f1f23;
+  --dash-border-hover: #3f3f46;
+
+  /* Dashboard Typography */
+  --dash-text-primary: #f4f4f5;
+  --dash-text-secondary: #a1a1aa;
+  --dash-text-muted: #71717a;
+  --dash-text-dim: #52525b;
 
   /* Border Scale */
-  --app-border: #1B1E2B;
-  --app-border-subtle: #151722;
-  --app-border-focus: #F97316;
+  --app-border: #27272a;
+  --app-border-subtle: #1f1f23;
+  --app-border-focus: #3f3f46;
 
   /* Text Colors */
-  --app-text-primary: #F8FAFC;
-  --app-text-secondary: #94A3B8;
-  --app-text-muted: #64748B;
-  --app-text-dim: #475569;
+  --app-text-primary: #f4f4f5;
+  --app-text-secondary: #a1a1aa;
+  --app-text-muted: #71717a;
+  --app-text-dim: #52525b;
 
-  /* Accent Colors (Used 10% max) */
+  /* Accent Colors */
   --app-accent-orange: #F97316;
   --app-accent-orange-hover: #EA580C;
   --app-accent-orange-subtle: rgba(249, 115, 22, 0.12);
