@@ -3,12 +3,19 @@ import { accessTokenOptions, refreshTokenOptions } from '../config/jwt.js';
 
 /**
  * Signs a new access token for the given user.
- * @param {{ id: string, email: string }} user
+ * @param {{ id: string, email: string, full_name: string, avatar_url: string, role: string }} user
  * @returns {string}
  */
 export function signAccessToken(user) {
   return jwt.sign(
-    { sub: user.id, email: user.email, type: 'access' },
+    {
+      sub: user.id,
+      email: user.email,
+      full_name: user.full_name || '',
+      avatar_url: user.avatar_url || '',
+      role: user.role || 'user',
+      type: 'access',
+    },
     accessTokenOptions.secret,
     accessTokenOptions.options
   );

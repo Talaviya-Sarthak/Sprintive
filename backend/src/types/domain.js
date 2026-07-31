@@ -21,6 +21,27 @@ export const MeetingStatus = {
   CANCELLED: 'cancelled',
 };
 
+export const MeetingType = {
+  DAILY_SCRUM: 'daily_scrum',
+  SPRINT_PLANNING: 'sprint_planning',
+  REVIEW: 'review',
+  RETROSPECTIVE: 'retrospective',
+  CUSTOM: 'custom',
+};
+
+export const ParticipantRole = {
+  HOST: 'host',
+  PARTICIPANT: 'participant',
+  CO_HOST: 'co-host',
+};
+
+export const AttendanceStatus = {
+  PENDING: 'pending',
+  JOINED: 'joined',
+  ABSENT: 'absent',
+  EXCUSED: 'excused',
+};
+
 export const RecordingStatus = {
   PROCESSING: 'processing',
   READY: 'ready',

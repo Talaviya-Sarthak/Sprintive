@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import type { Participant } from '../../types';
 
@@ -9,6 +10,29 @@ interface Props {
 
 export default function ParticipantCard({ participant, isActive, videoRef }: Props) {
   const initials = participant.full_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
+  const internalRef = useRef<HTMLVideoElement | null>(null);
+  const playedStreams = useRef<Set<string>>(new Set());
+  const isLocal = !!videoRef;
+  const showVideo = participant.isCameraOff !== true && (!!participant.stream || isLocal);
+
+  const handleVideoRef = useCallback((el: HTMLVideoElement | null) => {
+    internalRef.current = el;
+    if (videoRef) (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = el;
+  }, [videoRef]);
+
+  useEffect(() => {
+    const el = videoRef?.current || internalRef.current;
+    if (el && participant.stream) {
+      if (el.srcObject !== participant.stream) {
+        el.srcObject = participant.stream;
+      }
+      const sid = participant.stream.id;
+      if (!playedStreams.current.has(sid)) {
+        playedStreams.current.add(sid);
+        el.play().catch(() => {});
+      }
+    }
+  }, [participant.stream]);
 
   return (
     <motion.div
@@ -20,13 +44,13 @@ export default function ParticipantCard({ participant, isActive, videoRef }: Pro
         isActive ? 'border-[#3B82F6] shadow-[0_0_0_2px_rgba(59,130,246,0.4)]' : 'border-white/8'
       }`}
     >
-      {/* Video */}
-      {!participant.isCameraOff && participant.stream ? (
+      {/* Video: uses merged callback ref that handles both local and remote */}
+      {participant.isCameraOff !== true && (participant.stream || videoRef) ? (
         <video
-          ref={videoRef}
+          ref={handleVideoRef}
           autoPlay
           playsInline
-          muted={participant.role === 'host'}
+          muted={participant.role === 'host' || !!videoRef}
           className="w-full h-full object-cover"
         />
       ) : (

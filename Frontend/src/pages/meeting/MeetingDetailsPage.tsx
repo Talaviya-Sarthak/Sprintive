@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Clock, Users, Play } from 'lucide-react';
-import { useMeetingMockData } from '../../hooks/useMeetingMockData';
+import { ArrowLeft, Clock } from 'lucide-react';
+import { useMeeting } from '../../hooks/useMeeting';
+import { useUpdateMeeting } from '../../hooks/useUpdateMeeting';
+import { useDeleteMeeting } from '../../hooks/useDeleteMeeting';
+import { useMeetingParticipants } from '../../hooks/useMeetingParticipants';
+import { useTeamMembers } from '../../hooks/useTeamMembers';
+import { useToast } from '../../context/ToastContext';
 import { MeetingStatusBadge, MeetingTypeBadge } from '../../components/ui/Badge';
 import MeetingInfo, { getMeetingInfoItems } from '../../components/meeting/MeetingInfo';
 import MeetingTimeline from '../../components/meeting/MeetingTimeline';
@@ -12,8 +17,6 @@ import DeleteMeetingDialog from '../../components/meeting/DeleteMeetingDialog';
 import { MeetingDetailSkeleton } from '../../components/ui/Skeleton';
 import Button from '../../components/ui/Button';
 import type { Meeting } from '../../types';
-
-const currentUserId = 'u1';
 
 function formatDateFromNow(targetDate: string, targetTime: string) {
   const [y, m, d] = targetDate.split('-').map(Number);
@@ -36,22 +39,17 @@ function formatDateFromNow(targetDate: string, targetTime: string) {
 export default function MeetingDetailsPage() {
   const { meetingId, teamId } = useParams<{ meetingId: string; teamId?: string }>();
   const navigate = useNavigate();
-  const { getMeeting, getParticipants, getTeamMembers, updateMeeting, deleteMeeting } = useMeetingMockData(teamId);
+  const { showToast } = useToast();
 
-  const [meeting, setMeeting] = useState<Meeting | null>(null);
-  const [participants, setParticipants] = useState(getParticipants(meetingId ?? ''));
-  const [loading, setLoading] = useState(true);
+  const { data: meeting, isLoading, isError } = useMeeting(meetingId);
+  const { data: participants = [] } = useMeetingParticipants(meetingId);
+  const updateMutation = useUpdateMeeting(teamId);
+  const deleteMutation = useDeleteMeeting(teamId);
+  const { data: teamMembers = [] } = useTeamMembers(teamId);
+
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [countdown, setCountdown] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!meetingId) return;
-    const m = getMeeting(meetingId);
-    setMeeting(m);
-    setParticipants(getParticipants(meetingId));
-    setLoading(false);
-  }, [meetingId]);
 
   useEffect(() => {
     if (!meeting || meeting.status !== 'scheduled') return;
@@ -61,7 +59,30 @@ export default function MeetingDetailsPage() {
     return () => clearInterval(id);
   }, [meeting]);
 
-  if (loading) {
+  const handleUpdate = async (data: Partial<Meeting>) => {
+    if (!meeting) return;
+    try {
+      await updateMutation.mutateAsync({ id: meeting.id, data });
+      setShowEditModal(false);
+      showToast('Meeting updated successfully', 'success');
+    } catch {
+      showToast('Failed to update meeting', 'error');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!meeting) return;
+    try {
+      await deleteMutation.mutateAsync(meeting.id);
+      setShowDeleteDialog(false);
+      navigate(-1);
+      showToast('Meeting deleted successfully', 'success');
+    } catch {
+      showToast('Failed to delete meeting', 'error');
+    }
+  };
+
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0B1220] p-6 md:p-8">
         <div className="max-w-4xl mx-auto">
@@ -71,7 +92,7 @@ export default function MeetingDetailsPage() {
     );
   }
 
-  if (!meeting) {
+  if (isError || !meeting) {
     return (
       <div className="min-h-screen bg-[#0B1220] flex items-center justify-center p-4">
         <div className="text-center">
@@ -82,9 +103,7 @@ export default function MeetingDetailsPage() {
     );
   }
 
-  const isOwner = meeting.host_id === currentUserId;
   const infoItems = getMeetingInfoItems(meeting);
-  const teamMembers = getTeamMembers();
 
   return (
     <div className="min-h-screen bg-[#0B1220]">
@@ -109,7 +128,7 @@ export default function MeetingDetailsPage() {
             <div className="flex items-center gap-2 shrink-0">
               {meeting.status === 'active' && (
                 <Button variant="gradient" size="md" onClick={() => navigate(`/meetings/${meeting.id}/live`)}>
-                  <Play size={14} /> Join
+                  Join
                 </Button>
               )}
               {meeting.status === 'ended' && (
@@ -117,12 +136,8 @@ export default function MeetingDetailsPage() {
                   View Summary
                 </Button>
               )}
-              {isOwner && (
-                <>
-                  <Button variant="secondary" size="md" onClick={() => setShowEditModal(true)}>Edit</Button>
-                  <Button variant="danger" size="md" onClick={() => setShowDeleteDialog(true)}>Delete</Button>
-                </>
-              )}
+              <Button variant="secondary" size="md" onClick={() => setShowEditModal(true)}>Edit</Button>
+              <Button variant="danger" size="md" onClick={() => setShowDeleteDialog(true)}>Delete</Button>
             </div>
           </div>
 
@@ -153,18 +168,15 @@ export default function MeetingDetailsPage() {
           )}
 
           <div className="bg-[#111827] border border-white/8 rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <Users size={16} className="text-[#94A3B8]" />
-              <h3 className="text-base font-bold text-[#F8FAFC]">Participants ({participants.length})</h3>
-            </div>
-            <MeetingParticipants participants={participants} currentUserId={currentUserId} />
+            <h3 className="text-base font-bold text-[#F8FAFC] mb-4">Participants ({participants.length})</h3>
+            <MeetingParticipants participants={participants} />
           </div>
         </motion.div>
 
         <EditMeetingModal
           open={showEditModal}
           onClose={() => setShowEditModal(false)}
-          onUpdate={(data) => { updateMeeting(meeting.id, data); setShowEditModal(false); }}
+          onUpdate={handleUpdate}
           meeting={meeting}
           teamMembers={teamMembers}
         />
@@ -172,8 +184,9 @@ export default function MeetingDetailsPage() {
         <DeleteMeetingDialog
           open={showDeleteDialog}
           onClose={() => setShowDeleteDialog(false)}
-          onConfirm={() => { deleteMeeting(meeting.id); navigate(-1); }}
+          onConfirm={handleDelete}
           meetingTitle={meeting.title}
+          loading={deleteMutation.isPending}
         />
       </div>
     </div>

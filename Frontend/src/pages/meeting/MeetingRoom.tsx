@@ -145,6 +145,7 @@ export default function MeetingRoom() {
       isMuted,
       isCameraOff,
       isSpeaking: activeSpeakerId === userId,
+      stream: stream ?? undefined,
     },
     ...participants.filter((p) => p.user_id !== userId),
   ];
@@ -279,6 +280,7 @@ export default function MeetingRoom() {
           meetingStatus={meeting?.status ?? 'scheduled'}
           unreadCount={unreadCount}
           sidebarTab={sidebarTab}
+          isConnected={true}
           onToggleMic={handleToggleMic}
           onToggleCamera={handleToggleCam}
           onToggleScreen={handleScreenShare}
