@@ -19,8 +19,10 @@ import Button from '../../components/ui/Button';
 import type { Meeting } from '../../types';
 
 function formatDateFromNow(targetDate: string, targetTime: string) {
+  if (!targetDate || !targetTime) return null;
   const [y, m, d] = targetDate.split('-').map(Number);
   const [h, min] = targetTime.split(':').map(Number);
+  if ([y, m, d, h, min].some(Number.isNaN)) return null;
   const meetingTime = new Date(y, m - 1, d, h, min);
   const now = new Date();
   const diff = meetingTime.getTime() - now.getTime();

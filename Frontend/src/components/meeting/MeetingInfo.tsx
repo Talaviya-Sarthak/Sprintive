@@ -40,10 +40,12 @@ export function formatDateLong(dateStr: string) {
 }
 
 export function formatTime12h(time: string) {
+  if (!time) return '';
   const [h, m] = time.split(':').map(Number);
+  if (Number.isNaN(h)) return '';
   const ampm = h >= 12 ? 'PM' : 'AM';
   const hour = h % 12 || 12;
-  return `${hour}:${m.toString().padStart(2, '0')} ${ampm}`;
+  return `${hour}:${(m ?? 0).toString().padStart(2, '0')} ${ampm}`;
 }
 
 export function getMeetingInfoItems(meeting: {
