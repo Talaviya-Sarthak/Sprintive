@@ -18,12 +18,6 @@ function formatDateLong(dateStr: string) {
   return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 }
 
-<<<<<<< HEAD
-function formatTime12h(time: string) {
-  if (!time) return '';
-  const [h, m] = time.split(':').map(Number);
-  if (Number.isNaN(h)) return '';
-=======
 function formatTime12h(time?: string) {
   if (!time) return 'TBD';
   if (time.includes('T')) {
@@ -33,7 +27,6 @@ function formatTime12h(time?: string) {
   }
   const [h, m = 0] = time.split(':').map(Number);
   if (Number.isNaN(h) || Number.isNaN(m)) return 'TBD';
->>>>>>> Developement
   const ampm = h >= 12 ? 'PM' : 'AM';
   const hour = h % 12 || 12;
   return `${hour}:${(m ?? 0).toString().padStart(2, '0')} ${ampm}`;

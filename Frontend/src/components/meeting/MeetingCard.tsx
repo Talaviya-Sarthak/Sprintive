@@ -35,12 +35,6 @@ function formatDate(value?: string) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-<<<<<<< HEAD
-function formatTime(time: string) {
-  if (!time) return '';
-  const [h, m] = time.split(':').map(Number);
-  if (Number.isNaN(h)) return '';
-=======
 function formatTime(value?: string) {
   if (!value) return null;
 
@@ -52,7 +46,6 @@ function formatTime(value?: string) {
 
   const [h, m = 0] = value.split(':').map(Number);
   if (Number.isNaN(h) || Number.isNaN(m)) return null;
->>>>>>> Developement
   const ampm = h >= 12 ? 'PM' : 'AM';
   const hour = h % 12 || 12;
   return `${hour}:${(m ?? 0).toString().padStart(2, '0')} ${ampm}`;
