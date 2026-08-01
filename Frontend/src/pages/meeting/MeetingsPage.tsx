@@ -55,7 +55,7 @@ export default function MeetingsPage() {
 
   const filteredByTab = meetings.filter(m => {
     if (activeTab === 'live') return m.status === 'active';
-    if (activeTab === 'completed') return m.status === 'ended' || m.status === 'cancelled';
+    if (activeTab === 'completed') return m.status === 'ended' || m.status === 'completed' || m.status === 'cancelled';
     if (activeTab === 'upcoming') return m.status === 'scheduled';
     return true;
   });
@@ -76,7 +76,7 @@ export default function MeetingsPage() {
     { id: 'all', label: 'All', count: meetings.length },
     { id: 'upcoming', label: 'Upcoming', count: meetings.filter(m => m.status === 'scheduled').length },
     { id: 'live', label: 'Live', count: meetings.filter(m => m.status === 'active').length },
-    { id: 'completed', label: 'Completed', count: meetings.filter(m => m.status === 'ended' || m.status === 'cancelled').length },
+    { id: 'completed', label: 'Completed', count: meetings.filter(m => m.status === 'ended' || m.status === 'completed' || m.status === 'cancelled').length },
   ];
 
   if (loading) {

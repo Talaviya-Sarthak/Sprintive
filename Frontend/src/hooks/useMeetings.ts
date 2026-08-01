@@ -15,7 +15,7 @@ export function useMeetings(teamId: string | undefined, filters: MeetingFilters 
         all,
         upcoming: all.filter((m: any) => m.status === 'scheduled'),
         ongoing: all.filter((m: any) => m.status === 'active'),
-        completed: all.filter((m: any) => m.status === 'ended' || m.status === 'cancelled'),
+        completed: all.filter((m: any) => m.status === 'ended' || m.status === 'completed' || m.status === 'cancelled'),
       };
     },
   });

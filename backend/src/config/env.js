@@ -32,7 +32,18 @@ export const env = {
 
   frontendUrl:        process.env.FRONTEND_URL ?? 'http://localhost:5173',
 
-  // Cloudflare R2
+  // ── Object Storage (provider-agnostic) ─────────────────────────────────────
+  storageProvider:    process.env.STORAGE_PROVIDER         ?? 'supabase',
+
+  // Supabase Storage
+  supabaseUrl:        process.env.SUPABASE_URL              ?? '',
+  supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
+  supabaseBucket:     process.env.SUPABASE_BUCKET           ?? 'recordings',
+
+  // AI Service (speech recognition)
+  aiServiceUrl:       process.env.AI_SERVICE_URL            ?? 'http://localhost:8000',
+
+  // Cloudflare R2 (legacy — kept for backward compatibility)
   r2AccountId:        process.env.R2_ACCOUNT_ID        ?? '',
   r2AccessKeyId:      process.env.R2_ACCESS_KEY_ID     ?? '',
   r2SecretAccessKey:  process.env.R2_SECRET_ACCESS_KEY ?? '',

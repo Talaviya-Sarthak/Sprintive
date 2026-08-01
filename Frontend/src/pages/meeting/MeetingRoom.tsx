@@ -3,14 +3,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMeetingSocket } from '../../hooks/useMeetingSocket';
 import { useMediaDevices }  from '../../hooks/useMediaDevices';
+import { useParticipantRecording } from '../../hooks/useParticipantRecording';
 import { useMeetingStore }  from '../../store/meetingStore';
 import { meetingService }   from '../../services/meeting.service';
+import { submitLocalRecording } from '../../services/recording.service';
 import ParticipantCard      from '../../components/meeting/ParticipantCard';
 import MeetingChat          from '../../components/meeting/MeetingChat';
 import ParticipantsList     from '../../components/meeting/ParticipantsList';
 import MeetingToolbar       from '../../components/meeting/MeetingToolbar';
 import MeetingTimer         from '../../components/meeting/MeetingTimer';
-import type { Meeting, Recording, Transcript } from '../../types';
+import type { EndMeetingData } from '../../types';
 
 // Decode JWT payload (no verify — just for display)
 function parseJwt(token: string) {
@@ -26,20 +28,47 @@ export default function MeetingRoom() {
   const {
     meeting, participants, chats, recording, isMuted, isCameraOff, isScreenSharing,
     activeSpeakerId, sidebarTab, unreadCount,
-    setMeeting, setParticipants, setChats,
+    setMeeting, setParticipants, setChats, setRecording,
     toggleMute, toggleCamera, toggleScreenShare,
     setSidebarTab, resetUnread, reset,
   } = useMeetingStore();
 
   const { stream, stopMedia, toggleMic, toggleCamera: toggleCam, startScreenShare } = useMediaDevices();
-  const { sendChat, startMeeting, endMeeting, leaveMeeting: leaveSocket, setLocalStream } = useMeetingSocket(id);
+  const { sendChat, startMeeting, endMeeting, onMeetingEnded, leaveMeeting: leaveSocket, setLocalStream } = useMeetingSocket(id);
+  const { isRecording, stopAndGetBlob } = useParticipantRecording(stream, meeting?.status === 'active');
 
-  const [endedData, setEndedData] = useState<{ meeting: Meeting; recording: Recording; transcript: Transcript } | null>(null);
+  const [endedData, setEndedData] = useState<EndMeetingData | null>(null);
 
   const token = localStorage.getItem('access_token') ?? '';
   const payload = parseJwt(token);
   const userId = payload.id ?? payload.sub ?? '';
+  const participantName = payload.full_name ?? 'You';
   const isHost = meeting?.host_id === userId;
+
+  // Reflect active local recording in the store so the REC indicator shows.
+  useEffect(() => {
+    if (isRecording) {
+      setRecording({ id: 'local', meeting_id: id ?? '', status: 'processing', started_at: new Date().toISOString() });
+    }
+  }, [isRecording, id, setRecording]);
+
+  // Non-hosts upload their recording when the host ends the meeting.
+  useEffect(() => {
+    const cleanup = onMeetingEnded(async (data) => {
+      if (data?.meeting?.host_id !== userId) {
+        try {
+          const captured = await stopAndGetBlob();
+          if (captured) {
+            await submitLocalRecording({ meetingId: id ?? '', captured, participantId: userId, participantName });
+          }
+        } catch (err) {
+          console.error('[recording] capture failed', err);
+        }
+      }
+      setEndedData(data);
+    });
+    return cleanup;
+  }, [onMeetingEnded, id, userId, participantName, stopAndGetBlob]);
 
   useEffect(() => {
     if (!id) return;
@@ -70,7 +99,17 @@ export default function MeetingRoom() {
 
   const handleStartMeeting = () => startMeeting();
 
-  const handleEndMeeting = () => {
+  const handleEndMeeting = async () => {
+    // The host stops the local recorder and uploads their audio first,
+    // so the backend has it before the meeting is marked completed.
+    try {
+      const captured = await stopAndGetBlob();
+      if (captured) {
+        await submitLocalRecording({ meetingId: id ?? '', captured, participantId: userId, participantName });
+      }
+    } catch (err) {
+      console.error('[recording] capture failed', err);
+    }
     endMeeting((data) => setEndedData(data));
   };
 
@@ -88,8 +127,9 @@ export default function MeetingRoom() {
 
   // ── Meeting Ended Modal ────────────────────────────────────────────────────
   if (endedData) {
-    const dur = endedData.recording?.duration;
-    const fmt = dur ? `${Math.floor(dur / 60)}m ${dur % 60}s` : 'N/A';
+    const durMs = endedData.recording?.duration_ms;
+    const fmt = durMs ? `${Math.floor(durMs / 60000)}m ${Math.floor((durMs % 60000) / 1000)}s` : 'N/A';
+    const recordingStatus = endedData.recording?.status ?? 'none';
     return (
       <div className="min-h-screen bg-[#09090b] flex items-center justify-center p-4">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-lg">
@@ -99,7 +139,7 @@ export default function MeetingRoom() {
             </div>
             <div>
               <h2 className="text-xl font-semibold text-[#f4f4f5]">Meeting Ended</h2>
-              <p className="text-[#a1a1aa] text-xs mt-1">Recording saved successfully</p>
+              <p className="text-[#a1a1aa] text-xs mt-1">Recording submitted for speech recognition</p>
             </div>
 
             <div className="space-y-3 text-left">
@@ -108,13 +148,13 @@ export default function MeetingRoom() {
                 <span className="text-xs font-semibold text-[#f4f4f5]">{fmt}</span>
               </div>
               <div className="flex justify-between items-center p-3 rounded-xl bg-[#1c1c21] border border-[#27272a]">
-                <span className="text-xs text-[#71717a] font-mono">Status</span>
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-medium">Saved to Storage</span>
+                <span className="text-xs text-[#71717a] font-mono">Recording</span>
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-medium capitalize">{recordingStatus}</span>
               </div>
-              {endedData.recording?.recording_url && (
+              {endedData.recording?.storage_key && (
                 <div className="p-3 rounded-xl bg-[#1c1c21] border border-[#27272a]">
-                  <p className="text-xs text-[#71717a] font-mono mb-1">Recording URL</p>
-                  <p className="text-xs text-[#f4f4f5] break-all">{endedData.recording.recording_url}</p>
+                  <p className="text-xs text-[#71717a] font-mono mb-1">Storage Key</p>
+                  <p className="text-xs text-[#f4f4f5] break-all">{endedData.recording.storage_key}</p>
                 </div>
               )}
             </div>

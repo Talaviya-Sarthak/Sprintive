@@ -69,7 +69,7 @@ export interface DashboardData {
 }
 
 
-export type MeetingStatus = 'scheduled' | 'active' | 'ended' | 'cancelled';
+export type MeetingStatus = 'scheduled' | 'active' | 'ended' | 'completed' | 'cancelled';
 export type MeetingType = 'daily_scrum' | 'sprint_planning' | 'review' | 'retrospective' | 'custom';
 
 export interface Meeting {
@@ -130,6 +130,51 @@ export interface Recording {
   status: 'processing' | 'ready' | 'failed';
   started_at: string;
   ended_at?: string;
+}
+
+/** Per-participant audio recording metadata (participant_audio row). */
+export type AudioRecordingStatus = 'pending' | 'stored' | 'processing' | 'completed' | 'failed' | 'missing';
+
+export interface AudioRecording {
+  id: string;
+  meeting_id: string;
+  participant_id: string;
+  participant_name: string;
+  storage_key?: string;
+  mime_type?: string;
+  size_bytes?: number;
+  duration_ms?: number;
+  status: AudioRecordingStatus;
+  started_at?: string;
+  ended_at?: string;
+  created_at: string;
+}
+
+/** A single recognized speech segment (speech_segments row). */
+export interface SpeechSegment {
+  id: string;
+  meeting_id: string;
+  participant_id: string;
+  participant_name: string;
+  audio_id?: string | null;
+  start_time: number;
+  end_time: number;
+  text: string;
+  created_at: string;
+}
+
+/** Raw segment returned by the AI service (pre-persistence). */
+export interface RecognizedSegment {
+  start: number;
+  end: number;
+  text: string;
+}
+
+export interface EndMeetingData {
+  meeting: Meeting;
+  transcript?: Transcript | null;
+  summary?: MeetingSummary | null;
+  recording?: AudioRecording | null;
 }
 
 export interface Transcript {

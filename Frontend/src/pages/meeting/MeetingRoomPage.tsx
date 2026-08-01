@@ -3,8 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMediaDevices } from '../../hooks/useMediaDevices';
 import { useMeetingSocket } from '../../hooks/useMeetingSocket';
+import { useParticipantRecording } from '../../hooks/useParticipantRecording';
 import { useMeetingStore } from '../../store/meetingStore';
 import { meetingService } from '../../services/meeting.service';
+import { submitLocalRecording } from '../../services/recording.service';
 import { useAuth } from '../../context/AuthContext';
 import ParticipantCard from '../../components/meeting/ParticipantCard';
 import MeetingChat from '../../components/meeting/MeetingChat';
@@ -12,7 +14,7 @@ import ParticipantsList from '../../components/meeting/ParticipantsList';
 import MeetingToolbar from '../../components/meeting/MeetingToolbar';
 import MeetingTimer from '../../components/meeting/MeetingTimer';
 import { MeetingStatusBadge } from '../../components/ui/Badge';
-import type { Meeting, Transcript } from '../../types';
+import type { EndMeetingData } from '../../types';
 
 export default function MeetingRoomPage() {
   const { meetingId } = useParams<{ meetingId: string }>();
@@ -24,19 +26,46 @@ export default function MeetingRoomPage() {
   const {
     meeting, participants, chats, recording, isMuted, isCameraOff, isScreenSharing,
     activeSpeakerId, sidebarTab, unreadCount,
-    setMeeting, setParticipants, setChats,
+    setMeeting, setParticipants, setChats, setRecording,
     toggleScreenShare,
     setSidebarTab, resetUnread, reset,
   } = useMeetingStore();
 
   const { stream, toggleMic, toggleCamera: toggleCam, startScreenShare, error: mediaError } = useMediaDevices();
-  const { sendChat, startMeeting, endMeeting, onRedirect, setLocalStream, toggleCamera: socketToggleCamera, toggleMic: socketToggleMic, isConnected, socketError } = useMeetingSocket(meetingId);
+  const { sendChat, startMeeting, endMeeting, onMeetingEnded, onRedirect, setLocalStream, toggleCamera: socketToggleCamera, toggleMic: socketToggleMic, isConnected, socketError } = useMeetingSocket(meetingId);
+  const { isRecording, stopAndGetBlob } = useParticipantRecording(stream, meeting?.status === 'active');
 
   const [loading, setLoading] = useState(true);
-  const [endedData, setEndedData] = useState<{ meeting: Meeting; transcript: Transcript } | null>(null);
+  const [endedData, setEndedData] = useState<EndMeetingData | null>(null);
 
   const userId = user?.id ?? '';
+  const participantName = user?.full_name ?? 'You';
   const isHost = meeting?.host_id === userId;
+
+  // Reflect active local recording in the store so the REC indicator shows.
+  useEffect(() => {
+    if (isRecording) {
+      setRecording({ id: 'local', meeting_id: meetingId ?? '', status: 'processing', started_at: new Date().toISOString() });
+    }
+  }, [isRecording, meetingId, setRecording]);
+
+  // Non-hosts upload their recording when the host ends the meeting.
+  useEffect(() => {
+    const cleanup = onMeetingEnded(async (data) => {
+      if (data?.meeting?.host_id !== userId) {
+        try {
+          const captured = await stopAndGetBlob();
+          if (captured) {
+            await submitLocalRecording({ meetingId: meetingId ?? '', captured, participantId: userId, participantName });
+          }
+        } catch (err) {
+          console.error('[recording] capture failed', err);
+        }
+      }
+      setEndedData(data);
+    });
+    return cleanup;
+  }, [onMeetingEnded, meetingId, userId, participantName, stopAndGetBlob]);
 
   // Fetch initial data on mount
   useEffect(() => {
@@ -124,7 +153,15 @@ export default function MeetingRoomPage() {
 
   const handleStartMeeting = () => startMeeting();
 
-  const handleEndMeeting = () => {
+  const handleEndMeeting = async () => {
+    try {
+      const captured = await stopAndGetBlob();
+      if (captured) {
+        await submitLocalRecording({ meetingId: meetingId ?? '', captured, participantId: userId, participantName });
+      }
+    } catch (err) {
+      console.error('[recording] capture failed', err);
+    }
     endMeeting((data) => setEndedData(data));
   };
 

@@ -1,6 +1,6 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Sprintive — Complete Database Schema (latest state)
--- Migrations applied: 001 → 008
+-- Migrations applied: 001 → 011
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
@@ -10,8 +10,9 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE TYPE auth_provider     AS ENUM ('local', 'google', 'github');
 CREATE TYPE team_member_role  AS ENUM ('scrum_master', 'developer', 'product_owner', 'observer');
 CREATE TYPE invitation_status AS ENUM ('pending', 'accepted', 'rejected', 'expired');
-CREATE TYPE meeting_status    AS ENUM ('scheduled', 'active', 'ended', 'cancelled');
+CREATE TYPE meeting_status    AS ENUM ('scheduled', 'active', 'ended', 'completed', 'cancelled');
 CREATE TYPE participant_role  AS ENUM ('host', 'participant');
+CREATE TYPE participant_audio_status AS ENUM ('pending', 'stored', 'processing', 'completed', 'failed', 'missing');
 
 
 -- ─── FUNCTION ─────────────────────────────────────────────────────────────────
@@ -238,3 +239,54 @@ CREATE INDEX IF NOT EXISTS idx_recordings_meeting ON meeting_recordings (meeting
 CREATE TRIGGER trg_recordings_updated_at
   BEFORE UPDATE ON meeting_recordings
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- ─── PARTICIPANT AUDIO ────────────────────────────────────────────────────────
+-- One row per participant recording. Only the object key is stored.
+-- The storage layer is provider-agnostic (Supabase today, S3 in the future).
+
+CREATE TABLE IF NOT EXISTS participant_audio (
+  id               UUID                     PRIMARY KEY DEFAULT gen_random_uuid(),
+  meeting_id       UUID                     NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+  participant_id   UUID                     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  participant_name VARCHAR(150)             NOT NULL,
+  storage_key      TEXT                     UNIQUE,
+  mime_type        VARCHAR(100),
+  size_bytes       BIGINT,
+  duration_ms      INTEGER,
+  status           participant_audio_status NOT NULL DEFAULT 'pending',
+  error            TEXT,
+  started_at       TIMESTAMPTZ,
+  ended_at         TIMESTAMPTZ,
+  created_at       TIMESTAMPTZ              NOT NULL DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ              NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_participant_audio_meeting     ON participant_audio (meeting_id);
+CREATE INDEX IF NOT EXISTS idx_participant_audio_participant ON participant_audio (participant_id);
+CREATE INDEX IF NOT EXISTS idx_participant_audio_status      ON participant_audio (status);
+CREATE INDEX IF NOT EXISTS idx_participant_audio_retriable
+  ON participant_audio (meeting_id, status)
+  WHERE status = 'failed' AND storage_key IS NOT NULL;
+
+CREATE TRIGGER trg_participant_audio_updated_at
+  BEFORE UPDATE ON participant_audio
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- ─── SPEECH SEGMENTS ──────────────────────────────────────────────────────────
+-- Recognized speech per participant, stored for future AI processing.
+
+CREATE TABLE IF NOT EXISTS speech_segments (
+  id               UUID             PRIMARY KEY DEFAULT gen_random_uuid(),
+  meeting_id       UUID             NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+  participant_id   UUID             NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  participant_name VARCHAR(150)     NOT NULL,
+  audio_id         UUID             REFERENCES participant_audio(id) ON DELETE SET NULL,
+  start_time       DOUBLE PRECISION NOT NULL DEFAULT 0,
+  end_time         DOUBLE PRECISION NOT NULL DEFAULT 0,
+  text             TEXT             NOT NULL,
+  created_at       TIMESTAMPTZ      NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_speech_segments_meeting     ON speech_segments (meeting_id);
+CREATE INDEX IF NOT EXISTS idx_speech_segments_participant ON speech_segments (participant_id);
+CREATE INDEX IF NOT EXISTS idx_speech_segments_audio       ON speech_segments (audio_id);

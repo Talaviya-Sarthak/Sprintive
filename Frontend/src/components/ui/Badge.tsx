@@ -4,6 +4,7 @@ const statusStyles: Record<MeetingStatus, string> = {
   scheduled: 'bg-[#1c1c21] text-[#a1a1aa] border-[#27272a]',
   active: 'bg-emerald-500/12 text-emerald-400 border-emerald-500/25',
   ended: 'bg-[#18181b] text-[#71717a] border-[#27272a]',
+  completed: 'bg-emerald-500/12 text-emerald-400 border-emerald-500/25',
   cancelled: 'bg-red-500/12 text-red-400 border-red-500/25',
 };
 
@@ -11,6 +12,7 @@ const statusLabels: Record<MeetingStatus, string> = {
   scheduled: 'Scheduled',
   active: 'Live',
   ended: 'Completed',
+  completed: 'Completed',
   cancelled: 'Cancelled',
 };
 

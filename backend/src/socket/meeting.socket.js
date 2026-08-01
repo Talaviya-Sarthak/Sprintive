@@ -127,6 +127,7 @@ export function initSocket(io) {
           meeting:    result.meeting,
           transcript: result.transcript,
           summary:    result.summary,
+          recording:  result.recording,
         });
         setTimeout(() => {
           io.to(room).emit('meeting:redirect', { url: `/meetings/${meetingId}/summary` });

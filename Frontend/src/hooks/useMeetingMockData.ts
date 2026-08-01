@@ -50,7 +50,7 @@ export function useMeetingMockData(teamId?: string) {
 
   const upcoming = useMemo(() => filteredMeetings.filter(m => m.status === 'scheduled'), [filteredMeetings]);
   const ongoing = useMemo(() => filteredMeetings.filter(m => m.status === 'active'), [filteredMeetings]);
-  const completed = useMemo(() => filteredMeetings.filter(m => m.status === 'ended' || m.status === 'cancelled'), [filteredMeetings]);
+  const completed = useMemo(() => filteredMeetings.filter(m => m.status === 'ended' || m.status === 'completed' || m.status === 'cancelled'), [filteredMeetings]);
 
   const getMeeting = (meetingId: string) => meetings.find(m => m.id === meetingId) ?? null;
   const getParticipants = (meetingId: string) => mockParticipants[meetingId] ?? [];

@@ -1,6 +1,9 @@
 import { meetingRepository } from '../repositories/meeting.repository.js';
 import { teamRepository }    from '../repositories/team.repository.js';
+import { recordingRepository } from '../repositories/recording.repository.js';
+import { meetingEndService }   from './meeting/MeetingEndService.js';
 import { AppError }          from '../middleware/error.middleware.js';
+import { logger }            from '../utils/logger.js';
 import fs                    from 'fs';
 import path                  from 'path';
 
@@ -108,7 +111,7 @@ export const meetingService = {
   async joinMeeting(meeting_id, userId) {
     const meeting = await meetingRepository.findById(meeting_id);
     if (!meeting) throw new AppError('Meeting not found', 404);
-    if (meeting.status === 'ended') throw new AppError('Meeting has ended', 400);
+    if (meeting.status === 'ended' || meeting.status === 'completed') throw new AppError('Meeting has ended', 400);
 
     await meetingRepository.addParticipant(meeting_id, userId, 'participant');
     const participants = await meetingRepository.getParticipants(meeting_id);
@@ -120,6 +123,9 @@ export const meetingService = {
     if (!meeting) throw new AppError('Meeting not found', 404);
     if (meeting.host_id !== userId) throw new AppError('Only the host can start the meeting', 403);
     if (meeting.status === 'active') throw new AppError('Meeting already started', 400);
+    if (['ended', 'completed', 'cancelled'].includes(meeting.status)) {
+      throw new AppError('Meeting has already ended', 400);
+    }
 
     const updated = await meetingRepository.updateStatus(meeting_id, 'active', { started_at: new Date() });
     return { meeting: this.transformMeeting(updated) };
@@ -129,8 +135,12 @@ export const meetingService = {
     const meeting = await meetingRepository.findById(meeting_id);
     if (!meeting) throw new AppError('Meeting not found', 404);
     if (meeting.host_id !== userId) throw new AppError('Only the host can end the meeting', 403);
+    if (meeting.status === 'ended' || meeting.status === 'completed') {
+      throw new AppError('Meeting has already ended', 400);
+    }
 
-    const updated = await meetingRepository.updateStatus(meeting_id, 'ended', { ended_at: new Date() });
+    // ACTIVE → COMPLETED
+    const updated = await meetingRepository.updateStatus(meeting_id, 'completed', { ended_at: new Date() });
 
     // Generate a mock transcript
     const content = `Transcript for meeting ${meeting_id}\nGenerated at: ${new Date().toISOString()}\n\nThis is an AI-generated transcript placeholder.`;
@@ -155,10 +165,25 @@ export const meetingService = {
       tickets_generated: [],
     });
 
+    // ── Speech recognition pipeline (async, non-blocking) ──────────────────
+    // Finalize recordings → upload to storage → Groq Whisper → persist segments.
+    void meetingEndService.finalizeMeeting(meeting_id).catch((err) => {
+      logger.error(`[pipeline] finalizeMeeting failed for meeting ${meeting_id}`, err.message);
+    });
+
+    // Include the ending user's own recording metadata (if already uploaded).
+    let recording = null;
+    try {
+      recording = await recordingRepository.findByMeetingAndParticipant(meeting_id, userId);
+    } catch (err) {
+      logger.error('[pipeline] could not load host recording metadata', err.message);
+    }
+
     return {
       meeting: this.transformMeeting(updated),
       transcript,
       summary,
+      recording,
     };
   },
 

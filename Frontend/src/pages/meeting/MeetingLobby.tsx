@@ -169,10 +169,10 @@ export default function MeetingLobby() {
               size="md"
               className="w-full justify-center py-3.5 text-sm font-semibold"
               loading={joining}
-              disabled={meeting?.status === 'ended'}
+              disabled={meeting?.status === 'ended' || meeting?.status === 'completed'}
               onClick={handleJoin}
             >
-              {meeting?.status === 'ended' ? 'Meeting Ended' : 'Join Meeting'}
+              {meeting?.status === 'ended' || meeting?.status === 'completed' ? 'Meeting Ended' : 'Join Meeting'}
             </AppButton>
 
             <button

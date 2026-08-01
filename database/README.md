@@ -70,11 +70,17 @@ database/
 │   ├── 001_initial_schema.sql     # Already applied
 │   ├── 002_team.sql
 │   ├── ...
-│   └── 007_profile_and_plan.sql
+│   └── 009_speech_recognition.sql
 ├── schema/
 │   └── schema.sql                 # Reference only
+├── supabase/
+│   ├── diff/                      # Mirrors of migrations for Supabase
+│   └── README.md
 └── README.md                      # This file
 ```
+
+> **Rule:** All SQL lives inside `database/`. Never place migrations in
+> `backend/` or `ai-service/`.
 
 ---
 
@@ -147,10 +153,11 @@ SELECT * FROM schema_migrations ORDER BY executed_at DESC;
 
 ## ✅ Current Status
 
-- **Database Version:** 7 migrations applied
-- **Last Migration:** 007_profile_and_plan.sql
+- **Database Version:** 9 migrations applied
+- **Last Migration:** 009_speech_recognition.sql
 - **Migration System:** Active and tracking
 - **Team Creation:** ✅ Fixed and working
+- **Speech Recognition:** ✅ participant_audio + speech_segments tables added
 
 ---
 

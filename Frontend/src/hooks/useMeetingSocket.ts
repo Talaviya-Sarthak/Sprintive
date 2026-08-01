@@ -417,6 +417,14 @@ export function useMeetingSocket(meetingId: string | undefined) {
     setTimeout(() => endCallbacks.current.delete(id), 10000);
   }, [meetingId, isConnected]);
 
+  const onMeetingEnded = useCallback((cb: (data: any) => void) => {
+    // Register a callback fired on 'meeting:ended' WITHOUT emitting — used by
+    // non-hosts to upload their recording after the host ends the meeting.
+    const id = Date.now().toString();
+    endCallbacks.current.set(id, cb);
+    return () => { endCallbacks.current.delete(id); };
+  }, []);
+
   const onRedirect = useCallback((cb: (url: string) => void) => {
     const id = Date.now().toString();
     redirectCallbacks.current.set(id, cb);
@@ -487,7 +495,7 @@ export function useMeetingSocket(meetingId: string | undefined) {
 
   return {
     isConnected, socketError,
-    sendChat, startMeeting, endMeeting, onRedirect, leaveMeeting,
+    sendChat, startMeeting, endMeeting, onMeetingEnded, onRedirect, leaveMeeting,
     toggleCamera, toggleMic, raiseHand, screenShareStart, screenShareStop, setLocalStream,
   };
 }
