@@ -25,11 +25,11 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className={`relative w-full ${maxWidth} max-h-[90vh] overflow-y-auto bg-[#111827] border border-white/8 rounded-2xl shadow-2xl`}
+        className={`relative w-full ${maxWidth} max-h-[90vh] overflow-y-auto bg-[#141417] border border-[#27272a] rounded-2xl shadow-2xl`}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/6">
-          <h2 className="text-lg font-bold text-[#F8FAFC]">{title}</h2>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center text-[#94A3B8] hover:text-[#F8FAFC] transition-colors">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#1f1f23]">
+          <h2 className="text-base font-semibold text-[#f4f4f5]">{title}</h2>
+          <button onClick={onClose} className="w-7 h-7 rounded-lg hover:bg-[#1c1c21] flex items-center justify-center text-[#a1a1aa] hover:text-[#f4f4f5] transition-colors cursor-pointer">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>

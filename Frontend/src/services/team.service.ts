@@ -77,8 +77,15 @@ export const teamService = {
     return data.data;
   },
 
-  async rejectInvitation(token: string) {
-    const { data } = await api.post('/teams/reject', { token });
-    return data;
+  async generateInviteLink(teamId: string): Promise<{ link: string }> {
+    const { data } = await api.post(`/teams/${teamId}/invite-link`);
+    return data.data;
+  },
+
+  async uploadAvatar(teamId: string, avatar: File): Promise<string> {
+    const form = new FormData();
+    form.append('avatar', avatar);
+    const { data } = await api.post(`/teams/${teamId}/avatar`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+    return data.data.avatar_url;
   },
 };

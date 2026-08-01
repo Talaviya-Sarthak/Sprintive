@@ -1,33 +1,33 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Brain, Menu, X, Sun, Moon, Zap } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
+import { Brain, Menu, X, Zap } from 'lucide-react';
+import { Button } from './ui/Button';
 
-const links = ['Home', 'Features', 'How It Works', 'Pricing', 'Testimonials', 'Contact'];
-const ids    = ['hero', 'features', 'how-it-works', 'pricing', 'testimonials', 'contact'];
+const links = ['Home', 'Features', 'Pricing', 'About', 'Contact'];
+const ids = ['hero', 'features', 'pricing', 'about', 'contact'];
 
-interface NavbarProps {
-  theme?: string;
-  toggleTheme?: () => void;
-}
-
-export default function Navbar({ theme: themeProp, toggleTheme: toggleProp }: NavbarProps) {
-  const ctx = (() => { try { return useTheme(); } catch { return null; } })();
-  const theme       = ctx ? ctx.theme       : themeProp;
-  const toggleTheme = ctx ? ctx.toggleTheme : toggleProp;
-
+export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
-  const [open,     setOpen]     = useState(false);
-  const [active,   setActive]   = useState('hero');
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState('hero');
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (window.location.pathname === '/contact') {
+      setActive('contact');
+      return;
+    }
+    if (window.location.pathname === '/about') {
+      setActive('about');
+      return;
+    }
+
     const onScroll = () => {
       setScrolled(window.scrollY > 16);
       const current = ids.findLast(id => {
         const el = document.getElementById(id);
-        return el && el.getBoundingClientRect().top <= 100;
+        return el && el.getBoundingClientRect().top <= 120;
       });
       if (current) setActive(current);
     };
@@ -36,6 +36,23 @@ export default function Navbar({ theme: themeProp, toggleTheme: toggleProp }: Na
   }, []);
 
   const scrollTo = (id: string) => {
+    if (id === 'contact') {
+      navigate('/contact');
+      setOpen(false);
+      return;
+    }
+    if (id === 'about') {
+      navigate('/about');
+      setOpen(false);
+      return;
+    }
+
+    if (window.location.pathname !== '/') {
+      navigate('/', { state: { scrollTo: id } });
+      setOpen(false);
+      return;
+    }
+
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
     setOpen(false);
   };
@@ -44,129 +61,116 @@ export default function Navbar({ theme: themeProp, toggleTheme: toggleProp }: Na
     <motion.nav
       initial={{ y: -72, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-      className={[
-        'fixed top-0 left-0 right-0 z-[1000] transition-all duration-300',
-        scrolled
-          ? theme === 'dark'
-            ? 'bg-[#0B1220]/92 backdrop-blur-[20px] saturate-180 border-b border-white/7'
-            : 'bg-white/92 backdrop-blur-[20px] saturate-180 border-b border-[#E2E8F0]'
-          : 'bg-transparent border-b border-transparent',
-      ].join(' ')}
+      transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+      className="fixed top-0 left-0 right-0 z-[1000] py-3.5 px-4 md:px-8 transition-all duration-300"
     >
-      <div className="max-w-[1160px] mx-auto px-8 max-sm:px-4 flex items-center justify-between h-16">
-
-        <motion.button
-          whileHover={{ opacity: 0.85 }}
-          whileTap={{ scale: 0.97 }}
+      <div
+        className={[
+          'max-w-[1320px] mx-auto flex items-center justify-between h-14 px-2 sm:px-4 rounded-lg bg-transparent transition-all duration-200',
+          scrolled ? 'backdrop-blur-md bg-black/40' : 'bg-transparent',
+        ].join(' ')}
+      >
+        {/* Static Sprintive Logo (Not in a button) */}
+        <div
           onClick={() => navigate('/')}
-          className="flex items-center gap-2.5 bg-transparent border-none cursor-pointer p-0"
+          className="flex items-center gap-2.5 cursor-pointer select-none py-1 group"
         >
-          <div className="w-8 h-8 rounded-[9px] bg-[#3B82F6] flex items-center justify-center shadow-[0_2px_8px_rgba(59,130,246,0.4)] shrink-0">
-            <Brain size={17} color="#fff" strokeWidth={2.2} />
+          <div className="w-8 h-8 rounded-md bg-[#F97316] flex items-center justify-center shrink-0 shadow-[2px_2px_0px_#FFFFFF]">
+            <Brain size={16} color="#fff" strokeWidth={2.5} />
           </div>
-          <span className="text-[17px] font-bold text-[var(--color-text-h)] tracking-[-0.03em]">
-            Scrum<span className="text-[#3B82F6]">Mind</span>
+          <span className="text-[18px] font-extrabold text-white tracking-[-0.03em]">
+            Sprin<span className="text-[#F97316]">tive</span>
           </span>
-        </motion.button>
+        </div>
 
-        {/* Desktop nav */}
-        <div className="hidden md:flex gap-0.5 items-center">
+        {/* Desktop Navigation Links — Slightly Rounded Neo-Brutalist Buttons */}
+        <div className="hidden md:flex gap-2.5 items-center">
           {links.map((l, i) => {
             const isActive = active === ids[i];
             return (
-              <button
+              <Button
                 key={l}
+                variant={isActive ? 'active' : 'neutral'}
+                size="default"
                 onClick={() => scrollTo(ids[i])}
-                className={[
-                  'border-none cursor-pointer text-[13.5px] font-medium px-3 py-1.5 rounded-lg transition-all duration-200 tracking-[-0.01em]',
-                  isActive
-                    ? 'bg-[rgba(59,130,246,0.12)] text-[#3B82F6] font-semibold'
-                    : 'bg-transparent text-[var(--color-text-body)] hover:text-[var(--color-text-h)] hover:bg-[var(--color-surface2)]',
-                ].join(' ')}
               >
                 {l}
-              </button>
+              </Button>
             );
           })}
         </div>
 
-        <div className="flex items-center gap-2">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={toggleTheme}
-            className="bg-[var(--color-surface2)] border border-[var(--color-border)] rounded-lg w-[34px] h-[34px] cursor-pointer text-[var(--color-text-muted)] flex items-center justify-center transition-all duration-200 shrink-0"
-            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-          >
-            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="neutral"
+            size="default"
             onClick={() => navigate('/login')}
-            className="hidden md:inline-flex items-center gap-2 px-[18px] py-[7px] bg-transparent text-[var(--color-text-h)] font-semibold text-[13.5px] rounded-xl border border-[var(--color-border2)] cursor-pointer transition-all duration-200 hover:bg-[var(--color-surface2)] hover:border-[#3B82F6] hover:text-[#3B82F6] hover:-translate-y-px active:translate-y-0 whitespace-nowrap tracking-[-0.01em]"
+            className="hidden md:inline-flex"
           >
             Login
-          </motion.button>
+          </Button>
 
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <Button
+            variant="orange"
+            size="default"
             onClick={() => navigate('/signup')}
-            className="inline-flex items-center gap-2 px-[18px] py-2 bg-[#3B82F6] text-white font-semibold text-[13.5px] rounded-xl border-none cursor-pointer transition-all duration-200 hover:bg-[#2563EB] hover:-translate-y-px active:translate-y-0 whitespace-nowrap tracking-[-0.01em] shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_12px_rgba(59,130,246,0.3)]"
+            className="gap-1.5"
           >
-            <Zap size={13} /> Get Started
-          </motion.button>
+            <Zap size={13} strokeWidth={2.5} /> Get Started
+          </Button>
 
-          <button
+          {/* Mobile Menu Toggle Button */}
+          <Button
+            variant="icon"
+            size="icon"
             onClick={() => setOpen(o => !o)}
-            className="md:hidden bg-transparent border-none cursor-pointer text-[var(--color-text-h)] p-1.5 rounded-lg"
+            className="md:hidden"
           >
-            {open ? <X size={20} /> : <Menu size={20} />}
-          </button>
+            {open ? <X size={18} /> : <Menu size={18} />}
+          </Button>
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile Menu Drawer */}
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: -8 }}
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
+            exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className={[
-              'backdrop-blur-[20px] border-t border-[var(--color-border)] px-5 pb-6 pt-2',
-              theme === 'dark' ? 'bg-[#0B1220]/98' : 'bg-white/98',
-            ].join(' ')}
+            className="bg-[#111111]/95 backdrop-blur-md border-2 border-black rounded-lg shadow-[4px_4px_0px_#FFFFFF] p-4 mt-3 flex flex-col gap-2 max-w-[1320px] mx-auto"
           >
             {links.map((l, i) => (
-              <button
+              <Button
                 key={l}
+                variant={active === ids[i] ? 'active' : 'neutral'}
+                size="default"
                 onClick={() => scrollTo(ids[i])}
-                className={[
-                  'flex w-full text-left bg-transparent border-none text-[15px] font-medium py-3 px-1 border-b border-[var(--color-border)] cursor-pointer tracking-[-0.01em]',
-                  active === ids[i] ? 'text-[#3B82F6]' : 'text-[var(--color-text-h)]',
-                ].join(' ')}
+                className="w-full justify-start text-left"
               >
                 {l}
-              </button>
+              </Button>
             ))}
-            <div className="flex gap-2.5 mt-5">
-              <button
+
+            <div className="flex gap-2.5 mt-2 pt-2 border-t-2 border-[#262626]">
+              <Button
+                variant="neutral"
+                size="default"
                 onClick={() => { navigate('/login'); setOpen(false); }}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-transparent text-[var(--color-text-h)] font-semibold text-sm rounded-xl border border-[var(--color-border2)] cursor-pointer transition-all duration-200 hover:bg-[var(--color-surface2)] hover:border-[#3B82F6] hover:text-[#3B82F6]"
+                className="flex-1"
               >
                 Login
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="orange"
+                size="default"
                 onClick={() => { navigate('/signup'); setOpen(false); }}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#3B82F6] text-white font-semibold text-sm rounded-xl border-none cursor-pointer transition-all duration-200 hover:bg-[#2563EB]"
+                className="flex-1 gap-1.5"
               >
-                <Zap size={13} /> Get Started
-              </button>
+                <Zap size={13} strokeWidth={2.5} /> Get Started
+              </Button>
             </div>
           </motion.div>
         )}

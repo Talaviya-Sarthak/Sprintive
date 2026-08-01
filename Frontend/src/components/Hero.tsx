@@ -1,6 +1,8 @@
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Play, Sparkles, FileText, CheckSquare } from 'lucide-react';
+import { Zap, Play, CheckCircle2, Mic, Bot, CheckSquare, Sparkles } from 'lucide-react';
+import { Button } from './ui/Button';
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 32 },
@@ -9,113 +11,188 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.6, delay, ease: [0.4, 0, 0.2, 1] as const },
 });
 
-function MeetingCard() {
-  const members = ['A', 'B', 'C', 'D'];
+// Live Interactive AI Workflow Demo Loop Component
+function LiveWorkflowDemo() {
+  const [step, setStep] = useState(1);
+
+  // 5-step automated workflow loop (~2.4s per step)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setStep((prev) => (prev >= 5 ? 1 : prev + 1));
+    }, 2400);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
-    <div className="bg-[var(--color-surface2)] border border-[var(--color-border)] rounded-xl p-4 mb-3">
-      <div className="flex items-center gap-2 mb-3.5">
-        <div className="w-[7px] h-[7px] rounded-full bg-[#10B981] shadow-[0_0_6px_#10B981]" />
-        <span className="text-[var(--color-text-h)] text-xs font-semibold">Daily Scrum — Live</span>
-        <div className="ml-auto bg-[rgba(59,130,246,0.12)] border border-[rgba(59,130,246,0.2)] rounded-md px-2 py-0.5 text-[10px] font-semibold text-[#3B82F6]">Recording</div>
+    <div className="relative w-full max-w-[460px] h-[480px] flex flex-col justify-between p-4 bg-[#111111] border-2 border-black rounded-[4px] shadow-[5px_5px_0px_0px_#F97316] select-none overflow-hidden">
+      {/* Live Workflow Stage Header */}
+      <div className="flex items-center justify-between pb-2.5 border-b border-[#262626] shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-[#F97316] animate-pulse" />
+          <span className="text-xs font-mono font-bold uppercase tracking-wider text-white">
+            Live AI Workflow Loop
+          </span>
+        </div>
+        <span className="text-[10px] font-mono font-bold text-[#F97316] uppercase tracking-widest bg-[rgba(249,115,22,0.1)] px-2 py-0.5 rounded-[2px] border border-[rgba(249,115,22,0.25)]">
+          Stage 0{step} / 05
+        </span>
       </div>
-      <div className="grid grid-cols-2 gap-[7px]">
-        {members.map((m, i) => (
-          <div
-            key={m}
-            className={`bg-[var(--color-bg3)] rounded-[9px] p-[10px_11px] flex items-center gap-2 border ${i === 0 ? 'border-[rgba(59,130,246,0.3)]' : 'border-[var(--color-border)]'}`}
-          >
-            <div
-              className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-[11px] font-bold text-white"
-              style={{ background: `linear-gradient(135deg, hsl(${i * 55 + 200},65%,55%), hsl(${i * 55 + 240},65%,65%))` }}
-            >
-              {m}
+
+      <div className="flex-1 flex flex-col justify-center gap-2.5 overflow-hidden py-2">
+        {/* Step 1: Live Meeting Card (Always active for context) */}
+        <div className="bg-[#1A1A1E] border border-[#262626] rounded-[4px] p-2.5 shrink-0">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-[#10B981] shadow-[0_0_6px_#10B981]" />
+              <span className="text-xs font-bold text-white uppercase tracking-tight">Daily Scrum — Live</span>
             </div>
-            <div className="min-w-0">
-              <div className="text-[11px] text-[var(--color-text-h)] font-semibold whitespace-nowrap">Member {m}</div>
-              <div className="text-[10px] text-[var(--color-text-muted)]">{i === 0 ? 'Speaking…' : 'Listening'}</div>
+            <div className="flex items-center gap-1 bg-[#F97316]/10 border border-[#F97316]/30 px-1.5 py-0.5 rounded-[2px] text-[9px] font-mono font-bold text-[#F97316]">
+              <Mic size={9} className="animate-pulse" /> RECORDING
             </div>
-            {i === 0 && (
-              <div className="ml-auto flex gap-0.5 items-end h-3.5">
-                {[3, 5, 4, 6, 3].map((h, j) => (
-                  <motion.div
-                    key={j}
-                    animate={{ height: [h * 1.5, h * 3, h * 1.5] }}
-                    transition={{ duration: 0.55, repeat: Infinity, delay: j * 0.1 }}
-                    className="w-[2.5px] bg-[#3B82F6] rounded-sm"
-                  />
-                ))}
-              </div>
-            )}
           </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
-function SummaryCard() {
-  const items = [
-    { name: 'Alex',    text: 'Blocked on the payment flow, need access from the team', tag: '🚫 Blocker' },
-    { name: 'Sam',     text: 'Will finish the dashboard by Thursday EOD',               tag: '📅 Deadline' },
-    { name: 'Summary', text: 'Action item: Resolve payment access — Owner: Alex',       tag: '✅ Action' },
-  ];
-  return (
-    <div className="bg-[var(--color-surface2)] border border-[var(--color-border)] rounded-xl p-3.5 mb-3">
-      <div className="flex items-center gap-[7px] mb-[11px]">
-        <FileText size={13} color="#3B82F6" />
-        <span className="text-xs font-semibold text-[var(--color-text-h)]">Meeting Summary</span>
-        <motion.div
-          animate={{ opacity: [1, 0.3, 1] }}
-          transition={{ duration: 1.4, repeat: Infinity }}
-          className="ml-auto w-1.5 h-1.5 rounded-full bg-[#10B981]"
-        />
-      </div>
-      {items.map((item, i) => (
-        <motion.div
-          key={i}
-          initial={{ opacity: 0, x: -8 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: i * 0.35 + 0.4 }}
-          className="flex gap-2 mb-[7px] items-start"
-        >
-          <span className="text-[10px] text-[#3B82F6] font-bold min-w-[44px] pt-px">{item.name}</span>
-          <span className="flex-1 text-[11px] text-[var(--color-text-body)] leading-[1.5]">{item.text}</span>
-          <span className="text-[9px] font-semibold bg-[rgba(59,130,246,0.1)] border border-[rgba(59,130,246,0.18)] rounded-[5px] px-[7px] py-0.5 text-[#3B82F6] whitespace-nowrap">{item.tag}</span>
-        </motion.div>
-      ))}
-    </div>
-  );
-}
-
-function SprintCard() {
-  const cols = [
-    { title: 'To Do',       color: '#94A3B8', tasks: ['Auth API', 'UI Tests'] },
-    { title: 'In Progress', color: '#3B82F6', tasks: ['Dashboard'] },
-    { title: 'Done',        color: '#10B981', tasks: ['Login', 'DB Setup'] },
-  ];
-  return (
-    <div className="bg-[var(--color-surface2)] border border-[var(--color-border)] rounded-xl p-3.5">
-      <div className="flex items-center gap-[7px] mb-[11px]">
-        <CheckSquare size={13} color="#3B82F6" />
-        <span className="text-xs font-semibold text-[var(--color-text-h)]">Sprint Board</span>
-        <motion.span
-          animate={{ opacity: [0.6, 1, 0.6] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="ml-auto text-[10px] text-[#10B981] font-semibold"
-        >
-          ↑ 3 tasks added
-        </motion.span>
-      </div>
-      <div className="grid grid-cols-3 gap-[7px]">
-        {cols.map(col => (
-          <div key={col.title}>
-            <div className="text-[9px] font-bold mb-[5px] uppercase tracking-[0.06em]" style={{ color: col.color }}>{col.title}</div>
-            {col.tasks.map(t => (
-              <div key={t} className="bg-[var(--color-bg)] border border-[var(--color-border)] rounded-md px-[7px] py-[5px] text-[10px] text-[var(--color-text-body)] mb-1">{t}</div>
+          <div className="grid grid-cols-2 gap-1.5">
+            {['Alex (Lead)', 'Sam (Dev)', 'Priya (PM)', 'David (QA)'].map((name, i) => (
+              <div
+                key={name}
+                className={`p-1.5 rounded-[3px] border flex items-center gap-1.5 ${i === 0 ? 'bg-[#241A14] border-[#F97316]/40' : 'bg-[#111111] border-[#262626]'
+                  }`}
+              >
+                <div className="w-4.5 h-4.5 rounded-full bg-[#F97316] text-white font-black text-[8px] flex items-center justify-center shrink-0">
+                  {name[0]}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[10px] font-semibold text-white truncate">{name}</div>
+                </div>
+                {i === 0 && (
+                  <div className="flex gap-0.5 items-end h-2.5 shrink-0">
+                    {[4, 8, 10, 6].map((h, j) => (
+                      <motion.div
+                        key={j}
+                        animate={{ height: [h, 12, h] }}
+                        transition={{ duration: 0.5, repeat: Infinity, delay: j * 0.1 }}
+                        className="w-[2px] bg-[#F97316] rounded-sm"
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
-        ))}
+        </div>
+
+        {/* Dynamic Transition Area for Steps 2, 3, 4 */}
+        <div className="flex-1 flex flex-col gap-2 justify-center min-h-0 overflow-hidden">
+          {/* Step 2+: Live Transcript Stream */}
+          {step >= 2 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="bg-[#1A1A1E] border border-[#262626] rounded-[4px] p-2.5 shrink-0"
+            >
+              <div className="text-[9px] font-mono uppercase tracking-wider text-[#A1A1AA] mb-1 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#F97316]" /> Live Transcript Stream
+              </div>
+              <div className="font-mono text-[11px] text-white leading-tight space-y-1">
+                <p className="truncate">
+                  <span className="text-[#F97316] font-bold">Alex:</span> "I'll complete the authentication module by EOD."
+                </p>
+                {step >= 3 && (
+                  <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="truncate">
+                    <span className="text-[#A1A1AA] font-bold">Sam:</span> "Blocked on payment gateway access key."
+                  </motion.p>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 3+: AI Analysis & Decision Extraction */}
+          {step >= 3 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="bg-[#1A1A1E] border border-[#F97316]/40 rounded-[4px] p-2.5 shrink-0"
+            >
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Bot size={13} className="text-[#F97316]" />
+                <span className="text-[11px] font-bold text-white uppercase tracking-tight">AI Decision Extraction</span>
+                <span className="ml-auto text-[8px] font-mono text-[#F97316] uppercase animate-pulse">Analyzing…</span>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {[
+                  { tag: '✓ Action Item', text: 'Auth Module' },
+                  { tag: '🚫 Blocker', text: 'Payment Key' },
+                  { tag: '📅 Deadline', text: 'Friday EOD' },
+                ].map((chip) => (
+                  <div
+                    key={chip.tag}
+                    className="flex items-center gap-1 bg-[#111111] border border-[#262626] px-1.5 py-0.5 rounded-[2px] text-[9px]"
+                  >
+                    <span className="font-mono font-bold text-[#F97316]">{chip.tag}:</span>
+                    <span className="text-zinc-300 font-medium">{chip.text}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 4+: Sprint Board Synced */}
+          {step >= 4 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="bg-[#1A1A1E] border border-[#262626] rounded-[4px] p-2.5 shrink-0"
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1">
+                  <CheckSquare size={12} className="text-[#F97316]" />
+                  <span className="text-[11px] font-bold text-white uppercase tracking-tight">Sprint Board Synced</span>
+                </div>
+                <span className="text-[9px] font-mono text-[#10B981] font-bold">↑ 2 Tickets Created</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1">
+                {[
+                  { col: 'To Do', task: 'Payment Key', color: '#A1A1AA' },
+                  { col: 'In Progress', task: 'Auth Module', color: '#F97316' },
+                  { col: 'Done', task: 'Setup Repo', color: '#10B981' },
+                ].map((c) => (
+                  <div key={c.col} className="bg-[#111111] border border-[#262626] rounded-[2px] p-1">
+                    <div className="text-[8px] font-mono font-bold uppercase mb-0.5" style={{ color: c.color }}>{c.col}</div>
+                    <div className="text-[9px] text-white font-medium truncate bg-[#1D1D22] px-1 py-0.5 rounded-[1px] border border-[#262626]">
+                      {c.task}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </div>
       </div>
+
+      {/* Step 5: Success Notification (Fixed height footer overlay) */}
+      <AnimatePresence>
+        {step === 5 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.25 }}
+            className="shrink-0 bg-[#10B981] text-black border-2 border-black rounded-[3px] p-2 shadow-[2px_2px_0px_#000] flex items-center justify-between mt-1"
+          >
+            <div className="flex items-center gap-2">
+              <CheckCircle2 size={15} strokeWidth={2.5} />
+              <div>
+                <div className="text-[11px] font-black uppercase leading-none">Sprint Updated & Synced</div>
+                <div className="text-[9px] font-semibold opacity-90 leading-none mt-0.5">2 tasks added · Summary ready</div>
+              </div>
+            </div>
+            <Sparkles size={13} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -123,129 +200,78 @@ function SprintCard() {
 export default function Hero() {
   const navigate = useNavigate();
   return (
-    <section id="hero" className="min-h-screen flex items-center relative overflow-hidden pt-16">
-      {/* Background */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <motion.div
-          animate={{ scale: [1, 1.12, 1], opacity: [0.5, 0.7, 0.5] }}
-          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute w-[700px] h-[700px] rounded-full -top-[200px] -left-[200px]"
-          style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%)' }}
-        />
-        <motion.div
-          animate={{ scale: [1.1, 1, 1.1], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute w-[600px] h-[600px] rounded-full -bottom-[150px] -right-[100px]"
-          style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.08) 0%, transparent 70%)' }}
-        />
+    <section id="hero" className="min-h-screen flex items-center relative overflow-hidden pt-24 md:pt-20 pb-12 bg-transparent">
+      {/* Soft Radial Orange Glow behind main hero headline */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
         <div
-          className="absolute inset-0 opacity-40"
-          style={{
-            backgroundImage: 'linear-gradient(var(--color-border) 1px, transparent 1px), linear-gradient(90deg, var(--color-border) 1px, transparent 1px)',
-            backgroundSize: '64px 64px',
-          }}
+          className="absolute w-[700px] h-[420px] rounded-full top-[10%] left-[50%] -translate-x-1/2 blur-[140px] opacity-20"
+          style={{ background: 'radial-gradient(circle, rgba(249,115,22,0.85) 0%, transparent 70%)' }}
         />
       </div>
 
-      <div className="max-w-[1160px] mx-auto px-8 max-sm:px-5 relative z-10 w-full py-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-[72px] items-center">
+      <div className="max-w-[1320px] mx-auto px-6 max-sm:px-4 relative z-10 w-full py-4 md:py-8 mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-center">
 
-          {/* Left */}
-          <div>
-            <motion.div {...fadeUp(0)}>
-              <div className="inline-flex items-center gap-1.5 px-3.5 py-[5px] bg-[rgba(59,130,246,0.12)] border border-[rgba(59,130,246,0.25)] rounded-full text-[11px] font-semibold text-[#3B82F6] uppercase tracking-[0.07em] mb-5">
-                <Sparkles size={11} /> AI-Powered Agile Platform
-              </div>
-            </motion.div>
-
+          {/* Left Column: Headline & Action CTAs */}
+          <div className="md:pl-6 lg:pl-10 text-center md:text-left flex flex-col items-center md:items-start">
+            {/* Editorial Display Typography Stack */}
             <motion.h1
               {...fadeUp(0.08)}
-              className="text-[clamp(30px,4.2vw,54px)] font-extrabold text-[var(--color-text-h)] leading-[1.1] tracking-[-0.03em] mb-5"
+              className="uppercase text-white mb-6 select-none"
             >
-              AI That Runs Your{' '}
-              <span
-                className="bg-clip-text text-transparent"
-                style={{ backgroundImage: 'linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%)' }}
-              >
-                Scrum Meetings
-              </span>{' '}
-              So Your Team Can Focus on Building.
+              <span className="block font-sans text-[clamp(36px,4.5vw,62px)] font-extrabold text-white tracking-tight leading-[0.95] mb-1">
+                AI FOR
+              </span>
+              <span className="block font-display text-[clamp(90px,13.5vw,175px)] font-black text-[#F97316] leading-[0.8] tracking-tight my-1.5">
+                SCRUM
+              </span>
+              <span className="block font-sans text-[clamp(36px,4.5vw,62px)] font-extrabold text-white tracking-tight leading-[0.95] mt-1">
+                TEAMS.
+              </span>
             </motion.h1>
 
             <motion.p
               {...fadeUp(0.16)}
-              className="text-[clamp(15px,1.6vw,17px)] text-[var(--color-text-body)] leading-[1.75] mb-8 max-w-[500px]"
+              className="font-mono text-[clamp(13px,1.2vw,15px)] text-[#CBD5E1] tracking-wide leading-[1.7] mb-8 max-w-[440px] font-normal"
             >
-              ScrumMind brings your team's meetings, tasks, and sprint management into one place — so every standup ends with a clear summary, assigned responsibilities, and a team that knows exactly what to do next.
+              AI meeting intelligence that turns conversations into organized sprints.
             </motion.p>
 
-            <motion.div {...fadeUp(0.24)} className="flex gap-3 flex-wrap">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+            {/* Hero CTA Action Buttons */}
+            <motion.div {...fadeUp(0.24)} className="flex gap-3.5 flex-wrap items-center justify-center md:justify-start w-full sm:w-auto">
+              <Button
+                variant="orange"
+                size="lg"
                 onClick={() => navigate('/signup')}
-                className="inline-flex items-center gap-2 px-7 py-3 bg-[#3B82F6] text-white font-semibold text-[15px] rounded-xl border-none cursor-pointer transition-all duration-200 hover:bg-[#2563EB] hover:-translate-y-px active:translate-y-0 shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_12px_rgba(59,130,246,0.3)] tracking-[-0.01em]"
+                className="gap-2 text-xs py-3 px-7 max-sm:w-full max-sm:justify-center"
               >
-                <Zap size={15} /> Start Free Trial
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="inline-flex items-center gap-2 px-7 py-3 bg-transparent text-[var(--color-text-h)] font-semibold text-[15px] rounded-xl border border-[var(--color-border2)] cursor-pointer transition-all duration-200 hover:bg-[var(--color-surface2)] hover:border-[#3B82F6] hover:text-[#3B82F6] hover:-translate-y-px active:translate-y-0 tracking-[-0.01em]"
-              >
-                <Play size={15} /> Watch Demo
-              </motion.button>
-            </motion.div>
+                <Zap size={15} strokeWidth={2.5} /> Start Free Trial
+              </Button>
 
-            <motion.div {...fadeUp(0.32)} className="flex gap-9 mt-10 flex-wrap">
-              {[['500+', 'Teams'], ['95%', 'Time Saved'], ['4.9★', 'Rating']].map(([val, label]) => (
-                <div key={label}>
-                  <div className="text-[22px] font-extrabold text-[var(--color-text-h)] tracking-[-0.02em]">{val}</div>
-                  <div className="text-xs text-[var(--color-text-muted)] font-medium mt-0.5">{label}</div>
-                </div>
-              ))}
+              <Button
+                variant="neutral"
+                size="lg"
+                className="gap-2 text-xs py-3 px-7 max-sm:w-full max-sm:justify-center"
+              >
+                <Play size={15} strokeWidth={2.5} /> Watch Demo
+              </Button>
             </motion.div>
           </div>
 
-          {/* Right — UI preview */}
+          {/* Right Column — Live Product AI Workflow Demonstration */}
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: 0.1, ease: [0.4, 0, 0.2, 1] }}
+            className="flex justify-center items-center w-full"
           >
-            <div className="relative">
-              <div
-                className="absolute inset-[-1px] rounded-[20px] z-0 blur-[1px]"
-                style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.25), rgba(6,182,212,0.15), transparent)' }}
-              />
-              <div className="bg-[rgba(17,24,39,0.7)] backdrop-blur-[24px] border border-[var(--color-border)] rounded-[18px] p-4 relative z-10 light:bg-[rgba(255,255,255,0.85)]">
-                <MeetingCard />
-                <SummaryCard />
-                <SprintCard />
-              </div>
-
-              <motion.div
-                animate={{ y: [-5, 5, -5] }}
-                transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
-                className="absolute -top-[18px] -right-[18px] z-20 bg-[#3B82F6] rounded-[10px] px-3.5 py-[9px] shadow-[0_4px_20px_rgba(59,130,246,0.4)]"
-              >
-                <div className="text-[11px] font-bold text-white">✨ Summary Ready</div>
-                <div className="text-[10px] text-white/75 mt-px">3 action items found</div>
-              </motion.div>
-
-              <motion.div
-                animate={{ y: [5, -5, 5] }}
-                transition={{ duration: 3.8, repeat: Infinity, ease: 'easeInOut' }}
-                className="absolute -bottom-[14px] -left-[18px] z-20 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[10px] px-3.5 py-[9px] shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
-              >
-                <div className="text-[11px] font-bold text-[#10B981]">✅ Sprint Updated</div>
-                <div className="text-[10px] text-[var(--color-text-muted)] mt-px">Board synced</div>
-              </motion.div>
-            </div>
+            <LiveWorkflowDemo />
           </motion.div>
+
         </div>
       </div>
     </section>
   );
 }
+

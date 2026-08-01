@@ -1,5 +1,4 @@
 import { Routes, Route } from 'react-router-dom';
-import { useTheme } from './context/ThemeContext';
 
 import Navbar            from './components/Navbar';
 import Hero              from './components/Hero';
@@ -7,16 +6,16 @@ import TrustedBy         from './components/TrustedBy';
 import Features          from './components/Features';
 import HowItWorks        from './components/HowItWorks';
 import DashboardShowcase from './components/DashboardShowcase';
-import Benefits          from './components/Benefits';
 import Pricing           from './components/Pricing';
 import Testimonials      from './components/Testimonials';
 import FAQ               from './components/FAQ';
-import FinalCTA          from './components/FinalCTA';
 import Footer            from './components/Footer';
 import ProtectedRoute    from './components/ProtectedRoute';
 
 import SignUp        from './pages/SignUp';
 import Login         from './pages/Login';
+import Contact       from './pages/Contact';
+import About         from './pages/About';
 import AuthCallback  from './pages/AuthCallback';
 import Profile       from './pages/Profile';
 import CreateTeam    from './pages/team/CreateTeam';
@@ -34,24 +33,32 @@ import MeetingRoomPage   from './pages/meeting/MeetingRoomPage';
 import MeetingSummaryPage from './pages/meeting/MeetingSummaryPage';
 
 function LandingPage() {
-  const { theme, toggleTheme } = useTheme();
   return (
-    <>
-      <Navbar theme={theme} toggleTheme={toggleTheme} />
-      <main>
-        <Hero />
-        <TrustedBy />
-        <Features />
-        <HowItWorks />
-        <DashboardShowcase />
-        <Benefits />
-        <Pricing />
-        <Testimonials />
-        <FAQ />
-        <FinalCTA />
-      </main>
-      <Footer />
-    </>
+    <div className="bg-[#050505] text-[#A1A1AA] min-h-screen relative overflow-x-hidden selection:bg-[#F97316]/25 selection:text-[#F97316]">
+      {/* Continuous Global Technical Grid Canvas (across every public section) */}
+      <div
+        className="fixed inset-0 pointer-events-none z-0"
+        style={{
+          backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px)',
+          backgroundSize: '44px 44px',
+        }}
+      />
+
+      <div className="relative z-10">
+        <Navbar />
+        <main className="bg-transparent">
+          <Hero />
+          <Features />
+          <HowItWorks />
+          <DashboardShowcase />
+          <Pricing />
+          <Testimonials />
+          <TrustedBy />
+          <FAQ />
+        </main>
+        <Footer />
+      </div>
+    </div>
   );
 }
 
@@ -60,6 +67,8 @@ export default function App() {
     <Routes>
       {/* Public routes */}
       <Route path="/"                      element={<LandingPage />} />
+      <Route path="/contact"               element={<Contact />} />
+      <Route path="/about"                 element={<About />} />
       <Route path="/signup"                element={<SignUp />} />
       <Route path="/login"                 element={<Login />} />
       <Route path="/auth/callback"         element={<AuthCallback />} />
@@ -79,7 +88,9 @@ export default function App() {
 
       {/* Meetings (protected) */}
       <Route path="/meetings/create"                  element={<ProtectedRoute><CreateMeeting /></ProtectedRoute>} />
-      <Route path="/meetings/:id"                     element={<ProtectedRoute><MeetingLobby /></ProtectedRoute>} />
+      <Route path="/teams/:teamId/meetings/create"    element={<ProtectedRoute><CreateMeeting /></ProtectedRoute>} />
+      <Route path="/meetings/:meetingId"              element={<ProtectedRoute><MeetingDetailsPage /></ProtectedRoute>} />
+      <Route path="/meetings/:id/lobby"               element={<ProtectedRoute><MeetingLobby /></ProtectedRoute>} />
       <Route path="/meetings/:id/room"                element={<ProtectedRoute><MeetingRoom /></ProtectedRoute>} />
 
       {/* New Meeting Module Routes (protected) */}

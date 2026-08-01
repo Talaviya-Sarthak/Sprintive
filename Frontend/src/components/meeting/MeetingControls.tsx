@@ -12,22 +12,22 @@ interface ControlButtonProps {
 function ControlButton({ icon, label, onClick, active, danger, badge }: ControlButtonProps) {
   return (
     <motion.button
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
+      whileHover={{ scale: 1.04 }}
+      whileTap={{ scale: 0.96 }}
       onClick={onClick}
       title={label}
-      className={`relative flex flex-col items-center gap-1 px-4 py-2.5 rounded-2xl transition-all duration-200 group ${
+      className={`relative flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all duration-150 cursor-pointer ${
         danger
-          ? 'bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white'
+          ? 'bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20'
           : active
-          ? 'bg-[#3B82F6]/20 text-[#3B82F6]'
-          : 'bg-white/6 hover:bg-white/10 text-[#94A3B8] hover:text-white'
+          ? 'bg-[#1c1c21] text-[#f4f4f5] border border-[#27272a]'
+          : 'bg-[#141417] hover:bg-[#18181b] text-[#a1a1aa] hover:text-[#f4f4f5] border border-[#27272a]'
       }`}
     >
-      <span className="w-5 h-5">{icon}</span>
+      <span className="w-4.5 h-4.5">{icon}</span>
       <span className="text-[10px] font-medium">{label}</span>
       {badge != null && badge > 0 && (
-        <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#3B82F6] text-white text-[9px] font-bold flex items-center justify-center">
+        <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#f4f4f5] text-[#09090b] text-[9px] font-bold flex items-center justify-center">
           {badge > 9 ? '9+' : badge}
         </span>
       )}
@@ -60,7 +60,7 @@ export default function MeetingControls({
       initial={{ y: 80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="flex items-center gap-2 px-4 py-3 rounded-3xl bg-[#0d1117]/90 backdrop-blur-xl border border-white/8 shadow-2xl"
+      className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#0c0c0e]/95 backdrop-blur-xl border border-[#27272a] shadow-2xl"
     >
       <ControlButton
         icon={
