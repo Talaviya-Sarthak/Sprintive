@@ -1,6 +1,7 @@
 import jwt                  from 'jsonwebtoken';
 import { env }              from '../config/env.js';
 import { meetingService }   from '../services/meeting.service.js';
+import { findUserById }     from '../repositories/auth.repository.js';
 
 // room → Set of socket ids
 const rooms = new Map();
@@ -8,13 +9,20 @@ const rooms = new Map();
 function getRoomKey(meetingId) { return `meeting:${meetingId}`; }
 
 export function initSocket(io) {
-  // Auth middleware
-  io.use((socket, next) => {
+  // Auth middleware — resolve the real user (JWT carries `sub`, not `id`)
+  io.use(async (socket, next) => {
     const token = socket.handshake.auth?.token;
     if (!token) return next(new Error('Authentication required'));
     try {
       const payload = jwt.verify(token, env.jwtAccessSecret);
-      socket.user = payload;
+      const user = await findUserById(payload.sub);
+      if (!user) return next(new Error('User not found'));
+      socket.user = {
+        id:         user.id,
+        full_name:  user.full_name,
+        avatar_url: user.avatar_url,
+        email:      user.email,
+      };
       next();
     } catch {
       next(new Error('Invalid token'));
@@ -34,6 +42,23 @@ export function initSocket(io) {
         rooms.get(room).add(socket.id);
 
         await meetingService.joinMeeting(meetingId, user.id);
+
+        // Send the current roster (including socketIds) to the joiner so they
+        // can map existing participants for WebRTC signaling.
+        const roster = [];
+        for (const socketId of rooms.get(room)) {
+          if (socketId === socket.id) continue;
+          const other = io.sockets.sockets.get(socketId);
+          if (other?.user) {
+            roster.push({
+              userId:   other.user.id,
+              name:     other.user.full_name,
+              avatar:   other.user.avatar_url,
+              socketId,
+            });
+          }
+        }
+        socket.emit('meeting:participants', { meetingId, participants: roster });
 
         socket.to(room).emit('participant:joined', {
           userId:   user.id,

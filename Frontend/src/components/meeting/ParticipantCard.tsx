@@ -20,6 +20,8 @@ export default function ParticipantCard({ participant, isActive, videoRef }: Pro
     }
     if (node && participant.stream) {
       node.srcObject = participant.stream;
+      // Guarantee playback: unmuted autoplay may be blocked, so retry muted.
+      node.play().catch(() => { node.muted = true; node.play().catch(() => {}); });
     }
   }, [participant.stream, videoRef]);
 
@@ -27,6 +29,7 @@ export default function ParticipantCard({ participant, isActive, videoRef }: Pro
     const target = videoRef?.current ?? internalVideoRef.current;
     if (target && participant.stream) {
       target.srcObject = participant.stream;
+      target.play().catch(() => { target.muted = true; target.play().catch(() => {}); });
     }
   }, [participant.stream, participant.isCameraOff, videoRef]);
 
@@ -47,7 +50,7 @@ export default function ParticipantCard({ participant, isActive, videoRef }: Pro
           autoPlay
           playsInline
           muted={participant.id === 'local' || participant.role === 'host'}
-          className="w-full h-full object-cover -scale-x-100"
+          className="w-full h-full object-cover"
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-[#141417]">

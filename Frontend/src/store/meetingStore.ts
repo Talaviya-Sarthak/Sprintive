@@ -44,8 +44,17 @@ export const useMeetingStore = create<MeetingState>((set) => ({
   unreadCount: 0,
 
   setMeeting:        (meeting)    => set({ meeting }),
-  setParticipants:   (participants) => set({ participants }),
-  addParticipant:    (p)          => set((s) => ({ participants: [...s.participants.filter(x => x.user_id !== p.user_id), p] })),
+  setParticipants:   (participants) => set((s) => ({
+    participants: participants.map((p) => {
+      const existing = s.participants.find((x) => x.user_id === p.user_id);
+      return existing?.stream && !p.stream ? { ...p, stream: existing.stream } : p;
+    }),
+  })),
+  addParticipant:    (p)          => set((s) => {
+    const existing = s.participants.find((x) => x.user_id === p.user_id);
+    const merged = existing && !p.stream ? { ...existing, ...p, stream: existing.stream } : p;
+    return { participants: [...s.participants.filter((x) => x.user_id !== p.user_id), merged] };
+  }),
   removeParticipant: (userId)     => set((s) => ({ participants: s.participants.filter(p => p.user_id !== userId) })),
   updateParticipant: (userId, patch) => set((s) => ({
     participants: s.participants.map(p => p.user_id === userId ? { ...p, ...patch } : p),

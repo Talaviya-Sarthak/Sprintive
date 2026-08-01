@@ -6,12 +6,23 @@ export function useMediaDevices() {
   const [isCameraOff, setCamera]    = useState(false);
   const [error, setError]           = useState<string | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const mountedRef = useRef(false);
 
   useEffect(() => {
+    mountedRef.current = true;
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-      .then((s) => { streamRef.current = s; setStream(s); })
+      .then((s) => {
+        if (!mountedRef.current) { s.getTracks().forEach((t) => t.stop()); return; }
+        streamRef.current = s;
+        setStream(s);
+      })
       .catch(() => setError('Camera/mic access denied'));
-    return () => { streamRef.current?.getTracks().forEach((t) => t.stop()); };
+    return () => {
+      // Only stop tracks on real unmount (StrictMode phantom unmount must not kill the camera)
+      mountedRef.current = false;
+      if (import.meta.env.DEV) return;
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+    };
   }, []);
 
   const toggleMic = () => {
