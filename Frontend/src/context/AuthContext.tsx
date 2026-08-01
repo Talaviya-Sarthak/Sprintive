@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import api from '../services/api';
+import api, { ensureFreshAccessToken } from '../services/api';
 import type { User, Team } from '../types';
 
 interface AuthState {
@@ -23,6 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const token = localStorage.getItem('access_token');
     if (!token) { setState({ user: null, teams: [], loading: false }); return; }
     try {
+      await ensureFreshAccessToken();
       const { data } = await api.get('/auth/me');
       setState({ user: data.data.user, teams: data.data.teams ?? [], loading: false });
     } catch {

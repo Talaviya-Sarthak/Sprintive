@@ -8,13 +8,13 @@ interface MeetingInfoItemProps {
 
 function MeetingInfoItem({ icon, label, value }: MeetingInfoItemProps) {
   return (
-    <div className="flex items-start gap-3 p-3 rounded-xl bg-[#0d1117] border border-white/6">
-      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-[#94A3B8] shrink-0">
+    <div className="flex items-start gap-3 p-3.5 rounded-xl bg-[#1c1c21] border border-[#27272a]">
+      <div className="w-8 h-8 rounded-lg bg-[#141417] border border-[#27272a] flex items-center justify-center text-[#a1a1aa] shrink-0">
         {icon}
       </div>
       <div className="min-w-0">
-        <p className="text-xs text-[#475569]">{label}</p>
-        <p className="text-sm font-medium text-[#CBD5E1] break-words">{value}</p>
+        <p className="text-[11px] font-mono text-[#71717a] uppercase tracking-wider">{label}</p>
+        <p className="text-xs font-semibold text-[#f4f4f5] break-words mt-0.5">{value}</p>
       </div>
     </div>
   );
@@ -26,7 +26,7 @@ interface MeetingInfoProps {
 
 export default function MeetingInfo({ items }: MeetingInfoProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
       {items.map((item, i) => (
         <MeetingInfoItem key={i} {...item} />
       ))}

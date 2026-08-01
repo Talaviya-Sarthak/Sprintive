@@ -1,6 +1,7 @@
 import jwt                  from 'jsonwebtoken';
 import { env }              from '../config/env.js';
 import { meetingService }   from '../services/meeting.service.js';
+import { findUserById }     from '../repositories/auth.repository.js';
 
 // room → Set of socket ids
 const rooms = new Map();
@@ -8,17 +9,20 @@ const rooms = new Map();
 function getRoomKey(meetingId) { return `meeting:${meetingId}`; }
 
 export function initSocket(io) {
-  io.use((socket, next) => {
+  // Auth middleware — resolve the real user (JWT carries `sub`, not `id`)
+  io.use(async (socket, next) => {
     const token = socket.handshake.auth?.token;
     if (!token) return next(new Error('Authentication required'));
     try {
       const payload = jwt.verify(token, env.jwtAccessSecret);
+      const user = await findUserById(payload.sub);
+      if (!user) return next(new Error('User not found'));
       socket.user = {
-        id:         payload.sub,
-        email:      payload.email || '',
-        full_name:  payload.full_name || '',
-        avatar_url: payload.avatar_url || '',
-        role:       payload.role || 'participant',
+        id:         user.id,
+        full_name:  user.full_name,
+        avatar_url: user.avatar_url,
+        email:      user.email,
+        role:       user.role || 'participant',
       };
       next();
     } catch (err) {
@@ -41,45 +45,58 @@ export function initSocket(io) {
         const meetingData = result?.meeting || null;
         const dbParticipants = result?.participants || [];
 
-        const joinPayload = {
-          id:         dbParticipants.find(p => p.user_id === user.id)?.id || socket.id,
-          meeting_id: meetingId,
-          user_id:    user.id,
-          full_name:  user.full_name,
-          avatar_url: user.avatar_url,
-          email:      user.email,
-          role:       user.role || 'participant',
-          joined_at:  new Date().toISOString(),
-          socketId:   socket.id,
-        };
-        socket.to(room).emit('participant:joined', joinPayload);
-
+        // Build the roster + full participant list for everyone already in the room
+        const roster = [];
         const existingParticipants = [];
         const roomSocketsSet = io.sockets.adapter.rooms.get(room);
         if (roomSocketsSet) {
           for (const sid of roomSocketsSet) {
-            if (sid !== socket.id) {
-              const sock = io.sockets.sockets.get(sid);
-              if (sock?.user) {
-                const dbp = dbParticipants.find(p => p.user_id === sock.user.id);
-                existingParticipants.push({
-                  id:           dbp?.id || sid,
-                  meeting_id:   meetingId,
-                  user_id:      sock.user.id,
-                  full_name:    sock.user.full_name,
-                  avatar_url:   sock.user.avatar_url,
-                  email:        sock.user.email,
-                  role:         sock.user.role || 'participant',
-                  joined_at:    dbp?.joined_at || new Date().toISOString(),
-                  socketId:     sid,
-                  isMuted:      dbp?.is_muted ?? false,
-                  isCameraOff:  dbp?.is_camera_off ?? false,
-                  isSpeaking:   dbp?.is_speaking ?? false,
-                });
-              }
-            }
+            if (sid === socket.id) continue;
+            const sock = io.sockets.sockets.get(sid);
+            if (!sock?.user) continue;
+            const dbp = dbParticipants.find(p => p.user_id === sock.user.id);
+            roster.push({
+              userId:   sock.user.id,
+              name:     sock.user.full_name,
+              avatar:   sock.user.avatar_url,
+              socketId: sid,
+            });
+            existingParticipants.push({
+              id:           dbp?.id || sid,
+              meeting_id:   meetingId,
+              user_id:      sock.user.id,
+              full_name:    sock.user.full_name,
+              avatar_url:   sock.user.avatar_url,
+              email:        sock.user.email,
+              role:         sock.user.role || 'participant',
+              joined_at:    dbp?.joined_at || new Date().toISOString(),
+              socketId:     sid,
+              isMuted:      dbp?.is_muted ?? false,
+              isCameraOff:  dbp?.is_camera_off ?? false,
+              isSpeaking:   dbp?.is_speaking ?? false,
+            });
           }
         }
+
+        // Notify the rest of the room about the new joiner (superset payload)
+        socket.to(room).emit('participant:joined', {
+          id:           dbParticipants.find(p => p.user_id === user.id)?.id || socket.id,
+          meeting_id:   meetingId,
+          user_id:      user.id,
+          userId:       user.id,
+          full_name:    user.full_name,
+          name:         user.full_name,
+          avatar_url:   user.avatar_url,
+          avatar:       user.avatar_url,
+          email:        user.email,
+          role:         user.role || 'participant',
+          joined_at:    new Date().toISOString(),
+          socketId:     socket.id,
+        });
+
+        // Send the current roster (including socketIds) to the joiner so they
+        // can map existing participants for WebRTC signaling.
+        socket.emit('meeting:participants', { meetingId, participants: roster });
 
         socket.emit('meeting:joined', {
           meetingId,

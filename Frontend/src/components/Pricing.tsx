@@ -48,17 +48,12 @@ export default function Pricing() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-16"
+          className="text-center mb-12 select-none"
         >
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[rgba(249,115,22,0.1)] border border-[rgba(249,115,22,0.25)] rounded-full text-xs font-semibold text-[#F97316] uppercase tracking-wider mb-4">
-            Pricing
-          </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[var(--color-text-h)] tracking-tight leading-tight mb-3">
-            Simple, Transparent Pricing
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#FFFFFF] tracking-tight uppercase leading-tight">
+            SIMPLE, TRANSPARENT<br />
+            <span className="text-[#F97316]">PRICING FOR TEAMS</span>
           </h2>
-          <p className="text-base sm:text-lg text-[var(--color-text-body)] max-w-xl mx-auto leading-relaxed">
-            Start free. Upgrade when your team is ready. No hidden fees, no surprises.
-          </p>
         </motion.div>
 
         {/* Pricing Cards Grid */}

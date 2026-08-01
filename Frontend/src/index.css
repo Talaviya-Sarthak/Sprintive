@@ -1,38 +1,50 @@
 @import "tailwindcss";
+@import "./styles/app-theme.css";
 
 @layer utilities {
-  .shadow-neo {
-    box-shadow: 4px 4px 0px 0px #F97316;
+  .dash-card {
+    background-color: #141417;
+    border: 1px solid #27272a;
+    border-radius: 0.75rem;
+  }
+  .dash-card:hover {
+    border-color: #3f3f46;
+  }
+  .dash-border {
+    border-color: #27272a;
+  }
+  .dash-border-subtle {
+    border-color: #1f1f23;
   }
 }
 
 @theme {
-  --color-primary: #F97316;
-  --color-primary-hover: #EA580C;
-  --color-accent: #FDBA74;
+  --color-primary: #f4f4f5;
+  --color-primary-hover: #e4e4e7;
+  --color-accent: #a1a1aa;
   --color-success: #10B981;
   --color-warning: #F59E0B;
 
-  --color-bg: #050505;
-  --color-bg2: #0A0A0C;
+  --color-bg: #09090b;
+  --color-bg2: #0c0c0e;
   --color-bg3: #141417;
-  --color-surface: #0F0F10;
-  --color-surface2: #171719;
+  --color-surface: #121215;
+  --color-surface2: #18181b;
 
-  --color-border: #262626;
-  --color-border2: #333333;
+  --color-border: #27272a;
+  --color-border2: #3f3f46;
 
-  --color-text-h: #F8FAFC;
-  --color-text-body: #CBD5E1;
-  --color-text-muted: #94A3B8;
+  --color-text-h: #f4f4f5;
+  --color-text-body: #a1a1aa;
+  --color-text-muted: #71717a;
 
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-display: 'Bebas Neue', 'Oswald', sans-serif;
+  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
 
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
 }
 
 @layer base {
@@ -49,16 +61,11 @@
     color: var(--color-text-body);
     line-height: 1.6;
     overflow-x: hidden;
-    transition: background 220ms cubic-bezier(0.4,0,0.2,1), color 220ms cubic-bezier(0.4,0,0.2,1);
+    transition: background 220ms cubic-bezier(0.4, 0, 0.2, 1), color 220ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .font-display {
     font-family: var(--font-display);
-  }
-
-  .light body {
-    background-color: #FFFFFF;
-    color: #475569;
   }
 
   #root {
@@ -67,37 +74,33 @@
   }
 
   ::selection {
-    background: rgba(249,115,22,0.25);
+    background: rgba(249, 115, 22, 0.25);
     color: #F97316;
   }
 
-  ::-webkit-scrollbar { width: 5px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 99px; }
-  ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
-}
+  ::-webkit-scrollbar {
+    width: 5px;
+  }
 
-/* Light theme overrides via CSS custom properties */
-.light {
-  --color-primary: #2563EB;
-  --color-primary-hover: #1D4ED8;
-  --color-accent: #0891B2;
-  --color-bg: #FFFFFF;
-  --color-bg2: #F8FAFC;
-  --color-bg3: #F1F5F9;
-  --color-surface: #FFFFFF;
-  --color-surface2: #F8FAFC;
-  --color-border: #E2E8F0;
-  --color-border2: #CBD5E1;
-  --color-text-h: #0F172A;
-  --color-text-body: #475569;
-  --color-text-muted: #64748B;
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 99px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
+  }
 }
 
 @keyframes carousel {
   0% {
     transform: translateX(0%);
   }
+
   100% {
     transform: translateX(-50%);
   }
@@ -108,6 +111,7 @@
     opacity: 1;
     transform: translate(0, 0) rotate(0deg);
   }
+
   100% {
     opacity: 0;
     transform: translate(0, 100px) rotate(180deg);
@@ -115,17 +119,21 @@
 }
 
 @keyframes hover-wiggle {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-1deg); }
-  75% { transform: rotate(1deg); }
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(-1deg);
+  }
+
+  75% {
+    transform: rotate(1deg);
+  }
 }
 
 .animate-carousel {
   animation: carousel 35s linear infinite;
 }
-
-.shadow-neo {
-  box-shadow: 4px 4px 0px 0px #F97316;
-}
-
-

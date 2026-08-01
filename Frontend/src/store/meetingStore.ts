@@ -47,13 +47,13 @@ export const useMeetingStore = create<MeetingState>((set) => ({
   setParticipants:   (participants) => set((s) => ({
     participants: participants.map(p => {
       const existing = s.participants.find(x => x.user_id === p.user_id);
-      return existing ? { ...existing, ...p } : p;
+      return existing ? { ...existing, ...p, stream: p.stream ?? existing.stream } : p;
     }),
   })),
   addParticipant:    (p)          => set((s) => {
     const existing = s.participants.find(x => x.user_id === p.user_id);
     if (existing) {
-      return { participants: s.participants.map(x => x.user_id === p.user_id ? { ...existing, ...p } : x) };
+      return { participants: s.participants.map(x => x.user_id === p.user_id ? { ...existing, ...p, stream: p.stream ?? existing.stream } : x) };
     }
     return { participants: [...s.participants, p] };
   }),

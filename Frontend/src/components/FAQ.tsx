@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, HelpCircle } from 'lucide-react';
+import { Plus, Minus } from 'lucide-react';
 
 interface FaqItem {
   q: string;
@@ -8,85 +8,100 @@ interface FaqItem {
 }
 
 const faqs: FaqItem[] = [
-  { q: 'How does AI understand our meetings?',    a: "ScrumMind uses OpenAI's Whisper for speech-to-text transcription and a fine-tuned LLM to understand Agile context. It identifies speakers, extracts tasks, detects blockers, and understands deadlines from natural conversation." },
-  { q: 'Is our meeting data secure?',             a: 'Absolutely. ScrumMind is SOC 2 Type II compliant with end-to-end encryption for all recordings and transcripts. Data is stored in isolated tenant environments and never used to train AI models.' },
-  { q: 'Can I import existing Jira projects?',    a: 'Yes! ScrumMind has a one-click Jira import that syncs your existing projects, epics, sprints, and tickets. Changes sync bidirectionally in real-time.' },
-  { q: 'Does it support Google Meet?',            a: 'ScrumMind has a native Google Meet integration. Our AI bot joins your existing Google Meet calls and processes the audio in real-time without requiring you to switch platforms.' },
-  { q: 'Can I use it with Zoom?',                 a: 'Yes, we support Zoom, Google Meet, Microsoft Teams, and our own built-in video meeting platform. The AI works seamlessly across all supported platforms.' },
-  { q: 'How accurate is the transcription?',      a: 'Our transcription accuracy is 96%+ for English and supports 50+ languages. The AI also understands technical jargon, product names, and team-specific terminology that you can customize.' },
-  { q: 'What happens if someone misses a meeting?', a: 'Absent team members receive an AI-generated summary with all decisions, action items, and their assigned tasks. They can also watch the recording with an interactive transcript.' },
-  { q: 'Can I customize what the AI extracts?',   a: "Yes, you can configure extraction rules, custom fields, priority mappings, and even train the AI on your team's specific workflow patterns and terminology." },
+  { q: 'WHAT IS SPRINTIVE?', a: "Sprintive is an AI-powered intelligence platform that unifies video meetings, automated transcripts, task extraction, and Agile sprint boards into a single seamless workspace." },
+  { q: 'HOW DOES AI EXTRACT TASKS?', a: "Sprintive uses speech-to-text models combined with a fine-tuned Agile LLM. It listens to natural standup conversations, detects action items, assigns owners, identifies blockers, and sets deadlines automatically." },
+  { q: 'IS MY MEETING DATA SECURE?', a: "Absolutely. Sprintive is SOC 2 Type II compliant with end-to-end encryption for all audio streams and transcripts. Data is isolated in secure tenant environments and never used for AI model training." },
+  { q: 'CAN I IMPORT EXISTING JIRA PROJECTS?', a: "Yes! Sprintive offers a 1-click Jira & GitHub integration that imports your existing projects, sprints, and backlogs while maintaining real-time bidirectional sync." },
+  { q: 'DOES IT SUPPORT GOOGLE MEET & ZOOM?', a: "Yes. Sprintive integrates with Google Meet, Zoom, and Microsoft Teams. Our AI assistant joins your call automatically or you can host directly in Sprintive." },
 ];
 
 export default function FAQ() {
   const [open, setOpen] = useState<number | null>(null);
 
   return (
-    <section id="contact" className="py-28 max-sm:py-18 bg-transparent">
-      <div className="max-w-[760px] mx-auto px-8 max-sm:px-5">
+    <section id="faq" className="py-24 max-sm:py-16 bg-transparent relative overflow-hidden">
+      <div className="max-w-[900px] mx-auto px-8 max-sm:px-5">
+        {/* Editorial Section Heading */}
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-14"
+          transition={{ duration: 0.5 }}
+          className="text-center mb-12 select-none"
         >
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-[5px] bg-[rgba(249,115,22,0.1)] border border-[rgba(249,115,22,0.25)] rounded-full text-[11px] font-semibold text-[#F97316] uppercase tracking-[0.07em] mb-5">
-            <HelpCircle size={11} /> FAQ
-          </div>
-          <h2 className="text-[clamp(28px,3.8vw,46px)] font-extrabold text-[var(--color-text-h)] leading-[1.12] tracking-[-0.025em] mb-4">
-            Frequently Asked<br />
-            <span className="bg-gradient-to-r from-[#F97316] to-[#FDBA74] bg-clip-text text-transparent">
-              Questions
-            </span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#FFFFFF] tracking-tight uppercase leading-tight">
+            FREQUENTLY<br />
+            <span className="text-[#F97316]">ASKED QUESTIONS</span>
           </h2>
-          <p className="text-[clamp(15px,1.8vw,17px)] text-[var(--color-text-body)] max-w-[560px] mx-auto leading-[1.75]">
-            Everything you need to know about Sprintive.
-          </p>
         </motion.div>
 
-        <div className="flex flex-col gap-2">
-          {faqs.map((faq, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.05 }}
-              className={[
-                'bg-[var(--color-surface)] rounded-xl overflow-hidden transition-all duration-200',
-                open === i
-                  ? 'border border-[rgba(249,115,22,0.35)] shadow-[0_0_0_1px_rgba(249,115,22,0.15),0_8px_32px_rgba(249,115,22,0.12)]'
-                  : 'border border-[var(--color-border)]',
-              ].join(' ')}
-            >
-              <button
-                onClick={() => setOpen(open === i ? null : i)}
-                className="w-full flex items-center justify-between px-[22px] py-[18px] bg-transparent border-none cursor-pointer text-left gap-4"
-              >
-                <span className="text-[15px] font-semibold text-[var(--color-text-h)] leading-[1.4] tracking-[-0.01em]">{faq.q}</span>
-                <motion.div animate={{ rotate: open === i ? 180 : 0 }} transition={{ duration: 0.25 }} className="shrink-0">
-                  <ChevronDown size={18} color={open === i ? '#3B82F6' : 'var(--color-text-muted)'} />
-                </motion.div>
-              </button>
+        {/* Accordion List */}
+        <div className="space-y-3">
+          {faqs.map((faq, i) => {
+            const isOpen = open === i;
+            const num = (i + 1).toString().padStart(2, '0');
 
-              <AnimatePresence>
-                {open === i && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25 }}
-                  >
-                    <div className="px-[22px] pb-[18px] border-t border-[var(--color-border)]">
-                      <p className="pt-3.5 text-sm text-[var(--color-text-body)] leading-[1.75]">{faq.a}</p>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          ))}
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.04 }}
+                className="select-none"
+              >
+                {/* Accordion Header Row */}
+                <button
+                  onClick={() => setOpen(isOpen ? null : i)}
+                  className={`
+                    w-full flex items-center justify-between p-4 sm:p-5
+                    border-2 border-black rounded-[4px] cursor-pointer
+                    transition-all duration-150 ease-out text-left gap-4
+                    ${isOpen
+                      ? 'bg-[#F97316] text-black shadow-[3px_3px_0px_0px_#000]'
+                      : 'bg-[#111111] text-white shadow-[3px_3px_0px_0px_#262626] hover:shadow-[1px_1px_0px_0px_#262626] hover:translate-x-[2px] hover:translate-y-[2px]'
+                    }
+                  `}
+                >
+                  <div className="flex items-center gap-4 sm:gap-6 min-w-0">
+                    <span className={`font-mono text-sm sm:text-base font-bold shrink-0 ${isOpen ? 'text-black' : 'text-[#F97316]'}`}>
+                      {num}
+                    </span>
+                    <div className={`w-[1px] h-5 ${isOpen ? 'bg-black/30' : 'bg-[#262626]'}`} />
+                    <span className={`text-sm sm:text-base font-bold tracking-tight uppercase truncate ${isOpen ? 'text-black' : 'text-white'}`}>
+                      {faq.q}
+                    </span>
+                  </div>
+
+                  <div className={`p-1 rounded-[2px] border ${isOpen ? 'border-black bg-black text-white' : 'border-[#262626] bg-[#1A1A1E] text-[#F97316]'}`}>
+                    {isOpen ? <Minus size={16} strokeWidth={2.5} /> : <Plus size={16} strokeWidth={2.5} />}
+                  </div>
+                </button>
+
+                {/* Answer Extension Box */}
+                <AnimatePresence>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25, ease: 'easeInOut' }}
+                      className="overflow-hidden"
+                    >
+                      <div className="mt-1 p-5 sm:p-6 bg-[#141417] border-2 border-black rounded-[4px] shadow-[3px_3px_0px_0px_#262626]">
+                        <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-mono">
+                          {faq.a}
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
   );
 }
+

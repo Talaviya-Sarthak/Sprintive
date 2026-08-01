@@ -1,29 +1,28 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Brain, Menu, X, Sun, Moon, Zap } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
+import { Brain, Menu, X, Zap } from 'lucide-react';
 import { Button } from './ui/Button';
 
-const links = ['Home', 'Features', 'How It Works', 'Pricing', 'Testimonials', 'FAQ'];
-const ids   = ['hero', 'features', 'how-it-works', 'pricing', 'testimonials', 'contact'];
+const links = ['Home', 'Features', 'Pricing', 'About', 'Contact'];
+const ids = ['hero', 'features', 'pricing', 'about', 'contact'];
 
-interface NavbarProps {
-  theme?: string;
-  toggleTheme?: () => void;
-}
-
-export default function Navbar({ theme: themeProp, toggleTheme: toggleProp }: NavbarProps) {
-  const ctx = (() => { try { return useTheme(); } catch { return null; } })();
-  const theme       = ctx ? ctx.theme       : themeProp;
-  const toggleTheme = ctx ? ctx.toggleTheme : toggleProp;
-
+export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
-  const [open,     setOpen]     = useState(false);
-  const [active,   setActive]   = useState('hero');
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState('hero');
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (window.location.pathname === '/contact') {
+      setActive('contact');
+      return;
+    }
+    if (window.location.pathname === '/about') {
+      setActive('about');
+      return;
+    }
+
     const onScroll = () => {
       setScrolled(window.scrollY > 16);
       const current = ids.findLast(id => {
@@ -37,6 +36,23 @@ export default function Navbar({ theme: themeProp, toggleTheme: toggleProp }: Na
   }, []);
 
   const scrollTo = (id: string) => {
+    if (id === 'contact') {
+      navigate('/contact');
+      setOpen(false);
+      return;
+    }
+    if (id === 'about') {
+      navigate('/about');
+      setOpen(false);
+      return;
+    }
+
+    if (window.location.pathname !== '/') {
+      navigate('/', { state: { scrollTo: id } });
+      setOpen(false);
+      return;
+    }
+
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
     setOpen(false);
   };
@@ -86,15 +102,6 @@ export default function Navbar({ theme: themeProp, toggleTheme: toggleProp }: Na
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2.5">
-          <Button
-            variant="icon"
-            size="icon"
-            onClick={toggleTheme}
-            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-          >
-            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-          </Button>
-
           <Button
             variant="neutral"
             size="default"
