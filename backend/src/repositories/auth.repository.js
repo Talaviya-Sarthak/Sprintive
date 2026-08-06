@@ -60,27 +60,48 @@ export async function createLocalUser({ fullName, email, passwordHash }) {
 }
 
 /**
- * Finds an existing OAuth user or creates a new one.
- * On conflict (same provider + provider_id), updates name and avatar.
+ * Creates a brand-new user from an OAuth profile.
+ * Callers MUST look up an existing user by provider or email first to avoid
+ * hitting the unique email constraint. Unique-violation errors (code 23505)
+ * are intentionally NOT swallowed here so the service layer can retry safely.
  *
  * @param {{ provider: string, providerId: string, email: string|null,
  *            fullName: string, avatarUrl: string|null }} data
- * @returns {Promise<object>}
+ * @returns {Promise<object>} created user row
  */
-export async function findOrCreateOAuthUser({ provider, providerId, email, fullName, avatarUrl }) {
+export async function createOAuthUser({ provider, providerId, email, fullName, avatarUrl }) {
   const { rows } = await query(
     `INSERT INTO users (full_name, email, auth_provider, provider_id, avatar_url, email_verified)
      VALUES ($1, $2, $3, $4, $5, TRUE)
-     ON CONFLICT (auth_provider, provider_id)
-       WHERE provider_id IS NOT NULL
-     DO UPDATE SET
-       full_name  = EXCLUDED.full_name,
-       avatar_url = EXCLUDED.avatar_url,
-       updated_at = NOW()
      RETURNING id, full_name, email, avatar_url, email_verified, auth_provider, created_at`,
     [fullName, email, provider, providerId, avatarUrl]
   );
   return rows[0];
+}
+
+/**
+ * Links an OAuth identity (provider + provider_id) to an existing account.
+ * Used when a user signs in via Google/GitHub but already has an account with
+ * the same email. Updates only the OAuth-related columns and NEVER touches
+ * password_hash, so existing email/password login keeps working.
+ *
+ * @param {string} userId - ID of the existing user row
+ * @param {{ provider: string, providerId: string, avatarUrl: string|null }} data
+ * @returns {Promise<object>} updated user row
+ */
+export async function linkOAuthProvider(userId, { provider, providerId, avatarUrl }) {
+  const { rows } = await query(
+    `UPDATE users
+     SET auth_provider   = $1,
+         provider_id     = $2,
+         avatar_url      = COALESCE($3, avatar_url),
+         email_verified  = TRUE,
+         updated_at      = NOW()
+     WHERE id = $4
+     RETURNING id, full_name, email, avatar_url, email_verified, auth_provider, created_at`,
+    [provider, providerId, avatarUrl, userId]
+  );
+  return rows[0] ?? null;
 }
 
 // ─── Refresh Token Queries ────────────────────────────────────────────────────

@@ -4,7 +4,10 @@ import { env } from '../config/env.js';
 import {
   findUserByEmail,
   findUserById,
+  findUserByProvider,
   createLocalUser,
+  createOAuthUser,
+  linkOAuthProvider,
   saveRefreshToken,
   revokeRefreshToken,
   revokeTokenFamily,
@@ -182,6 +185,53 @@ export async function getCurrentUser(userId) {
     throw err;
   }
   return sanitizeUser(user);
+}
+
+/**
+ * Resolves an OAuth profile to a user account, linking or creating as needed.
+ *
+ * Resolution order (never inserts a duplicate email):
+ *   1. Match an existing user by (provider, providerId) → return it.
+ *   2. Otherwise match by email → link the OAuth identity to that account,
+ *      preserving the existing password_hash so email/password login still works.
+ *   3. Otherwise create a brand-new user from the OAuth profile.
+ *
+ * A Postgres unique-violation (code 23505) can only occur under a race between
+ * two concurrent sign-ins for the same brand-new identity; it is caught and
+ * re-resolved rather than bubbling up as a 409 to the client.
+ *
+ * @param {{ provider: string, providerId: string, email: string|null,
+ *            fullName: string, avatarUrl: string|null }} data
+ * @returns {Promise<object>} resolved user row
+ */
+export async function findOrCreateOAuthUser({ provider, providerId, email, fullName, avatarUrl }) {
+  // 1. Existing OAuth identity → already linked, just sign in.
+  let user = await findUserByProvider(provider, providerId);
+  if (user) return user;
+
+  // 2. Same email → link the OAuth account to the existing user.
+  if (email) {
+    user = await findUserByEmail(email);
+    if (user) return linkOAuthProvider(user.id, { provider, providerId, avatarUrl });
+  }
+
+  // 3. No account at all → create one from the OAuth profile.
+  try {
+    return await createOAuthUser({ provider, providerId, email, fullName, avatarUrl });
+  } catch (err) {
+    // Race: a concurrent request inserted this user between our lookups.
+    // Re-resolve by provider, then by email, instead of failing the sign-in.
+    if (err.code === '23505') {
+      user = await findUserByProvider(provider, providerId);
+      if (user) return user;
+
+      if (email) {
+        user = await findUserByEmail(email);
+        if (user) return linkOAuthProvider(user.id, { provider, providerId, avatarUrl });
+      }
+    }
+    throw err;
+  }
 }
 
 /**

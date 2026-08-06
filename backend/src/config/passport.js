@@ -4,7 +4,8 @@ import { Strategy as GitHubStrategy }  from 'passport-github2';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { env } from './env.js';
 import { accessTokenOptions } from './jwt.js';
-import { findOrCreateOAuthUser, findUserById } from '../repositories/auth.repository.js';
+import { findUserById } from '../repositories/auth.repository.js';
+import { findOrCreateOAuthUser } from '../services/auth.service.js';
 
 /**
  * Configures all Passport.js strategies.
