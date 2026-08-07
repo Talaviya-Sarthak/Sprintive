@@ -68,6 +68,34 @@ export interface DashboardData {
   limits: { maxOwnedTeams: number; maxJoinedTeams: number };
 }
 
+/** A user returned by the WhatsApp-style member search (GET /users/search). */
+export interface UserSearchResult {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string | null;
+  already_member?: boolean;
+  already_invited?: boolean;
+}
+
+export type InviteUserStatus =
+  | 'sent'
+  | 'already_member'
+  | 'already_invited'
+  | 'owner'
+  | 'duplicate'
+  | 'not_found'
+  | 'invalid'
+  | 'failed';
+
+/** Per-user result from the bulk invitation endpoint (POST /teams/:id/invitations). */
+export interface InviteUsersResult {
+  userId: string | null;
+  status: InviteUserStatus;
+  token?: string;
+  error?: string;
+}
+
 
 export type MeetingStatus = 'scheduled' | 'active' | 'ended' | 'completed' | 'cancelled';
 export type MeetingType = 'daily_scrum' | 'sprint_planning' | 'review' | 'retrospective' | 'custom';

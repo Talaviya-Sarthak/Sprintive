@@ -1,5 +1,5 @@
 import { teamRepository }    from '../repositories/team.repository.js';
-import { findUserByEmail, findUserById } from '../repositories/auth.repository.js';
+import { findUserByEmail, findUserById, findUsersByIds } from '../repositories/auth.repository.js';
 import { AppError }          from '../middleware/error.middleware.js';
 import { sendInvitationEmail } from '../utils/email.js';
 import { logger }            from '../utils/logger.js';
@@ -97,6 +97,60 @@ export const teamService = {
       }
       const inv = await this._createAndSendInvitation({ team, email, invitedBy: userId });
       results.push({ email, status: 'invited', token: inv.token });
+    }
+    return results;
+  },
+
+  async inviteUsers({ team_id, userIds, userId }) {
+    const team = await teamRepository.findById(team_id);
+    if (!team) throw new AppError('Team not found', 404);
+    if (team.created_by !== userId) throw new AppError('Only the team owner can invite members', 403);
+
+    const requested  = Array.isArray(userIds) ? userIds.filter(id => typeof id === 'string') : [];
+    // Resolve every requested user in a single query (owner/self, members,
+    // pending invites, and the not-found case are all derived from this data).
+    const users = await findUsersByIds(requested);
+    const userMap = new Map(users.map(u => [u.id, u]));
+
+    const results = [];
+    const seen = new Set();
+    for (const id of requested) {
+      // Duplicate userId within the same request → skip, report as duplicate.
+      if (seen.has(id)) {
+        results.push({ userId: id, status: 'duplicate' });
+        continue;
+      }
+      seen.add(id);
+
+      const target = userMap.get(id);
+      if (!target) {
+        results.push({ userId: id, status: 'not_found' });
+        continue;
+      }
+      // Team owner cannot (and should not) invite themselves.
+      if (target.id === userId) {
+        results.push({ userId: id, status: 'owner' });
+        continue;
+      }
+      // Already a member.
+      if (await teamRepository.isMember(team_id, target.id)) {
+        results.push({ userId: id, status: 'already_member' });
+        continue;
+      }
+      // Existing pending invitation for this user's email (existing validation).
+      const existing = await teamRepository.findPendingInvitationByEmail(team_id, target.email);
+      if (existing) {
+        results.push({ userId: id, status: 'already_invited', token: existing.token });
+        continue;
+      }
+      // Reuse the existing single-invitation pipeline (token gen + insert + email).
+      try {
+        const inv = await this._createAndSendInvitation({ team, email: target.email, invitedBy: userId });
+        results.push({ userId: id, status: 'sent', token: inv.token });
+      } catch (err) {
+        logger.error(`[teamService] Bulk invitation failed for user ${id}:`, err?.message ?? err);
+        results.push({ userId: id, status: 'failed', error: err?.message ?? 'Invitation failed' });
+      }
     }
     return results;
   },

@@ -5,6 +5,7 @@ import {
   createTeamSchema,
   updateTeamSchema,
   inviteMembersSchema,
+  inviteUsersSchema,
   joinTeamSchema,
 } from '../validators/team.validator.js';
 
@@ -103,6 +104,24 @@ export const teamController = {
     try {
       const invitations = await teamService.getTeamInvitations(req.params.id, req.user.id);
       return sendSuccess(res, { message: 'Invitations retrieved.', data: invitations });
+    } catch (err) { next(err); }
+  },
+
+  async inviteUsers(req, res, next) {
+    try {
+      const parsed = inviteUsersSchema.safeParse({
+        team_id: req.params.id,
+        userIds: req.body.userIds,
+      });
+      if (!parsed.success) {
+        return sendError(res, {
+          message:    parsed.error.errors[0].message,
+          statusCode: HTTP_STATUS.BAD_REQUEST,
+          errors:     parsed.error.errors.map(e => ({ field: e.path.join('.'), message: e.message })),
+        });
+      }
+      const results = await teamService.inviteUsers({ ...parsed.data, userId: req.user.id });
+      return sendSuccess(res, { message: 'Invitations sent.', data: results });
     } catch (err) { next(err); }
   },
 

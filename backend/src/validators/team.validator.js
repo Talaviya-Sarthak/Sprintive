@@ -29,6 +29,11 @@ export const inviteMembersSchema = z.object({
   emails:  z.array(z.string().email()).min(1).max(20),
 });
 
+export const inviteUsersSchema = z.object({
+  team_id: z.string().uuid(),
+  userIds: z.array(z.string().uuid()).min(1).max(50),
+});
+
 export const joinTeamSchema = z.object({
   token: z.string().min(1),
 });

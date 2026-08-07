@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { UserMinus, Plus, ArrowLeft } from 'lucide-react';
+import { UserMinus, Plus, ArrowLeft, UserPlus } from 'lucide-react';
 import { teamService } from '../../services/team.service';
 import { useAuth } from '../../context/AuthContext';
 import AppLayout from '../../layouts/AppLayout';
-import { AppTable, AppButton, AppInput, AppBadge, AppTabs } from '../../components/app-ui';
+import { AppTable, AppButton, AppInput, AppBadge, AppTabs, MemberInviteModal } from '../../components/app-ui';
 import type { TeamMember, Invitation } from '../../types';
 
 export default function TeamMembers() {
@@ -24,6 +24,7 @@ export default function TeamMembers() {
   const [inviting, setInviting] = useState(false);
   const [inviteMsg, setInviteMsg] = useState('');
   const [inviteErr, setInviteErr] = useState('');
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   const [isOwner, setIsOwner] = useState(false);
 
@@ -111,7 +112,6 @@ export default function TeamMembers() {
         >
           <ArrowLeft size={14} /> Back to Team
         </button>
-
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#1f1f23]">
           <div>
             <h1 className="text-xl md:text-2xl font-semibold text-[#f4f4f5] tracking-tight">
@@ -123,14 +123,19 @@ export default function TeamMembers() {
           </div>
 
           {isOwner && (
-            <div className="flex items-center gap-2.5">
-              <AppInput
-                placeholder="colleague@company.com"
-                value={inviteEmail}
-                onChange={e => setInviteEmail(e.target.value)}
-              />
-              <AppButton variant="mono" size="xs" loading={inviting} onClick={handleInvite}>
-                <Plus size={13} className="mr-1.5" /> Invite
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+              <div className="flex items-center gap-2.5">
+                <AppInput
+                  placeholder="colleague@company.com"
+                  value={inviteEmail}
+                  onChange={e => setInviteEmail(e.target.value)}
+                />
+                <AppButton variant="mono" size="xs" loading={inviting} onClick={handleInvite}>
+                  <Plus size={13} className="mr-1.5" /> Invite
+                </AppButton>
+              </div>
+              <AppButton variant="mono-outline" size="xs" onClick={() => setShowInviteModal(true)}>
+                <UserPlus size={13} className="mr-1.5" /> Invite Members
               </AppButton>
             </div>
           )}
@@ -207,6 +212,17 @@ export default function TeamMembers() {
             ]}
             data={invitations}
             keyExtractor={i => i.id}
+          />
+        )}
+
+        {isOwner && (
+          <MemberInviteModal
+            open={showInviteModal}
+            onClose={() => setShowInviteModal(false)}
+            teamId={id!}
+            onSent={() => {
+              load();
+            }}
           />
         )}
       </div>

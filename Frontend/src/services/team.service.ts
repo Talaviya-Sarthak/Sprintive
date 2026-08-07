@@ -1,5 +1,5 @@
 import api from './api';
-import type { Team, TeamMember, Invitation, DashboardData, CreateTeamPayload } from '../types';
+import type { Team, TeamMember, Invitation, DashboardData, CreateTeamPayload, UserSearchResult, InviteUsersResult } from '../types';
 
 export const teamService = {
   async createTeam(payload: CreateTeamPayload): Promise<{ team: Team; invitations: Invitation[] }> {
@@ -69,6 +69,18 @@ export const teamService = {
 
   async getInvitePreview(token: string): Promise<Invitation> {
     const { data } = await api.get(`/teams/invite/${token}`);
+    return data.data;
+  },
+
+  async searchUsers(query: string, teamId?: string): Promise<UserSearchResult[]> {
+    const { data } = await api.get('/users/search', {
+      params: { query, ...(teamId ? { teamId } : {}) },
+    });
+    return data.data;
+  },
+
+  async inviteUsers(teamId: string, userIds: string[]): Promise<InviteUsersResult[]> {
+    const { data } = await api.post(`/teams/${teamId}/invitations`, { userIds });
     return data.data;
   },
 

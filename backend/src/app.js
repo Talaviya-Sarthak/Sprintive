@@ -13,6 +13,7 @@ import teamRoutes            from './routes/team.routes.js';
 import meetingRoutes         from './routes/meeting.routes.js';
 import recordingRoutes       from './routes/recording.routes.js';
 import profileRoutes         from './routes/profile.routes.js';
+import usersRoutes           from './routes/users.routes.js';
 
 const app = express();
 
@@ -61,6 +62,7 @@ app.use('/api/teams',    teamRoutes);
 app.use('/api/meetings', meetingRoutes);
 app.use('/api/meetings', recordingRoutes);
 app.use('/api/profile',  profileRoutes);
+app.use('/api/users',    usersRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

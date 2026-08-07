@@ -36,6 +36,7 @@ router.delete('/:id/members/:memberId',  teamController.removeMember);
 
 // Invitations
 router.post('/:id/invite',               teamController.inviteMembers);
+router.post('/:id/invitations',          teamController.inviteUsers);
 router.get('/:id/invitations',           teamController.getInvitations);
 
 // Team meetings

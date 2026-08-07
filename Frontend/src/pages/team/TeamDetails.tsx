@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Users, Clock, Calendar, Mail, Trash2, Video, Settings } from 'lucide-react';
+import { Users, Clock, Calendar, Mail, Trash2, Video, Settings, UserPlus } from 'lucide-react';
 import { teamService } from '../../services/team.service';
 import { useAuth } from '../../context/AuthContext';
 import AppLayout from '../../layouts/AppLayout';
-import { AppButton, AppBadge, AppInput } from '../../components/app-ui';
+import { AppButton, AppBadge, AppInput, MemberInviteModal } from '../../components/app-ui';
 import type { Team, TeamMember } from '../../types';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -24,6 +24,7 @@ export default function TeamOverview() {
   const [inviting, setInviting] = useState(false);
   const [inviteError, setInviteError] = useState('');
   const [inviteSuccess, setInviteSuccess] = useState('');
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   // Delete
   const [deleting, setDeleting] = useState(false);
@@ -227,27 +228,39 @@ export default function TeamOverview() {
           {/* Right Col: Invite & Workspace Actions */}
           <div className="space-y-6">
             {/* Invite Teammates Card */}
-            <div className="bg-[#141417] border border-[#27272a] rounded-xl p-6 space-y-4">
-              <div>
-                <h2 className="text-xs font-mono font-semibold text-[#71717a] uppercase tracking-wider">
-                  Invite Teammates
-                </h2>
-                <p className="text-xs text-[#a1a1aa] mt-1">Send immediate email invitations to join workspace.</p>
-              </div>
+            {isOwner && (
+              <div className="bg-[#141417] border border-[#27272a] rounded-xl p-6 space-y-4">
+                <div>
+                  <h2 className="text-xs font-mono font-semibold text-[#71717a] uppercase tracking-wider">
+                    Invite Teammates
+                  </h2>
+                  <p className="text-xs text-[#a1a1aa] mt-1">Send immediate email invitations to join workspace.</p>
+                </div>
 
-              <div className="space-y-3">
-                <AppInput
-                  placeholder="colleague@company.com"
-                  value={inviteEmail}
-                  onChange={e => setInviteEmail(e.target.value)}
-                />
-                {inviteError && <p className="text-[10px] text-red-400">{inviteError}</p>}
-                {inviteSuccess && <p className="text-[10px] text-emerald-400">{inviteSuccess}</p>}
-                <AppButton variant="mono" size="xs" className="w-full justify-center" loading={inviting} onClick={handleInvite}>
-                  <Mail size={13} className="mr-1.5" /> Send Invitation
-                </AppButton>
+                <div className="space-y-3">
+                  <AppInput
+                    placeholder="colleague@company.com"
+                    value={inviteEmail}
+                    onChange={e => setInviteEmail(e.target.value)}
+                  />
+                  {inviteError && <p className="text-[10px] text-red-400">{inviteError}</p>}
+                  {inviteSuccess && <p className="text-[10px] text-emerald-400">{inviteSuccess}</p>}
+                  <AppButton variant="mono" size="xs" className="w-full justify-center" loading={inviting} onClick={handleInvite}>
+                    <Mail size={13} className="mr-1.5" /> Send Invitation
+                  </AppButton>
+
+                  <div className="flex items-center gap-2 py-1">
+                    <div className="h-px flex-1 bg-[#1f1f23]" />
+                    <span className="text-[10px] font-mono text-[#71717a] uppercase tracking-wider">or</span>
+                    <div className="h-px flex-1 bg-[#1f1f23]" />
+                  </div>
+
+                  <AppButton variant="mono-outline" size="xs" className="w-full justify-center" onClick={() => setShowInviteModal(true)}>
+                    <UserPlus size={13} className="mr-1.5" /> Invite Members
+                  </AppButton>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Owner Workspace Danger Zone */}
             {isOwner && (
@@ -273,6 +286,17 @@ export default function TeamOverview() {
           </div>
         </div>
       </div>
+
+      {isOwner && (
+        <MemberInviteModal
+          open={showInviteModal}
+          onClose={() => setShowInviteModal(false)}
+          teamId={team.id}
+          onSent={() => {
+            if (id) teamService.getMembers(id).then(setMembers).catch(() => undefined);
+          }}
+        />
+      )}
     </AppLayout>
   );
 }

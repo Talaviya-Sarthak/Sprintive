@@ -6,4 +6,5 @@ export * from './AppTabs';
 export * from './AppTable';
 export * from './AppModal';
 export * from './AppSelect';
+export * from './MemberInviteModal';
 

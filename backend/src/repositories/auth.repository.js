@@ -45,6 +45,63 @@ export async function findUserByProvider(provider, providerId) {
 }
 
 /**
+ * Searches active users by email or full name (case-insensitive, partial).
+ * Optionally annotates each result with membership / pending-invitation
+ * flags for a given team, used by the WhatsApp-style invitation picker.
+ *
+ * Never returns sensitive columns (no password_hash).
+ *
+ * @param {{ query: string, limit?: number, excludeUserId?: string|null,
+ *            teamId?: string|null }} opts
+ * @returns {Promise<Array<{ id, name, email, avatar, already_member, already_invited }>>}
+ */
+export async function searchUsers({ query: searchTerm, limit = 20, excludeUserId = null, teamId = null }) {
+  const contains = `%${searchTerm}%`;
+  const prefix   = `${searchTerm}%`;
+  const { rows } = await query(
+    `SELECT
+       u.id,
+       u.full_name  AS name,
+       u.email,
+       u.avatar_url AS avatar,
+       EXISTS (
+         SELECT 1 FROM team_members tm
+         WHERE tm.team_id = $3 AND tm.user_id = u.id
+       ) AS already_member,
+       EXISTS (
+         SELECT 1 FROM invitations i
+         WHERE i.team_id = $3 AND i.email = u.email AND i.status = 'pending'
+       ) AS already_invited
+     FROM users u
+     WHERE u.is_active = TRUE
+       AND (u.id <> $4 OR $4 IS NULL)
+       AND (u.email ILIKE $1 OR u.full_name ILIKE $1)
+     ORDER BY
+       (u.email ILIKE $2 OR u.full_name ILIKE $2) DESC,
+       u.full_name ASC
+     LIMIT $5`,
+    [contains, prefix, teamId, excludeUserId, limit]
+  );
+  return rows;
+}
+
+/**
+ * Fetches multiple active users by their IDs (bulk invitation resolution).
+ * @param {string[]} ids
+ * @returns {Promise<Array<{ id: string, full_name: string, email: string, avatar_url: string|null }>>}
+ */
+export async function findUsersByIds(ids) {
+  if (!Array.isArray(ids) || ids.length === 0) return [];
+  const { rows } = await query(
+    `SELECT id, full_name, email, avatar_url
+     FROM users
+     WHERE id = ANY($1::uuid[]) AND is_active = TRUE`,
+    [ids]
+  );
+  return rows;
+}
+
+/**
  * Creates a new local (email/password) user.
  * @param {{ fullName: string, email: string, passwordHash: string }} data
  * @returns {Promise<object>} created user row
