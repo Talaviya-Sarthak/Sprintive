@@ -3,15 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMeetingSocket } from '../../hooks/useMeetingSocket';
 import { useMediaDevices }  from '../../hooks/useMediaDevices';
-import { useParticipantRecording } from '../../hooks/useParticipantRecording';
+import { useAudioCapture }  from '../../hooks/useAudioCapture';
 import { useMeetingStore }  from '../../store/meetingStore';
 import { meetingService }   from '../../services/meeting.service';
-import { submitLocalRecording } from '../../services/recording.service';
 import ParticipantCard      from '../../components/meeting/ParticipantCard';
 import MeetingChat          from '../../components/meeting/MeetingChat';
 import ParticipantsList     from '../../components/meeting/ParticipantsList';
 import MeetingToolbar       from '../../components/meeting/MeetingToolbar';
 import MeetingTimer         from '../../components/meeting/MeetingTimer';
+import TranscriptPanel      from '../../components/meeting/TranscriptPanel';
 import type { EndMeetingData } from '../../types';
 
 // Decode JWT payload (no verify — just for display)
@@ -26,49 +26,46 @@ export default function MeetingRoom() {
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
 
   const {
-    meeting, participants, chats, recording, isMuted, isCameraOff, isScreenSharing,
+    meeting, participants, chats, transcriptSegments, liveCaption, isMuted, isCameraOff, isScreenSharing,
     activeSpeakerId, sidebarTab, unreadCount,
-    setMeeting, setParticipants, setChats, setRecording,
+    setMeeting, setParticipants, setChats,
     toggleMute, toggleCamera, toggleScreenShare,
     setSidebarTab, resetUnread, reset,
   } = useMeetingStore();
 
   const { stream, stopMedia, toggleMic, toggleCamera: toggleCam, startScreenShare } = useMediaDevices();
-  const { sendChat, startMeeting, endMeeting, onMeetingEnded, leaveMeeting: leaveSocket, setLocalStream } = useMeetingSocket(id);
-  const { isRecording, stopAndGetBlob } = useParticipantRecording(stream, meeting?.status === 'active');
+  const { sendChat, startMeeting, endMeeting, onMeetingEnded, onForceLeave, leaveMeeting: leaveSocket, setLocalStream, sttStatus, sendAudioChunk } = useMeetingSocket(id);
+
+  // Audio capture: send chunks to server for STT when meeting is active
+  const isMeetingActive = meeting?.status === 'active';
+  useAudioCapture({
+    stream,
+    enabled: isMeetingActive && !isMuted,
+    onAudioChunk: sendAudioChunk,
+    chunkIntervalMs: 250,
+  });
 
   const [endedData, setEndedData] = useState<EndMeetingData | null>(null);
 
   const token = localStorage.getItem('access_token') ?? '';
   const payload = parseJwt(token);
   const userId = payload.id ?? payload.sub ?? '';
-  const participantName = payload.full_name ?? 'You';
   const isHost = meeting?.host_id === userId;
 
-  // Reflect active local recording in the store so the REC indicator shows.
+  // Any participant shows the ended screen when the host ends the meeting.
   useEffect(() => {
-    if (isRecording) {
-      setRecording({ id: 'local', meeting_id: id ?? '', status: 'processing', started_at: new Date().toISOString() });
-    }
-  }, [isRecording, id, setRecording]);
+    const cleanup = onMeetingEnded((data) => setEndedData(data));
+    return cleanup;
+  }, [onMeetingEnded]);
 
-  // Non-hosts upload their recording when the host ends the meeting.
+  // Force leave when host ends meeting — disconnect immediately
   useEffect(() => {
-    const cleanup = onMeetingEnded(async (data) => {
-      if (data?.meeting?.host_id !== userId) {
-        try {
-          const captured = await stopAndGetBlob();
-          if (captured) {
-            await submitLocalRecording({ meetingId: id ?? '', captured, participantId: userId, participantName });
-          }
-        } catch (err) {
-          console.error('[recording] capture failed', err);
-        }
-      }
-      setEndedData(data);
+    const cleanup = onForceLeave(() => {
+      stopMedia();
+      navigate('/dashboard');
     });
     return cleanup;
-  }, [onMeetingEnded, id, userId, participantName, stopAndGetBlob]);
+  }, [onForceLeave, navigate, stopMedia]);
 
   useEffect(() => {
     if (!id) return;
@@ -99,17 +96,7 @@ export default function MeetingRoom() {
 
   const handleStartMeeting = () => startMeeting();
 
-  const handleEndMeeting = async () => {
-    // The host stops the local recorder and uploads their audio first,
-    // so the backend has it before the meeting is marked completed.
-    try {
-      const captured = await stopAndGetBlob();
-      if (captured) {
-        await submitLocalRecording({ meetingId: id ?? '', captured, participantId: userId, participantName });
-      }
-    } catch (err) {
-      console.error('[recording] capture failed', err);
-    }
+  const handleEndMeeting = () => {
     endMeeting((data) => setEndedData(data));
   };
 
@@ -120,16 +107,13 @@ export default function MeetingRoom() {
     navigate('/dashboard');
   };
 
-  const handleToggleSidebar = (tab: 'participants' | 'chat') => {
+  const handleToggleSidebar = (tab: 'participants' | 'chat' | 'transcript') => {
     setSidebarTab(sidebarTab === tab ? null : tab);
     if (tab === 'chat') resetUnread();
   };
 
   // ── Meeting Ended Modal ────────────────────────────────────────────────────
   if (endedData) {
-    const durMs = endedData.recording?.duration_ms;
-    const fmt = durMs ? `${Math.floor(durMs / 60000)}m ${Math.floor((durMs % 60000) / 1000)}s` : 'N/A';
-    const recordingStatus = endedData.recording?.status ?? 'none';
     return (
       <div className="min-h-screen bg-[#09090b] flex items-center justify-center p-4">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-lg">
@@ -139,24 +123,7 @@ export default function MeetingRoom() {
             </div>
             <div>
               <h2 className="text-xl font-semibold text-[#f4f4f5]">Meeting Ended</h2>
-              <p className="text-[#a1a1aa] text-xs mt-1">Recording submitted for speech recognition</p>
-            </div>
-
-            <div className="space-y-3 text-left">
-              <div className="flex justify-between items-center p-3 rounded-xl bg-[#1c1c21] border border-[#27272a]">
-                <span className="text-xs text-[#71717a] font-mono">Duration</span>
-                <span className="text-xs font-semibold text-[#f4f4f5]">{fmt}</span>
-              </div>
-              <div className="flex justify-between items-center p-3 rounded-xl bg-[#1c1c21] border border-[#27272a]">
-                <span className="text-xs text-[#71717a] font-mono">Recording</span>
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-medium capitalize">{recordingStatus}</span>
-              </div>
-              {endedData.recording?.storage_key && (
-                <div className="p-3 rounded-xl bg-[#1c1c21] border border-[#27272a]">
-                  <p className="text-xs text-[#71717a] font-mono mb-1">Storage Key</p>
-                  <p className="text-xs text-[#f4f4f5] break-all">{endedData.recording.storage_key}</p>
-                </div>
-              )}
+              <p className="text-[#a1a1aa] text-xs mt-1">Transcript saved to Supabase</p>
             </div>
 
             {/* Transcript preview */}
@@ -221,25 +188,29 @@ export default function MeetingRoom() {
         </div>
 
         <div className="flex items-center gap-4">
-          {/* Recording indicator */}
-          {recording && recording.status === 'processing' && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20">
-              <motion.div
-                className="w-1.5 h-1.5 rounded-full bg-red-500"
-                animate={{ opacity: [1, 0.3, 1] }}
-                transition={{ repeat: Infinity, duration: 1.2 }}
-              />
-              <span className="text-[10px] text-red-400 font-mono font-semibold">REC</span>
-            </div>
-          )}
-
           {/* Timer */}
           <MeetingTimer startedAt={meeting?.started_at} />
 
-          {/* AI Live Intelligence Indicator */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#1c1c21] border border-[#27272a]">
+          {/* AI / STT status indicator */}
+          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${
+            sttStatus === 'active'
+              ? 'bg-[#8B5CF6]/10 border-[#8B5CF6]/20'
+              : sttStatus === 'finalizing'
+              ? 'bg-amber-500/10 border-amber-500/20'
+              : sttStatus === 'completed'
+              ? 'bg-green-500/10 border-green-500/20'
+              : sttStatus === 'failed'
+              ? 'bg-red-500/10 border-red-500/20'
+              : 'bg-[#1c1c21] border-[#27272a]'
+          }`}>
             <svg
-              className="w-3 h-3 text-[#f4f4f5]"
+              className={`w-3 h-3 ${
+                sttStatus === 'active' ? 'text-[#8B5CF6] animate-pulse' :
+                sttStatus === 'finalizing' ? 'text-amber-400 animate-pulse' :
+                sttStatus === 'completed' ? 'text-green-400' :
+                sttStatus === 'failed' ? 'text-red-400' :
+                'text-[#f4f4f5]'
+              }`}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -247,8 +218,18 @@ export default function MeetingRoom() {
             >
               <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
-            <span className="text-[10px] font-mono text-[#f4f4f5] font-semibold uppercase">
-              AI Active
+            <span className={`text-[10px] font-mono font-semibold uppercase ${
+              sttStatus === 'active' ? 'text-[#8B5CF6]' :
+              sttStatus === 'finalizing' ? 'text-amber-400' :
+              sttStatus === 'completed' ? 'text-green-400' :
+              sttStatus === 'failed' ? 'text-red-400' :
+              'text-[#f4f4f5]'
+            }`}>
+              {sttStatus === 'active' && 'STT Active'}
+              {sttStatus === 'finalizing' && 'Finalizing...'}
+              {sttStatus === 'completed' && 'Transcript Ready'}
+              {sttStatus === 'failed' && 'STT Failed'}
+              {sttStatus === 'not_started' && 'AI Active'}
             </span>
           </div>
 
@@ -263,7 +244,7 @@ export default function MeetingRoom() {
       {/* ── Body ── */}
       <div className="flex flex-1 overflow-hidden">
         {/* ── Participant Grid ── */}
-        <div className="flex-1 p-4 overflow-y-auto">
+        <div className="flex-1 p-4 overflow-y-auto relative">
           <div className={`grid ${gridCols} gap-3 h-full`}>
             <AnimatePresence>
               {allParticipants.map((p) => (
@@ -276,6 +257,27 @@ export default function MeetingRoom() {
               ))}
             </AnimatePresence>
           </div>
+
+          {/* ── Live Caption Overlay ── */}
+          <AnimatePresence>
+            {liveCaption && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                transition={{ duration: 0.2 }}
+                className="absolute bottom-6 left-1/2 -translate-x-1/2 max-w-[80%] px-4 py-2.5 rounded-xl bg-black/70 backdrop-blur-md border border-white/10 shadow-xl"
+              >
+                <span className="text-[10px] font-bold text-[#8B5CF6] mr-2">
+                  {liveCaption.speakerName}:
+                </span>
+                <span className="text-sm text-white/90 font-medium">
+                  {liveCaption.text}
+                  <span className="inline-block w-0.5 h-4 bg-[#8B5CF6] ml-1 animate-pulse align-middle" />
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* ── Sidebar ── */}
@@ -290,7 +292,7 @@ export default function MeetingRoom() {
             >
               {/* Sidebar tabs */}
               <div className="flex border-b border-[#27272a]">
-                {(['participants', 'chat', 'notes'] as const).map((tab) => (
+                {(['participants', 'chat', 'transcript'] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => {
@@ -331,28 +333,8 @@ export default function MeetingRoom() {
                     onOpen={resetUnread}
                   />
                 )}
-                {sidebarTab === 'notes' && (
-                  <div className="flex flex-col items-center justify-center h-full gap-3 p-6 text-center">
-                    <div className="w-10 h-10 rounded-xl bg-[#1c1c21] border border-[#27272a] flex items-center justify-center text-[#f4f4f5]">
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={1.5}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                        />
-                      </svg>
-                    </div>
-                    <p className="text-xs font-semibold text-[#f4f4f5]">AI Live Notes</p>
-                    <p className="text-[11px] text-[#71717a]">
-                      Extracted action items and blockers will stream here live.
-                    </p>
-                  </div>
+                {sidebarTab === 'transcript' && (
+                  <TranscriptPanel />
                 )}
               </div>
             </motion.div>
@@ -376,6 +358,7 @@ export default function MeetingRoom() {
           onToggleScreen={handleScreenShare}
           onToggleParticipants={() => handleToggleSidebar('participants')}
           onToggleChat={() => handleToggleSidebar('chat')}
+          onToggleTranscript={() => handleToggleSidebar('transcript')}
           onStartMeeting={handleStartMeeting}
           onEndMeeting={handleEndMeeting}
           onLeave={handleLeave}

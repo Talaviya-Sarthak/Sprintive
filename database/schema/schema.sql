@@ -413,90 +413,18 @@ EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
 
--- ─── 2. PARTICIPANT AUDIO ─────────────────────────────────────────────────────
--- One row per participant recording. Only the object key is stored.
-
-CREATE TYPE participant_audio_status AS ENUM (
-  'pending',      -- received by the backend, not yet uploaded to storage
-  'stored',       -- uploaded to object storage, awaiting transcription
-  'processing',   -- transcription in progress
-  'completed',    -- transcribed successfully
-  'failed',       -- upload or transcription failed
-  'missing'       -- no audio was received for this participant
-);
-
-CREATE TABLE IF NOT EXISTS participant_audio (
-  id               UUID                     PRIMARY KEY DEFAULT gen_random_uuid(),
-  meeting_id       UUID                     NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
-  participant_id   UUID                     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  participant_name VARCHAR(150)             NOT NULL,
-  storage_key      TEXT                     UNIQUE,
-  mime_type        VARCHAR(100),
-  size_bytes       BIGINT,
-  duration_ms      INTEGER,
-  status           participant_audio_status NOT NULL DEFAULT 'pending',
-  started_at       TIMESTAMPTZ,
-  ended_at         TIMESTAMPTZ,
-  created_at       TIMESTAMPTZ              NOT NULL DEFAULT NOW(),
-  updated_at       TIMESTAMPTZ              NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_participant_audio_meeting     ON participant_audio (meeting_id);
-CREATE INDEX IF NOT EXISTS idx_participant_audio_participant ON participant_audio (participant_id);
-CREATE INDEX IF NOT EXISTS idx_participant_audio_status      ON participant_audio (status);
-
-CREATE TRIGGER trg_participant_audio_updated_at
-  BEFORE UPDATE ON participant_audio
-  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-
--- ─── 3. SPEECH SEGMENTS ───────────────────────────────────────────────────────
--- Recognized speech per participant. Stored for future AI processing
--- (summarization, task extraction, etc. — implemented later).
-
-CREATE TABLE IF NOT EXISTS speech_segments (
-  id               UUID             PRIMARY KEY DEFAULT gen_random_uuid(),
-  meeting_id       UUID             NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
-  participant_id   UUID             NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  participant_name VARCHAR(150)     NOT NULL,
-  audio_id         UUID             REFERENCES participant_audio(id) ON DELETE SET NULL,
-  start_time       DOUBLE PRECISION NOT NULL DEFAULT 0,
-  end_time         DOUBLE PRECISION NOT NULL DEFAULT 0,
-  text             TEXT             NOT NULL,
-  created_at       TIMESTAMPTZ      NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_speech_segments_meeting     ON speech_segments (meeting_id);
-CREATE INDEX IF NOT EXISTS idx_speech_segments_participant ON speech_segments (participant_id);
-CREATE INDEX IF NOT EXISTS idx_speech_segments_audio       ON speech_segments (audio_id);
-
--- ─── 010_participant_audio_error.sql ─────────────────────────────────────────────────────────────────
+-- ─── 013_remove_participant_recording.sql ─────────────────────────────────────────────────────────
 -- ─────────────────────────────────────────────────────────────────────────────
--- Migration: 010_participant_audio_error.sql
+-- Migration: 013_remove_participant_recording.sql
 -- Description:
---   * Add `error` column to participant_audio so failed uploads / failed
---     transcriptions can record the failure reason (Task 10 — Error Handling).
---     Failure details were previously persisted via `UPDATE participant_audio
---     SET error = …` but the column did not exist, causing the failure path
---     itself to throw. This migration closes that gap.
+--   * Removes the per-participant audio recording / speech-recognition
+--     pipeline (participant_audio, speech_segments, participant_audio_status).
+--     Audio is no longer uploaded to object storage; the meeting transcript is
+--     instead a dialogue-based raw transcript persisted to meeting_transcripts
+--     when the meeting ends.
 --
---   * Add a partial index so retries can quickly find failed recordings that
---     still have a storage_key (i.e. audio uploaded but transcription failed).
---
--- Idempotent: safe to run repeatedly.
+-- In the consolidated schema these objects simply do not exist.
 -- ─────────────────────────────────────────────────────────────────────────────
-
-
-
-ALTER TABLE participant_audio
-  ADD COLUMN IF NOT EXISTS error TEXT;
-
-COMMENT ON COLUMN participant_audio.error IS
-  'Human-readable failure reason for status=failed recordings.';
-
--- Failed recordings that still have audio in object storage are retriable.
-CREATE INDEX IF NOT EXISTS idx_participant_audio_retriable
-  ON participant_audio (meeting_id, status)
-  WHERE status = 'failed' AND storage_key IS NOT NULL;
 
 -- ─── 011_transcripts_nullable.sql ─────────────────────────────────────────────────────────────────
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -521,5 +449,38 @@ CREATE INDEX IF NOT EXISTS idx_participant_audio_retriable
 ALTER TABLE meeting_transcripts
   ALTER COLUMN transcript_path  DROP NOT NULL,
   ALTER COLUMN transcript_name  DROP NOT NULL;
+
+-- ─── 012_meeting_summaries_unique.sql ─────────────────────────────────────────────────────────────────
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Migration: 012_meeting_summaries_unique.sql
+-- Description:
+--   * Guarantee at most one summary row per meeting by adding a UNIQUE
+--     constraint on meeting_summaries.meeting_id.
+--
+--   * The End Meeting flow upserts the summary via
+--       INSERT ... ON CONFLICT (meeting_id) DO UPDATE
+--     but the table only had a NON-unique index (idx_meeting_summaries_meeting),
+--     so PostgreSQL raised `42P10: there is no unique or exclusion constraint
+--     matching the ON CONFLICT specification`. endMeeting() then threw, the
+--     `meeting:ended` broadcast never fired, and the speech-recognition
+--     pipeline was never triggered — the meeting was stuck at 'completed'
+--     with the room frozen. This constraint makes the upsert valid and
+--     idempotent.
+--
+--   * It is also the DB-level backstop for the atomic ACTIVE→COMPLETED
+--     transition enforced in the app layer: a racing second "end" can only
+--     ever update the existing summary, never insert a duplicate.
+--
+-- Idempotent: safe to run repeatedly.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'meeting_summaries_meeting_id_key'
+  ) THEN
+    ALTER TABLE meeting_summaries
+      ADD CONSTRAINT meeting_summaries_meeting_id_key UNIQUE (meeting_id);
+  END IF;
+END $$;
 
 COMMIT;

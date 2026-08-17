@@ -1,9 +1,6 @@
 import { meetingRepository } from '../repositories/meeting.repository.js';
 import { teamRepository }    from '../repositories/team.repository.js';
-import { recordingRepository } from '../repositories/recording.repository.js';
-import { meetingEndService }   from './meeting/MeetingEndService.js';
 import { AppError }          from '../middleware/error.middleware.js';
-import { logger }            from '../utils/logger.js';
 import fs                    from 'fs';
 import path                  from 'path';
 
@@ -135,15 +132,24 @@ export const meetingService = {
     const meeting = await meetingRepository.findById(meeting_id);
     if (!meeting) throw new AppError('Meeting not found', 404);
     if (meeting.host_id !== userId) throw new AppError('Only the host can end the meeting', 403);
-    if (meeting.status === 'ended' || meeting.status === 'completed') {
+
+    // ACTIVE/SCHEDULED → COMPLETED. Atomic: only one caller can win the race —
+    // the loser gets zero rows and is told the meeting already ended. This
+    // prevents the transcript/summary inserts and the STT finalize pipeline
+    // from running twice, and it blocks ending meetings that are already
+    // 'ended', 'completed', or 'cancelled'.
+    const updated = await meetingRepository.markCompleted(meeting_id);
+    if (!updated) {
       throw new AppError('Meeting has already ended', 400);
     }
 
-    // ACTIVE → COMPLETED
-    const updated = await meetingRepository.updateStatus(meeting_id, 'completed', { ended_at: new Date() });
-
-    // Generate a mock transcript
-    const content = `Transcript for meeting ${meeting_id}\nGenerated at: ${new Date().toISOString()}\n\nThis is an AI-generated transcript placeholder.`;
+    // ── Dialogue-based raw transcript ─────────────────────────────────────
+    // Build the transcript from the meeting chat log (the dialogue) and
+    // persist it to Supabase (meeting_transcripts) so it survives the end.
+    const chats = await meetingRepository.getChats(meeting_id);
+    const content = chats.length > 0
+      ? chats.map((c) => `${c.full_name}: ${c.message}`).join('\n')
+      : 'No dialogue was captured for this meeting.';
     const transcript = await meetingRepository.saveTranscript({
       meeting_id,
       content,
@@ -165,25 +171,10 @@ export const meetingService = {
       tickets_generated: [],
     });
 
-    // ── Speech recognition pipeline (async, non-blocking) ──────────────────
-    // Finalize recordings → upload to storage → Groq Whisper → persist segments.
-    void meetingEndService.finalizeMeeting(meeting_id).catch((err) => {
-      logger.error(`[pipeline] finalizeMeeting failed for meeting ${meeting_id}`, err.message);
-    });
-
-    // Include the ending user's own recording metadata (if already uploaded).
-    let recording = null;
-    try {
-      recording = await recordingRepository.findByMeetingAndParticipant(meeting_id, userId);
-    } catch (err) {
-      logger.error('[pipeline] could not load host recording metadata', err.message);
-    }
-
     return {
       meeting: this.transformMeeting(updated),
       transcript,
       summary,
-      recording,
     };
   },
 

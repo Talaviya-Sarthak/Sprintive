@@ -3,10 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMediaDevices } from '../../hooks/useMediaDevices';
 import { useMeetingSocket } from '../../hooks/useMeetingSocket';
-import { useParticipantRecording } from '../../hooks/useParticipantRecording';
+import { useAudioCapture } from '../../hooks/useAudioCapture';
 import { useMeetingStore } from '../../store/meetingStore';
 import { meetingService } from '../../services/meeting.service';
-import { submitLocalRecording } from '../../services/recording.service';
 import { useAuth } from '../../context/AuthContext';
 import ParticipantCard from '../../components/meeting/ParticipantCard';
 import MeetingChat from '../../components/meeting/MeetingChat';
@@ -24,48 +23,44 @@ export default function MeetingRoomPage() {
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
 
   const {
-    meeting, participants, chats, recording, isMuted, isCameraOff, isScreenSharing,
+    meeting, participants, chats, isMuted, isCameraOff, isScreenSharing,
     activeSpeakerId, sidebarTab, unreadCount,
-    setMeeting, setParticipants, setChats, setRecording,
+    setMeeting, setParticipants, setChats,
     toggleScreenShare,
     setSidebarTab, resetUnread, reset,
   } = useMeetingStore();
 
   const { stream, toggleMic, toggleCamera: toggleCam, startScreenShare, error: mediaError } = useMediaDevices();
-  const { sendChat, startMeeting, endMeeting, onMeetingEnded, onRedirect, setLocalStream, toggleCamera: socketToggleCamera, toggleMic: socketToggleMic, isConnected, socketError } = useMeetingSocket(meetingId);
-  const { isRecording, stopAndGetBlob } = useParticipantRecording(stream, meeting?.status === 'active');
+  const { sendChat, startMeeting, endMeeting, onMeetingEnded, onRedirect, onForceLeave, setLocalStream, toggleCamera: socketToggleCamera, toggleMic: socketToggleMic, isConnected, socketError, sttStatus, sendAudioChunk } = useMeetingSocket(meetingId);
+
+  // Audio capture: send chunks to server for STT when meeting is active
+  const isMeetingActive = meeting?.status === 'active';
+  useAudioCapture({
+    stream,
+    enabled: isMeetingActive && !isMuted,
+    onAudioChunk: sendAudioChunk,
+    chunkIntervalMs: 3000,
+  });
 
   const [loading, setLoading] = useState(true);
   const [endedData, setEndedData] = useState<EndMeetingData | null>(null);
 
   const userId = user?.id ?? '';
-  const participantName = user?.full_name ?? 'You';
   const isHost = meeting?.host_id === userId;
 
-  // Reflect active local recording in the store so the REC indicator shows.
+  // Any participant shows the ended screen when the host ends the meeting.
   useEffect(() => {
-    if (isRecording) {
-      setRecording({ id: 'local', meeting_id: meetingId ?? '', status: 'processing', started_at: new Date().toISOString() });
-    }
-  }, [isRecording, meetingId, setRecording]);
+    const cleanup = onMeetingEnded((data) => setEndedData(data));
+    return cleanup;
+  }, [onMeetingEnded]);
 
-  // Non-hosts upload their recording when the host ends the meeting.
+  // Force leave when host ends meeting — disconnect immediately
   useEffect(() => {
-    const cleanup = onMeetingEnded(async (data) => {
-      if (data?.meeting?.host_id !== userId) {
-        try {
-          const captured = await stopAndGetBlob();
-          if (captured) {
-            await submitLocalRecording({ meetingId: meetingId ?? '', captured, participantId: userId, participantName });
-          }
-        } catch (err) {
-          console.error('[recording] capture failed', err);
-        }
-      }
-      setEndedData(data);
+    const cleanup = onForceLeave(() => {
+      navigate('/dashboard');
     });
     return cleanup;
-  }, [onMeetingEnded, meetingId, userId, participantName, stopAndGetBlob]);
+  }, [onForceLeave, navigate]);
 
   // Fetch initial data on mount
   useEffect(() => {
@@ -153,15 +148,7 @@ export default function MeetingRoomPage() {
 
   const handleStartMeeting = () => startMeeting();
 
-  const handleEndMeeting = async () => {
-    try {
-      const captured = await stopAndGetBlob();
-      if (captured) {
-        await submitLocalRecording({ meetingId: meetingId ?? '', captured, participantId: userId, participantName });
-      }
-    } catch (err) {
-      console.error('[recording] capture failed', err);
-    }
+  const handleEndMeeting = () => {
     endMeeting((data) => setEndedData(data));
   };
 
@@ -254,26 +241,46 @@ export default function MeetingRoomPage() {
             {meeting?.sprint_name && <p className="text-[11px] text-[#475569] mt-0.5">{meeting.sprint_name}</p>}
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          {/* Recording indicator */}
-          {recording && recording.status === 'processing' && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20">
-              <motion.div className="w-1.5 h-1.5 rounded-full bg-red-500" animate={{ opacity: [1, 0.3, 1] }} transition={{ repeat: Infinity, duration: 1.2 }} />
-              <span className="text-[11px] text-red-400 font-medium">REC</span>
-            </div>
-          )}
-
+<div className="flex items-center gap-4">
           {meeting?.status && <MeetingStatusBadge status={meeting.status} />}
 
           {/* Timer */}
           <MeetingTimer startedAt={meeting?.started_at} />
 
-          {/* AI placeholder */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#8B5CF6]/10 border border-[#8B5CF6]/20">
-            <svg className="w-3 h-3 text-[#8B5CF6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          {/* AI / STT status indicator */}
+          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${
+            sttStatus === 'active'
+              ? 'bg-[#8B5CF6]/10 border-[#8B5CF6]/20'
+              : sttStatus === 'finalizing'
+              ? 'bg-amber-500/10 border-amber-500/20'
+              : sttStatus === 'completed'
+              ? 'bg-green-500/10 border-green-500/20'
+              : sttStatus === 'failed'
+              ? 'bg-red-500/10 border-red-500/20'
+              : 'bg-[#8B5CF6]/10 border-[#8B5CF6]/20'
+          }`}>
+            <svg className={`w-3 h-3 ${
+              sttStatus === 'active' ? 'text-[#8B5CF6] animate-pulse' :
+              sttStatus === 'finalizing' ? 'text-amber-400 animate-pulse' :
+              sttStatus === 'completed' ? 'text-green-400' :
+              sttStatus === 'failed' ? 'text-red-400' :
+              'text-[#8B5CF6]'
+            }`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
-            <span className="text-[11px] text-[#8B5CF6] font-medium">AI Notes</span>
+            <span className={`text-[11px] font-medium ${
+              sttStatus === 'active' ? 'text-[#8B5CF6]' :
+              sttStatus === 'finalizing' ? 'text-amber-400' :
+              sttStatus === 'completed' ? 'text-green-400' :
+              sttStatus === 'failed' ? 'text-red-400' :
+              'text-[#8B5CF6]'
+            }`}>
+              {sttStatus === 'active' && 'STT Active'}
+              {sttStatus === 'finalizing' && 'Finalizing...'}
+              {sttStatus === 'completed' && 'Transcript Ready'}
+              {sttStatus === 'failed' && 'STT Failed'}
+              {sttStatus === 'not_started' && 'AI Notes'}
+            </span>
           </div>
 
           {mediaError && (

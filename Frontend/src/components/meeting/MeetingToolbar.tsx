@@ -53,6 +53,7 @@ interface Props {
   onToggleScreen: () => void;
   onToggleParticipants: () => void;
   onToggleChat: () => void;
+  onToggleTranscript: () => void;
   onStartMeeting: () => void;
   onEndMeeting: () => void;
   onLeave: () => void;
@@ -62,7 +63,7 @@ export default function MeetingToolbar({
   isMuted, isCameraOff, isScreenSharing, isHost, meetingStatus,
   unreadCount, sidebarTab, isConnected,
   onToggleMic, onToggleCamera, onToggleScreen,
-  onToggleParticipants, onToggleChat,
+  onToggleParticipants, onToggleChat, onToggleTranscript,
   onStartMeeting, onEndMeeting, onLeave,
 }: Props) {
   return (
@@ -152,15 +153,13 @@ export default function MeetingToolbar({
       <ToolbarButton
         icon={
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <circle cx="12" cy="12" r="6" fill="currentColor" />
+            <path d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
           </svg>
         }
-        label="Record"
-        onClick={() => {}}
-        disabled
+        label="Transcript"
+        onClick={onToggleTranscript}
+        active={sidebarTab === 'transcript'}
       />
-
-      <div className="w-px h-6 bg-[#27272a] mx-1" />
 
       {isHost && meetingStatus === 'scheduled' && (
         <ToolbarButton

@@ -141,6 +141,23 @@ export const meetingRepository = {
     return rows[0];
   },
 
+  /**
+   * Atomically transition a live meeting (ACTIVE or SCHEDULED) to COMPLETED.
+   * Only ONE concurrent caller can win — the loser gets zero rows, so the
+   * winner is the only one that proceeds to write the transcript/summary and
+   * run the STT finalize pipeline.
+   */
+  async markCompleted(id) {
+    const { rows } = await pool.query(
+      `UPDATE meetings
+         SET status = 'ended', ended_at = NOW()
+         WHERE id = $1 AND status IN ('active', 'scheduled')
+         RETURNING *`,
+      [id]
+    );
+    return rows[0] ?? null;
+  },
+
   async addParticipant(meeting_id, user_id, role = 'participant') {
     const { rows } = await pool.query(
       `INSERT INTO meeting_participants (meeting_id, user_id, role, attendance_status)

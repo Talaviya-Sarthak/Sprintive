@@ -1,7 +1,10 @@
 import jwt                  from 'jsonwebtoken';
 import { env }              from '../config/env.js';
 import { meetingService }   from '../services/meeting.service.js';
+import { sttService }       from '../services/stt/stt.service.js';
+import { transcriptService } from '../services/transcript/transcript.service.js';
 import { findUserById }     from '../repositories/auth.repository.js';
+import { logger }           from '../utils/logger.js';
 
 // room → Set of socket ids
 const rooms = new Map();
@@ -9,6 +12,17 @@ const rooms = new Map();
 function getRoomKey(meetingId) { return `meeting:${meetingId}`; }
 
 export function initSocket(io) {
+  // ── STT Events: forward partial/final results to meeting room ──────────────
+  sttService.on('partial', ({ meetingId, participantId, speakerName, text, words, start, duration }) => {
+    const room = getRoomKey(meetingId);
+    io.to(room).emit('stt:partial', { meetingId, participantId, speakerName, text, words, start, duration });
+  });
+
+  sttService.on('final', ({ meetingId, participantId, speakerName, text, words, start, end }) => {
+    const room = getRoomKey(meetingId);
+    io.to(room).emit('stt:final', { meetingId, participantId, speakerName, text, words, start, end });
+  });
+
   // Auth middleware — resolve the real user (JWT carries `sub`, not `id`)
   io.use(async (socket, next) => {
     const token = socket.handshake.auth?.token;
@@ -113,6 +127,23 @@ export function initSocket(io) {
       try {
         const result = await meetingService.startMeeting(meetingId, user.id);
         const room   = getRoomKey(meetingId);
+
+        // Gather all current participants in the room for STT session init
+        const participants = [];
+        const roomSocketsSet = io.sockets.adapter.rooms.get(room);
+        if (roomSocketsSet) {
+          for (const sid of roomSocketsSet) {
+            const sock = io.sockets.sockets.get(sid);
+            if (sock?.user) {
+              participants.push({ id: sock.user.id, name: sock.user.full_name });
+            }
+          }
+        }
+
+        // Initialize streaming STT sessions for all participants
+        sttService.startSession(meetingId, participants);
+        io.to(room).emit('stt:status', { meetingId, status: 'active' });
+
         io.to(room).emit('meeting:started', { meeting: result.meeting });
       } catch (err) {
         socket.emit('error', { message: err.message });
@@ -121,19 +152,53 @@ export function initSocket(io) {
 
     socket.on('meeting:end', async ({ meetingId }) => {
       try {
+        const room = getRoomKey(meetingId);
+        logger.info(`[meeting] End requested by ${user.full_name} for meeting ${meetingId}`);
+
+        // 1. End the meeting immediately (fast — no STT wait)
         const result = await meetingService.endMeeting(meetingId, user.id);
-        const room   = getRoomKey(meetingId);
+
+        // 2. Broadcast meeting ended to all participants immediately
         io.to(room).emit('meeting:ended', {
           meeting:    result.meeting,
           transcript: result.transcript,
           summary:    result.summary,
-          recording:  result.recording,
         });
+
+        logger.info(`[meeting] Meeting ${meetingId} ended successfully`);
+
+        // 3. Force disconnect all participants after a brief delay
+        setTimeout(() => {
+          io.to(room).emit('meeting:force-leave', { meetingId });
+          setTimeout(() => {
+            const roomSockets = io.sockets.adapter.rooms.get(room);
+            if (roomSockets) {
+              for (const sid of roomSockets) {
+                const s = io.sockets.sockets.get(sid);
+                if (s) {
+                  s.leave(room);
+                  s.disconnect(true);
+                }
+              }
+            }
+            rooms.delete(room);
+          }, 500);
+        }, 500);
+
+        // 4. Redirect after a short delay
         setTimeout(() => {
           io.to(room).emit('meeting:redirect', { url: `/meetings/${meetingId}/summary` });
-        }, 2000);
+        }, 1500);
+
+        // 5. Finalize STT sessions (flushes remaining audio via Deepgram Finalize)
+        //    then upload transcript in background
+        transcriptService.finalizeTranscript(meetingId).catch(err => {
+          logger.error(`[transcript] Background transcript finalization failed for ${meetingId}: ${err.message}`);
+        });
       } catch (err) {
+        logger.error(`[meeting] End meeting failed for ${meetingId}: ${err.message}`);
         socket.emit('error', { message: err.message });
+        sttService.abortSession(meetingId);
       }
     });
 
@@ -156,6 +221,18 @@ export function initSocket(io) {
         });
       } catch (err) {
         socket.emit('error', { message: err.message });
+      }
+    });
+
+    // ── STT: Receive audio chunk from participant ──────────────────────────────
+    socket.on('audio:chunk', async ({ meetingId, audio }) => {
+      try {
+        if (!sttService.hasSession(meetingId)) return;
+
+        const audioBuffer = Buffer.from(audio, 'base64');
+        sttService.processAudio(meetingId, user.id, audioBuffer, user.full_name);
+      } catch (err) {
+        logger.error(`[stt] audio:chunk error for meeting ${meetingId}: ${err.message}`);
       }
     });
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { useMeetingStore } from '../store/meetingStore';
+import { useMeetingStore, type TranscriptSegment, type LiveCaption } from '../store/meetingStore';
 import { ensureFreshAccessToken } from '../services/api';
 import type { Participant, ChatMessage, Meeting } from '../types';
 
@@ -36,6 +36,7 @@ function toParticipant(raw: any, meetingId: string | undefined, defaultSocketId?
 export function useMeetingSocket(meetingId: string | undefined) {
   const [socketError, setSocketError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [sttStatus, setSttStatus] = useState<'not_started' | 'active' | 'finalizing' | 'completed' | 'failed'>('not_started');
 
   const socketRef = useRef<Socket | null>(null);
   const peerConnections = useRef<Map<string, RTCPeerConnection>>(new Map());
@@ -43,12 +44,13 @@ export function useMeetingSocket(meetingId: string | undefined) {
 
   const endCallbacks = useRef<Map<string, (data: any) => void>>(new Map());
   const redirectCallbacks = useRef<Map<string, (url: string) => void>>(new Map());
+  const forceLeaveCallbacks = useRef<Map<string, () => void>>(new Map());
   const socketToUser = useRef<Map<string, string>>(new Map());
   const pendingStreams = useRef<Map<string, MediaStream>>(new Map());
 
   const {
     addParticipant, removeParticipant, updateParticipant,
-    addChat, setMeeting, setRecording, incrementUnread,
+    addChat, setMeeting, incrementUnread, addTranscriptSegments, setLiveCaption,
   } = useMeetingStore();
 
   const negotiationFlags = useRef<Map<string, { isInitiator: boolean; makingOffer: boolean; settingAnswer: boolean; negotiated: boolean }>>(new Map());
@@ -284,10 +286,60 @@ export function useMeetingSocket(meetingId: string | undefined) {
         setMeeting(meeting);
       });
 
+      socket.on('stt:status', ({ meetingId: mid, status }: { meetingId: string; status: string }) => {
+        if (mid === meetingId) {
+          log('stt:status', status);
+          setSttStatus(status as typeof sttStatus);
+        }
+      });
+
+      socket.on('stt:segments', ({ meetingId: mid, segments }: { meetingId: string; segments: TranscriptSegment[] }) => {
+        if (mid === meetingId && segments?.length) {
+          log(`stt:segments received: ${segments.length} segment(s)`);
+          addTranscriptSegments(segments);
+        }
+      });
+
+      socket.on('stt:partial', ({ meetingId: mid, participantId, speakerName, text, start, duration }: {
+        meetingId: string; participantId: string; speakerName: string; text: string; start: number; duration: number;
+      }) => {
+        if (mid === meetingId) {
+          setLiveCaption({ participantId, speakerName, text, start });
+        }
+      });
+
+      socket.on('stt:final', ({ meetingId: mid, participantId, speakerName, text, words, start, end }: {
+        meetingId: string; participantId: string; speakerName: string; text: string;
+        words?: Array<{ word: string; start: number; end: number; confidence: number }>;
+        start: number; end: number;
+      }) => {
+        if (mid === meetingId) {
+          // Clear live caption if it's from the same speaker
+          const current = useMeetingStore.getState().liveCaption;
+          if (current?.participantId === participantId) {
+            setLiveCaption(null);
+          }
+          // Add finalized segment
+          addTranscriptSegments([{
+            speakerId: participantId,
+            speakerName,
+            text,
+            start,
+            end,
+            words,
+          }]);
+        }
+      });
+
       socket.on('meeting:ended', (data) => {
         log('meeting:ended');
         if (data?.meeting) setMeeting(data.meeting);
         endCallbacks.current.forEach((cb) => cb(data));
+      });
+
+      socket.on('meeting:force-leave', () => {
+        log('meeting:force-leave — server disconnected room');
+        forceLeaveCallbacks.current.forEach((cb) => cb());
       });
 
       socket.on('meeting:redirect', ({ url }: { url: string }) => {
@@ -300,10 +352,6 @@ export function useMeetingSocket(meetingId: string | undefined) {
 
       socket.on('microphone-state-changed', ({ userId, muted }: { userId: string; muted: boolean }) => {
         updateParticipant(userId, { isMuted: muted });
-      });
-
-      socket.on('recording:start', ({ recordingId }: { recordingId: string }) => {
-        setRecording({ id: recordingId, meeting_id: meetingId, status: 'processing', started_at: new Date().toISOString() });
       });
 
       // ── WebRTC signaling (perfect negotiation) ──
@@ -396,8 +444,9 @@ export function useMeetingSocket(meetingId: string | undefined) {
       negotiationFlags.current.clear();
       endCallbacks.current.clear();
       redirectCallbacks.current.clear();
+      forceLeaveCallbacks.current.clear();
     };
-  }, [meetingId, addParticipant, removeParticipant, updateParticipant, addChat, setMeeting, setRecording, incrementUnread, getOrCreatePeer, flushPendingCandidates]);
+  }, [meetingId, addParticipant, removeParticipant, updateParticipant, addChat, setMeeting, incrementUnread, addTranscriptSegments, setLiveCaption, getOrCreatePeer, flushPendingCandidates]);
 
   const sendChat = useCallback((message: string) => {
     log('chat:send', message);
@@ -418,8 +467,8 @@ export function useMeetingSocket(meetingId: string | undefined) {
   }, [meetingId, isConnected]);
 
   const onMeetingEnded = useCallback((cb: (data: any) => void) => {
-    // Register a callback fired on 'meeting:ended' WITHOUT emitting — used by
-    // non-hosts to upload their recording after the host ends the meeting.
+    // Register a callback fired on 'meeting:ended' WITHOUT emitting — used to
+    // show the ended state in browsers that did not trigger the end themselves.
     const id = Date.now().toString();
     endCallbacks.current.set(id, cb);
     return () => { endCallbacks.current.delete(id); };
@@ -429,6 +478,12 @@ export function useMeetingSocket(meetingId: string | undefined) {
     const id = Date.now().toString();
     redirectCallbacks.current.set(id, cb);
     return () => { redirectCallbacks.current.delete(id); };
+  }, []);
+
+  const onForceLeave = useCallback((cb: () => void) => {
+    const id = Date.now().toString();
+    forceLeaveCallbacks.current.set(id, cb);
+    return () => { forceLeaveCallbacks.current.delete(id); };
   }, []);
 
   const toggleCamera = useCallback((cameraOff: boolean) => {
@@ -449,6 +504,22 @@ export function useMeetingSocket(meetingId: string | undefined) {
 
   const screenShareStop = useCallback(() => {
     socketRef.current?.emit('screen-share-stop', { meetingId });
+  }, [meetingId]);
+
+  const sendAudioChunk = useCallback(async (blob: Blob) => {
+    if (!socketRef.current?.connected || !meetingId) return;
+    try {
+      const arrayBuffer = await blob.arrayBuffer();
+      const base64 = btoa(
+        new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+      );
+      socketRef.current.emit('audio:chunk', {
+        meetingId,
+        audio: base64,
+      });
+    } catch (err) {
+      errLog('sendAudioChunk failed', err);
+    }
   }, [meetingId]);
 
   const setLocalStream = useCallback((stream: MediaStream) => {
@@ -494,8 +565,9 @@ export function useMeetingSocket(meetingId: string | undefined) {
   }, [meetingId]);
 
   return {
-    isConnected, socketError,
-    sendChat, startMeeting, endMeeting, onMeetingEnded, onRedirect, leaveMeeting,
+    isConnected, socketError, sttStatus,
+    sendChat, startMeeting, endMeeting, onMeetingEnded, onRedirect, onForceLeave, leaveMeeting,
     toggleCamera, toggleMic, raiseHand, screenShareStart, screenShareStop, setLocalStream,
+    sendAudioChunk,
   };
 }

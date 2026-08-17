@@ -1,16 +1,33 @@
 import { create } from 'zustand';
-import type { Meeting, Participant, ChatMessage, Recording } from '../types';
+import type { Meeting, Participant, ChatMessage } from '../types';
+
+export interface TranscriptSegment {
+  speakerId: string;
+  speakerName: string;
+  text: string;
+  start: number;
+  end: number;
+  words?: Array<{ word: string; start: number; end: number; confidence: number }>;
+}
+
+export interface LiveCaption {
+  participantId: string;
+  speakerName: string;
+  text: string;
+  start: number;
+}
 
 interface MeetingState {
   meeting: Meeting | null;
   participants: Participant[];
   chats: ChatMessage[];
-  recording: Recording | null;
+  transcriptSegments: TranscriptSegment[];
+  liveCaption: LiveCaption | null;
   isMuted: boolean;
   isCameraOff: boolean;
   isScreenSharing: boolean;
   activeSpeakerId: string | null;
-  sidebarTab: 'participants' | 'chat' | 'notes' | null;
+  sidebarTab: 'participants' | 'chat' | 'transcript' | null;
   unreadCount: number;
 
   setMeeting: (m: Meeting) => void;
@@ -20,7 +37,8 @@ interface MeetingState {
   updateParticipant: (userId: string, patch: Partial<Participant>) => void;
   addChat: (c: ChatMessage) => void;
   setChats: (c: ChatMessage[]) => void;
-  setRecording: (r: Recording) => void;
+  setLiveCaption: (caption: LiveCaption | null) => void;
+  addTranscriptSegments: (segments: TranscriptSegment[]) => void;
   toggleMute: () => void;
   toggleCamera: () => void;
   toggleScreenShare: () => void;
@@ -35,7 +53,8 @@ export const useMeetingStore = create<MeetingState>((set) => ({
   meeting: null,
   participants: [],
   chats: [],
-  recording: null,
+  transcriptSegments: [],
+  liveCaption: null,
   isMuted: false,
   isCameraOff: false,
   isScreenSharing: false,
@@ -63,7 +82,10 @@ export const useMeetingStore = create<MeetingState>((set) => ({
   })),
   addChat:           (c)          => set((s) => ({ chats: [...s.chats, c] })),
   setChats:          (chats)      => set({ chats }),
-  setRecording:      (recording)  => set({ recording }),
+  setLiveCaption:    (caption)    => set({ liveCaption: caption }),
+  addTranscriptSegments: (segments) => set((s) => ({
+    transcriptSegments: [...s.transcriptSegments, ...segments],
+  })),
   toggleMute:        ()           => set((s) => ({ isMuted: !s.isMuted })),
   toggleCamera:      ()           => set((s) => ({ isCameraOff: !s.isCameraOff })),
   toggleScreenShare: ()           => set((s) => ({ isScreenSharing: !s.isScreenSharing })),
@@ -72,7 +94,7 @@ export const useMeetingStore = create<MeetingState>((set) => ({
   incrementUnread:   ()           => set((s) => ({ unreadCount: s.unreadCount + 1 })),
   resetUnread:       ()           => set({ unreadCount: 0 }),
   reset:             ()           => set({
-    meeting: null, participants: [], chats: [], recording: null,
+    meeting: null, participants: [], chats: [], transcriptSegments: [], liveCaption: null,
     isMuted: false, isCameraOff: false, isScreenSharing: false,
     activeSpeakerId: null, sidebarTab: null, unreadCount: 0,
   }),
