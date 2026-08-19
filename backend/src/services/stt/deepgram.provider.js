@@ -8,6 +8,9 @@ import { logger } from '../../utils/logger.js';
  * Opens a WebSocket connection to Deepgram's live transcription endpoint
  * and streams audio chunks for real-time transcription with partial/final results.
  *
+ * Audio format: Raw PCM 16-bit signed little-endian, 16kHz mono (linear16).
+ * The frontend captures audio via Web Audio API and sends raw PCM buffers.
+ *
  * Provider interface:
  *   createSession({ meetingId, participantId, participantName }) → Session
  *   session.sendAudio(buffer)
@@ -18,6 +21,7 @@ import { logger } from '../../utils/logger.js';
 
 const DEEPGRAM_WS_URL = 'wss://api.deepgram.com/v1/listen';
 const KEEPALIVE_INTERVAL_MS = 5000;
+const AUDIO_BUFFER_MAX_MS = 2000; // Max buffer duration before dropping old audio
 
 export class DeepgramStreamingProvider {
   constructor() {
@@ -55,6 +59,8 @@ class DeepgramSession {
     this._closeCallbacks = [];
     this._closed = false;
     this._keepaliveTimer = null;
+    this._audioBuffer = []; // Buffer audio until WebSocket opens
+    this._isOpen = false;
 
     const params = new URLSearchParams({
       model,
@@ -62,8 +68,8 @@ class DeepgramSession {
       interim_results: 'true',
       punctuate: 'true',
       smart_format: 'true',
-      encoding: 'opus',
-      sample_rate: '48000',
+      encoding: 'linear16',
+      sample_rate: '16000',
       channels: '1',
       endpointing: '300',
       utterance_end_ms: '1000',
@@ -78,7 +84,9 @@ class DeepgramSession {
 
     this.ws.on('open', () => {
       logger.info(`[deepgram] Session opened: meeting=${meetingId} participant=${participantName}`);
+      this._isOpen = true;
       this._startKeepalive();
+      this._flushAudioBuffer();
       for (const cb of this._openCallbacks) cb();
     });
 
@@ -100,8 +108,23 @@ class DeepgramSession {
       logger.info(`[deepgram] Session closed for ${participantName}: code=${code} reason=${reason}`);
       this._stopKeepalive();
       this._closed = true;
+      this._isOpen = false;
       for (const cb of this._closeCallbacks) cb(code, reason);
     });
+  }
+
+  /**
+   * Flush buffered audio chunks to Deepgram once the WebSocket is open.
+   */
+  _flushAudioBuffer() {
+    if (this._audioBuffer.length === 0) return;
+    logger.info(`[deepgram] Flushing ${this._audioBuffer.length} buffered audio chunks for ${this.participantName}`);
+    for (const chunk of this._audioBuffer) {
+      if (this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(chunk);
+      }
+    }
+    this._audioBuffer = [];
   }
 
   _handleMessage(msg) {
@@ -131,16 +154,22 @@ class DeepgramSession {
       };
 
       if (isFinal || speechFinal) {
+        logger.info(`[STT FINAL] meetingId=${this.meetingId} participantId=${this.participantId} participantName=${this.participantName} text="${transcript}" start=${msg.start} duration=${msg.duration}`);
         for (const cb of this._finalCallbacks) cb(result);
       } else {
+        logger.debug(`[STT PARTIAL] meetingId=${this.meetingId} participantId=${this.participantId} participantName=${this.participantName} text="${transcript}" start=${msg.start}`);
         for (const cb of this._partialCallbacks) cb(result);
       }
     } else if (type === 'UtteranceEnd') {
-      logger.debug(`[deepgram] UtteranceEnd for ${this.participantName}`);
+      logger.info(`[deepgram] UtteranceEnd for ${this.participantName}`);
     } else if (type === 'SpeechStarted') {
-      logger.debug(`[deepgram] SpeechStarted for ${this.participantName}`);
+      logger.info(`[deepgram] SpeechStarted for ${this.participantName}`);
+    } else if (type === 'SpeechEnded') {
+      logger.info(`[deepgram] SpeechEnded for ${this.participantName}`);
     } else if (type === 'Metadata') {
       logger.debug(`[deepgram] Metadata for ${this.participantName}: model=${msg.model}`);
+    } else {
+      logger.debug(`[deepgram] Unknown message type=${type} for ${this.participantName}`);
     }
   }
 
@@ -161,18 +190,33 @@ class DeepgramSession {
 
   /**
    * Send an audio chunk to Deepgram for transcription.
-   * @param {Buffer} audioBuffer - Raw audio data (opus encoded)
+   * If the WebSocket is not yet open, the audio is buffered and flushed on open.
+   *
+   * @param {Buffer} audioBuffer - Raw PCM audio data (16-bit signed LE, 16kHz mono)
    */
   sendAudio(audioBuffer) {
-    if (this._closed || this.ws.readyState !== WebSocket.OPEN) {
+    if (this._closed) {
+      logger.warn(`[deepgram] Cannot send audio: session closed participant=${this.participantName}`);
       return;
     }
-    this.ws.send(audioBuffer);
+
+    if (this._isOpen && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(audioBuffer);
+    } else {
+      // Buffer audio until WebSocket opens
+      this._audioBuffer.push(audioBuffer);
+      // Drop old audio if buffer grows too large (prevent memory leak)
+      const maxChunks = Math.ceil(AUDIO_BUFFER_MAX_MS / 250); // ~250ms per chunk
+      if (this._audioBuffer.length > maxChunks) {
+        const dropped = this._audioBuffer.length - maxChunks;
+        this._audioBuffer.splice(0, dropped);
+        logger.warn(`[deepgram] Dropped ${dropped} buffered audio chunks for ${this.participantName} (buffer overflow)`);
+      }
+    }
   }
 
   /**
    * Register a callback for partial (interim) transcription results.
-   * @param {(result: { text, confidence, words, start, duration, isFinal, speechFinal, speakerName, participantId, meetingId }) => void} cb
    */
   onPartial(cb) {
     this._partialCallbacks.push(cb);
@@ -180,7 +224,6 @@ class DeepgramSession {
 
   /**
    * Register a callback for final transcription results.
-   * @param {(result: { text, confidence, words, start, duration, isFinal, speechFinal, speakerName, participantId, meetingId }) => void} cb
    */
   onFinal(cb) {
     this._finalCallbacks.push(cb);
@@ -209,12 +252,21 @@ class DeepgramSession {
 
   /**
    * Finalize and close the session.
-   * Sends a Finalize message to flush remaining audio, then closes the WebSocket.
+   * Sends a Finalize message to flush remaining audio, waits for final results,
+   * then closes the WebSocket.
    */
   async close() {
     if (this._closed) return;
     this._stopKeepalive();
 
+    // Send Finalize to flush remaining audio in Deepgram's buffer
+    if (this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'Finalize' }));
+      // Wait up to 5 seconds for Deepgram to process and send final results
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+
+    // Now close the WebSocket
     return new Promise((resolve) => {
       const timeout = setTimeout(() => {
         this.ws.terminate();
@@ -227,9 +279,10 @@ class DeepgramSession {
       });
 
       if (this.ws.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify({ type: 'Finalize' }));
+        this.ws.close();
       } else {
         this.ws.terminate();
+        resolve();
       }
     });
   }

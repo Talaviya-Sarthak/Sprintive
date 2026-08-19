@@ -334,7 +334,7 @@ export default function MeetingRoom() {
                   />
                 )}
                 {sidebarTab === 'transcript' && (
-                  <TranscriptPanel />
+                  <TranscriptPanel sttStatus={sttStatus} />
                 )}
               </div>
             </motion.div>

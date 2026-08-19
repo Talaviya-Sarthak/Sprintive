@@ -9,6 +9,9 @@ import { logger }           from '../utils/logger.js';
 // room → Set of socket ids
 const rooms = new Map();
 
+// meetingId → Promise (prevents duplicate end-meeting processing)
+const endingMeetings = new Map();
+
 function getRoomKey(meetingId) { return `meeting:${meetingId}`; }
 
 export function initSocket(io) {
@@ -151,23 +154,54 @@ export function initSocket(io) {
     });
 
     socket.on('meeting:end', async ({ meetingId }) => {
+      const room = getRoomKey(meetingId);
+
+      // ── Idempotency guard: if this meeting is already ending, skip ──
+      if (endingMeetings.has(meetingId)) {
+        logger.warn(`[meeting] End already in progress for ${meetingId}, ignoring duplicate`);
+        return;
+      }
+      endingMeetings.set(meetingId, true);
+
       try {
-        const room = getRoomKey(meetingId);
         logger.info(`[meeting] End requested by ${user.full_name} for meeting ${meetingId}`);
 
-        // 1. End the meeting immediately (fast — no STT wait)
+        // 1. End the meeting in DB (fast — no STT wait)
         const result = await meetingService.endMeeting(meetingId, user.id);
 
-        // 2. Broadcast meeting ended to all participants immediately
+        // 2. Emit STT finalizing status
+        io.to(room).emit('stt:status', { meetingId, status: 'finalizing' });
+
+        // 3. Broadcast meeting ended to all participants
         io.to(room).emit('meeting:ended', {
           meeting:    result.meeting,
           transcript: result.transcript,
           summary:    result.summary,
         });
 
-        logger.info(`[meeting] Meeting ${meetingId} ended successfully`);
+        logger.info(`[meeting] Meeting ${meetingId} ended, now finalizing transcript...`);
 
-        // 3. Force disconnect all participants after a brief delay
+        // 4. Finalize STT sessions (flushes remaining audio via Deepgram Finalize)
+        //    with a timeout so finalization cannot hang forever
+        const FINALIZATION_TIMEOUT_MS = 15000; // 15 seconds max for finalization
+        try {
+          const transcriptResult = await Promise.race([
+            transcriptService.finalizeTranscript(meetingId),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Transcript finalization timeout')), FINALIZATION_TIMEOUT_MS)
+            ),
+          ]);
+
+          logger.info(`[meeting] Transcript finalized for ${meetingId}: ${transcriptResult?.storagePath || 'no storage'}`);
+          io.to(room).emit('stt:status', { meetingId, status: 'completed' });
+        } catch (finalizationErr) {
+          logger.error(`[meeting] Transcript finalization failed/timed out for ${meetingId}: ${finalizationErr.message}`);
+          io.to(room).emit('stt:status', { meetingId, status: 'failed' });
+          // Abort any remaining STT sessions
+          sttService.abortSession(meetingId);
+        }
+
+        // 5. Force disconnect all participants after finalization
         setTimeout(() => {
           io.to(room).emit('meeting:force-leave', { meetingId });
           setTimeout(() => {
@@ -182,23 +216,20 @@ export function initSocket(io) {
               }
             }
             rooms.delete(room);
+            endingMeetings.delete(meetingId);
           }, 500);
         }, 500);
 
-        // 4. Redirect after a short delay
+        // 6. Redirect after a short delay
         setTimeout(() => {
           io.to(room).emit('meeting:redirect', { url: `/meetings/${meetingId}/summary` });
         }, 1500);
 
-        // 5. Finalize STT sessions (flushes remaining audio via Deepgram Finalize)
-        //    then upload transcript in background
-        transcriptService.finalizeTranscript(meetingId).catch(err => {
-          logger.error(`[transcript] Background transcript finalization failed for ${meetingId}: ${err.message}`);
-        });
       } catch (err) {
         logger.error(`[meeting] End meeting failed for ${meetingId}: ${err.message}`);
         socket.emit('error', { message: err.message });
         sttService.abortSession(meetingId);
+        endingMeetings.delete(meetingId);
       }
     });
 
@@ -230,6 +261,7 @@ export function initSocket(io) {
         if (!sttService.hasSession(meetingId)) return;
 
         const audioBuffer = Buffer.from(audio, 'base64');
+        logger.debug(`[audio:chunk] meeting=${meetingId} participant=${user.full_name} size=${audioBuffer.length}`);
         sttService.processAudio(meetingId, user.id, audioBuffer, user.full_name);
       } catch (err) {
         logger.error(`[stt] audio:chunk error for meeting ${meetingId}: ${err.message}`);

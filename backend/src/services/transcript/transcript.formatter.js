@@ -11,6 +11,8 @@
  * - Raw text preserved exactly (no summarization, correction, or translation).
  */
 
+import { logger } from '../../utils/logger.js';
+
 const MERGE_GAP_THRESHOLD = 2.0; // seconds — merge adjacent segments from same speaker if gap < this
 
 /**
@@ -74,6 +76,10 @@ function mergeSegments(segments) {
  * @returns {string} The full file content
  */
 export function generateConversationFile(segments) {
+  logger.info(`[TRANSCRIPT FORMAT] inputSegments=${segments.length}`);
   const dialogue = formatDialogue(segments);
-  return dialogue || 'No dialogue was captured for this meeting.';
+  const result = dialogue || 'No dialogue was captured for this meeting.';
+  logger.info(`[TRANSCRIPT FORMAT] outputLength=${result.length} chars`);
+  logger.debug(`[TRANSCRIPT FORMAT] content=\n${result}`);
+  return result;
 }

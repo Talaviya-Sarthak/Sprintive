@@ -39,7 +39,7 @@ export default function MeetingRoomPage() {
     stream,
     enabled: isMeetingActive && !isMuted,
     onAudioChunk: sendAudioChunk,
-    chunkIntervalMs: 3000,
+    chunkIntervalMs: 250,
   });
 
   const [loading, setLoading] = useState(true);

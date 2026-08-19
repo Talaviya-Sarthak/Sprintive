@@ -108,6 +108,8 @@ class STTService extends EventEmitter {
 
       entry.segments.push(segment);
 
+      logger.info(`[TRANSCRIPT ADD] meetingId=${meetingId} speakerName=${result.speakerName} speakerId=${participantId} text="${result.text}" start=${segment.start} end=${segment.end}`);
+
       this.emit('final', {
         meetingId,
         participantId,
@@ -147,6 +149,7 @@ class STTService extends EventEmitter {
     }
 
     const entry = this._ensureParticipantSession(meetingId, participantId, participantName);
+    logger.debug(`[stt] Sending audio: meeting=${meetingId} participant=${participantName} size=${audioBuffer.length}`);
     entry.session.sendAudio(audioBuffer);
   }
 
@@ -186,6 +189,11 @@ class STTService extends EventEmitter {
 
     // Sort chronologically by start time
     allSegments.sort((a, b) => a.start - b.start);
+
+    logger.info(`[TRANSCRIPT FINALIZE] meetingId=${meetingId} totalSegments=${allSegments.length}`);
+    for (const seg of allSegments) {
+      logger.info(`[TRANSCRIPT SEGMENT] meetingId=${meetingId} speakerName=${seg.speakerName} speakerId=${seg.speakerId} text="${seg.text}" start=${seg.start} end=${seg.end}`);
+    }
 
     // Clean up
     this.meetings.delete(meetingId);

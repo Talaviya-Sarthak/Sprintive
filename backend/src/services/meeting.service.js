@@ -143,22 +143,6 @@ export const meetingService = {
       throw new AppError('Meeting has already ended', 400);
     }
 
-    // ── Dialogue-based raw transcript ─────────────────────────────────────
-    // Build the transcript from the meeting chat log (the dialogue) and
-    // persist it to Supabase (meeting_transcripts) so it survives the end.
-    const chats = await meetingRepository.getChats(meeting_id);
-    const content = chats.length > 0
-      ? chats.map((c) => `${c.full_name}: ${c.message}`).join('\n')
-      : 'No dialogue was captured for this meeting.';
-    const transcript = await meetingRepository.saveTranscript({
-      meeting_id,
-      content,
-      transcript_path: null,
-      transcript_name: null,
-      transcript_size: Buffer.byteLength(content, 'utf8'),
-      duration: null,
-    });
-
     // Generate a mock summary
     const participants = await meetingRepository.getParticipants(meeting_id);
     const summary = await meetingRepository.upsertSummary({
@@ -173,7 +157,6 @@ export const meetingService = {
 
     return {
       meeting: this.transformMeeting(updated),
-      transcript,
       summary,
     };
   },

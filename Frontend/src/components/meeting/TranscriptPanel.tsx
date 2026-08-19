@@ -1,8 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { useMeetingStore, type TranscriptSegment, type LiveCaption } from '../../store/meetingStore';
+import { useMeetingStore, type TranscriptSegment } from '../../store/meetingStore';
 
-export default function TranscriptPanel() {
+interface TranscriptPanelProps {
+  sttStatus?: 'not_started' | 'active' | 'finalizing' | 'completed' | 'failed';
+}
+
+export default function TranscriptPanel({ sttStatus }: TranscriptPanelProps) {
   const { transcriptSegments, liveCaption } = useMeetingStore();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -51,6 +55,44 @@ export default function TranscriptPanel() {
             {liveCaption.text}
             <span className="inline-block w-0.5 h-3.5 bg-[#8B5CF6] ml-0.5 animate-pulse align-middle" />
           </p>
+        </motion.div>
+      )}
+
+      {/* Finalization status indicator */}
+      {sttStatus === 'finalizing' && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex items-center gap-2 py-2 px-3 rounded-lg bg-amber-500/10 border border-amber-500/20"
+        >
+          <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+          <span className="text-[10px] font-semibold text-amber-400">Finalizing transcript...</span>
+        </motion.div>
+      )}
+
+      {sttStatus === 'completed' && transcriptSegments.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex items-center gap-2 py-2 px-3 rounded-lg bg-green-500/10 border border-green-500/20"
+        >
+          <svg className="w-3 h-3 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+          <span className="text-[10px] font-semibold text-green-400">Transcript saved</span>
+        </motion.div>
+      )}
+
+      {sttStatus === 'failed' && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex items-center gap-2 py-2 px-3 rounded-lg bg-red-500/10 border border-red-500/20"
+        >
+          <svg className="w-3 h-3 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          <span className="text-[10px] font-semibold text-red-400">Transcript save failed</span>
         </motion.div>
       )}
     </div>

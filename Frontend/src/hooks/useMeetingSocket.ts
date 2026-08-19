@@ -513,6 +513,7 @@ export function useMeetingSocket(meetingId: string | undefined) {
       const base64 = btoa(
         new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
       );
+      log(`audio:chunk sending: meeting=${meetingId?.slice(0, 8)} size=${blob.size} type=${blob.type}`);
       socketRef.current.emit('audio:chunk', {
         meetingId,
         audio: base64,

@@ -44,7 +44,7 @@ class TranscriptService {
     let storageResult = null;
     try {
       storageResult = await storageService.uploadTranscript(meetingId, content);
-      logger.info(`[transcript] Uploaded ${meetingId}.txt to ${storageResult.path}`);
+      logger.info(`[TRANSCRIPT UPLOAD] meetingId=${meetingId} bucket=${storageResult.bucket} path=${storageResult.path} size=${storageResult.size} provider=${storageResult.provider}`);
     } catch (error) {
       logger.error(`[transcript] Storage upload failed for meeting ${meetingId}: ${error.message}`);
       // Continue — we still save the content in the database
