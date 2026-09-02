@@ -9,7 +9,7 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<string>(() => {
-    return localStorage.getItem('sm-theme') ?? 'dark';
+    return localStorage.getItem('sprintive-theme') ?? 'dark';
   });
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       root.classList.add('dark');
       root.classList.remove('light');
     }
-    localStorage.setItem('sm-theme', theme);
+    localStorage.setItem('sprintive-theme', theme);
   }, [theme]);
 
   const toggleTheme = () => setTheme(t => (t === 'dark' ? 'light' : 'dark'));

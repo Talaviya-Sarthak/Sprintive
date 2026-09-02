@@ -22,31 +22,30 @@ export function AppTable<T>({
   keyExtractor,
   emptyMessage = 'No items found',
   onRowClick,
-  variant = 'default',
 }: AppTableProps<T>) {
-  const isDash = variant === 'dashboard';
+  const containerStyle: React.CSSProperties = {
+    width: '100%',
+    overflowX: 'auto',
+    backgroundColor: 'var(--app-surface-card)',
+    borderColor: 'var(--app-border)',
+    borderRadius: '0.75rem'
+  };
 
-  const containerClasses = isDash
-    ? 'w-full overflow-x-auto bg-[#141417] border border-[#27272a] rounded-xl'
-    : 'w-full overflow-x-auto bg-[#11131C] border border-[#1E2232] rounded-xl shadow-sm';
-
-  const headerTrClasses = isDash
-    ? 'border-b border-[#1f1f23] bg-[#121215] text-[10px] font-mono uppercase tracking-wider text-[#71717a]'
-    : 'border-b border-[#181A26] bg-[#0C0D14]/80 text-[10px] font-mono uppercase tracking-wider text-[#64748B]';
-
-  const tbodyClasses = isDash
-    ? 'divide-y divide-[#1f1f23] text-xs text-[#a1a1aa]'
-    : 'divide-y divide-[#181A26] text-xs text-[#CBD5E1]';
-
-  const rowHover = isDash
-    ? 'transition-colors hover:bg-[#18181b] hover:text-[#f4f4f5]'
-    : 'transition-colors hover:bg-[#171A26]';
+  const headerTrStyle: React.CSSProperties = {
+    borderBottom: '1px solid var(--app-border-subtle)',
+    backgroundColor: 'var(--app-surface-subtle)',
+    fontSize: '10px',
+    fontFamily: 'monospace',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    color: 'var(--app-text-muted)'
+  };
 
   return (
-    <div className={containerClasses}>
+    <div style={containerStyle}>
       <table className="w-full text-left border-collapse">
         <thead>
-          <tr className={headerTrClasses}>
+          <tr style={headerTrStyle}>
             {columns.map(col => (
               <th key={col.key} className={`px-4 py-3 font-semibold ${col.className ?? ''}`}>
                 {col.header}
@@ -54,10 +53,10 @@ export function AppTable<T>({
             ))}
           </tr>
         </thead>
-        <tbody className={tbodyClasses}>
+        <tbody style={{ color: 'var(--app-text-secondary)' }}>
           {data.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="px-4 py-8 text-center text-[#71717a]">
+              <td colSpan={columns.length} className="px-4 py-8 text-center" style={{ color: 'var(--app-text-muted)' }}>
                 {emptyMessage}
               </td>
             </tr>
@@ -66,7 +65,16 @@ export function AppTable<T>({
               <tr
                 key={keyExtractor(item)}
                 onClick={() => onRowClick?.(item)}
-                className={`${rowHover} ${onRowClick ? 'cursor-pointer' : ''}`}
+                className={`transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                style={{ borderBottom: '1px solid var(--app-border-subtle)' }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+                  e.currentTarget.style.color = 'var(--app-text-primary)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'var(--app-text-secondary)';
+                }}
               >
                 {columns.map(col => (
                   <td key={col.key} className={`px-4 py-3.5 ${col.className ?? ''}`}>

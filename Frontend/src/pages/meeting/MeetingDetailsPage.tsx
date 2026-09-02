@@ -11,6 +11,7 @@ import MeetingInfo from '../../components/meeting/MeetingInfo';
 import EditMeetingModal from '../../components/meeting/EditMeetingModal';
 import DeleteMeetingDialog from '../../components/meeting/DeleteMeetingDialog';
 import { AppButton, AppCard } from '../../components/app-ui';
+import { useTheme } from '../../context/ThemeContext';
 import type { Meeting } from '../../types';
 
 function formatDateLong(dateStr: string) {
@@ -58,7 +59,17 @@ export default function MeetingDetailsPage() {
   const { meetingId, teamId } = useParams<{ meetingId: string; teamId?: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
   const { getMeeting, getTeamMembers, updateMeeting: updateMockMeeting, deleteMeeting: deleteMockMeeting } = useMeetingMockData(teamId);
+
+  const headingColor = isLight ? 'text-[#0f172a]' : 'text-[#f4f4f5]';
+  const subtextColor = isLight ? 'text-[#475569]' : 'text-[#a1a1aa]';
+  const mutedColor = isLight ? 'text-[#94a3b8]' : 'text-[#71717a]';
+  const borderColor = isLight ? 'border-[#e2e8f0]' : 'border-[#1f1f23]';
+  const cardBg = isLight ? 'bg-[#f8fafc]' : 'bg-[#1c1c21]';
+  const cardBorder = isLight ? 'border-[#e2e8f0]' : 'border-[#27272a]';
+  const avatarBg = isLight ? 'bg-white' : 'bg-[#141417]';
 
   const [meeting, setMeeting] = useState<Meeting | null>(null);
   const [loading, setLoading] = useState(true);
@@ -110,7 +121,7 @@ export default function MeetingDetailsPage() {
     return (
       <AppLayout teamId={teamId || meeting?.team_id}>
         <div className="flex items-center justify-center h-64">
-          <div className="w-7 h-7 border-2 border-[#27272a] border-t-[#f4f4f5] rounded-full animate-spin" />
+          <div className={`w-7 h-7 border-2 ${cardBorder} border-t-[#f4f4f5] rounded-full animate-spin`} />
         </div>
       </AppLayout>
     );
@@ -120,7 +131,7 @@ export default function MeetingDetailsPage() {
     return (
       <AppLayout teamId={teamId}>
         <div className="p-8 text-center space-y-4">
-          <p className="text-[#a1a1aa] text-sm">{error || 'Meeting not found'}</p>
+          <p className={`${subtextColor} text-sm`}>{error || 'Meeting not found'}</p>
           <AppButton variant="mono" size="sm" onClick={handleBack}>
             Go Back
           </AppButton>
@@ -147,24 +158,24 @@ export default function MeetingDetailsPage() {
       <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-8">
         <button
           onClick={handleBack}
-          className="flex items-center gap-1.5 text-xs text-[#a1a1aa] hover:text-[#f4f4f5] transition-colors cursor-pointer"
+          className={`flex items-center gap-1.5 text-xs ${subtextColor} hover:${headingColor} transition-colors cursor-pointer`}
         >
           <ArrowLeft size={14} /> Back
         </button>
 
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
           {/* Main Title & Action Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b border-[#1f1f23]">
+          <div className={`flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b ${borderColor}`}>
             <div className="space-y-2.5">
               <div className="flex items-center gap-2">
                 <MeetingStatusBadge status={meeting.status} size="md" />
                 <MeetingTypeBadge type={meeting.meeting_type ?? 'daily_scrum'} size="md" />
                 {meeting.sprint_name && (
-                  <span className="text-xs text-[#71717a] font-mono">({meeting.sprint_name})</span>
+                  <span className={`text-xs ${mutedColor} font-mono`}>({meeting.sprint_name})</span>
                 )}
               </div>
-              <h1 className="text-2xl md:text-3xl font-semibold text-[#f4f4f5] tracking-tight">{meeting.title}</h1>
-              {meeting.description && <p className="text-xs text-[#a1a1aa] leading-relaxed max-w-2xl">{meeting.description}</p>}
+              <h1 className={`text-2xl md:text-3xl font-semibold ${headingColor} tracking-tight`}>{meeting.title}</h1>
+              {meeting.description && <p className={`text-xs ${subtextColor} leading-relaxed max-w-2xl`}>{meeting.description}</p>}
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
@@ -206,12 +217,12 @@ export default function MeetingDetailsPage() {
             <motion.div
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 p-4 rounded-xl bg-[#1c1c21] border border-[#27272a]"
+              className={`flex items-center gap-3 p-4 rounded-xl ${cardBg} border ${cardBorder}`}
             >
-              <Clock size={18} className="text-[#f4f4f5]" />
+              <Clock size={18} className={headingColor} />
               <div>
-                <p className="text-xs font-semibold text-[#f4f4f5]">Upcoming Session</p>
-                <p className="text-[11px] text-[#a1a1aa] mt-0.5">{countdown}</p>
+                <p className={`text-xs font-semibold ${headingColor}`}>Upcoming Session</p>
+                <p className={`text-[11px] ${subtextColor} mt-0.5`}>{countdown}</p>
               </div>
             </motion.div>
           )}
@@ -224,19 +235,19 @@ export default function MeetingDetailsPage() {
             variant="dashboard"
             title={
               <div className="flex items-center gap-2">
-                <Users size={15} className="text-[#a1a1aa]" />
-                <span className="text-xs font-semibold text-[#f4f4f5]">Host & Workspace Details</span>
+                <Users size={15} className={subtextColor} />
+                <span className={`text-xs font-semibold ${headingColor}`}>Host & Workspace Details</span>
               </div>
             }
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-[#1c1c21] border border-[#27272a]">
-                <div className="w-9 h-9 rounded-full bg-[#141417] border border-[#27272a] flex items-center justify-center text-[#f4f4f5] text-xs font-bold shrink-0">
+              <div className={`flex items-center gap-3 p-3 rounded-xl ${cardBg} border ${cardBorder}`}>
+                <div className={`w-9 h-9 rounded-full ${avatarBg} border ${cardBorder} flex items-center justify-center ${headingColor} text-xs font-bold shrink-0`}>
                   {meeting.host_name?.[0]?.toUpperCase() ?? 'H'}
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-[#f4f4f5]">{meeting.host_name ?? 'Host'}</p>
-                  <p className="text-[10px] text-[#71717a]">Meeting Host</p>
+                  <p className={`text-xs font-semibold ${headingColor}`}>{meeting.host_name ?? 'Host'}</p>
+                  <p className={`text-[10px] ${mutedColor}`}>Meeting Host</p>
                 </div>
                 <div className="ml-auto">
                   <RoleBadge role="host" size="sm" />
@@ -244,13 +255,13 @@ export default function MeetingDetailsPage() {
               </div>
 
               {meeting.team_name && (
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-[#1c1c21] border border-[#27272a]">
-                  <div className="w-9 h-9 rounded-xl bg-[#141417] border border-[#27272a] flex items-center justify-center text-[#f4f4f5] text-xs font-bold shrink-0">
+                <div className={`flex items-center gap-3 p-3 rounded-xl ${cardBg} border ${cardBorder}`}>
+                  <div className={`w-9 h-9 rounded-xl ${avatarBg} border ${cardBorder} flex items-center justify-center ${headingColor} text-xs font-bold shrink-0`}>
                     {meeting.team_name[0]?.toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-[#f4f4f5]">{meeting.team_name}</p>
-                    <p className="text-[10px] text-[#71717a]">Target Workspace</p>
+                    <p className={`text-xs font-semibold ${headingColor}`}>{meeting.team_name}</p>
+                    <p className={`text-[10px] ${mutedColor}`}>Target Workspace</p>
                   </div>
                 </div>
               )}

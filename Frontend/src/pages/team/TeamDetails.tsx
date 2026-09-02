@@ -90,7 +90,7 @@ export default function TeamOverview() {
     return (
       <AppLayout teamId={id}>
         <div className="flex items-center justify-center h-64">
-          <div className="w-7 h-7 border-2 border-[#27272a] border-t-[#f4f4f5] rounded-full animate-spin" />
+          <div className="w-7 h-7 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--app-border)', borderTopColor: 'var(--app-text-primary)' }} />
         </div>
       </AppLayout>
     );
@@ -117,10 +117,11 @@ export default function TeamOverview() {
     <AppLayout teamId={id}>
       <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-8">
         {/* Workspace Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[#1f1f23]">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b" style={{ borderColor: 'var(--app-border-subtle)' }}>
           <div className="flex items-center gap-4">
             <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center text-[#f4f4f5] text-xl font-bold border border-[#27272a] shrink-0 bg-[#1c1c21]"
+              className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold border shrink-0"
+              style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}
             >
               {team.avatar_url ? (
                 <img src={team.avatar_url} className="w-full h-full object-cover rounded-2xl" alt={team.name} />
@@ -130,12 +131,12 @@ export default function TeamOverview() {
             </div>
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl md:text-2xl font-semibold text-[#f4f4f5] tracking-tight">{team.name}</h1>
+                <h1 className="text-xl md:text-2xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>{team.name}</h1>
                 <AppBadge variant="mono" size="xs">
                   {isOwner ? 'Owner' : 'Member'}
                 </AppBadge>
               </div>
-              <p className="text-[#a1a1aa] text-xs mt-1 max-w-xl">
+              <p className="text-xs mt-1 max-w-xl" style={{ color: 'var(--app-text-secondary)' }}>
                 {team.description || 'Agile Scrum workspace & meeting intelligence environment'}
               </p>
             </div>
@@ -162,38 +163,47 @@ export default function TeamOverview() {
           <div className="lg:col-span-2 space-y-6">
             {/* Quick Stats Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <div className="bg-[#141417] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-4">
-                <div className="flex items-center justify-between text-[#71717a] mb-2">
+              <div className="border rounded-xl p-4 transition-colors" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--app-border-focus)'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--app-border)'}
+              >
+                <div className="flex items-center justify-between mb-2" style={{ color: 'var(--app-text-muted)' }}>
                   <span className="text-[10px] font-mono uppercase font-medium tracking-wider">Teammates</span>
-                  <Users size={14} className="text-[#a1a1aa]" />
+                  <Users size={14} style={{ color: 'var(--app-text-secondary)' }} />
                 </div>
-                <div className="text-2xl font-semibold text-[#f4f4f5] tracking-tight">{members.length}</div>
-                <span className="text-[11px] text-[#71717a] block mt-1">Active Engineers</span>
+                <div className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>{members.length}</div>
+                <span className="text-[11px] block mt-1" style={{ color: 'var(--app-text-muted)' }}>Active Engineers</span>
               </div>
 
-              <div className="bg-[#141417] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-4">
-                <div className="flex items-center justify-between text-[#71717a] mb-2">
+              <div className="border rounded-xl p-4 transition-colors" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--app-border-focus)'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--app-border)'}
+              >
+                <div className="flex items-center justify-between mb-2" style={{ color: 'var(--app-text-muted)' }}>
                   <span className="text-[10px] font-mono uppercase font-medium tracking-wider">Daily Scrum</span>
-                  <Clock size={14} className="text-[#a1a1aa]" />
+                  <Clock size={14} style={{ color: 'var(--app-text-secondary)' }} />
                 </div>
-                <div className="text-2xl font-semibold text-[#f4f4f5] tracking-tight">{team.daily_scrum_time || '09:00'}</div>
-                <span className="text-[11px] text-[#71717a] block mt-1">{team.timezone || 'UTC'}</span>
+                <div className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>{team.daily_scrum_time || '09:00'}</div>
+                <span className="text-[11px] block mt-1" style={{ color: 'var(--app-text-muted)' }}>{team.timezone || 'UTC'}</span>
               </div>
 
-              <div className="bg-[#141417] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-4 col-span-2 sm:col-span-1">
-                <div className="flex items-center justify-between text-[#71717a] mb-2">
+              <div className="border rounded-xl p-4 transition-colors col-span-2 sm:col-span-1" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--app-border-focus)'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--app-border)'}
+              >
+                <div className="flex items-center justify-between mb-2" style={{ color: 'var(--app-text-muted)' }}>
                   <span className="text-[10px] font-mono uppercase font-medium tracking-wider">Sprint Days</span>
-                  <Calendar size={14} className="text-[#a1a1aa]" />
+                  <Calendar size={14} style={{ color: 'var(--app-text-secondary)' }} />
                 </div>
-                <div className="text-xs font-semibold text-[#f4f4f5] truncate mt-1">{workingDayNames}</div>
-                <span className="text-[11px] text-[#a1a1aa] block mt-1">Active Cadence</span>
+                <div className="text-xs font-semibold truncate mt-1" style={{ color: 'var(--app-text-primary)' }}>{workingDayNames}</div>
+                <span className="text-[11px] block mt-1" style={{ color: 'var(--app-text-secondary)' }}>Active Cadence</span>
               </div>
             </div>
 
             {/* Team Members List */}
-            <div className="bg-[#141417] border border-[#27272a] rounded-xl p-6 space-y-4">
-              <div className="flex items-center justify-between pb-3.5 border-b border-[#1f1f23]">
-                <h2 className="text-xs font-mono font-semibold text-[#71717a] uppercase tracking-wider">
+            <div className="border rounded-xl p-6 space-y-4" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}>
+              <div className="flex items-center justify-between pb-3.5 border-b" style={{ borderColor: 'var(--app-border-subtle)' }}>
+                <h2 className="text-xs font-mono font-semibold uppercase tracking-wider" style={{ color: 'var(--app-text-muted)' }}>
                   Team Members ({members.length})
                 </h2>
                 <AppButton variant="mono-ghost" size="xs" onClick={() => navigate(`/teams/${team.id}/members`)}>
@@ -205,15 +215,16 @@ export default function TeamOverview() {
                 {members.map(m => (
                   <div
                     key={m.user_id}
-                    className="flex items-center justify-between p-3.5 rounded-xl bg-[#18181b] border border-[#27272a]"
+                    className="flex items-center justify-between p-3.5 rounded-xl border"
+                    style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)' }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-[#1c1c21] border border-[#27272a] flex items-center justify-center text-[#f4f4f5] font-semibold text-xs">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center font-semibold text-xs" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}>
                         {m.full_name?.[0] ?? 'U'}
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-[#f4f4f5]">{m.full_name}</p>
-                        <p className="text-[10px] text-[#71717a]">{m.email}</p>
+                        <p className="text-xs font-medium" style={{ color: 'var(--app-text-primary)' }}>{m.full_name}</p>
+                        <p className="text-[10px]" style={{ color: 'var(--app-text-muted)' }}>{m.email}</p>
                       </div>
                     </div>
                     <AppBadge variant="mono" size="xs">
@@ -229,18 +240,19 @@ export default function TeamOverview() {
           <div className="space-y-6">
             {/* Invite Teammates Card */}
             {isOwner && (
-              <div className="bg-[#141417] border border-[#27272a] rounded-xl p-6 space-y-4">
+              <div className="border rounded-xl p-6 space-y-4" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}>
                 <div>
-                  <h2 className="text-xs font-mono font-semibold text-[#71717a] uppercase tracking-wider">
+                  <h2 className="text-xs font-mono font-semibold uppercase tracking-wider" style={{ color: 'var(--app-text-muted)' }}>
                     Invite Teammates
                   </h2>
-                  <p className="text-xs text-[#a1a1aa] mt-1">Send immediate email invitations to join workspace.</p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--app-text-secondary)' }}>Send immediate email invitations to join workspace.</p>
                 </div>
 
                 <div className="space-y-3">
                   <AppInput
                     placeholder="colleague@company.com"
                     value={inviteEmail}
+                    
                     onChange={e => setInviteEmail(e.target.value)}
                   />
                   {inviteError && <p className="text-[10px] text-red-400">{inviteError}</p>}
@@ -264,11 +276,11 @@ export default function TeamOverview() {
 
             {/* Owner Workspace Danger Zone */}
             {isOwner && (
-              <div className="bg-[#141417] border border-red-500/20 rounded-xl p-6 space-y-3">
+              <div className="border rounded-xl p-6 space-y-3" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'rgba(239, 68, 68, 0.2)' }}>
                 <h2 className="text-xs font-mono font-semibold text-red-400 uppercase tracking-wider">
                   Danger Zone
                 </h2>
-                <p className="text-[11px] text-[#71717a] leading-normal">
+                <p className="text-[11px] leading-normal" style={{ color: 'var(--app-text-muted)' }}>
                   Permanently delete this team workspace, meeting records, and sprint task histories.
                 </p>
                 <AppButton

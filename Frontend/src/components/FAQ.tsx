@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Minus } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 interface FaqItem {
   q: string;
@@ -17,6 +18,20 @@ const faqs: FaqItem[] = [
 
 export default function FAQ() {
   const [open, setOpen] = useState<number | null>(null);
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
+
+  const headingColor = isLight ? 'text-[#0f172a]' : 'text-[#FFFFFF]';
+  const closedBg = isLight ? 'bg-[#f8fafc]' : 'bg-[#111111]';
+  const closedText = isLight ? 'text-[#0f172a]' : 'text-white';
+  const cardBorder = isLight ? 'border-[#0f172a]' : 'border-black';
+  const shadowClass = isLight ? 'shadow-[3px_3px_0px_0px_#0f172a]' : 'shadow-[3px_3px_0px_0px_#262626]';
+  const hoverShadow = isLight ? 'hover:shadow-[1px_1px_0px_0px_#0f172a]' : 'hover:shadow-[1px_1px_0px_0px_#262626]';
+  const dividerColor = isLight ? 'bg-[#e2e8f0]' : 'bg-[#262626]';
+  const iconBg = isLight ? 'bg-[#f1f5f9]' : 'bg-[#1A1A1E]';
+  const iconBorder = isLight ? 'border-[#e2e8f0]' : 'border-[#262626]';
+  const answerBg = isLight ? 'bg-[#f1f5f9]' : 'bg-[#141417]';
+  const answerText = isLight ? 'text-[#475569]' : 'text-zinc-300';
 
   return (
     <section id="faq" className="py-24 max-sm:py-16 bg-transparent relative overflow-hidden">
@@ -29,7 +44,7 @@ export default function FAQ() {
           transition={{ duration: 0.5 }}
           className="text-center mb-12 select-none"
         >
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#FFFFFF] tracking-tight uppercase leading-tight">
+          <h2 className={`text-3xl sm:text-4xl md:text-5xl font-black ${headingColor} tracking-tight uppercase leading-tight`}>
             FREQUENTLY<br />
             <span className="text-[#F97316]">ASKED QUESTIONS</span>
           </h2>
@@ -55,11 +70,11 @@ export default function FAQ() {
                   onClick={() => setOpen(isOpen ? null : i)}
                   className={`
                     w-full flex items-center justify-between p-4 sm:p-5
-                    border-2 border-black rounded-[4px] cursor-pointer
+                    border-2 ${cardBorder} rounded-[4px] cursor-pointer
                     transition-all duration-150 ease-out text-left gap-4
                     ${isOpen
                       ? 'bg-[#F97316] text-black shadow-[3px_3px_0px_0px_#000]'
-                      : 'bg-[#111111] text-white shadow-[3px_3px_0px_0px_#262626] hover:shadow-[1px_1px_0px_0px_#262626] hover:translate-x-[2px] hover:translate-y-[2px]'
+                      : `${closedBg} ${closedText} ${shadowClass} ${hoverShadow} hover:translate-x-[2px] hover:translate-y-[2px]`
                     }
                   `}
                 >
@@ -67,13 +82,13 @@ export default function FAQ() {
                     <span className={`font-mono text-sm sm:text-base font-bold shrink-0 ${isOpen ? 'text-black' : 'text-[#F97316]'}`}>
                       {num}
                     </span>
-                    <div className={`w-[1px] h-5 ${isOpen ? 'bg-black/30' : 'bg-[#262626]'}`} />
-                    <span className={`text-sm sm:text-base font-bold tracking-tight uppercase truncate ${isOpen ? 'text-black' : 'text-white'}`}>
+                    <div className={`w-[1px] h-5 ${isOpen ? 'bg-black/30' : dividerColor}`} />
+                    <span className={`text-sm sm:text-base font-bold tracking-tight uppercase truncate ${isOpen ? 'text-black' : closedText}`}>
                       {faq.q}
                     </span>
                   </div>
 
-                  <div className={`p-1 rounded-[2px] border ${isOpen ? 'border-black bg-black text-white' : 'border-[#262626] bg-[#1A1A1E] text-[#F97316]'}`}>
+                  <div className={`p-1 rounded-[2px] border ${isOpen ? 'border-black bg-black text-white' : `${iconBorder} ${iconBg} text-[#F97316]`}`}>
                     {isOpen ? <Minus size={16} strokeWidth={2.5} /> : <Plus size={16} strokeWidth={2.5} />}
                   </div>
                 </button>
@@ -88,8 +103,8 @@ export default function FAQ() {
                       transition={{ duration: 0.25, ease: 'easeInOut' }}
                       className="overflow-hidden"
                     >
-                      <div className="mt-1 p-5 sm:p-6 bg-[#141417] border-2 border-black rounded-[4px] shadow-[3px_3px_0px_0px_#262626]">
-                        <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-mono">
+                      <div className={`mt-1 p-5 sm:p-6 ${answerBg} border-2 ${cardBorder} rounded-[4px] ${shadowClass}`}>
+                        <p className={`text-xs sm:text-sm ${answerText} leading-relaxed font-mono`}>
                           {faq.a}
                         </p>
                       </div>

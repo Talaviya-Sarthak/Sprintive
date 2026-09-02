@@ -10,34 +10,89 @@ export interface AppBadgeProps {
 export function AppBadge({ variant = 'neutral', size = 'xs', children, pulse = false }: AppBadgeProps) {
   const sizeClasses = size === 'xs' ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-0.5 text-[11px]';
 
-  const variantStyles: Record<string, string> = {
-    neutral: 'bg-[#171A26] text-[#94A3B8] border-[#232738]',
-    mono: 'bg-[#1f1f23] text-[#a1a1aa] border-[#27272a]',
-    orange: 'bg-[#F97316]/10 text-[#F97316] border-[#F97316]/25',
-    emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25',
-    amber: 'bg-amber-500/10 text-amber-400 border-amber-500/25',
-    blue: 'bg-blue-500/10 text-blue-400 border-blue-500/25',
-    purple: 'bg-purple-500/10 text-purple-400 border-purple-500/25',
-    red: 'bg-red-500/10 text-red-400 border-red-500/25',
+  const getVariantStyle = (variant: string): React.CSSProperties => {
+    switch (variant) {
+      case 'neutral':
+        return {
+          backgroundColor: 'var(--app-surface-hover)',
+          color: 'var(--app-text-secondary)',
+          borderColor: 'var(--app-border)'
+        };
+      case 'mono':
+        return {
+          backgroundColor: 'var(--app-surface-subtle)',
+          color: 'var(--app-text-secondary)',
+          borderColor: 'var(--app-border)'
+        };
+      case 'orange':
+        return {
+          backgroundColor: 'rgba(249, 115, 22, 0.1)',
+          color: '#F97316',
+          borderColor: 'rgba(249, 115, 22, 0.25)'
+        };
+      case 'emerald':
+        return {
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          color: '#10B981',
+          borderColor: 'rgba(16, 185, 129, 0.25)'
+        };
+      case 'amber':
+        return {
+          backgroundColor: 'rgba(245, 158, 11, 0.1)',
+          color: '#F59E0B',
+          borderColor: 'rgba(245, 158, 11, 0.25)'
+        };
+      case 'blue':
+        return {
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          color: '#3B82F6',
+          borderColor: 'rgba(59, 130, 246, 0.25)'
+        };
+      case 'purple':
+        return {
+          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+          color: '#8B5CF6',
+          borderColor: 'rgba(139, 92, 246, 0.25)'
+        };
+      case 'red':
+        return {
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          color: '#EF4444',
+          borderColor: 'rgba(239, 68, 68, 0.25)'
+        };
+      default:
+        return {
+          backgroundColor: 'var(--app-surface-hover)',
+          color: 'var(--app-text-secondary)',
+          borderColor: 'var(--app-border)'
+        };
+    }
+  };
+
+  const variantStyle = getVariantStyle(variant);
+
+  const getPulseColor = (variant: string): string => {
+    switch (variant) {
+      case 'emerald':
+        return '#10B981';
+      case 'orange':
+        return '#F97316';
+      case 'red':
+        return '#EF4444';
+      default:
+        return 'var(--app-text-muted)';
+    }
   };
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border font-medium tracking-tight ${sizeClasses} ${
-        variantStyles[variant] || variantStyles.neutral
-      }`}
+      className={`inline-flex items-center gap-1.5 rounded-full border font-medium tracking-tight ${sizeClasses}`}
+      style={variantStyle}
     >
       {pulse && (
         <span
-          className={`w-1.5 h-1.5 rounded-full animate-pulse ${
-            variant === 'emerald'
-              ? 'bg-emerald-400'
-              : variant === 'orange'
-              ? 'bg-[#F97316]'
-              : variant === 'red'
-              ? 'bg-red-400'
-              : 'bg-[#94A3B8]'
-          }`}
+          className="w-1.5 h-1.5 rounded-full animate-pulse"
+          style={{ backgroundColor: getPulseColor(variant) }}
         />
       )}
       {children}

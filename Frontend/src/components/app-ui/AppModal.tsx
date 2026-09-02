@@ -46,7 +46,8 @@ export function AppModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/75 backdrop-blur-xs"
+            className="fixed inset-0 backdrop-blur-xs"
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)' }}
           />
 
           <motion.div
@@ -54,20 +55,33 @@ export function AppModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className={`relative w-full ${resolvedMaxWidth} bg-[#141417] border border-[#27272a] rounded-2xl shadow-2xl overflow-hidden z-10`}
+            className={`relative w-full ${resolvedMaxWidth} border rounded-2xl shadow-2xl overflow-hidden z-10`}
+            style={{
+              backgroundColor: 'var(--app-surface-card)',
+              borderColor: 'var(--app-border)'
+            }}
           >
             {(title || description) && (
-              <div className="flex items-start justify-between px-6 py-4.5 border-b border-[#1f1f23]">
+              <div className="flex items-start justify-between px-6 py-4.5 border-b" style={{ borderColor: 'var(--app-border-subtle)' }}>
                 <div>
-                  {title && <h3 className="text-sm font-semibold text-[#f4f4f5] tracking-tight">{title}</h3>}
+                  {title && <h3 className="text-sm font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>{title}</h3>}
                   {description && (
-                    <p className="text-xs text-[#a1a1aa] mt-0.5 leading-normal">{description}</p>
+                    <p className="text-xs mt-0.5 leading-normal" style={{ color: 'var(--app-text-secondary)' }}>{description}</p>
                   )}
                 </div>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="p-1 text-[#71717a] hover:text-[#f4f4f5] rounded-lg hover:bg-[#18181b] transition-colors cursor-pointer"
+                  className="p-1 rounded-lg transition-colors cursor-pointer"
+                  style={{ color: 'var(--app-text-muted)' }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.color = 'var(--app-text-primary)';
+                    e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.color = 'var(--app-text-muted)';
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
                 >
                   <X size={15} />
                 </button>
@@ -77,7 +91,7 @@ export function AppModal({
             <div className="p-6">{children}</div>
 
             {footer && (
-              <div className="px-6 py-4 bg-[#121215] border-t border-[#1f1f23] flex items-center justify-end gap-2.5">
+              <div className="px-6 py-4 border-t flex items-center justify-end gap-2.5" style={{ backgroundColor: 'var(--app-surface-subtle)', borderColor: 'var(--app-border-subtle)' }}>
                 {footer}
               </div>
             )}

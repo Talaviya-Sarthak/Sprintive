@@ -23,34 +23,53 @@ export function AppCard({
 }: AppCardProps) {
   const isDash = variant === 'dashboard';
 
-  const containerClasses = isDash
-    ? `bg-[#141417] border border-[#27272a] rounded-xl overflow-hidden flex flex-col justify-between ${
-        hoverable ? 'hover:border-[#3f3f46] hover:bg-[#18181b] transition-all duration-150' : ''
-      }`
-    : `bg-[#11131C] border border-[#1E2232] rounded-xl overflow-hidden shadow-sm flex flex-col justify-between ${
-        hoverable ? 'hover:border-[#2A2F45] transition-colors duration-150' : ''
-      }`;
-
-  const headerBorder = isDash ? 'border-b border-[#1f1f23]' : 'border-b border-[#181A26]';
-  const footerBg = isDash ? 'bg-[#121215] border-t border-[#1f1f23] text-[#a1a1aa]' : 'bg-[#0C0D14] border-t border-[#181A26] text-[#94A3B8]';
+  const containerStyle: React.CSSProperties = isDash
+    ? {
+        backgroundColor: 'var(--app-surface-card)',
+        borderColor: 'var(--app-border)',
+        borderRadius: '0.75rem',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between'
+      }
+    : {
+        backgroundColor: 'var(--app-surface-card)',
+        borderColor: 'var(--app-border)',
+        borderRadius: '0.75rem',
+        overflow: 'hidden',
+        boxShadow: 'var(--app-shadow-sm)',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between'
+      };
 
   return (
     <motion.div
       whileHover={hoverable ? { y: -1.5 } : undefined}
       transition={{ duration: 0.15, ease: 'easeOut' }}
-      className={`${containerClasses} ${className}`}
+      style={containerStyle}
+      className={className}
+      onMouseEnter={hoverable ? e => {
+        e.currentTarget.style.borderColor = 'var(--app-border-focus)';
+        e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+      } : undefined}
+      onMouseLeave={hoverable ? e => {
+        e.currentTarget.style.borderColor = 'var(--app-border)';
+        e.currentTarget.style.backgroundColor = 'var(--app-surface-card)';
+      } : undefined}
       {...(props as any)}
     >
       {(title || subtitle || action) && (
-        <div className={`flex items-start justify-between gap-3 px-4 py-3.5 ${headerBorder}`}>
+        <div className="flex items-start justify-between gap-3 px-4 py-3.5" style={{ borderBottom: '1px solid var(--app-border-subtle)' }}>
           <div className="min-w-0 flex-1">
             {title && (
-              <h3 className={`text-xs font-semibold tracking-tight truncate ${isDash ? 'text-[#f4f4f5]' : 'text-[#F8FAFC]'}`}>
+              <h3 className="text-xs font-semibold tracking-tight truncate" style={{ color: 'var(--app-text-primary)' }}>
                 {title}
               </h3>
             )}
             {subtitle && (
-              <p className={`text-[11px] mt-0.5 leading-normal truncate ${isDash ? 'text-[#a1a1aa]' : 'text-[#64748B]'}`}>
+              <p className="text-[11px] mt-0.5 leading-normal truncate" style={{ color: 'var(--app-text-secondary)' }}>
                 {subtitle}
               </p>
             )}
@@ -62,7 +81,7 @@ export function AppCard({
       <div className="p-4 flex-1">{children}</div>
 
       {footer && (
-        <div className={`px-4 py-3 flex items-center justify-between text-xs ${footerBg}`}>
+        <div className="px-4 py-3 flex items-center justify-between text-xs" style={{ backgroundColor: 'var(--app-surface-subtle)', borderTop: '1px solid var(--app-border-subtle)', color: 'var(--app-text-secondary)' }}>
           {footer}
         </div>
       )}

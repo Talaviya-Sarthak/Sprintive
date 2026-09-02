@@ -79,7 +79,7 @@ export default function MeetingCard({ meeting, currentUserId, onEdit, onDelete }
         <div className="flex items-center gap-2">
           <MeetingTypeBadge type={meetingType} />
           {meeting.sprint_name && (
-            <span className="text-[10px] text-[#71717a] font-mono">{meeting.sprint_name}</span>
+            <span className="text-[10px] font-mono" style={{ color: 'var(--app-text-muted)' }}>{meeting.sprint_name}</span>
           )}
         </div>
       }
@@ -87,10 +87,10 @@ export default function MeetingCard({ meeting, currentUserId, onEdit, onDelete }
       footer={
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-5 h-5 rounded-full bg-[#1c1c21] border border-[#27272a] flex items-center justify-center text-[#f4f4f5] text-[9px] font-semibold shrink-0">
+            <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold shrink-0" style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}>
               {getInitials(hostName)}
             </div>
-            <span className="text-xs text-[#a1a1aa] font-medium truncate">{hostName}</span>
+            <span className="text-xs font-medium truncate" style={{ color: 'var(--app-text-secondary)' }}>{hostName}</span>
           </div>
 
           <div className="flex items-center gap-1.5">
@@ -128,17 +128,18 @@ export default function MeetingCard({ meeting, currentUserId, onEdit, onDelete }
       <div>
         <h3
           onClick={() => navigate(`/meetings/${meeting.id}`)}
-          className="text-xs font-semibold text-[#f4f4f5] truncate hover:text-white transition-colors cursor-pointer"
+          className="text-xs font-semibold truncate transition-colors cursor-pointer"
+          style={{ color: 'var(--app-text-primary)' }}
         >
           {meeting.title}
         </h3>
         {meeting.description && (
-          <p className="text-[11px] text-[#a1a1aa] mt-0.5 line-clamp-1">{meeting.description}</p>
+          <p className="text-[11px] mt-0.5 line-clamp-1" style={{ color: 'var(--app-text-secondary)' }}>{meeting.description}</p>
         )}
 
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2.5 text-[11px] text-[#71717a]">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2.5 text-[11px]" style={{ color: 'var(--app-text-muted)' }}>
           <span className="flex items-center gap-1">
-            <Calendar size={12} className="text-[#a1a1aa]" /> {formatDate(getMeetingDateValue(meeting))}
+            <Calendar size={12} style={{ color: 'var(--app-text-secondary)' }} /> {formatDate(getMeetingDateValue(meeting))}
           </span>
           <span className="flex items-center gap-1">
             <Clock size={12} /> {formatTimeRange(meeting)}

@@ -5,6 +5,7 @@ import { Cpu, Users, Layers, ShieldCheck, Zap, ArrowRight } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Button } from '../components/ui/Button';
+import { useTheme } from '../context/ThemeContext';
 
 const principles = [
   {
@@ -62,6 +63,17 @@ export default function About() {
   const navigate = useNavigate();
   const shouldReduceMotion = useReducedMotion();
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
+
+  const bgColor = isLight ? 'bg-[#f8fafc]' : 'bg-[#050505]';
+  const textColor = isLight ? 'text-[#475569]' : 'text-[#A1A1AA]';
+  const headingColor = isLight ? 'text-[#0f172a]' : 'text-white';
+  const gridColor = isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.045)';
+  const cardBg = isLight ? 'bg-[#f8fafc]' : 'bg-[#111111]';
+  const cardBorder = isLight ? 'border-[#e2e8f0]' : 'border-[#262626]';
+  const dividerColor = isLight ? 'bg-[#e2e8f0]' : 'bg-[#262626]';
+  const highlightText = isLight ? 'text-[#0f172a] font-medium' : 'text-white font-medium';
 
   useEffect(() => {
     if (shouldReduceMotion) return;
@@ -73,13 +85,13 @@ export default function About() {
   }, [shouldReduceMotion]);
 
   return (
-    <div className="bg-[#050505] text-[#A1A1AA] min-h-screen relative overflow-x-hidden selection:bg-[#F97316]/25 selection:text-[#F97316]">
+    <div className={`${bgColor} ${textColor} min-h-screen relative overflow-x-hidden selection:bg-[#F97316]/25 selection:text-[#F97316]`}>
       {/* Background Engineering Grid */}
       <div
         className="fixed inset-0 pointer-events-none z-0"
         style={{
           backgroundImage:
-            'linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px)',
+            `linear-gradient(${gridColor} 1px, transparent 1px), linear-gradient(90deg, ${gridColor} 1px, transparent 1px)`,
           backgroundSize: '44px 44px',
         }}
       />
@@ -117,15 +129,15 @@ export default function About() {
 
             {/* 1. Small Neo-Brutalist Badge */}
             <motion.div variants={fadeInUp} className="inline-block mb-6">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#111111] border border-[#262626] shadow-[2px_2px_0px_#F97316] text-[#F97316] font-mono text-xs font-bold uppercase tracking-wider">
+              <div className={`inline-flex items-center gap-1.5 px-3 py-1 ${cardBg} border ${cardBorder} shadow-[2px_2px_0px_#F97316] text-[#F97316] font-mono text-xs font-bold uppercase tracking-wider`}>
                 <span className="w-1.5 h-1.5 bg-[#F97316] rounded-full animate-pulse" />
                 <span>ABOUT</span>
-                <span className="text-[#A1A1AA]">↓</span>
+                <span className={textColor}>↓</span>
               </div>
             </motion.div>
 
             {/* 2. Editorial Heading - Animated Line by Line */}
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-[#FFFFFF] tracking-tight leading-[1.05] mb-6 overflow-hidden">
+            <h1 className={`text-4xl sm:text-6xl lg:text-7xl font-extrabold ${headingColor} tracking-tight leading-[1.05] mb-6 overflow-hidden`}>
               <motion.span variants={fadeInUp} className="block">
                 Meetings Should
               </motion.span>
@@ -137,7 +149,7 @@ export default function About() {
             {/* 3. Description */}
             <motion.p
               variants={fadeInUp}
-              className="text-base sm:text-lg lg:text-xl text-[#A1A1AA] max-w-2xl leading-relaxed mb-8"
+              className={`text-base sm:text-lg lg:text-xl ${textColor} max-w-2xl leading-relaxed mb-8`}
             >
               Sprintive transforms conversations into action. Every meeting becomes searchable knowledge, actionable tasks, and an organized sprint—automatically.
             </motion.p>
@@ -176,7 +188,7 @@ export default function About() {
             {/* Animated Expanding Divider */}
             <motion.div
               variants={lineExpand}
-              className="w-full h-[1px] bg-[#262626] origin-left mb-16"
+              className={`w-full h-[1px] ${dividerColor} origin-left mb-16`}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -187,19 +199,19 @@ export default function About() {
                     01 / PHILOSOPHY
                   </span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-[#FFFFFF] tracking-tight">
+                <h2 className={`text-2xl sm:text-3xl font-extrabold ${headingColor} tracking-tight`}>
                   Why Sprintive Exists
                 </h2>
               </motion.div>
 
               <motion.div
                 variants={fadeInUp}
-                className="lg:col-span-8 space-y-4 text-sm sm:text-base text-[#A1A1AA] leading-relaxed"
+                className={`lg:col-span-8 space-y-4 text-sm sm:text-base ${textColor} leading-relaxed`}
               >
                 <p>
                   Modern teams spend too much time manually documenting meetings, taking notes, and assigning tasks instead of building great products.
                 </p>
-                <p className="text-[#FFFFFF] font-medium border-l-2 border-[#F97316] pl-4 py-1">
+                <p className={`${highlightText} border-l-2 border-[#F97316] pl-4 py-1`}>
                   Sprintive removes manual work by allowing AI to capture conversations, identify key decisions, extract action items, and organize work automatically.
                 </p>
               </motion.div>
@@ -221,7 +233,7 @@ export default function About() {
                   02 / PRINCIPLES
                 </span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#FFFFFF] tracking-tight">
+              <h2 className={`text-2xl sm:text-3xl font-extrabold ${headingColor} tracking-tight`}>
                 Our Core Principles
               </h2>
             </motion.div>
@@ -234,19 +246,19 @@ export default function About() {
                   <motion.div
                     key={p.title}
                     variants={fadeInUp}
-                    className="p-6 bg-[#111111] border-2 border-black shadow-[4px_4px_0px_#FFFFFF] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#FFFFFF] hover:border-[#F97316]/60 transition-all duration-200 flex flex-col justify-between group relative overflow-hidden"
+                    className={`p-6 ${cardBg} border-2 ${isLight ? 'border-[#0f172a]' : 'border-black'} shadow-[4px_4px_0px_#FFFFFF] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#FFFFFF] hover:border-[#F97316]/60 transition-all duration-200 flex flex-col justify-between group relative overflow-hidden`}
                   >
                     {/* Subtle Orange Hover Accent Line */}
                     <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#F97316] opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
 
                     <div>
-                      <div className="w-10 h-10 bg-[#1A1A1A] border border-[#262626] flex items-center justify-center text-[#F97316] mb-4 group-hover:border-[#F97316] transition-colors">
+                      <div className={`w-10 h-10 ${isLight ? 'bg-white' : 'bg-[#1A1A1A]'} border ${cardBorder} flex items-center justify-center text-[#F97316] mb-4 group-hover:border-[#F97316] transition-colors`}>
                         <Icon size={20} strokeWidth={2} />
                       </div>
-                      <h3 className="text-lg font-bold text-[#FFFFFF] mb-2 group-hover:text-[#F97316] transition-colors">
+                      <h3 className={`text-lg font-bold ${headingColor} mb-2 group-hover:text-[#F97316] transition-colors`}>
                         {p.title}
                       </h3>
-                      <p className="text-xs sm:text-sm text-[#A1A1AA] leading-relaxed">
+                      <p className={`text-xs sm:text-sm ${textColor} leading-relaxed`}>
                         {p.description}
                       </p>
                     </div>
@@ -262,7 +274,7 @@ export default function About() {
             whileInView="visible"
             viewport={{ once: true, margin: '-80px' }}
             variants={fadeInUp}
-            className="bg-[#111111] border-2 border-black shadow-[6px_6px_0px_#FFFFFF] p-8 sm:p-12 text-left relative overflow-hidden"
+            className={`${cardBg} border-2 ${isLight ? 'border-[#0f172a]' : 'border-black'} shadow-[6px_6px_0px_#FFFFFF] p-8 sm:p-12 text-left relative overflow-hidden`}
           >
             {/* Subtle floating dot */}
             {!shouldReduceMotion && (
@@ -280,11 +292,11 @@ export default function About() {
               </span>
             </div>
 
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#FFFFFF] tracking-tight leading-tight mb-4">
+            <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-extrabold ${headingColor} tracking-tight leading-tight mb-4`}>
               The Future Of Meetings <br />
               <span className="text-[#F97316]">Is Action.</span>
             </h2>
-            <p className="text-sm sm:text-base text-[#A1A1AA] max-w-2xl leading-relaxed">
+            <p className={`text-sm sm:text-base ${textColor} max-w-2xl leading-relaxed`}>
               We envision a world where meetings are no longer a disruption to deep work, but a catalyst for immediate execution.
             </p>
           </motion.section>
@@ -300,15 +312,15 @@ export default function About() {
             {/* Horizontal Expanding Divider */}
             <motion.div
               variants={lineExpand}
-              className="w-full h-[1px] bg-[#262626] origin-left mb-12"
+              className={`w-full h-[1px] ${dividerColor} origin-left mb-12`}
             />
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
               <motion.div variants={fadeInUp}>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-[#FFFFFF] tracking-tight mb-2">
+                <h2 className={`text-2xl sm:text-3xl font-extrabold ${headingColor} tracking-tight mb-2`}>
                   Ready To Experience Sprintive?
                 </h2>
-                <p className="text-xs sm:text-sm text-[#A1A1AA]">
+                <p className={`text-xs sm:text-sm ${textColor}`}>
                   Join high-performing teams automating meeting notes and execution.
                 </p>
               </motion.div>

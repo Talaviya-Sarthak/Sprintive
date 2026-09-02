@@ -97,7 +97,7 @@ export default function TeamMembers() {
     return (
       <AppLayout teamId={id}>
         <div className="flex items-center justify-center h-64">
-          <div className="w-7 h-7 border-2 border-[#27272a] border-t-[#f4f4f5] rounded-full animate-spin" />
+          <div className="w-7 h-7 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--app-border)', borderTopColor: 'var(--app-text-primary)' }} />
         </div>
       </AppLayout>
     );
@@ -108,16 +108,20 @@ export default function TeamMembers() {
       <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-8">
         <button
           onClick={() => navigate(`/teams/${id}`)}
-          className="flex items-center gap-1.5 text-xs text-[#a1a1aa] hover:text-[#f4f4f5] transition-colors cursor-pointer"
+          className="flex items-center gap-1.5 text-xs transition-colors cursor-pointer"
+          style={{ color: 'var(--app-text-secondary)' }}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--app-text-primary)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--app-text-secondary)'}
         >
           <ArrowLeft size={14} /> Back to Team
         </button>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#1f1f23]">
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b" style={{ borderColor: 'var(--app-border-subtle)' }}>
           <div>
-            <h1 className="text-xl md:text-2xl font-semibold text-[#f4f4f5] tracking-tight">
+            <h1 className="text-xl md:text-2xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>
               Team Members & Invites
             </h1>
-            <p className="text-[#a1a1aa] text-xs mt-1">
+            <p className="text-xs mt-1" style={{ color: 'var(--app-text-secondary)' }}>
               Manage workspace access, permissions, and pending invitations.
             </p>
           </div>
@@ -163,12 +167,12 @@ export default function TeamMembers() {
                 header: 'Member',
                 render: (m: TeamMember) => (
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[#1c1c21] border border-[#27272a] flex items-center justify-center text-[#f4f4f5] font-semibold text-xs">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center font-semibold text-xs" style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}>
                       {m.full_name?.[0] ?? 'U'}
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-[#f4f4f5]">{m.full_name}</p>
-                      <p className="text-[10px] text-[#71717a]">{m.email}</p>
+                      <p className="text-xs font-medium" style={{ color: 'var(--app-text-primary)' }}>{m.full_name}</p>
+                      <p className="text-[10px]" style={{ color: 'var(--app-text-muted)' }}>{m.email}</p>
                     </div>
                   </div>
                 ),
@@ -192,7 +196,7 @@ export default function TeamMembers() {
                       size="xs"
                       disabled={removingId === m.user_id}
                       onClick={() => handleRemove(m.user_id)}
-                      className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                      className="text-red-400"
                     >
                       <UserMinus size={14} />
                     </AppButton>
@@ -206,9 +210,9 @@ export default function TeamMembers() {
           <AppTable
             variant="dashboard"
             columns={[
-              { key: 'email', header: 'Invited Email', render: (i: Invitation) => <span className="font-mono text-xs text-[#f4f4f5]">{i.email}</span> },
+              { key: 'email', header: 'Invited Email', render: (i: Invitation) => <span className="font-mono text-xs" style={{ color: 'var(--app-text-primary)' }}>{i.email}</span> },
               { key: 'status', header: 'Status', render: (i: Invitation) => <AppBadge variant="mono" size="xs">{i.status}</AppBadge> },
-              { key: 'expires_at', header: 'Expires', render: (i: Invitation) => <span className="text-xs text-[#71717a]">{new Date(i.expires_at).toLocaleDateString()}</span> },
+              { key: 'expires_at', header: 'Expires', render: (i: Invitation) => <span className="text-xs" style={{ color: 'var(--app-text-muted)' }}>{new Date(i.expires_at).toLocaleDateString()}</span> },
             ]}
             data={invitations}
             keyExtractor={i => i.id}

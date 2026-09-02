@@ -34,12 +34,18 @@ import MeetingSummaryPage from './pages/meeting/MeetingSummaryPage';
 
 function LandingPage() {
   return (
-    <div className="bg-[#050505] text-[#A1A1AA] min-h-screen relative overflow-x-hidden selection:bg-[#F97316]/25 selection:text-[#F97316]">
+    <div 
+      className="min-h-screen relative overflow-x-hidden selection:bg-[#F97316]/25 selection:text-[#F97316]"
+      style={{ 
+        backgroundColor: 'var(--landing-bg)', 
+        color: 'var(--landing-text)' 
+      }}
+    >
       {/* Continuous Global Technical Grid Canvas (across every public section) */}
       <div
         className="fixed inset-0 pointer-events-none z-0"
         style={{
-          backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px)',
+          backgroundImage: `linear-gradient(${String('var(--landing-grid-color)')} 1px, transparent 1px), linear-gradient(90deg, ${String('var(--landing-grid-color)')} 1px, transparent 1px)`,
           backgroundSize: '44px 44px',
         }}
       />

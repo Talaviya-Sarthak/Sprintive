@@ -43,11 +43,11 @@ export default function MeetingHeader({
   onCreateClick,
 }: MeetingHeaderProps) {
   return (
-    <div className="space-y-4 pb-6 border-b border-[#1f1f23]">
+    <div className="space-y-4 pb-6 border-b" style={{ borderColor: 'var(--app-border-subtle)' }}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-semibold text-[#f4f4f5] tracking-tight">{title}</h1>
-          {description && <p className="text-xs text-[#a1a1aa] mt-1">{description}</p>}
+          <h1 className="text-xl md:text-2xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>{title}</h1>
+          {description && <p className="text-xs mt-1" style={{ color: 'var(--app-text-secondary)' }}>{description}</p>}
         </div>
         <AppButton variant="mono" size="sm" onClick={onCreateClick}>
           <Plus size={14} className="mr-1.5" /> New Meeting
@@ -65,7 +65,10 @@ export default function MeetingHeader({
           {search && (
             <button
               onClick={() => onSearchChange('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#71717a] hover:text-[#f4f4f5] cursor-pointer"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer"
+              style={{ color: 'var(--app-text-muted)' }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--app-text-primary)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--app-text-muted)'}
             >
               <X size={12} />
             </button>
@@ -76,10 +79,13 @@ export default function MeetingHeader({
           <select
             value={statusFilter}
             onChange={e => onStatusFilterChange(e.target.value as MeetingStatus | 'all')}
-            className="bg-[#141417] border border-[#27272a] rounded-lg px-3 py-2 text-xs text-[#f4f4f5] outline-none focus:border-[#3f3f46] transition-colors cursor-pointer"
+            className="border rounded-lg px-3 py-2 text-xs outline-none transition-colors cursor-pointer"
+            style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}
+            onFocus={e => e.currentTarget.style.borderColor = 'var(--app-border-focus)'}
+            onBlur={e => e.currentTarget.style.borderColor = 'var(--app-border)'}
           >
             {statusOptions.map(opt => (
-              <option key={opt.value} value={opt.value} className="bg-[#141417] text-[#f4f4f5]">
+              <option key={opt.value} value={opt.value} style={{ backgroundColor: 'var(--app-surface-card)', color: 'var(--app-text-primary)' }}>
                 {opt.label}
               </option>
             ))}
@@ -88,10 +94,13 @@ export default function MeetingHeader({
           <select
             value={typeFilter}
             onChange={e => onTypeFilterChange(e.target.value as MeetingType | 'all')}
-            className="bg-[#141417] border border-[#27272a] rounded-lg px-3 py-2 text-xs text-[#f4f4f5] outline-none focus:border-[#3f3f46] transition-colors cursor-pointer"
+            className="border rounded-lg px-3 py-2 text-xs outline-none transition-colors cursor-pointer"
+            style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}
+            onFocus={e => e.currentTarget.style.borderColor = 'var(--app-border-focus)'}
+            onBlur={e => e.currentTarget.style.borderColor = 'var(--app-border)'}
           >
             {typeOptions.map(opt => (
-              <option key={opt.value} value={opt.value} className="bg-[#141417] text-[#f4f4f5]">
+              <option key={opt.value} value={opt.value} style={{ backgroundColor: 'var(--app-surface-card)', color: 'var(--app-text-primary)' }}>
                 {opt.label}
               </option>
             ))}

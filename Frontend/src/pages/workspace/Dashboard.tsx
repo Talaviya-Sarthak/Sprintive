@@ -21,8 +21,8 @@ function TeamCard({ team, onOpen }: { team: Team; onOpen: () => void }) {
       }
       footer={
         <div className="flex items-center justify-between w-full">
-          <span className="flex items-center gap-1.5 text-xs text-[#a1a1aa] font-medium">
-            <Users size={13} className="text-[#71717a]" /> {memberCount} member
+          <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--app-text-secondary)' }}>
+            <Users size={13} style={{ color: 'var(--app-text-muted)' }} /> {memberCount} member
             {memberCount !== 1 ? 's' : ''}
           </span>
           <AppButton variant="mono-ghost" size="xs" onClick={onOpen}>
@@ -47,12 +47,12 @@ export default function Dashboard() {
     <AppLayout>
       <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#1f1f23]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b" style={{ borderColor: 'var(--app-border-subtle)' }}>
           <div>
-            <h1 className="text-xl md:text-2xl font-semibold text-[#f4f4f5] tracking-tight">
+            <h1 className="text-xl md:text-2xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>
               Welcome back, {user?.full_name?.split(' ')[0]} 👋
             </h1>
-            <p className="text-[#a1a1aa] text-xs mt-1">
+            <p className="text-xs mt-1" style={{ color: 'var(--app-text-secondary)' }}>
               Overview of active teams, meeting intelligence, and sprint status.
             </p>
           </div>
@@ -68,40 +68,52 @@ export default function Dashboard() {
 
         {/* Stat Cards - Pure Monochromatic Modern SaaS */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-[#141417] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-4">
-            <div className="flex items-center justify-between text-[#71717a] mb-2">
+          <div className="border rounded-xl p-4 transition-colors" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--app-border-focus)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--app-border)'}
+          >
+            <div className="flex items-center justify-between mb-2" style={{ color: 'var(--app-text-muted)' }}>
               <span className="text-[10px] font-mono uppercase font-medium tracking-wider">Active Teams</span>
-              <Users size={14} className="text-[#a1a1aa]" />
+              <Users size={14} style={{ color: 'var(--app-text-secondary)' }} />
             </div>
-            <div className="text-2xl font-semibold text-[#f4f4f5] tracking-tight">{teams.length}</div>
-            <span className="text-[11px] text-[#71717a] block mt-1">Workspaces</span>
+            <div className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>{teams.length}</div>
+            <span className="text-[11px] block mt-1" style={{ color: 'var(--app-text-muted)' }}>Workspaces</span>
           </div>
 
-          <div className="bg-[#141417] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-4">
-            <div className="flex items-center justify-between text-[#71717a] mb-2">
+          <div className="border rounded-xl p-4 transition-colors" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--app-border-focus)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--app-border)'}
+          >
+            <div className="flex items-center justify-between mb-2" style={{ color: 'var(--app-text-muted)' }}>
               <span className="text-[10px] font-mono uppercase font-medium tracking-wider">AI Meetings</span>
-              <Calendar size={14} className="text-[#a1a1aa]" />
+              <Calendar size={14} style={{ color: 'var(--app-text-secondary)' }} />
             </div>
-            <div className="text-2xl font-semibold text-[#f4f4f5] tracking-tight">14</div>
-            <span className="text-[11px] text-[#a1a1aa] block mt-1">Recorded & Synced</span>
+            <div className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>14</div>
+            <span className="text-[11px] block mt-1" style={{ color: 'var(--app-text-secondary)' }}>Recorded & Synced</span>
           </div>
 
-          <div className="bg-[#141417] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-4">
-            <div className="flex items-center justify-between text-[#71717a] mb-2">
+          <div className="border rounded-xl p-4 transition-colors" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--app-border-focus)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--app-border)'}
+          >
+            <div className="flex items-center justify-between mb-2" style={{ color: 'var(--app-text-muted)' }}>
               <span className="text-[10px] font-mono uppercase font-medium tracking-wider">Sprint Tasks</span>
-              <CheckCircle2 size={14} className="text-[#a1a1aa]" />
+              <CheckCircle2 size={14} style={{ color: 'var(--app-text-secondary)' }} />
             </div>
-            <div className="text-2xl font-semibold text-[#f4f4f5] tracking-tight">38</div>
-            <span className="text-[11px] text-[#71717a] block mt-1">85% Sprint Progress</span>
+            <div className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>38</div>
+            <span className="text-[11px] block mt-1" style={{ color: 'var(--app-text-muted)' }}>85% Sprint Progress</span>
           </div>
 
-          <div className="bg-[#141417] border border-[#27272a] hover:border-[#3f3f46] transition-colors rounded-xl p-4">
-            <div className="flex items-center justify-between text-[#71717a] mb-2">
+          <div className="border rounded-xl p-4 transition-colors" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--app-border-focus)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--app-border)'}
+          >
+            <div className="flex items-center justify-between mb-2" style={{ color: 'var(--app-text-muted)' }}>
               <span className="text-[10px] font-mono uppercase font-medium tracking-wider">AI Saved Time</span>
-              <Activity size={14} className="text-[#a1a1aa]" />
+              <Activity size={14} style={{ color: 'var(--app-text-secondary)' }} />
             </div>
-            <div className="text-2xl font-semibold text-[#f4f4f5] tracking-tight">12.5h</div>
-            <span className="text-[11px] text-[#a1a1aa] block mt-1">This Month</span>
+            <div className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>12.5h</div>
+            <span className="text-[11px] block mt-1" style={{ color: 'var(--app-text-secondary)' }}>This Month</span>
           </div>
         </div>
 
@@ -110,13 +122,14 @@ export default function Dashboard() {
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-[#141417] border border-[#27272a] rounded-xl p-10 text-center"
+            className="border rounded-xl p-10 text-center"
+            style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
           >
-            <div className="w-12 h-12 rounded-xl bg-[#1c1c21] border border-[#27272a] flex items-center justify-center mx-auto mb-4 text-[#a1a1aa]">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)', color: 'var(--app-text-secondary)' }}>
               <Users size={20} />
             </div>
-            <h2 className="text-sm font-semibold text-[#f4f4f5] mb-1">No teams configured yet</h2>
-            <p className="text-[#a1a1aa] text-xs mb-6 max-w-sm mx-auto leading-relaxed">
+            <h2 className="text-sm font-semibold mb-1" style={{ color: 'var(--app-text-primary)' }}>No teams configured yet</h2>
+            <p className="text-xs mb-6 max-w-sm mx-auto leading-relaxed" style={{ color: 'var(--app-text-secondary)' }}>
               Create your Scrum team workspace to start recording meetings and generating AI tasks.
             </p>
             <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
@@ -134,13 +147,14 @@ export default function Dashboard() {
         {ownedTeams.length > 0 && (
           <section className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-[10px] font-mono font-semibold text-[#71717a] uppercase tracking-wider">
+              <h2 className="text-[10px] font-mono font-semibold uppercase tracking-wider" style={{ color: 'var(--app-text-muted)' }}>
                 Owned Workspaces ({ownedTeams.length})
               </h2>
               {canCreate ? (
                 <button
                   onClick={() => navigate('/teams/create')}
-                  className="flex items-center gap-1 text-xs text-[#f4f4f5] font-medium hover:underline cursor-pointer transition-colors"
+                  className="flex items-center gap-1 text-xs font-medium hover:underline cursor-pointer transition-colors"
+                  style={{ color: 'var(--app-text-primary)' }}
                 >
                   <Plus size={12} /> New Team
                 </button>
@@ -159,12 +173,21 @@ export default function Dashboard() {
               {canCreate && (
                 <button
                   onClick={() => navigate('/teams/create')}
-                  className="bg-[#141417] border border-dashed border-[#27272a] rounded-xl p-5 flex flex-col items-center justify-center gap-2.5 hover:border-[#3f3f46] hover:bg-[#18181b] transition-all min-h-[140px] cursor-pointer group"
+                  className="border border-dashed rounded-xl p-5 flex flex-col items-center justify-center gap-2.5 transition-all min-h-[140px] cursor-pointer group"
+                  style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = 'var(--app-border-focus)';
+                    e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = 'var(--app-border)';
+                    e.currentTarget.style.backgroundColor = 'var(--app-surface-card)';
+                  }}
                 >
-                  <div className="w-8 h-8 rounded-lg bg-[#1c1c21] border border-[#27272a] flex items-center justify-center text-[#71717a] group-hover:text-[#f4f4f5] transition-colors">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors" style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)', color: 'var(--app-text-muted)' }}>
                     <Plus size={16} />
                   </div>
-                  <span className="text-xs text-[#a1a1aa] font-medium group-hover:text-[#f4f4f5] transition-colors">
+                  <span className="text-xs font-medium transition-colors" style={{ color: 'var(--app-text-secondary)' }}>
                     Create New Team
                   </span>
                 </button>
@@ -176,7 +199,7 @@ export default function Dashboard() {
         {/* Joined Teams */}
         {joinedTeams.length > 0 && (
           <section className="space-y-4 pt-2">
-            <h2 className="text-[10px] font-mono font-semibold text-[#71717a] uppercase tracking-wider">
+            <h2 className="text-[10px] font-mono font-semibold uppercase tracking-wider" style={{ color: 'var(--app-text-muted)' }}>
               Joined Workspaces ({joinedTeams.length})
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

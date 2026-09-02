@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { BreakableCard } from './ui/features-card';
+import { useTheme } from '../context/ThemeContext';
 
 interface Feature {
   title: string;
@@ -16,6 +17,12 @@ const features: Feature[] = [
 ];
 
 export default function Features() {
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
+
+  const headingColor = isLight ? 'text-[#0f172a]' : 'text-[#FFFFFF]';
+  const subtextColor = isLight ? 'text-[#475569]' : 'text-zinc-500';
+
   return (
     <section id="features" className="py-24 max-sm:py-16 bg-transparent">
       <div className="max-w-[1160px] mx-auto px-8 max-sm:px-5">
@@ -26,7 +33,7 @@ export default function Features() {
           transition={{ duration: 0.5 }}
           className="text-center mb-12 select-none"
         >
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#FFFFFF] tracking-tight uppercase leading-tight">
+          <h2 className={`text-3xl sm:text-4xl md:text-5xl font-black ${headingColor} tracking-tight uppercase leading-tight`}>
             BUILT FOR<br />
             <span className="text-[#F97316]">HIGH-VELOCITY TEAMS</span>
           </h2>
@@ -50,7 +57,7 @@ export default function Features() {
           ))}
         </div>
 
-        <div className="mt-10 text-center text-zinc-500 font-mono text-xs uppercase tracking-widest pointer-events-none select-none">
+        <div className={`mt-10 text-center ${subtextColor} font-mono text-xs uppercase tracking-widest pointer-events-none select-none`}>
           Shake cards to break them free
         </div>
       </div>

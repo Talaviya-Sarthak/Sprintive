@@ -11,19 +11,32 @@ export const AppSelect = React.forwardRef<HTMLSelectElement, AppSelectProps>(
     return (
       <div className="w-full space-y-1.5">
         {label && (
-          <label className="block text-[11px] font-mono font-medium text-[#71717a] uppercase tracking-wider">
+          <label className="block text-[11px] font-mono font-medium uppercase tracking-wider" style={{ color: 'var(--app-text-muted)' }}>
             {label}
           </label>
         )}
         <select
           ref={ref}
-          className={`w-full bg-[#141417] border border-[#27272a] rounded-lg px-3 py-2 text-xs text-[#f4f4f5] outline-none focus:border-[#3f3f46] focus:ring-1 focus:ring-[#3f3f46] transition-colors ${
+          className={`w-full border rounded-lg px-3 py-2 text-xs outline-none transition-colors ${
             error ? 'border-red-500/50' : ''
           } ${className}`}
+          style={{
+            backgroundColor: 'var(--app-surface-card)',
+            borderColor: error ? undefined : 'var(--app-border)',
+            color: 'var(--app-text-primary)'
+          }}
+          onFocus={e => {
+            e.currentTarget.style.borderColor = 'var(--app-border-focus)';
+            e.currentTarget.style.boxShadow = '0 0 0 1px var(--app-border-focus)';
+          }}
+          onBlur={e => {
+            e.currentTarget.style.borderColor = error ? 'rgba(239, 68, 68, 0.5)' : 'var(--app-border)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
           {...props}
         >
           {options.map(opt => (
-            <option key={opt.value} value={opt.value} className="bg-[#141417] text-[#f4f4f5]">
+            <option key={opt.value} value={opt.value} style={{ backgroundColor: 'var(--app-surface-card)', color: 'var(--app-text-primary)' }}>
               {opt.label}
             </option>
           ))}

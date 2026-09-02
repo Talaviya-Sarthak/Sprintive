@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useTheme } from "../../context/ThemeContext";
 
 // Helper function to combine class names
 function cn(...classes: (string | undefined | null | false)[]): string {
@@ -340,6 +341,9 @@ const CrackLines = ({ level }: { level: number }) => {
  * =========================================================================
  */
 export const BreakableCard = ({ title, description, className, onBreak }: SectionCardProps) => {
+    const { theme } = useTheme();
+    const isLight = theme === 'light';
+
     const {
         isDragging,
         position,
@@ -362,17 +366,26 @@ export const BreakableCard = ({ title, description, className, onBreak }: Sectio
         const rotation = fallState.rotation + (fallState.velocityX > 0 ? 45 : -45);
         return `translate(${horizontalDrift}px, 120vh) rotate(${rotation}deg)`;
     }, [fallState]);
+    const cardBg = isLight ? 'bg-[#f8fafc]' : 'bg-white';
+    const cardBorder = isLight ? 'border-[#0f172a]' : 'border-black';
+    const textPrimary = isLight ? 'text-[#0f172a]' : 'text-black';
+    const shadowClass = isLight ? 'shadow-[4px_4px_0px_0px_#0f172a]' : 'shadow-neo';
+    const remnantBg = isLight ? 'bg-[#e2e8f0]' : 'bg-zinc-900';
+    const remnantBorder = isLight ? 'border-[#cbd5e1]' : 'border-zinc-700';
+    const barBg = isLight ? 'bg-[#f1f5f9]' : 'bg-zinc-950';
+    const barBorder = isLight ? 'border-[#cbd5e1]' : 'border-zinc-700';
+
     return (
         <div className={cn("relative w-full h-full", className)}>
             {/* 
                LAYER 1: Shadow Remnant (Background) 
                Always visible, indicating where the card was/should be.
             */}
-            <div className="absolute inset-0 bg-zinc-900 border-4 border-dashed border-zinc-700 flex flex-col items-center justify-center z-0">
+            <div className={`absolute inset-0 ${remnantBg} border-4 border-dashed ${remnantBorder} flex flex-col items-center justify-center z-0`}>
                 <span className="text-[#F97316] font-black text-2xl uppercase tracking-widest mb-2">Gone</span>
                 {/* Loading Bar (Visible only when waiting for respawn) */}
                 {isBroken && (
-                    <div className="w-24 h-4 border-2 border-zinc-700 bg-zinc-950 relative overflow-hidden mt-2">
+                    <div className={`w-24 h-4 border-2 ${barBorder} ${barBg} relative overflow-hidden mt-2`}>
                         <div
                             className="absolute inset-0 bg-[#F97316] transition-all duration-75 ease-linear"
                             style={{ width: `${respawnProgress}%` }}
@@ -410,7 +423,7 @@ export const BreakableCard = ({ title, description, className, onBreak }: Sectio
                 onMouseDown={handleDragStart}
                 onTouchStart={handleDragStart}
                 className={cn(
-                    "relative z-10 bg-white border-4 border-black p-6 shadow-neo cursor-grab active:cursor-grabbing select-none h-full flex flex-col justify-between overflow-hidden transition-[background-color]",
+                    `relative z-10 ${cardBg} border-4 ${cardBorder} p-6 ${shadowClass} cursor-grab active:cursor-grabbing select-none h-full flex flex-col justify-between overflow-hidden transition-[background-color]`,
                     !isDragging && !isBroken && "hover:animate-[hover-wiggle_0.8s_ease-in-out_infinite]",
                     isBroken && "pointer-events-none",
                     isFlashing && "bg-orange-100"
@@ -440,14 +453,14 @@ export const BreakableCard = ({ title, description, className, onBreak }: Sectio
                 <div>
                     {/* Header */}
                     <div className="flex justify-between items-start mb-4">
-                        <h3 className="font-black text-3xl uppercase tracking-tighter leading-none text-black">{title}</h3>
+                        <h3 className={`font-black text-3xl uppercase tracking-tighter leading-none ${textPrimary}`}>{title}</h3>
                         <div className="w-8 h-8 bg-[#F97316] rounded-full flex-shrink-0" />
                     </div>
                     {/* Body */}
-                    <p className="font-bold text-lg leading-tight text-black">{description}</p>
+                    <p className={`font-bold text-lg leading-tight ${textPrimary}`}>{description}</p>
                 </div>
                 {/* Footer */}
-                <div className="mt-8 border-t-2 border-black pt-2 flex justify-between text-xs font-mono uppercase text-black">
+                <div className={`mt-8 border-t-2 ${cardBorder} pt-2 flex justify-between text-xs font-mono uppercase ${textPrimary}`}>
                     <span>Fig. {figNum.toString().padStart(2, '0')}</span>
                     <span className={cn(crackLevel > 0.7 && "text-[#F97316] font-bold")}>
                         {crackLevel > 0 ? `${Math.round(crackLevel * 100)}% DMG` : 'INTACT'}
