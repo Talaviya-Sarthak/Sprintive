@@ -8,8 +8,6 @@ import {
   Calendar,
   Activity,
   CheckCircle2,
-  Sparkles,
-  BarChart3,
   Folder,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -25,41 +23,30 @@ function StatCard({
   value,
   description,
   icon: Icon,
-  color = 'default',
   delay = 0,
 }: {
   label: string;
   value: string | number;
   description: string;
   icon: React.ElementType;
-  color?: 'default' | 'orange' | 'green' | 'blue' | 'amber';
   delay?: number;
 }) {
-  const colorMap = {
-    default: 'text-[#71717a]',
-    orange: 'text-[#F97316]',
-    green: 'text-emerald-400',
-    blue: 'text-blue-400',
-    amber: 'text-amber-400',
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="bg-[#141417] border border-[#27272a] rounded-xl p-5 hover:border-[#3f3f46] transition-all duration-200 group cursor-default"
+      className="border rounded-xl p-4 transition-colors"
+      style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
+      onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--app-border-focus)'}
+      onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--app-border)'}
     >
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-[11px] font-mono uppercase font-semibold tracking-wider text-[#52525b]">
-          {label}
-        </span>
-        <div className={`w-8 h-8 rounded-lg bg-[#1c1c21] border border-[#27272a] flex items-center justify-center group-hover:border-[#3f3f46] transition-colors ${colorMap[color]}`}>
-          <Icon size={15} />
-        </div>
+      <div className="flex items-center justify-between mb-2" style={{ color: 'var(--app-text-muted)' }}>
+        <span className="text-[10px] font-mono uppercase font-medium tracking-wider">{label}</span>
+        <Icon size={14} style={{ color: 'var(--app-text-secondary)' }} />
       </div>
-      <div className="text-2xl font-bold text-[#f4f4f5] tracking-tight">{value}</div>
-      <span className="text-[12px] text-[#71717a] block mt-1.5">{description}</span>
+      <div className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>{value}</div>
+      <span className="text-[11px] block mt-1" style={{ color: 'var(--app-text-muted)' }}>{description}</span>
     </motion.div>
   );
 }
@@ -89,8 +76,8 @@ function TeamCard({ team, onOpen, delay = 0 }: { team: Team; onOpen: () => void;
         }
         footer={
           <div className="flex items-center justify-between w-full">
-            <span className="flex items-center gap-1.5 text-[12px] text-[#71717a] font-medium">
-              <Users size={13} className="text-[#52525b]" /> {memberCount} member
+            <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--app-text-secondary)' }}>
+              <Users size={13} style={{ color: 'var(--app-text-muted)' }} /> {memberCount} member
               {memberCount !== 1 ? 's' : ''}
             </span>
             <AppButton variant="mono-ghost" size="xs" onClick={onOpen}>
@@ -102,46 +89,6 @@ function TeamCard({ team, onOpen, delay = 0 }: { team: Team; onOpen: () => void;
       />
     </motion.div>
   );
-}
-
-/* ─────────────────────────────────────────────
-   Empty State
-   ───────────────────────────────────────────── */
-function EmptyState({ onCreate }: { onCreate: () => void }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: 0.2 }}
-      className="bg-[#141417] border border-[#27272a] rounded-xl p-12 text-center"
-    >
-      <div className="w-14 h-14 rounded-2xl bg-[#1c1c21] border border-[#27272a] flex items-center justify-center mx-auto mb-5">
-        <Folder size={24} className="text-[#52525b]" />
-      </div>
-      <h2 className="text-[15px] font-semibold text-[#f4f4f5] mb-1.5">No teams configured yet</h2>
-      <p className="text-[#71717a] text-[13px] mb-7 max-w-sm mx-auto leading-relaxed">
-        Create your Scrum team workspace to start recording meetings and generating AI-powered tasks.
-      </p>
-      <div className="flex flex-col sm:flex-row gap-3 justify-center">
-        <AppButton variant="mono" size="sm" onClick={onCreate}>
-          <Plus size={14} className="mr-1.5" /> Create First Team
-        </AppButton>
-        <AppButton variant="mono-outline" size="sm" disabled>
-          <Mail size={14} className="mr-1.5" /> Waiting for invitation
-        </AppButton>
-      </div>
-    </motion.div>
-  );
-}
-
-/* ─────────────────────────────────────────────
-   Get time-based greeting
-   ───────────────────────────────────────────── */
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 17) return 'Good afternoon';
-  return 'Good evening';
 }
 
 /* ═══════════════════════════════════════════════
@@ -157,20 +104,15 @@ export default function Dashboard() {
 
   return (
     <AppLayout>
-      <div className="p-5 md:p-8 lg:p-10 max-w-6xl mx-auto space-y-8">
-        {/* ─── Welcome Header ─── */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-[#1a1a1e]"
-        >
+      <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b" style={{ borderColor: 'var(--app-border-subtle)' }}>
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-[#f4f4f5] tracking-tight">
-              {getGreeting()}, {user?.full_name?.split(' ')[0]}
+            <h1 className="text-xl md:text-2xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>
+              Welcome back, {user?.full_name?.split(' ')[0]}
             </h1>
-            <p className="text-[#71717a] text-[13px] mt-1.5">
-              Here's an overview of your teams, meetings, and project activity.
+            <p className="text-xs mt-1" style={{ color: 'var(--app-text-secondary)' }}>
+              Overview of active teams, meeting intelligence, and sprint status.
             </p>
           </div>
 
@@ -181,16 +123,15 @@ export default function Dashboard() {
               </AppButton>
             )}
           </div>
-        </motion.div>
+        </div>
 
-        {/* ─── KPI Summary Cards ─── */}
+        {/* KPI Summary Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             label="Active Teams"
             value={teams.length}
             description="Workspaces"
             icon={Users}
-            color="blue"
             delay={0}
           />
           <StatCard
@@ -198,7 +139,6 @@ export default function Dashboard() {
             value={14}
             description="Recorded & Synced"
             icon={Calendar}
-            color="green"
             delay={0.05}
           />
           <StatCard
@@ -206,7 +146,6 @@ export default function Dashboard() {
             value={38}
             description="85% Sprint Progress"
             icon={CheckCircle2}
-            color="orange"
             delay={0.1}
           />
           <StatCard
@@ -214,47 +153,37 @@ export default function Dashboard() {
             value="12.5h"
             description="This Month"
             icon={Activity}
-            color="amber"
             delay={0.15}
           />
         </div>
 
-        {/* ─── Quick Actions Bar ─── */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.15 }}
-          className="flex flex-wrap items-center gap-3"
-        >
-          <button
-            onClick={() => navigate(teamId('/teams', ownedTeams[0]?.id ?? joinedTeams[0]?.id))}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#141417] border border-[#27272a] rounded-lg text-[13px] font-medium text-[#a1a1aa] hover:text-[#f4f4f5] hover:border-[#3f3f46] hover:bg-[#1c1c21] transition-all duration-150 cursor-pointer"
-          >
-            <BarChart3 size={15} className="text-[#F97316]" />
-            <span>View Analytics</span>
-          </button>
-          <button
-            onClick={() => navigate(ownedTeams.length > 0 ? `/teams/${ownedTeams[0].id}/meetings` : '/meetings/create')}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#141417] border border-[#27272a] rounded-lg text-[13px] font-medium text-[#a1a1aa] hover:text-[#f4f4f5] hover:border-[#3f3f46] hover:bg-[#1c1c21] transition-all duration-150 cursor-pointer"
-          >
-            <Calendar size={15} className="text-emerald-400" />
-            <span>Upcoming Meetings</span>
-          </button>
-          <button
-            onClick={() => navigate(ownedTeams.length > 0 ? `/teams/${ownedTeams[0].id}/members` : '/dashboard')}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#141417] border border-[#27272a] rounded-lg text-[13px] font-medium text-[#a1a1aa] hover:text-[#f4f4f5] hover:border-[#3f3f46] hover:bg-[#1c1c21] transition-all duration-150 cursor-pointer"
-          >
-            <Sparkles size={15} className="text-purple-400" />
-            <span>Team Members</span>
-          </button>
-        </motion.div>
-
-        {/* ─── Empty State ─── */}
+        {/* Empty State */}
         {teams.length === 0 && (
-          <EmptyState onCreate={() => navigate('/teams/create')} />
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="border rounded-xl p-10 text-center"
+            style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
+          >
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)', color: 'var(--app-text-secondary)' }}>
+              <Folder size={20} />
+            </div>
+            <h2 className="text-sm font-semibold mb-1" style={{ color: 'var(--app-text-primary)' }}>No teams configured yet</h2>
+            <p className="text-xs mb-6 max-w-sm mx-auto leading-relaxed" style={{ color: 'var(--app-text-secondary)' }}>
+              Create your Scrum team workspace to start recording meetings and generating AI tasks.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
+              <AppButton variant="mono" size="sm" onClick={() => navigate('/teams/create')}>
+                <Plus size={14} className="mr-1.5" /> Create First Team
+              </AppButton>
+              <AppButton variant="mono-outline" size="sm" disabled>
+                <Mail size={14} className="mr-1.5" /> Waiting for invitation
+              </AppButton>
+            </div>
+          </motion.div>
         )}
 
-        {/* ─── Owned Teams ─── */}
+        {/* Owned Teams */}
         {ownedTeams.length > 0 && (
           <motion.section
             initial={{ opacity: 0 }}
@@ -263,14 +192,14 @@ export default function Dashboard() {
             className="space-y-4"
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-[11px] font-mono font-semibold text-[#52525b] uppercase tracking-wider">
-                Owned Workspaces
-                <span className="ml-2 text-[#3f3f46]">({ownedTeams.length})</span>
+              <h2 className="text-[10px] font-mono font-semibold uppercase tracking-wider" style={{ color: 'var(--app-text-muted)' }}>
+                Owned Workspaces ({ownedTeams.length})
               </h2>
               {canCreate ? (
                 <button
                   onClick={() => navigate('/teams/create')}
-                  className="flex items-center gap-1 text-[13px] text-[#a1a1aa] font-medium hover:text-[#f4f4f5] cursor-pointer transition-colors duration-150"
+                  className="flex items-center gap-1 text-xs font-medium hover:underline cursor-pointer transition-colors"
+                  style={{ color: 'var(--app-text-primary)' }}
                 >
                   <Plus size={13} /> New Team
                 </button>
@@ -297,12 +226,21 @@ export default function Dashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35, delay: 0.3 + ownedTeams.length * 0.05 }}
                   onClick={() => navigate('/teams/create')}
-                  className="bg-[#141417] border border-dashed border-[#27272a] rounded-xl p-6 flex flex-col items-center justify-center gap-3 hover:border-[#F97316]/40 hover:bg-[#F97316]/5 transition-all duration-200 min-h-[160px] cursor-pointer group"
+                  className="border border-dashed rounded-xl p-5 flex flex-col items-center justify-center gap-2.5 transition-all min-h-[140px] cursor-pointer group"
+                  style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = 'var(--app-border-focus)';
+                    e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = 'var(--app-border)';
+                    e.currentTarget.style.backgroundColor = 'var(--app-surface-card)';
+                  }}
                 >
-                  <div className="w-10 h-10 rounded-xl bg-[#1c1c21] border border-[#27272a] flex items-center justify-center text-[#52525b] group-hover:text-[#F97316] group-hover:border-[#F97316]/30 transition-all duration-200">
-                    <Plus size={18} />
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors" style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)', color: 'var(--app-text-muted)' }}>
+                    <Plus size={16} />
                   </div>
-                  <span className="text-[13px] text-[#71717a] font-medium group-hover:text-[#f4f4f5] transition-colors duration-200">
+                  <span className="text-xs font-medium transition-colors" style={{ color: 'var(--app-text-secondary)' }}>
                     Create New Team
                   </span>
                 </motion.button>
@@ -311,17 +249,11 @@ export default function Dashboard() {
           </motion.section>
         )}
 
-        {/* ─── Joined Teams ─── */}
+        {/* Joined Teams */}
         {joinedTeams.length > 0 && (
-          <motion.section
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.35 }}
-            className="space-y-4 pt-2"
-          >
-            <h2 className="text-[11px] font-mono font-semibold text-[#52525b] uppercase tracking-wider">
-              Joined Workspaces
-              <span className="ml-2 text-[#3f3f46]">({joinedTeams.length})</span>
+          <section className="space-y-4 pt-2">
+            <h2 className="text-[10px] font-mono font-semibold uppercase tracking-wider" style={{ color: 'var(--app-text-muted)' }}>
+              Joined Workspaces ({joinedTeams.length})
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {joinedTeams.map((t, i) => (
@@ -333,14 +265,9 @@ export default function Dashboard() {
                 />
               ))}
             </div>
-          </motion.section>
+          </section>
         )}
       </div>
     </AppLayout>
   );
-}
-
-/* Helper to build a team URL */
-function teamId(prefix: string, id?: string): string {
-  return id ? `${prefix}/${id}` : prefix;
 }

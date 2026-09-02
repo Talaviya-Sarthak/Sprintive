@@ -1,4 +1,5 @@
 import { Brain, MessageSquare } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 interface FooterLink {
   label: string;
@@ -52,11 +53,21 @@ const socials = [
 ];
 
 export default function Footer() {
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
+
+  const textColor = isLight ? 'text-[#0f172a]' : 'text-[#FFFFFF]';
+  const textMuted = isLight ? 'text-[#475569]' : 'text-[#A1A1AA]';
+  const borderColor = isLight ? 'border-[#e2e8f0]' : 'border-[#262626]';
+  const dividerColor = isLight ? 'bg-[#e2e8f0]' : 'bg-[#262626]';
+  const socialBg = isLight ? 'bg-[#f8fafc]' : 'bg-[#111111]';
+  const socialBorder = isLight ? 'border-[#e2e8f0]' : 'border-[#262626]';
+
   return (
     <footer className="bg-transparent pt-16 pb-12 relative z-10">
       <div className="max-w-[1240px] mx-auto px-8 max-sm:px-5">
         {/* Thin Minimal Top Divider */}
-        <div className="w-full h-[1px] bg-[#262626] mb-12" />
+        <div className={`w-full h-[1px] ${dividerColor} mb-12`} />
 
         {/* Footer Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
@@ -67,11 +78,11 @@ export default function Footer() {
                 <div className="w-7 h-7 rounded-[4px] bg-[#F97316] flex items-center justify-center shrink-0">
                   <Brain size={16} color="#FFFFFF" strokeWidth={2.2} />
                 </div>
-                <span className="text-base font-bold text-[#FFFFFF] tracking-tight">
+                <span className={`text-base font-bold ${textColor} tracking-tight`}>
                   Sprint<span className="text-[#F97316]">ive</span>
                 </span>
               </div>
-              <p className="text-xs text-[#A1A1AA] leading-relaxed max-w-[220px]">
+              <p className={`text-xs ${textMuted} leading-relaxed max-w-[220px]`}>
                 AI-powered meeting intelligence for modern agile teams.
               </p>
             </div>
@@ -83,7 +94,7 @@ export default function Footer() {
                   key={label}
                   href={href}
                   aria-label={label}
-                  className="w-8 h-8 rounded-[4px] bg-[#111111] border border-[#262626] flex items-center justify-center text-[#A1A1AA] hover:text-[#F97316] hover:border-[#F97316] transition-colors duration-150"
+                  className={`w-8 h-8 rounded-[4px] ${socialBg} border ${socialBorder} flex items-center justify-center ${textMuted} hover:text-[#F97316] hover:border-[#F97316] transition-colors duration-150`}
                 >
                   <Icon size={14} />
                 </a>
@@ -95,7 +106,7 @@ export default function Footer() {
           <div className="lg:col-span-4 grid grid-cols-2 sm:grid-cols-4 gap-8">
             {cols.map((col) => (
               <div key={col.title}>
-                <h4 className="text-[11px] font-mono font-bold text-[#FFFFFF] uppercase tracking-wider mb-4">
+                <h4 className={`text-[11px] font-mono font-bold ${textColor} uppercase tracking-wider mb-4`}>
                   {col.title}
                 </h4>
                 <ul className="space-y-2.5 list-none p-0 m-0">
@@ -103,7 +114,7 @@ export default function Footer() {
                     <li key={link.label}>
                       <a
                         href={link.href}
-                        className="text-xs text-[#A1A1AA] hover:text-[#F97316] transition-colors duration-150 block text-decoration-none"
+                        className={`text-xs ${textMuted} hover:text-[#F97316] transition-colors duration-150 block text-decoration-none`}
                       >
                         {link.label}
                       </a>
@@ -116,7 +127,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom Copyright Bar */}
-        <div className="pt-6 border-t border-[#262626] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#A1A1AA]">
+        <div className={`pt-6 border-t ${borderColor} flex flex-col sm:flex-row items-center justify-between gap-3 text-xs ${textMuted}`}>
           <span>© 2026 Sprintive. All rights reserved.</span>
           <span>Built for Modern Engineering Teams</span>
         </div>

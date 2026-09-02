@@ -3,6 +3,7 @@ import { Check, Zap, Star, Building2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/Button';
 import type { LucideIcon } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 interface Plan {
   name: string;
@@ -39,6 +40,18 @@ const plans: Plan[] = [
 
 export default function Pricing() {
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
+
+  const headingColor = isLight ? 'text-[#0f172a]' : 'text-[#FFFFFF]';
+  const cardBg = isLight ? 'bg-white' : 'bg-white';
+  const cardBorder = isLight ? 'border-[#0f172a]' : 'border-black';
+  const textPrimary = isLight ? 'text-[#0f172a]' : 'text-black';
+  const borderPrimary = isLight ? 'border-[#0f172a]' : 'border-black';
+  const checkBg = isLight ? 'bg-[#0f172a]' : 'bg-black';
+  const footerNoteColor = isLight ? 'text-[#475569]' : 'text-zinc-500';
+  const shadowClass = isLight ? 'shadow-[4px_4px_0px_0px_#0f172a]' : 'shadow-neo';
+
   return (
     <section id="pricing" className="py-24 max-sm:py-16 bg-transparent relative overflow-hidden">
       <div className="max-w-[1160px] mx-auto px-8 max-sm:px-5">
@@ -50,7 +63,7 @@ export default function Pricing() {
           transition={{ duration: 0.5 }}
           className="text-center mb-12 select-none"
         >
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#FFFFFF] tracking-tight uppercase leading-tight">
+          <h2 className={`text-3xl sm:text-4xl md:text-5xl font-black ${headingColor} tracking-tight uppercase leading-tight`}>
             SIMPLE, TRANSPARENT<br />
             <span className="text-[#F97316]">PRICING FOR TEAMS</span>
           </h2>
@@ -72,7 +85,7 @@ export default function Pricing() {
                 {/* Neo-Brutalist Card matching feature-card style (White bg, 4px black border, shadow-neo, bold black text) */}
                 <div
                   className={`
-                    relative flex-1 flex flex-col justify-between p-6 bg-white border-4 border-black shadow-neo
+                    relative flex-1 flex flex-col justify-between p-6 ${cardBg} border-4 ${cardBorder} ${shadowClass}
                     select-none transition-all duration-150
                   `}
                 >
@@ -83,7 +96,7 @@ export default function Pricing() {
 
                   {/* Neo-Brutalist Badge */}
                   {plan.badge && (
-                    <div className="absolute top-4 right-4 bg-[#F97316] text-white border-2 border-black px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
+                    <div className={`absolute top-4 right-4 bg-[#F97316] text-white border-2 ${cardBorder} px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider`}>
                       {plan.badge}
                     </div>
                   )}
@@ -92,8 +105,8 @@ export default function Pricing() {
                     {/* Header matching feature card header */}
                     <div className="flex justify-between items-start mb-4 gap-3">
                       <div>
-                        <h3 className="font-black text-2xl uppercase tracking-tighter leading-none text-black mb-2">{plan.name}</h3>
-                        <p className="font-bold text-xs text-black leading-snug">{plan.desc}</p>
+                        <h3 className={`font-black text-2xl uppercase tracking-tighter leading-none ${textPrimary} mb-2`}>{plan.name}</h3>
+                        <p className={`font-bold text-xs ${textPrimary} leading-snug`}>{plan.desc}</p>
                       </div>
                       <div className="w-8 h-8 bg-[#F97316] rounded-full flex-shrink-0 flex items-center justify-center text-white">
                         <Icon size={16} strokeWidth={2.5} />
@@ -101,21 +114,21 @@ export default function Pricing() {
                     </div>
 
                     {/* Pricing */}
-                    <div className="mb-6 pb-4 border-b-2 border-black">
-                      <span className="text-4xl sm:text-5xl font-black tracking-tighter text-black">
+                    <div className={`mb-6 pb-4 border-b-2 ${borderPrimary}`}>
+                      <span className={`text-4xl sm:text-5xl font-black tracking-tighter ${textPrimary}`}>
                         {plan.price}
                       </span>
-                      <span className="text-xs font-mono font-bold uppercase text-black ml-1">{plan.period}</span>
+                      <span className={`text-xs font-mono font-bold uppercase ${textPrimary} ml-1`}>{plan.period}</span>
                     </div>
 
                     {/* Features List */}
                     <div className="flex flex-col gap-2.5 mb-8">
                       {plan.features.map(f => (
                         <div key={f} className="flex items-center gap-2.5">
-                          <div className="w-4 h-4 bg-black text-white rounded-full flex items-center justify-center shrink-0">
+                          <div className={`w-4 h-4 ${checkBg} text-white rounded-full flex items-center justify-center shrink-0`}>
                             <Check size={10} strokeWidth={3} />
                           </div>
-                          <span className="text-xs font-bold text-black">{f}</span>
+                          <span className={`text-xs font-bold ${textPrimary}`}>{f}</span>
                         </div>
                       ))}
                     </div>
@@ -140,7 +153,7 @@ export default function Pricing() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="text-center mt-12 text-xs font-mono text-zinc-500 uppercase tracking-wider"
+          className={`text-center mt-12 text-xs font-mono ${footerNoteColor} uppercase tracking-wider`}
         >
           All plans include a 14-day free trial. No credit card required. Cancel anytime.
         </motion.p>

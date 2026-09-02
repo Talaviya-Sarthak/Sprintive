@@ -1,4 +1,5 @@
 import { Calendar, Clock, MapPin, Users, Tag } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
 interface MeetingInfoItemProps {
   icon: React.ReactNode;
@@ -7,14 +8,24 @@ interface MeetingInfoItemProps {
 }
 
 function MeetingInfoItem({ icon, label, value }: MeetingInfoItemProps) {
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
+
+  const cardBg = isLight ? 'bg-[#f8fafc]' : 'bg-[#1c1c21]';
+  const cardBorder = isLight ? 'border-[#e2e8f0]' : 'border-[#27272a]';
+  const iconBg = isLight ? 'bg-white' : 'bg-[#141417]';
+  const iconColor = isLight ? 'text-[#475569]' : 'text-[#a1a1aa]';
+  const labelColor = isLight ? 'text-[#94a3b8]' : 'text-[#71717a]';
+  const valueColor = isLight ? 'text-[#0f172a]' : 'text-[#f4f4f5]';
+
   return (
-    <div className="flex items-start gap-3 p-3.5 rounded-xl bg-[#1c1c21] border border-[#27272a]">
-      <div className="w-8 h-8 rounded-lg bg-[#141417] border border-[#27272a] flex items-center justify-center text-[#a1a1aa] shrink-0">
+    <div className={`flex items-start gap-3 p-3.5 rounded-xl ${cardBg} border ${cardBorder}`}>
+      <div className={`w-8 h-8 rounded-lg ${iconBg} border ${cardBorder} flex items-center justify-center ${iconColor} shrink-0`}>
         {icon}
       </div>
       <div className="min-w-0">
-        <p className="text-[11px] font-mono text-[#71717a] uppercase tracking-wider">{label}</p>
-        <p className="text-xs font-semibold text-[#f4f4f5] break-words mt-0.5">{value}</p>
+        <p className={`text-[11px] font-mono ${labelColor} uppercase tracking-wider`}>{label}</p>
+        <p className={`text-xs font-semibold ${valueColor} break-words mt-0.5`}>{value}</p>
       </div>
     </div>
   );

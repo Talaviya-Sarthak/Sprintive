@@ -55,7 +55,7 @@ export default function MeetingSummaryPage() {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="w-7 h-7 border-2 border-[#27272a] border-t-[#f4f4f5] rounded-full animate-spin" />
+          <div className="w-7 h-7 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--app-border)', borderTopColor: 'var(--app-text-primary)' }} />
         </div>
       </AppLayout>
     );
@@ -65,7 +65,7 @@ export default function MeetingSummaryPage() {
     return (
       <AppLayout>
         <div className="p-8 text-center space-y-4">
-          <p className="text-[#a1a1aa] text-xs font-mono">Summary details not found</p>
+          <p className="text-xs font-mono" style={{ color: 'var(--app-text-secondary)' }}>Summary details not found</p>
           <AppButton variant="mono" size="sm" onClick={() => navigate(-1)}>
             Go Back
           </AppButton>
@@ -94,43 +94,46 @@ export default function MeetingSummaryPage() {
       <div className="p-6 md:p-10 max-w-4xl mx-auto space-y-8">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-1.5 text-xs text-[#a1a1aa] hover:text-[#f4f4f5] transition-colors cursor-pointer"
+          className="flex items-center gap-1.5 text-xs transition-colors cursor-pointer"
+          style={{ color: 'var(--app-text-secondary)' }}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--app-text-primary)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--app-text-secondary)'}
         >
           <ArrowLeft size={14} /> Back
         </button>
 
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-          <div className="pb-4 border-b border-[#1f1f23] space-y-2">
+          <div className="pb-4 border-b space-y-2" style={{ borderColor: 'var(--app-border-subtle)' }}>
             <div className="flex items-center gap-2">
               <MeetingStatusBadge status={meeting.status} size="md" />
               <MeetingTypeBadge type={meeting.meeting_type} size="md" />
             </div>
-            <h1 className="text-2xl md:text-3xl font-semibold text-[#f4f4f5] tracking-tight">{meeting.title}</h1>
-            <p className="text-xs font-mono text-[#71717a]">
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>{meeting.title}</h1>
+            <p className="text-xs font-mono" style={{ color: 'var(--app-text-muted)' }}>
               {formatDateLong(meeting.date)} · {formatTime12h(meeting.start_time)} - {formatTime12h(meeting.end_time)}
             </p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <AppCard variant="dashboard" className="text-center p-4">
-              <Clock size={16} className="text-[#a1a1aa] mx-auto mb-2" />
-              <p className="text-xl font-bold text-[#f4f4f5]">{summaryData.duration_minutes}</p>
-              <p className="text-[10px] font-mono text-[#71717a] uppercase mt-0.5">Minutes</p>
+              <Clock size={16} className="mx-auto mb-2" style={{ color: 'var(--app-text-secondary)' }} />
+              <p className="text-xl font-bold" style={{ color: 'var(--app-text-primary)' }}>{summaryData.duration_minutes}</p>
+              <p className="text-[10px] font-mono uppercase mt-0.5" style={{ color: 'var(--app-text-muted)' }}>Minutes</p>
             </AppCard>
             <AppCard variant="dashboard" className="text-center p-4">
-              <Users size={16} className="text-[#a1a1aa] mx-auto mb-2" />
-              <p className="text-xl font-bold text-[#f4f4f5]">{summaryData.attendance_count}/{summaryData.total_participants}</p>
-              <p className="text-[10px] font-mono text-[#71717a] uppercase mt-0.5">Attendance</p>
+              <Users size={16} className="mx-auto mb-2" style={{ color: 'var(--app-text-secondary)' }} />
+              <p className="text-xl font-bold" style={{ color: 'var(--app-text-primary)' }}>{summaryData.attendance_count}/{summaryData.total_participants}</p>
+              <p className="text-[10px] font-mono uppercase mt-0.5" style={{ color: 'var(--app-text-muted)' }}>Attendance</p>
             </AppCard>
             <AppCard variant="dashboard" className="text-center p-4">
               <CheckCircle size={16} className="text-emerald-400 mx-auto mb-2" />
-              <p className="text-xl font-bold text-[#f4f4f5]">{summaryData.action_items.filter(a => a.status === 'done').length}/{summaryData.action_items.length}</p>
-              <p className="text-[10px] font-mono text-[#71717a] uppercase mt-0.5">Action Items</p>
+              <p className="text-xl font-bold" style={{ color: 'var(--app-text-primary)' }}>{summaryData.action_items.filter(a => a.status === 'done').length}/{summaryData.action_items.length}</p>
+              <p className="text-[10px] font-mono uppercase mt-0.5" style={{ color: 'var(--app-text-muted)' }}>Action Items</p>
             </AppCard>
             <AppCard variant="dashboard" className="text-center p-4">
-              <LayoutDashboard size={16} className="text-[#a1a1aa] mx-auto mb-2" />
-              <p className="text-xl font-bold text-[#f4f4f5]">{summaryData.tickets_generated.length}</p>
-              <p className="text-[10px] font-mono text-[#71717a] uppercase mt-0.5">Tickets</p>
+              <LayoutDashboard size={16} className="mx-auto mb-2" style={{ color: 'var(--app-text-secondary)' }} />
+              <p className="text-xl font-bold" style={{ color: 'var(--app-text-primary)' }}>{summaryData.tickets_generated.length}</p>
+              <p className="text-[10px] font-mono uppercase mt-0.5" style={{ color: 'var(--app-text-muted)' }}>Tickets</p>
             </AppCard>
           </div>
 
@@ -138,18 +141,18 @@ export default function MeetingSummaryPage() {
             variant="dashboard"
             title={
               <div className="flex items-center gap-2">
-                <Users size={15} className="text-[#a1a1aa]" />
-                <span className="text-xs font-semibold text-[#f4f4f5]">Participants ({participants.length})</span>
+                <Users size={15} style={{ color: 'var(--app-text-secondary)' }} />
+                <span className="text-xs font-semibold" style={{ color: 'var(--app-text-primary)' }}>Participants ({participants.length})</span>
               </div>
             }
           >
             <div className="flex flex-wrap gap-2">
               {participants.map((p: MeetingParticipant) => (
-                <div key={p.id} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#1c1c21] border border-[#27272a]">
-                  <div className="w-6 h-6 rounded-full bg-[#141417] border border-[#27272a] flex items-center justify-center text-[#f4f4f5] text-[10px] font-semibold">
+                <div key={p.id} className="flex items-center gap-2 px-3 py-2 rounded-xl border" style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)' }}>
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}>
                     {getInitials(p.full_name)}
                   </div>
-                  <span className="text-xs text-[#f4f4f5] font-medium">{p.full_name}</span>
+                  <span className="text-xs font-medium" style={{ color: 'var(--app-text-primary)' }}>{p.full_name}</span>
                   {p.role === 'host' && <RoleBadge role="host" size="sm" />}
                 </div>
               ))}
@@ -160,32 +163,32 @@ export default function MeetingSummaryPage() {
             variant="dashboard"
             title={
               <div className="flex items-center gap-2">
-                <Sparkles size={15} className="text-[#f4f4f5]" />
-                <span className="text-xs font-semibold text-[#f4f4f5]">AI Executive Summary</span>
+                <Sparkles size={15} style={{ color: 'var(--app-text-primary)' }} />
+                <span className="text-xs font-semibold" style={{ color: 'var(--app-text-primary)' }}>AI Executive Summary</span>
               </div>
             }
           >
-            <p className="text-xs text-[#a1a1aa] leading-relaxed">{summaryData.ai_summary}</p>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--app-text-secondary)' }}>{summaryData.ai_summary}</p>
           </AppCard>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <AppCard
               variant="dashboard"
-              title={<span className="text-xs font-semibold text-[#f4f4f5]">Action Items</span>}
+              title={<span className="text-xs font-semibold" style={{ color: 'var(--app-text-primary)' }}>Action Items</span>}
             >
               {summaryData.action_items.length === 0 ? (
-                <p className="text-xs text-[#71717a]">No action items recorded</p>
+                <p className="text-xs" style={{ color: 'var(--app-text-muted)' }}>No action items recorded</p>
               ) : (
                 <div className="space-y-2">
                   {summaryData.action_items.map(item => (
-                    <div key={item.id} className="flex items-start gap-2.5 p-3 rounded-xl bg-[#1c1c21] border border-[#27272a]">
-                      <CheckCircle size={15} className={`mt-0.5 shrink-0 ${item.status === 'done' ? 'text-emerald-400' : 'text-[#71717a]'}`} />
+                    <div key={item.id} className="flex items-start gap-2.5 p-3 rounded-xl border" style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)' }}>
+                      <CheckCircle size={15} className={`mt-0.5 shrink-0 ${item.status === 'done' ? 'text-emerald-400' : ''}`} style={item.status !== 'done' ? { color: 'var(--app-text-muted)' } : undefined} />
                       <div className="flex-1 min-w-0">
-                        <p className={`text-xs ${item.status === 'done' ? 'text-[#71717a] line-through' : 'text-[#f4f4f5]'}`}>
+                        <p className={`text-xs ${item.status === 'done' ? 'line-through' : ''}`} style={{ color: item.status === 'done' ? 'var(--app-text-muted)' : 'var(--app-text-primary)' }}>
                           {item.text}
                         </p>
                         {item.assignee && (
-                          <p className="text-[10px] text-[#71717a] mt-0.5">— {item.assignee}</p>
+                          <p className="text-[10px] mt-0.5" style={{ color: 'var(--app-text-muted)' }}>— {item.assignee}</p>
                         )}
                       </div>
                     </div>
@@ -196,20 +199,20 @@ export default function MeetingSummaryPage() {
 
             <AppCard
               variant="dashboard"
-              title={<span className="text-xs font-semibold text-[#f4f4f5]">Tickets Generated</span>}
+              title={<span className="text-xs font-semibold" style={{ color: 'var(--app-text-primary)' }}>Tickets Generated</span>}
             >
               {summaryData.tickets_generated.length === 0 ? (
-                <p className="text-xs text-[#71717a]">No tickets generated</p>
+                <p className="text-xs" style={{ color: 'var(--app-text-muted)' }}>No tickets generated</p>
               ) : (
                 <div className="space-y-2">
                   {summaryData.tickets_generated.map(ticket => (
-                    <div key={ticket.id} className="flex items-center gap-2.5 p-3 rounded-xl bg-[#1c1c21] border border-[#27272a]">
+                    <div key={ticket.id} className="flex items-center gap-2.5 p-3 rounded-xl border" style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)' }}>
                       <div className={`w-2 h-2 rounded-full ${
-                        ticket.status === 'open' ? 'bg-[#f4f4f5]' :
+                        ticket.status === 'open' ? '' :
                         ticket.status === 'in_progress' ? 'bg-amber-400' : 'bg-emerald-400'
-                      }`} />
-                      <span className="text-xs text-[#f4f4f5] font-medium">{ticket.title}</span>
-                      <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-[#141417] border border-[#27272a] text-[#a1a1aa] font-mono capitalize">
+                      }`} style={ticket.status === 'open' ? { backgroundColor: 'var(--app-text-primary)' } : undefined} />
+                      <span className="text-xs font-medium" style={{ color: 'var(--app-text-primary)' }}>{ticket.title}</span>
+                      <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full font-mono capitalize border" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)', color: 'var(--app-text-secondary)' }}>
                         {ticket.status.replace('_', ' ')}
                       </span>
                     </div>
@@ -222,10 +225,10 @@ export default function MeetingSummaryPage() {
           {transcriptContent && (
             <AppCard
               variant="dashboard"
-              title={<span className="text-xs font-semibold text-[#f4f4f5]">Full Transcript</span>}
+              title={<span className="text-xs font-semibold" style={{ color: 'var(--app-text-primary)' }}>Full Transcript</span>}
             >
-              <div className="bg-[#1c1c21] border border-[#27272a] rounded-xl p-4 max-h-64 overflow-y-auto">
-                <pre className="text-xs text-[#a1a1aa] whitespace-pre-wrap font-sans leading-relaxed">{transcriptContent}</pre>
+              <div className="border rounded-xl p-4 max-h-64 overflow-y-auto" style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)' }}>
+                <pre className="text-xs whitespace-pre-wrap font-sans leading-relaxed" style={{ color: 'var(--app-text-secondary)' }}>{transcriptContent}</pre>
               </div>
             </AppCard>
           )}

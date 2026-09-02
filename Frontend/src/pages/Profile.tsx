@@ -110,7 +110,7 @@ export default function Profile() {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="w-7 h-7 border-2 border-[#27272a] border-t-[#f4f4f5] rounded-full animate-spin" />
+          <div className="w-7 h-7 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--app-border)', borderTopColor: 'var(--app-text-primary)' }} />
         </div>
       </AppLayout>
     );
@@ -119,7 +119,7 @@ export default function Profile() {
   if (!profile) {
     return (
       <AppLayout>
-        <div className="p-8 text-center text-[#f4f4f5]">Profile data unavailable</div>
+        <div className="p-8 text-center" style={{ color: 'var(--app-text-primary)' }}>Profile data unavailable</div>
       </AppLayout>
     );
   }
@@ -137,24 +137,30 @@ export default function Profile() {
   return (
     <AppLayout>
       <div className="p-6 md:p-10 max-w-3xl mx-auto space-y-8">
-        <div className="flex items-center justify-between pb-6 border-b border-[#1f1f23]">
+        <div className="flex items-center justify-between pb-6 border-b" style={{ borderColor: 'var(--app-border-subtle)' }}>
           <div>
-            <h1 className="text-xl md:text-2xl font-semibold text-[#f4f4f5] tracking-tight">Account Profile</h1>
-            <p className="text-xs text-[#a1a1aa] mt-1">
+            <h1 className="text-xl md:text-2xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>Account Profile</h1>
+            <p className="text-xs mt-1" style={{ color: 'var(--app-text-secondary)' }}>
               Personal credentials and workspace preferences
             </p>
           </div>
           {!isEditing ? (
             <button
               onClick={() => setIsEditing(true)}
-              className="px-4 py-2 rounded-lg bg-[#f4f4f5] hover:bg-[#e4e4e7] text-[#09090b] text-xs font-semibold transition-all cursor-pointer"
+              className="px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+              style={{ backgroundColor: 'var(--app-text-primary)', color: 'var(--app-bg)' }}
+              onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
             >
               Edit Profile
             </button>
           ) : (
             <button
               onClick={() => setIsEditing(false)}
-              className="px-4 py-2 rounded-lg bg-[#141417] hover:bg-[#18181b] border border-[#27272a] text-[#f4f4f5] text-xs font-semibold transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-lg border text-xs font-semibold transition-colors cursor-pointer"
+              style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'var(--app-surface-card)'}
             >
               Cancel
             </button>
@@ -179,10 +185,11 @@ export default function Profile() {
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-[#141417] border border-[#27272a] rounded-2xl p-6 flex flex-col sm:flex-row items-center sm:items-start gap-5 shadow-sm"
+          className="border rounded-2xl p-6 flex flex-col sm:flex-row items-center sm:items-start gap-5 shadow-sm"
+          style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
         >
           <div className="relative group shrink-0">
-            <div className="w-20 h-20 rounded-full bg-[#1c1c21] border border-[#27272a] flex items-center justify-center text-[#f4f4f5] text-2xl font-bold overflow-hidden shadow-md">
+            <div className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold overflow-hidden shadow-md" style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}>
               {avatarPreview ? (
                 <img src={avatarPreview} className="w-full h-full object-cover" alt="" />
               ) : (
@@ -192,9 +199,10 @@ export default function Profile() {
             {isEditing && (
               <label
                 onClick={() => fileRef.current?.click()}
-                className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center cursor-pointer transition-opacity"
+                className="absolute inset-0 rounded-full flex items-center justify-center cursor-pointer transition-opacity"
+                style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
               >
-                <Camera size={18} className="text-[#f4f4f5]" />
+                <Camera size={18} style={{ color: 'var(--app-text-primary)' }} />
               </label>
             )}
             <input
@@ -208,16 +216,16 @@ export default function Profile() {
 
           <div className="flex-1 min-w-0 text-center sm:text-left">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
-              <h2 className="text-lg font-bold text-[#f4f4f5]">{profile.full_name}</h2>
-              <span className="px-2.5 py-0.5 rounded-full bg-[#1c1c21] border border-[#27272a] text-[#f4f4f5] text-[10px] font-mono font-semibold">
+              <h2 className="text-lg font-bold" style={{ color: 'var(--app-text-primary)' }}>{profile.full_name}</h2>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold" style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}>
                 MEMBER
               </span>
             </div>
-            <p className="text-xs text-[#a1a1aa] mt-0.5">{profile.email}</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--app-text-secondary)' }}>{profile.email}</p>
 
-            <div className="flex flex-wrap gap-4 mt-3 pt-3 border-t border-[#1f1f23] text-xs text-[#a1a1aa]">
+            <div className="flex flex-wrap gap-4 mt-3 pt-3 border-t text-xs" style={{ borderColor: 'var(--app-border-subtle)', color: 'var(--app-text-secondary)' }}>
               <span className="flex items-center gap-1.5">
-                <ShieldCheck size={13} className="text-[#f4f4f5]" /> Authenticated
+                <ShieldCheck size={13} style={{ color: 'var(--app-text-primary)' }} /> Authenticated
               </span>
               <span className="flex items-center gap-1.5">
                 <Users size={13} /> {ownedTeamCount + joinedTeamCount} Workspaces
@@ -238,34 +246,38 @@ export default function Profile() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="bg-[#141417] border border-[#27272a] rounded-2xl p-6 space-y-5 shadow-sm"
+          className="border rounded-2xl p-6 space-y-5 shadow-sm"
+          style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
         >
-          <h3 className="text-xs font-mono font-semibold text-[#71717a] uppercase tracking-wider mb-2">
+          <h3 className="text-xs font-mono font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--app-text-muted)' }}>
             Profile Information
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="block text-xs font-mono font-medium text-[#71717a] mb-1.5 uppercase tracking-wider">Full Name</label>
+              <label className="block text-xs font-mono font-medium mb-1.5 uppercase tracking-wider" style={{ color: 'var(--app-text-muted)' }}>Full Name</label>
               {isEditing ? (
                 <input
                   type="text"
                   value={form.full_name || ''}
                   onChange={e => handleInputChange('full_name', e.target.value)}
-                  className="w-full bg-[#141417] border border-[#27272a] rounded-lg px-3 py-2 text-xs text-[#f4f4f5] outline-none focus:border-[#3f3f46]"
+                  className="w-full border rounded-lg px-3 py-2 text-xs outline-none"
+                  style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}
+                  onFocus={e => e.currentTarget.style.borderColor = 'var(--app-border-focus)'}
+                  onBlur={e => e.currentTarget.style.borderColor = 'var(--app-border)'}
                 />
               ) : (
-                <p className="text-xs text-[#f4f4f5] font-medium">{profile.full_name}</p>
+                <p className="text-xs font-medium" style={{ color: 'var(--app-text-primary)' }}>{profile.full_name}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-medium text-[#71717a] mb-1.5 uppercase tracking-wider">Email</label>
-              <p className="text-xs text-[#a1a1aa]">{profile.email}</p>
+              <label className="block text-xs font-mono font-medium mb-1.5 uppercase tracking-wider" style={{ color: 'var(--app-text-muted)' }}>Email</label>
+              <p className="text-xs" style={{ color: 'var(--app-text-secondary)' }}>{profile.email}</p>
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-medium text-[#71717a] mb-1.5 flex items-center gap-1.5 uppercase tracking-wider">
+              <label className="block text-xs font-mono font-medium mb-1.5 flex items-center gap-1.5 uppercase tracking-wider" style={{ color: 'var(--app-text-muted)' }}>
                 <Briefcase size={12} /> Company
               </label>
               {isEditing ? (
@@ -274,15 +286,18 @@ export default function Profile() {
                   value={form.company || ''}
                   onChange={e => handleInputChange('company', e.target.value)}
                   placeholder="Company name"
-                  className="w-full bg-[#141417] border border-[#27272a] rounded-lg px-3 py-2 text-xs text-[#f4f4f5] outline-none focus:border-[#3f3f46]"
+                  className="w-full border rounded-lg px-3 py-2 text-xs outline-none"
+                  style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}
+                  onFocus={e => e.currentTarget.style.borderColor = 'var(--app-border-focus)'}
+                  onBlur={e => e.currentTarget.style.borderColor = 'var(--app-border)'}
                 />
               ) : (
-                <p className="text-xs text-[#f4f4f5] font-medium">{profile.company || '-'}</p>
+                <p className="text-xs font-medium" style={{ color: 'var(--app-text-primary)' }}>{profile.company || '-'}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-medium text-[#71717a] mb-1.5 flex items-center gap-1.5 uppercase tracking-wider">
+              <label className="block text-xs font-mono font-medium mb-1.5 flex items-center gap-1.5 uppercase tracking-wider" style={{ color: 'var(--app-text-muted)' }}>
                 <Building2 size={12} /> Role / Designation
               </label>
               {isEditing ? (
@@ -291,15 +306,18 @@ export default function Profile() {
                   value={form.designation || ''}
                   onChange={e => handleInputChange('designation', e.target.value)}
                   placeholder="e.g. Lead Engineer"
-                  className="w-full bg-[#141417] border border-[#27272a] rounded-lg px-3 py-2 text-xs text-[#f4f4f5] outline-none focus:border-[#3f3f46]"
+                  className="w-full border rounded-lg px-3 py-2 text-xs outline-none"
+                  style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}
+                  onFocus={e => e.currentTarget.style.borderColor = 'var(--app-border-focus)'}
+                  onBlur={e => e.currentTarget.style.borderColor = 'var(--app-border)'}
                 />
               ) : (
-                <p className="text-xs text-[#f4f4f5] font-medium">{profile.designation || '-'}</p>
+                <p className="text-xs font-medium" style={{ color: 'var(--app-text-primary)' }}>{profile.designation || '-'}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-medium text-[#71717a] mb-1.5 flex items-center gap-1.5 uppercase tracking-wider">
+              <label className="block text-xs font-mono font-medium mb-1.5 flex items-center gap-1.5 uppercase tracking-wider" style={{ color: 'var(--app-text-muted)' }}>
                 <MapPin size={12} /> Country
               </label>
               {isEditing ? (
@@ -308,15 +326,18 @@ export default function Profile() {
                   value={form.country || ''}
                   onChange={e => handleInputChange('country', e.target.value)}
                   placeholder="Country"
-                  className="w-full bg-[#141417] border border-[#27272a] rounded-lg px-3 py-2 text-xs text-[#f4f4f5] outline-none focus:border-[#3f3f46]"
+                  className="w-full border rounded-lg px-3 py-2 text-xs outline-none"
+                  style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}
+                  onFocus={e => e.currentTarget.style.borderColor = 'var(--app-border-focus)'}
+                  onBlur={e => e.currentTarget.style.borderColor = 'var(--app-border)'}
                 />
               ) : (
-                <p className="text-xs text-[#f4f4f5] font-medium">{profile.country || '-'}</p>
+                <p className="text-xs font-medium" style={{ color: 'var(--app-text-primary)' }}>{profile.country || '-'}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-medium text-[#71717a] mb-1.5 flex items-center gap-1.5 uppercase tracking-wider">
+              <label className="block text-xs font-mono font-medium mb-1.5 flex items-center gap-1.5 uppercase tracking-wider" style={{ color: 'var(--app-text-muted)' }}>
                 <Globe size={12} /> Timezone
               </label>
               {isEditing ? (
@@ -325,26 +346,32 @@ export default function Profile() {
                   value={form.timezone || ''}
                   onChange={e => handleInputChange('timezone', e.target.value)}
                   placeholder="e.g. UTC"
-                  className="w-full bg-[#141417] border border-[#27272a] rounded-lg px-3 py-2 text-xs text-[#f4f4f5] outline-none focus:border-[#3f3f46]"
+                  className="w-full border rounded-lg px-3 py-2 text-xs outline-none"
+                  style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}
+                  onFocus={e => e.currentTarget.style.borderColor = 'var(--app-border-focus)'}
+                  onBlur={e => e.currentTarget.style.borderColor = 'var(--app-border)'}
                 />
               ) : (
-                <p className="text-xs text-[#f4f4f5] font-medium">{profile.timezone || '-'}</p>
+                <p className="text-xs font-medium" style={{ color: 'var(--app-text-primary)' }}>{profile.timezone || '-'}</p>
               )}
             </div>
           </div>
 
-          <div className="pt-3 border-t border-[#1f1f23]">
-            <label className="block text-xs font-mono font-medium text-[#71717a] mb-1.5 uppercase tracking-wider">Bio</label>
+          <div className="pt-3 border-t" style={{ borderColor: 'var(--app-border-subtle)' }}>
+            <label className="block text-xs font-mono font-medium mb-1.5 uppercase tracking-wider" style={{ color: 'var(--app-text-muted)' }}>Bio</label>
             {isEditing ? (
               <textarea
                 value={form.bio || ''}
                 onChange={e => handleInputChange('bio', e.target.value)}
                 placeholder="Tell us about your background"
                 rows={3}
-                className="w-full bg-[#141417] border border-[#27272a] rounded-lg px-3 py-2 text-xs text-[#f4f4f5] outline-none focus:border-[#3f3f46] resize-none"
+                className="w-full border rounded-lg px-3 py-2 text-xs outline-none resize-none"
+                style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}
+                onFocus={e => e.currentTarget.style.borderColor = 'var(--app-border-focus)'}
+                onBlur={e => e.currentTarget.style.borderColor = 'var(--app-border)'}
               />
             ) : (
-              <p className="text-xs text-[#a1a1aa]">{profile.bio || 'No bio provided.'}</p>
+              <p className="text-xs" style={{ color: 'var(--app-text-secondary)' }}>{profile.bio || 'No bio provided.'}</p>
             )}
           </div>
 
@@ -353,10 +380,11 @@ export default function Profile() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#f4f4f5] hover:bg-[#e4e4e7] text-[#09090b] text-xs font-semibold transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-semibold transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                style={{ backgroundColor: 'var(--app-text-primary)', color: 'var(--app-bg)' }}
               >
                 {saving ? (
-                  <span className="w-3.5 h-3.5 border-2 border-[#09090b]/30 border-t-[#09090b] rounded-full animate-spin" />
+                  <span className="w-3.5 h-3.5 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--app-bg)', borderTopColor: 'var(--app-text-primary)' }} />
                 ) : (
                   <Save size={14} />
                 )}

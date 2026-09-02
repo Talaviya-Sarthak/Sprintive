@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Quote, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { Button } from './ui/Button';
+import { useTheme } from '../context/ThemeContext';
 
 interface Testimonial {
   name: string;
@@ -24,6 +25,8 @@ const testimonials: Testimonial[] = [
 export default function Testimonials() {
   const [current, setCurrent] = useState(0);
   const [auto, setAuto] = useState(true);
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
 
   useEffect(() => {
     if (!auto) return;
@@ -35,6 +38,19 @@ export default function Testimonials() {
   const next = () => { setAuto(false); setCurrent(c => (c + 1) % testimonials.length); };
 
   const visible = [0, 1, 2].map(offset => testimonials[(current + offset) % testimonials.length]);
+
+  const headingColor = isLight ? 'text-[#0f172a]' : 'text-[#FFFFFF]';
+  const cardBg = isLight ? 'bg-[#f8fafc]' : 'bg-[#111111]';
+  const cardBorder = isLight ? 'border-[#0f172a]' : 'border-black';
+  const shadowClass = isLight ? 'shadow-[4px_4px_0px_0px_#0f172a]' : 'shadow-[4px_4px_0px_0px_#262626]';
+  const hoverShadow = isLight ? 'hover:shadow-[1.5px_1.5px_0px_0px_#0f172a]' : 'hover:shadow-[1.5px_1.5px_0px_0px_#262626]';
+  const dividerColor = isLight ? 'border-[#e2e8f0]' : 'border-[#262626]';
+  const quoteColor = isLight ? 'text-[#475569]' : 'text-[#A1A1AA]';
+  const avatarBg = isLight ? 'bg-[#f1f5f9]' : 'bg-[#1F1F23]';
+  const avatarBorder = isLight ? 'border-[#e2e8f0]' : 'border-[#262626]';
+  const nameColor = isLight ? 'text-[#0f172a]' : 'text-[#FFFFFF]';
+  const roleColor = isLight ? 'text-[#475569]' : 'text-[#A1A1AA]';
+  const inactiveDot = isLight ? 'bg-[#e2e8f0] hover:bg-[#cbd5e1]' : 'bg-[#262626] hover:bg-[#A1A1AA]';
 
   return (
     <section
@@ -52,7 +68,7 @@ export default function Testimonials() {
           transition={{ duration: 0.5 }}
           className="text-center mb-12 select-none"
         >
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#FFFFFF] tracking-tight uppercase leading-tight">
+          <h2 className={`text-3xl sm:text-4xl md:text-5xl font-black ${headingColor} tracking-tight uppercase leading-tight`}>
             LOVED BY<br />
             <span className="text-[#F97316]">MODERN TEAMS</span>
           </h2>
@@ -72,17 +88,17 @@ export default function Testimonials() {
               >
                 {/* Sharp Neo-Brutalist Card with Hard Offset Layer & Tactile Pressed Hover */}
                 <div
-                  className="
+                  className={`
                     relative flex-1 flex flex-col justify-between p-6 
-                    bg-[#111111] border-2 border-black rounded-[4px]
-                    shadow-[4px_4px_0px_0px_#262626] 
-                    hover:shadow-[1.5px_1.5px_0px_0px_#262626] hover:translate-x-[2.5px] hover:translate-y-[2.5px]
+                    ${cardBg} border-2 ${cardBorder} rounded-[4px]
+                    ${shadowClass} 
+                    ${hoverShadow} hover:translate-x-[2.5px] hover:translate-y-[2.5px]
                     transition-all duration-150 ease-out select-none
-                  "
+                  `}
                 >
                   <div>
                     {/* Header: Subtle Rating Stars & Minimal Quote Icon */}
-                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#262626]">
+                    <div className={`flex items-center justify-between mb-4 pb-3 border-b ${dividerColor}`}>
                       <div className="flex gap-1">
                         {Array.from({ length: t.rating }).map((_, j) => (
                           <Star key={j} size={13} className="text-[#F97316] fill-[#F97316]" />
@@ -92,20 +108,20 @@ export default function Testimonials() {
                     </div>
 
                     {/* Quote */}
-                    <p className="text-xs text-[#A1A1AA] leading-relaxed mb-6 font-normal">
+                    <p className={`text-xs ${quoteColor} leading-relaxed mb-6 font-normal`}>
                       "{t.quote}"
                     </p>
                   </div>
 
                   {/* Author Meta */}
-                  <div className="flex items-center gap-3 pt-3 border-t border-[#262626]">
+                  <div className={`flex items-center gap-3 pt-3 border-t ${dividerColor}`}>
                     {/* Sharp Rectangular Avatar */}
-                    <div className="w-9 h-9 rounded-[4px] bg-[#1F1F23] border border-[#262626] text-white flex items-center justify-center text-xs font-black shrink-0 tracking-wider">
+                    <div className={`w-9 h-9 rounded-[4px] ${avatarBg} border ${avatarBorder} text-white flex items-center justify-center text-xs font-black shrink-0 tracking-wider`}>
                       {t.avatar}
                     </div>
                     <div className="min-w-0">
-                      <div className="text-xs font-bold text-[#FFFFFF] tracking-tight truncate">{t.name}</div>
-                      <div className="text-[11px] font-mono text-[#A1A1AA] truncate">{t.role} · <span className="text-[#F97316] font-semibold">{t.company}</span></div>
+                      <div className={`text-xs font-bold ${nameColor} tracking-tight truncate`}>{t.name}</div>
+                      <div className={`text-[11px] font-mono ${roleColor} truncate`}>{t.role} · <span className="text-[#F97316] font-semibold">{t.company}</span></div>
                     </div>
                   </div>
                 </div>
@@ -133,7 +149,7 @@ export default function Testimonials() {
                 aria-label={`Go to slide ${i + 1}`}
                 className={`h-2 rounded-[2px] cursor-pointer transition-all duration-200 border-none p-0 ${i === current
                     ? 'w-6 bg-[#F97316]'
-                    : 'w-2 bg-[#262626] hover:bg-[#A1A1AA]'
+                    : `w-2 ${inactiveDot}`
                   }`}
               />
             ))}

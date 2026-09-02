@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Zap, Play, CheckCircle2, Mic, Bot, CheckSquare, Sparkles } from 'lucide-react';
 import { Button } from './ui/Button';
+import { useTheme } from '../context/ThemeContext';
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 32 },
@@ -14,6 +15,8 @@ const fadeUp = (delay = 0) => ({
 // Live Interactive AI Workflow Demo Loop Component
 function LiveWorkflowDemo() {
   const [step, setStep] = useState(1);
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
 
   // 5-step automated workflow loop (~2.4s per step)
   useEffect(() => {
@@ -23,13 +26,24 @@ function LiveWorkflowDemo() {
     return () => clearInterval(timer);
   }, []);
 
+  const demoBg = isLight ? 'bg-white' : 'bg-[#111111]';
+  const demoBorder = isLight ? 'border-[#0f172a]' : 'border-black';
+  const demoShadow = isLight ? 'shadow-[5px_5px_0px_0px_#0f172a]' : 'shadow-[5px_5px_0px_0px_#F97316]';
+  const cardBg = isLight ? 'bg-[#f8fafc]' : 'bg-[#1A1A1E]';
+  const cardBorder = isLight ? 'border-[#e2e8f0]' : 'border-[#262626]';
+  const textPrimary = isLight ? 'text-[#0f172a]' : 'text-white';
+  const textSecondary = isLight ? 'text-[#475569]' : 'text-[#A1A1AA]';
+  const innerCardBg = isLight ? 'bg-white' : 'bg-[#111111]';
+  const innerCardBorder = isLight ? 'border-[#e2e8f0]' : 'border-[#262626]';
+  const taskBg = isLight ? 'bg-[#f1f5f9]' : 'bg-[#1D1D22]';
+
   return (
-    <div className="relative w-full max-w-[460px] h-[480px] flex flex-col justify-between p-4 bg-[#111111] border-2 border-black rounded-[4px] shadow-[5px_5px_0px_0px_#F97316] select-none overflow-hidden">
+    <div className={`relative w-full max-w-[460px] h-[480px] flex flex-col justify-between p-4 ${demoBg} border-2 ${demoBorder} rounded-[4px] ${demoShadow} select-none overflow-hidden`}>
       {/* Live Workflow Stage Header */}
-      <div className="flex items-center justify-between pb-2.5 border-b border-[#262626] shrink-0">
+      <div className={`flex items-center justify-between pb-2.5 border-b ${cardBorder} shrink-0`}>
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-[#F97316] animate-pulse" />
-          <span className="text-xs font-mono font-bold uppercase tracking-wider text-white">
+          <span className={`text-xs font-mono font-bold uppercase tracking-wider ${textPrimary}`}>
             Live AI Workflow Loop
           </span>
         </div>
@@ -40,11 +54,11 @@ function LiveWorkflowDemo() {
 
       <div className="flex-1 flex flex-col justify-center gap-2.5 overflow-hidden py-2">
         {/* Step 1: Live Meeting Card (Always active for context) */}
-        <div className="bg-[#1A1A1E] border border-[#262626] rounded-[4px] p-2.5 shrink-0">
+        <div className={`${cardBg} border ${cardBorder} rounded-[4px] p-2.5 shrink-0`}>
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-[#10B981] shadow-[0_0_6px_#10B981]" />
-              <span className="text-xs font-bold text-white uppercase tracking-tight">Daily Scrum — Live</span>
+              <span className={`text-xs font-bold ${textPrimary} uppercase tracking-tight`}>Daily Scrum — Live</span>
             </div>
             <div className="flex items-center gap-1 bg-[#F97316]/10 border border-[#F97316]/30 px-1.5 py-0.5 rounded-[2px] text-[9px] font-mono font-bold text-[#F97316]">
               <Mic size={9} className="animate-pulse" /> RECORDING
@@ -55,14 +69,14 @@ function LiveWorkflowDemo() {
             {['Alex (Lead)', 'Sam (Dev)', 'Priya (PM)', 'David (QA)'].map((name, i) => (
               <div
                 key={name}
-                className={`p-1.5 rounded-[3px] border flex items-center gap-1.5 ${i === 0 ? 'bg-[#241A14] border-[#F97316]/40' : 'bg-[#111111] border-[#262626]'
+                className={`p-1.5 rounded-[3px] border flex items-center gap-1.5 ${i === 0 ? 'bg-[#F97316]/10 border-[#F97316]/40' : `${innerCardBg} ${innerCardBorder}`
                   }`}
               >
                 <div className="w-4.5 h-4.5 rounded-full bg-[#F97316] text-white font-black text-[8px] flex items-center justify-center shrink-0">
                   {name[0]}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[10px] font-semibold text-white truncate">{name}</div>
+                  <div className={`text-[10px] font-semibold ${textPrimary} truncate`}>{name}</div>
                 </div>
                 {i === 0 && (
                   <div className="flex gap-0.5 items-end h-2.5 shrink-0">
@@ -89,18 +103,18 @@ function LiveWorkflowDemo() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25 }}
-              className="bg-[#1A1A1E] border border-[#262626] rounded-[4px] p-2.5 shrink-0"
+              className={`${cardBg} border ${cardBorder} rounded-[4px] p-2.5 shrink-0`}
             >
-              <div className="text-[9px] font-mono uppercase tracking-wider text-[#A1A1AA] mb-1 flex items-center gap-1">
+              <div className={`text-[9px] font-mono uppercase tracking-wider ${textSecondary} mb-1 flex items-center gap-1`}>
                 <span className="w-1.5 h-1.5 rounded-full bg-[#F97316]" /> Live Transcript Stream
               </div>
-              <div className="font-mono text-[11px] text-white leading-tight space-y-1">
+              <div className={`font-mono text-[11px] ${textPrimary} leading-tight space-y-1`}>
                 <p className="truncate">
                   <span className="text-[#F97316] font-bold">Alex:</span> "I'll complete the authentication module by EOD."
                 </p>
                 {step >= 3 && (
                   <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="truncate">
-                    <span className="text-[#A1A1AA] font-bold">Sam:</span> "Blocked on payment gateway access key."
+                    <span className={`${textSecondary} font-bold`}>Sam:</span> "Blocked on payment gateway access key."
                   </motion.p>
                 )}
               </div>
@@ -113,11 +127,11 @@ function LiveWorkflowDemo() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25 }}
-              className="bg-[#1A1A1E] border border-[#F97316]/40 rounded-[4px] p-2.5 shrink-0"
+              className={`${cardBg} border border-[#F97316]/40 rounded-[4px] p-2.5 shrink-0`}
             >
               <div className="flex items-center gap-1.5 mb-1.5">
                 <Bot size={13} className="text-[#F97316]" />
-                <span className="text-[11px] font-bold text-white uppercase tracking-tight">AI Decision Extraction</span>
+                <span className={`text-[11px] font-bold ${textPrimary} uppercase tracking-tight`}>AI Decision Extraction</span>
                 <span className="ml-auto text-[8px] font-mono text-[#F97316] uppercase animate-pulse">Analyzing…</span>
               </div>
               <div className="flex flex-wrap gap-1">
@@ -128,10 +142,10 @@ function LiveWorkflowDemo() {
                 ].map((chip) => (
                   <div
                     key={chip.tag}
-                    className="flex items-center gap-1 bg-[#111111] border border-[#262626] px-1.5 py-0.5 rounded-[2px] text-[9px]"
+                    className={`flex items-center gap-1 ${innerCardBg} border ${innerCardBorder} px-1.5 py-0.5 rounded-[2px] text-[9px]`}
                   >
                     <span className="font-mono font-bold text-[#F97316]">{chip.tag}:</span>
-                    <span className="text-zinc-300 font-medium">{chip.text}</span>
+                    <span className={`${isLight ? 'text-[#475569]' : 'text-zinc-300'} font-medium`}>{chip.text}</span>
                   </div>
                 ))}
               </div>
@@ -144,24 +158,24 @@ function LiveWorkflowDemo() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25 }}
-              className="bg-[#1A1A1E] border border-[#262626] rounded-[4px] p-2.5 shrink-0"
+              className={`${cardBg} border ${cardBorder} rounded-[4px] p-2.5 shrink-0`}
             >
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1">
                   <CheckSquare size={12} className="text-[#F97316]" />
-                  <span className="text-[11px] font-bold text-white uppercase tracking-tight">Sprint Board Synced</span>
+                  <span className={`text-[11px] font-bold ${textPrimary} uppercase tracking-tight`}>Sprint Board Synced</span>
                 </div>
                 <span className="text-[9px] font-mono text-[#10B981] font-bold">↑ 2 Tickets Created</span>
               </div>
               <div className="grid grid-cols-3 gap-1">
                 {[
-                  { col: 'To Do', task: 'Payment Key', color: '#A1A1AA' },
+                  { col: 'To Do', task: 'Payment Key', color: isLight ? '#475569' : '#A1A1AA' },
                   { col: 'In Progress', task: 'Auth Module', color: '#F97316' },
                   { col: 'Done', task: 'Setup Repo', color: '#10B981' },
                 ].map((c) => (
-                  <div key={c.col} className="bg-[#111111] border border-[#262626] rounded-[2px] p-1">
+                  <div key={c.col} className={`${innerCardBg} border ${innerCardBorder} rounded-[2px] p-1`}>
                     <div className="text-[8px] font-mono font-bold uppercase mb-0.5" style={{ color: c.color }}>{c.col}</div>
-                    <div className="text-[9px] text-white font-medium truncate bg-[#1D1D22] px-1 py-0.5 rounded-[1px] border border-[#262626]">
+                    <div className={`text-[9px] ${textPrimary} font-medium truncate ${taskBg} px-1 py-0.5 rounded-[1px] border ${innerCardBorder}`}>
                       {c.task}
                     </div>
                   </div>
@@ -199,6 +213,12 @@ function LiveWorkflowDemo() {
 
 export default function Hero() {
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
+
+  const headingColor = isLight ? 'text-[#0f172a]' : 'text-white';
+  const subtextColor = isLight ? 'text-[#475569]' : 'text-[#CBD5E1]';
+
   return (
     <section id="hero" className="min-h-screen flex items-center relative overflow-hidden pt-24 md:pt-20 pb-12 bg-transparent">
       {/* Soft Radial Orange Glow behind main hero headline */}
@@ -217,22 +237,22 @@ export default function Hero() {
             {/* Editorial Display Typography Stack */}
             <motion.h1
               {...fadeUp(0.08)}
-              className="uppercase text-white mb-6 select-none"
+              className={`uppercase ${headingColor} mb-6 select-none`}
             >
-              <span className="block font-sans text-[clamp(36px,4.5vw,62px)] font-extrabold text-white tracking-tight leading-[0.95] mb-1">
+              <span className={`block font-sans text-[clamp(36px,4.5vw,62px)] font-extrabold ${headingColor} tracking-tight leading-[0.95] mb-1`}>
                 AI FOR
               </span>
               <span className="block font-display text-[clamp(90px,13.5vw,175px)] font-black text-[#F97316] leading-[0.8] tracking-tight my-1.5">
                 SCRUM
               </span>
-              <span className="block font-sans text-[clamp(36px,4.5vw,62px)] font-extrabold text-white tracking-tight leading-[0.95] mt-1">
+              <span className={`block font-sans text-[clamp(36px,4.5vw,62px)] font-extrabold ${headingColor} tracking-tight leading-[0.95] mt-1`}>
                 TEAMS.
               </span>
             </motion.h1>
 
             <motion.p
               {...fadeUp(0.16)}
-              className="font-mono text-[clamp(13px,1.2vw,15px)] text-[#CBD5E1] tracking-wide leading-[1.7] mb-8 max-w-[440px] font-normal"
+              className={`font-mono text-[clamp(13px,1.2vw,15px)] ${subtextColor} tracking-wide leading-[1.7] mb-8 max-w-[440px] font-normal`}
             >
               AI meeting intelligence that turns conversations into organized sprints.
             </motion.p>

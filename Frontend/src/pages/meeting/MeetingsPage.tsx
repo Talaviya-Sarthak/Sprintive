@@ -83,7 +83,7 @@ export default function MeetingsPage() {
     return (
       <AppLayout teamId={teamId}>
         <div className="flex items-center justify-center h-64">
-          <div className="w-7 h-7 border-2 border-[#27272a] border-t-[#f4f4f5] rounded-full animate-spin" />
+          <div className="w-7 h-7 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--app-border)', borderTopColor: 'var(--app-text-primary)' }} />
         </div>
       </AppLayout>
     );
@@ -115,8 +115,8 @@ export default function MeetingsPage() {
         {error && <p className="text-red-400 text-xs">{error}</p>}
 
         {finalFiltered.length === 0 ? (
-          <div className="bg-[#141417] border border-[#27272a] rounded-xl p-10 text-center">
-            <p className="text-xs text-[#71717a]">No meetings match your filter criteria.</p>
+          <div className="border rounded-xl p-10 text-center" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}>
+            <p className="text-xs" style={{ color: 'var(--app-text-muted)' }}>No meetings match your filter criteria.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">

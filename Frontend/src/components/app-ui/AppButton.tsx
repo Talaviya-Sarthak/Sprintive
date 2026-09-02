@@ -12,27 +12,78 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
     const baseStyles =
       'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 ease-out select-none cursor-pointer disabled:opacity-50 disabled:pointer-events-none shrink-0 border';
 
-    const variantStyles: Record<string, string> = {
-      primary:
-        'bg-[#F97316] text-white border-[#EA580C] hover:bg-[#EA580C] shadow-sm shadow-[#F97316]/20 active:scale-[0.98]',
-      secondary:
-        'bg-[#141417] text-[#a1a1aa] border-[#27272a] hover:bg-[#1c1c21] hover:text-[#f4f4f5] hover:border-[#3f3f46] active:scale-[0.98]',
-      ghost:
-        'bg-transparent text-[#71717a] border-transparent hover:bg-[#141417] hover:text-[#f4f4f5]',
-      icon:
-        'bg-[#141417] text-[#71717a] border-[#27272a] hover:bg-[#1c1c21] hover:text-[#f4f4f5] active:scale-[0.98]',
-      danger:
-        'bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500 hover:text-white active:scale-[0.98]',
-      success:
-        'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500 hover:text-white active:scale-[0.98]',
-      active:
-        'bg-[#F97316]/10 text-[#F97316] border-[#F97316]/30 font-semibold',
-      mono:
-        'bg-[#f4f4f5] text-[#09090b] border-[#f4f4f5] hover:bg-[#e4e4e7] font-semibold active:scale-[0.98]',
-      'mono-outline':
-        'bg-[#141417] text-[#a1a1aa] border-[#27272a] hover:bg-[#1c1c21] hover:text-[#f4f4f5] hover:border-[#3f3f46] active:scale-[0.98]',
-      'mono-ghost':
-        'bg-transparent text-[#71717a] border-transparent hover:bg-[#141417] hover:text-[#f4f4f5]',
+    const getVariantStyle = (variant: string): React.CSSProperties => {
+      switch (variant) {
+        case 'primary':
+          return {
+            backgroundColor: '#F97316',
+            color: '#ffffff',
+            borderColor: '#EA580C',
+            boxShadow: 'var(--app-shadow-sm)'
+          };
+        case 'secondary':
+          return {
+            backgroundColor: 'var(--app-surface-card)',
+            color: 'var(--app-text-secondary)',
+            borderColor: 'var(--app-border)'
+          };
+        case 'ghost':
+          return {
+            backgroundColor: 'transparent',
+            color: 'var(--app-text-secondary)',
+            borderColor: 'transparent'
+          };
+        case 'icon':
+          return {
+            backgroundColor: 'var(--app-surface-card)',
+            color: 'var(--app-text-secondary)',
+            borderColor: 'var(--app-border)'
+          };
+        case 'danger':
+          return {
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            color: '#EF4444',
+            borderColor: 'rgba(239, 68, 68, 0.2)'
+          };
+        case 'success':
+          return {
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            color: '#10B981',
+            borderColor: 'rgba(16, 185, 129, 0.2)'
+          };
+        case 'active':
+          return {
+            backgroundColor: 'rgba(249, 115, 22, 0.1)',
+            color: '#F97316',
+            borderColor: 'rgba(249, 115, 22, 0.3)',
+            fontWeight: 600
+          };
+        case 'mono':
+          return {
+            backgroundColor: 'var(--app-text-primary)',
+            color: 'var(--app-bg)',
+            borderColor: 'var(--app-text-primary)',
+            fontWeight: 600
+          };
+        case 'mono-outline':
+          return {
+            backgroundColor: 'var(--app-surface-card)',
+            color: 'var(--app-text-primary)',
+            borderColor: 'var(--app-border)'
+          };
+        case 'mono-ghost':
+          return {
+            backgroundColor: 'transparent',
+            color: 'var(--app-text-secondary)',
+            borderColor: 'transparent'
+          };
+        default:
+          return {
+            backgroundColor: 'var(--app-surface-card)',
+            color: 'var(--app-text-secondary)',
+            borderColor: 'var(--app-border)'
+          };
+      }
     };
 
     const sizeStyles: Record<string, string> = {
@@ -43,11 +94,70 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
       icon: 'h-8 w-8 p-0 flex items-center justify-center',
     };
 
+    const variantStyle = getVariantStyle(variant);
+
+    const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (variant === 'secondary') {
+        e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+        e.currentTarget.style.color = 'var(--app-text-primary)';
+        e.currentTarget.style.borderColor = 'var(--app-border-focus)';
+      } else if (variant === 'ghost' || variant === 'mono-ghost') {
+        e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+        e.currentTarget.style.color = 'var(--app-text-primary)';
+      } else if (variant === 'icon') {
+        e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+        e.currentTarget.style.color = 'var(--app-text-primary)';
+      } else if (variant === 'mono-outline') {
+        e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+        e.currentTarget.style.borderColor = 'var(--app-border-focus)';
+      } else if (variant === 'primary') {
+        e.currentTarget.style.backgroundColor = '#EA580C';
+      } else if (variant === 'danger') {
+        e.currentTarget.style.backgroundColor = '#EF4444';
+        e.currentTarget.style.color = '#ffffff';
+      } else if (variant === 'success') {
+        e.currentTarget.style.backgroundColor = '#10B981';
+        e.currentTarget.style.color = '#ffffff';
+      } else if (variant === 'mono') {
+        e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+      }
+    };
+
+    const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (variant === 'secondary') {
+        e.currentTarget.style.backgroundColor = 'var(--app-surface-card)';
+        e.currentTarget.style.color = 'var(--app-text-secondary)';
+        e.currentTarget.style.borderColor = 'var(--app-border)';
+      } else if (variant === 'ghost' || variant === 'mono-ghost') {
+        e.currentTarget.style.backgroundColor = 'transparent';
+        e.currentTarget.style.color = 'var(--app-text-secondary)';
+      } else if (variant === 'icon') {
+        e.currentTarget.style.backgroundColor = 'var(--app-surface-card)';
+        e.currentTarget.style.color = 'var(--app-text-secondary)';
+      } else if (variant === 'mono-outline') {
+        e.currentTarget.style.backgroundColor = 'var(--app-surface-card)';
+        e.currentTarget.style.borderColor = 'var(--app-border)';
+      } else if (variant === 'primary') {
+        e.currentTarget.style.backgroundColor = '#F97316';
+      } else if (variant === 'danger') {
+        e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+        e.currentTarget.style.color = '#EF4444';
+      } else if (variant === 'success') {
+        e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+        e.currentTarget.style.color = '#10B981';
+      } else if (variant === 'mono') {
+        e.currentTarget.style.backgroundColor = 'var(--app-text-primary)';
+      }
+    };
+
     return (
       <button
         ref={ref}
         disabled={disabled || loading}
-        className={`${baseStyles} ${variantStyles[variant] || variantStyles.secondary} ${sizeStyles[size] || sizeStyles.sm} ${fullWidth ? 'w-full' : ''} ${className}`}
+        className={`${baseStyles} ${sizeStyles[size] || sizeStyles.sm} ${fullWidth ? 'w-full' : ''} ${className}`}
+        style={variantStyle}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         {...props}
       >
         {loading && (

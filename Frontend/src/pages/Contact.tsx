@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Mail, Clock, MapPin, Send, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { Button } from '../components/ui/Button';
+import { useTheme } from '../context/ThemeContext';
 
 function GithubIcon({ size = 15 }: { size?: number }) {
   return (
@@ -70,12 +71,26 @@ const contactCards = [
 ];
 
 export default function Contact() {
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     subject: '',
     message: '',
   });
+
+  const bgColor = isLight ? 'bg-[#f8fafc]' : 'bg-[#050505]';
+  const textColor = isLight ? 'text-[#475569]' : 'text-[#A1A1AA]';
+  const headingColor = isLight ? 'text-[#0f172a]' : 'text-white';
+  const gridColor = isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.045)';
+  const cardBg = isLight ? 'bg-[#f8fafc]' : 'bg-[#111111]';
+  const cardBorder = isLight ? 'border-[#e2e8f0]' : 'border-[#262626]';
+  const inputBg = isLight ? 'bg-white' : 'bg-[#0B0B0D]';
+  const inputText = isLight ? 'text-[#0f172a]' : 'text-white';
+  const inputBorder = isLight ? 'border-[#e2e8f0]' : 'border-[#262626]';
+  const placeholderColor = isLight ? 'placeholder-[#94a3b8]' : 'placeholder-[#52525B]';
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -133,13 +148,13 @@ export default function Contact() {
   };
 
   return (
-    <div className="bg-[#050505] text-[#A1A1AA] min-h-screen lg:h-screen flex flex-col justify-between relative overflow-x-hidden lg:overflow-hidden selection:bg-[#F97316]/25 selection:text-[#F97316]">
+    <div className={`${bgColor} ${textColor} min-h-screen lg:h-screen flex flex-col justify-between relative overflow-x-hidden lg:overflow-hidden selection:bg-[#F97316]/25 selection:text-[#F97316]`}>
       {/* Background Engineering Grid */}
       <div
         className="fixed inset-0 pointer-events-none z-0"
         style={{
           backgroundImage:
-            'linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px)',
+            `linear-gradient(${gridColor} 1px, transparent 1px), linear-gradient(90deg, ${gridColor} 1px, transparent 1px)`,
           backgroundSize: '44px 44px',
         }}
       />
@@ -160,19 +175,19 @@ export default function Contact() {
             >
               <div>
                 {/* Neo-Brutalist Badge */}
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-[#111111] border border-[#262626] shadow-[2px_2px_0px_#F97316] text-[#F97316] font-mono text-[11px] font-bold uppercase tracking-wider mb-4">
+                <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 ${cardBg} border ${cardBorder} shadow-[2px_2px_0px_#F97316] text-[#F97316] font-mono text-[11px] font-bold uppercase tracking-wider mb-4`}>
                   <span>CONTACT</span>
-                  <span className="text-[#A1A1AA]">/</span>
+                  <span className={textColor}>/</span>
                   <span>ENGINEERING</span>
                 </div>
 
                 {/* Editorial Heading */}
-                <h1 className="text-4xl sm:text-5xl lg:text-5xl font-extrabold text-[#FFFFFF] tracking-tight leading-[1.08] mb-3">
+                <h1 className={`text-4xl sm:text-5xl lg:text-5xl font-extrabold ${headingColor} tracking-tight leading-[1.08] mb-3`}>
                   Let's Talk.
                 </h1>
 
                 {/* Single Concise Description */}
-                <p className="text-sm sm:text-base text-[#A1A1AA] leading-relaxed max-w-md">
+                <p className={`text-sm sm:text-base ${textColor} leading-relaxed max-w-md`}>
                   Questions, partnerships, or support—we're here to help.
                 </p>
               </div>
@@ -182,15 +197,15 @@ export default function Contact() {
                 {contactCards.map((card) => {
                   const Icon = card.icon;
                   const cardElement = (
-                    <div className="p-3.5 bg-[#111111] border border-[#262626] shadow-[3px_3px_0px_#000000] flex items-center gap-3.5 hover:border-[#F97316]/50 transition-colors">
-                      <div className="w-8 h-8 bg-[#1A1A1A] border border-[#262626] flex items-center justify-center text-[#F97316] shrink-0">
+                    <div className={`p-3.5 ${cardBg} border ${cardBorder} shadow-[3px_3px_0px_#000000] flex items-center gap-3.5 hover:border-[#F97316]/50 transition-colors`}>
+                      <div className={`w-8 h-8 ${isLight ? 'bg-white' : 'bg-[#1A1A1A]'} border ${cardBorder} flex items-center justify-center text-[#F97316] shrink-0`}>
                         <Icon size={15} strokeWidth={2} />
                       </div>
                       <div className="min-w-0">
-                        <div className="text-[10px] font-mono text-[#A1A1AA] uppercase tracking-wider font-semibold">
+                        <div className={`text-[10px] font-mono ${textColor} uppercase tracking-wider font-semibold`}>
                           {card.title}
                         </div>
-                        <div className="text-xs font-bold text-[#FFFFFF] truncate mt-0.5">
+                        <div className={`text-xs font-bold ${headingColor} truncate mt-0.5`}>
                           {card.value}
                         </div>
                       </div>
@@ -215,14 +230,14 @@ export default function Contact() {
                       key={label}
                       href={href}
                       aria-label={label}
-                      className="w-8 h-8 bg-[#111111] border border-[#262626] shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none flex items-center justify-center text-[#A1A1AA] hover:text-[#F97316] hover:border-[#F97316] transition-colors duration-150"
+                      className={`w-8 h-8 ${cardBg} border ${cardBorder} shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none flex items-center justify-center ${textColor} hover:text-[#F97316] hover:border-[#F97316] transition-colors duration-150`}
                     >
                       <Icon size={14} />
                     </a>
                   ))}
                 </div>
 
-                <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#A1A1AA]">
+                <div className={`flex items-center gap-1.5 text-[11px] font-mono ${textColor}`}>
                   <ShieldCheck size={13} className="text-[#F97316]" />
                   <span>Direct Dev Channel</span>
                 </div>
@@ -236,12 +251,12 @@ export default function Contact() {
               transition={{ duration: 0.4 }}
               className="lg:col-span-7"
             >
-              <div className="bg-[#111111] border-2 border-black shadow-[6px_6px_0px_#FFFFFF] p-5 sm:p-6">
-                <div className="flex items-center justify-between mb-4 pb-2.5 border-b border-[#262626]">
-                  <h2 className="text-base font-bold text-[#FFFFFF] tracking-tight">
+              <div className={`${cardBg} border-2 ${frameBorder} shadow-[6px_6px_0px_#FFFFFF] p-5 sm:p-6`}>
+                <div className={`flex items-center justify-between mb-4 pb-2.5 border-b ${cardBorder}`}>
+                  <h2 className={`text-base font-bold ${headingColor} tracking-tight`}>
                     Send us a message
                   </h2>
-                  <span className="text-[10px] font-mono text-[#A1A1AA] uppercase tracking-wider">
+                  <span className={`text-[10px] font-mono ${textColor} uppercase tracking-wider`}>
                     Fast response guaranteed
                   </span>
                 </div>
@@ -267,7 +282,7 @@ export default function Contact() {
                     <div>
                       <label
                         htmlFor="name"
-                        className="block text-[10px] font-mono font-bold text-[#FFFFFF] uppercase tracking-wider mb-1.5"
+                        className={`block text-[10px] font-mono font-bold ${headingColor} uppercase tracking-wider mb-1.5`}
                       >
                         Name <span className="text-[#F97316]">*</span>
                       </label>
@@ -278,8 +293,8 @@ export default function Contact() {
                         value={formData.name}
                         onChange={handleChange}
                         placeholder="Alex Morgan"
-                        className={`w-full bg-[#050505] text-[#FFFFFF] placeholder-[#52525B] px-3.5 py-2.5 border ${
-                          errors.name ? 'border-red-500' : 'border-[#262626]'
+                        className={`w-full ${inputBg} ${inputText} ${placeholderColor} px-3.5 py-2.5 border ${
+                          errors.name ? 'border-red-500' : inputBorder
                         } focus:outline-none focus:border-[#F97316] transition-colors text-xs font-medium`}
                       />
                       {errors.name && (
@@ -290,7 +305,7 @@ export default function Contact() {
                     <div>
                       <label
                         htmlFor="email"
-                        className="block text-[10px] font-mono font-bold text-[#FFFFFF] uppercase tracking-wider mb-1.5"
+                        className={`block text-[10px] font-mono font-bold ${headingColor} uppercase tracking-wider mb-1.5`}
                       >
                         Email <span className="text-[#F97316]">*</span>
                       </label>
@@ -301,8 +316,8 @@ export default function Contact() {
                         value={formData.email}
                         onChange={handleChange}
                         placeholder="alex@company.com"
-                        className={`w-full bg-[#050505] text-[#FFFFFF] placeholder-[#52525B] px-3.5 py-2.5 border ${
-                          errors.email ? 'border-red-500' : 'border-[#262626]'
+                        className={`w-full ${inputBg} ${inputText} ${placeholderColor} px-3.5 py-2.5 border ${
+                          errors.email ? 'border-red-500' : inputBorder
                         } focus:outline-none focus:border-[#F97316] transition-colors text-xs font-medium`}
                       />
                       {errors.email && (
@@ -315,7 +330,7 @@ export default function Contact() {
                   <div>
                     <label
                       htmlFor="subject"
-                      className="block text-[10px] font-mono font-bold text-[#FFFFFF] uppercase tracking-wider mb-1.5"
+                      className={`block text-[10px] font-mono font-bold ${headingColor} uppercase tracking-wider mb-1.5`}
                     >
                       Subject <span className="text-[#F97316]">*</span>
                     </label>
@@ -326,8 +341,8 @@ export default function Contact() {
                       value={formData.subject}
                       onChange={handleChange}
                       placeholder="How can we assist you?"
-                      className={`w-full bg-[#050505] text-[#FFFFFF] placeholder-[#52525B] px-3.5 py-2.5 border ${
-                        errors.subject ? 'border-red-500' : 'border-[#262626]'
+                      className={`w-full ${inputBg} ${inputText} ${placeholderColor} px-3.5 py-2.5 border ${
+                        errors.subject ? 'border-red-500' : inputBorder
                       } focus:outline-none focus:border-[#F97316] transition-colors text-xs font-medium`}
                     />
                     {errors.subject && (
@@ -339,7 +354,7 @@ export default function Contact() {
                   <div>
                     <label
                       htmlFor="message"
-                      className="block text-[10px] font-mono font-bold text-[#FFFFFF] uppercase tracking-wider mb-1.5"
+                      className={`block text-[10px] font-mono font-bold ${headingColor} uppercase tracking-wider mb-1.5`}
                     >
                       Message <span className="text-[#F97316]">*</span>
                     </label>
@@ -350,8 +365,8 @@ export default function Contact() {
                       value={formData.message}
                       onChange={handleChange}
                       placeholder="Write your message here..."
-                      className={`w-full bg-[#050505] text-[#FFFFFF] placeholder-[#52525B] px-3.5 py-2.5 border ${
-                        errors.message ? 'border-red-500' : 'border-[#262626]'
+                      className={`w-full ${inputBg} ${inputText} ${placeholderColor} px-3.5 py-2.5 border ${
+                        errors.message ? 'border-red-500' : inputBorder
                       } focus:outline-none focus:border-[#F97316] transition-colors text-xs font-medium resize-none`}
                     />
                     {errors.message && (

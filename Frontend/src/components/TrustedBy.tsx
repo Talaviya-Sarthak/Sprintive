@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useTheme } from '../context/ThemeContext';
 
 // Balanced set of prominent tech engineering companies with monochrome SVG vectors
 const LOGOS = [
@@ -88,6 +89,16 @@ const LOGOS = [
 const CAROUSEL_ITEMS = [...LOGOS, ...LOGOS];
 
 export default function TrustedBy() {
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
+
+  const headingColor = isLight ? 'text-[#0f172a]' : 'text-[var(--color-text-h)]';
+  const subtextColor = isLight ? 'text-[#475569]' : 'text-[#A1A1AA]';
+  const cardBg = isLight ? 'bg-[#f8fafc]' : 'bg-[#111111]';
+  const cardBorder = isLight ? 'border-[#e2e8f0]' : 'border-white';
+  const shadowClass = isLight ? 'shadow-[3.5px_3.5px_0px_0px_#0f172a]' : 'shadow-[3.5px_3.5px_0px_0px_#F97316]';
+  const textColor = isLight ? 'text-[#0f172a]' : 'text-white';
+
   return (
     <section className="py-20 max-sm:py-14 bg-transparent relative overflow-hidden">
       <div className="max-w-[1160px] mx-auto px-8 max-sm:px-5">
@@ -99,10 +110,10 @@ export default function TrustedBy() {
           transition={{ duration: 0.5 }}
           className="text-center mb-12"
         >
-          <h3 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[var(--color-text-h)] tracking-tight leading-snug max-w-2xl mx-auto">
+          <h3 className={`text-3xl sm:text-4xl md:text-5xl font-extrabold ${headingColor} tracking-tight leading-snug max-w-2xl mx-auto`}>
             Our Clients
           </h3>
-          <h5>We are trusted by world's most innovative teams </h5>
+          <h5 className={subtextColor}>We are trusted by world's most innovative teams</h5>
         </motion.div>
       </div>
 
@@ -116,17 +127,17 @@ export default function TrustedBy() {
             >
               {/* Neo-Brutalist Elevated Card with Hard Offset Back Layer */}
               <div
-                className="
+                className={`
                   flex items-center gap-3 px-5 py-2.5 
-                  bg-[#111111] text-white border-2 border-white rounded-[4px]
-                  shadow-[3.5px_3.5px_0px_0px_#F97316]
+                  ${cardBg} ${textColor} border-2 ${cardBorder} rounded-[4px]
+                  ${shadowClass}
                   select-none whitespace-nowrap
-                "
+                `}
               >
-                <div className="text-white shrink-0">
+                <div className={`${textColor} shrink-0`}>
                   {company.svg}
                 </div>
-                <span className="text-xs font-bold uppercase tracking-wider text-white">
+                <span className={`text-xs font-bold uppercase tracking-wider ${textColor}`}>
                   {company.name}
                 </span>
               </div>
