@@ -26,6 +26,8 @@ interface MeetingState {
   isMuted: boolean;
   isCameraOff: boolean;
   isScreenSharing: boolean;
+  screenShareStream: MediaStream | null;
+  screenShareUserId: string | null;
   activeSpeakerId: string | null;
   sidebarTab: 'participants' | 'chat' | 'transcript' | null;
   unreadCount: number;
@@ -42,6 +44,7 @@ interface MeetingState {
   toggleMute: () => void;
   toggleCamera: () => void;
   toggleScreenShare: () => void;
+  setScreenShare: (sharing: boolean, stream?: MediaStream | null, userId?: string | null) => void;
   setActiveSpeaker: (id: string | null) => void;
   setSidebarTab: (tab: MeetingState['sidebarTab']) => void;
   incrementUnread: () => void;
@@ -58,6 +61,8 @@ export const useMeetingStore = create<MeetingState>((set) => ({
   isMuted: false,
   isCameraOff: false,
   isScreenSharing: false,
+  screenShareStream: null,
+  screenShareUserId: null,
   activeSpeakerId: null,
   sidebarTab: null,
   unreadCount: 0,
@@ -89,6 +94,11 @@ export const useMeetingStore = create<MeetingState>((set) => ({
   toggleMute:        ()           => set((s) => ({ isMuted: !s.isMuted })),
   toggleCamera:      ()           => set((s) => ({ isCameraOff: !s.isCameraOff })),
   toggleScreenShare: ()           => set((s) => ({ isScreenSharing: !s.isScreenSharing })),
+  setScreenShare: (sharing, stream = null, userId = null) => set({
+    isScreenSharing: sharing,
+    screenShareStream: stream,
+    screenShareUserId: userId,
+  }),
   setActiveSpeaker:  (id)         => set({ activeSpeakerId: id }),
   setSidebarTab:     (tab)        => set({ sidebarTab: tab }),
   incrementUnread:   ()           => set((s) => ({ unreadCount: s.unreadCount + 1 })),
@@ -96,6 +106,7 @@ export const useMeetingStore = create<MeetingState>((set) => ({
   reset:             ()           => set({
     meeting: null, participants: [], chats: [], transcriptSegments: [], liveCaption: null,
     isMuted: false, isCameraOff: false, isScreenSharing: false,
+    screenShareStream: null, screenShareUserId: null,
     activeSpeakerId: null, sidebarTab: null, unreadCount: 0,
   }),
 }));

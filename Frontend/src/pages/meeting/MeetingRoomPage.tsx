@@ -12,6 +12,7 @@ import MeetingChat from '../../components/meeting/MeetingChat';
 import ParticipantsList from '../../components/meeting/ParticipantsList';
 import MeetingToolbar from '../../components/meeting/MeetingToolbar';
 import MeetingTimer from '../../components/meeting/MeetingTimer';
+import TranscriptPanel from '../../components/meeting/TranscriptPanel';
 import { MeetingStatusBadge } from '../../components/ui/Badge';
 import type { EndMeetingData } from '../../types';
 
@@ -21,17 +22,19 @@ export default function MeetingRoomPage() {
   const { user } = useAuth();
 
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
+  const screenShareVideoRef = useRef<HTMLVideoElement | null>(null);
 
   const {
     meeting, participants, chats, isMuted, isCameraOff, isScreenSharing,
+    screenShareStream,
     activeSpeakerId, sidebarTab, unreadCount,
     setMeeting, setParticipants, setChats,
-    toggleScreenShare,
+    setScreenShare,
     setSidebarTab, resetUnread, reset,
   } = useMeetingStore();
 
-  const { stream, toggleMic, toggleCamera: toggleCam, startScreenShare, error: mediaError } = useMediaDevices();
-  const { sendChat, startMeeting, endMeeting, onMeetingEnded, onRedirect, onForceLeave, setLocalStream, toggleCamera: socketToggleCamera, toggleMic: socketToggleMic, isConnected, socketError, sttStatus, sendAudioChunk } = useMeetingSocket(meetingId);
+  const { stream, toggleMic, toggleCamera: toggleCam, startScreenShare, stopScreenShare, error: mediaError } = useMediaDevices();
+  const { sendChat, startMeeting, endMeeting, onMeetingEnded, onRedirect, onForceLeave, setLocalStream, toggleCamera: socketToggleCamera, toggleMic: socketToggleMic, isConnected, socketError, sttStatus, sendAudioChunk, screenShareStart, screenShareStop, addScreenShareTrack, removeScreenShareTrack } = useMeetingSocket(meetingId);
 
   // Audio capture: send chunks to server for STT when meeting is active
   const isMeetingActive = meeting?.status === 'active';
@@ -112,6 +115,22 @@ export default function MeetingRoomPage() {
     }
   }, [stream]);
 
+  // Determine the active screen share stream (local or remote) - must be before the effect below
+  const remoteScreenSharer = participants.find(p => p.isScreenSharing && p.user_id !== userId);
+  const activeScreenShareStream = isScreenSharing ? screenShareStream : remoteScreenSharer?.screenStream ?? null;
+  const activeScreenShareUserId = isScreenSharing ? userId : remoteScreenSharer?.user_id ?? null;
+
+  // Bind screen share stream to video element (local or remote)
+  useEffect(() => {
+    const el = screenShareVideoRef.current;
+    console.log('[screen-share] video bind effect: el=', !!el, 'activeScreenShareStream=', !!activeScreenShareStream, 'screenShareStream=', !!screenShareStream);
+    if (el && activeScreenShareStream) {
+      console.log('[screen-share] setting srcObject on video element, stream id=', activeScreenShareStream.id?.slice(0, 8));
+      el.srcObject = activeScreenShareStream;
+      el.play().catch(() => {});
+    }
+  }, [activeScreenShareStream, screenShareStream]);
+
   // Sync initial camera/mic state to all participants on connect + stream ready
   useEffect(() => {
     if (isConnected && stream) {
@@ -140,11 +159,55 @@ export default function MeetingRoomPage() {
   };
 
   const handleScreenShare = async () => {
-    const screenStream = await startScreenShare();
-    if (screenStream) {
-      toggleScreenShare();
+    console.log('[screen-share] handleScreenShare called, isScreenSharing=', isScreenSharing);
+    if (isScreenSharing) {
+      // Stop screen sharing
+      console.log('[screen-share] stopping screen share');
+      removeScreenShareTrack();
+      screenShareStop();
+      setScreenShare(false);
+      stopScreenShare();
+      return;
     }
+
+    const screenStream = await startScreenShare();
+    console.log('[screen-share] startScreenShare returned:', screenStream ? `stream id=${screenStream.id?.slice(0, 8)}, tracks=${screenStream.getTracks().length}` : 'null');
+    if (!screenStream) return;
+
+    const screenTrack = screenStream.getVideoTracks()[0];
+    console.log('[screen-share] screenTrack:', screenTrack ? `id=${screenTrack.id?.slice(0, 8)}, kind=${screenTrack.kind}, enabled=${screenTrack.enabled}, readyState=${screenTrack.readyState}` : 'null');
+    if (!screenTrack) return;
+
+    // Add screen track to all peer connections
+    console.log('[screen-share] calling addScreenShareTrack');
+    addScreenShareTrack(screenTrack);
+
+    // Notify other participants
+    console.log('[screen-share] calling screenShareStart');
+    screenShareStart();
+
+    // Update local state
+    console.log('[screen-share] calling setScreenShare(true)');
+    setScreenShare(true, screenStream, userId);
+
+    // Handle browser native stop sharing button
+    screenTrack.onended = () => {
+      console.log('[screen-share] screenTrack.onended fired');
+      removeScreenShareTrack();
+      screenShareStop();
+      setScreenShare(false);
+    };
   };
+
+  // Cleanup screen share on unmount or leave
+  useEffect(() => {
+    return () => {
+      if (isScreenSharing) {
+        removeScreenShareTrack();
+        screenShareStop();
+      }
+    };
+  }, []);
 
   const handleStartMeeting = () => startMeeting();
 
@@ -153,11 +216,16 @@ export default function MeetingRoomPage() {
   };
 
   const handleLeave = async () => {
+    if (isScreenSharing) {
+      removeScreenShareTrack();
+      screenShareStop();
+    }
+    stopScreenShare();
     if (meetingId) await meetingService.leaveMeeting(meetingId).catch(() => {});
     navigate(-1);
   };
 
-  const handleToggleSidebar = (tab: 'participants' | 'chat') => {
+  const handleToggleSidebar = (tab: 'participants' | 'chat' | 'transcript') => {
     setSidebarTab(sidebarTab === tab ? null : tab);
     if (tab === 'chat') resetUnread();
   };
@@ -307,6 +375,28 @@ export default function MeetingRoomPage() {
       <div className="flex flex-1 overflow-hidden">
         {/* ── Participant Grid ── */}
         <div className="flex-1 p-4 overflow-y-auto">
+          {/* ── Screen Share Display ── */}
+          {activeScreenShareStream && (
+            <div className="mb-3 rounded-xl overflow-hidden border border-[#3B82F6]/30 bg-[#0B1220] relative">
+              <div className="px-3 py-1.5 bg-[#3B82F6]/10 border-b border-[#3B82F6]/20 flex items-center gap-2">
+                <svg className="w-3.5 h-3.5 text-[#3B82F6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <rect x="2" y="3" width="20" height="14" rx="2" />
+                  <path d="M8 21h8M12 17v4" />
+                </svg>
+                <span className="text-[11px] font-medium text-[#3B82F6]">
+                  {activeScreenShareUserId === userId ? 'You are sharing your screen' : `${participants.find(p => p.user_id === activeScreenShareUserId)?.full_name ?? 'Participant'} is sharing their screen`}
+                </span>
+              </div>
+              <video
+                ref={screenShareVideoRef}
+                autoPlay
+                playsInline
+                muted={activeScreenShareUserId === userId}
+                className="w-full max-h-[50vh] object-contain bg-black"
+              />
+            </div>
+          )}
+
           <div className={`grid ${gridCols} gap-3 h-full`}>
             <AnimatePresence>
               {allParticipants.map((p) => (
@@ -332,7 +422,7 @@ export default function MeetingRoomPage() {
               className="border-l border-white/6 bg-[#0d1117] flex flex-col overflow-hidden flex-shrink-0"
             >
               <div className="flex border-b border-white/6">
-                {(['participants', 'chat'] as const).map((tab) => (
+                {(['participants', 'chat', 'transcript'] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => { setSidebarTab(tab); if (tab === 'chat') resetUnread(); }}
@@ -364,6 +454,9 @@ export default function MeetingRoomPage() {
                     onOpen={resetUnread}
                   />
                 )}
+                {sidebarTab === 'transcript' && (
+                  <TranscriptPanel sttStatus={sttStatus} />
+                )}
               </div>
             </motion.div>
           )}
@@ -386,6 +479,7 @@ export default function MeetingRoomPage() {
           onToggleScreen={handleScreenShare}
           onToggleParticipants={() => handleToggleSidebar('participants')}
           onToggleChat={() => handleToggleSidebar('chat')}
+          onToggleTranscript={() => handleToggleSidebar('transcript')}
           onStartMeeting={handleStartMeeting}
           onEndMeeting={handleEndMeeting}
           onLeave={handleLeave}

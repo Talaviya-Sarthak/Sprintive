@@ -137,7 +137,9 @@ export interface Participant {
   isMuted?: boolean;
   isCameraOff?: boolean;
   isSpeaking?: boolean;
+  isScreenSharing?: boolean;
   stream?: MediaStream;
+  screenStream?: MediaStream;
 }
 
 export interface ChatMessage {

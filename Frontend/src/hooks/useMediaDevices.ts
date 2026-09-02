@@ -7,6 +7,7 @@ export function useMediaDevices() {
   const [error, setError]           = useState<string | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const mountedRef = useRef(false);
+  const screenStreamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -48,8 +49,15 @@ export function useMediaDevices() {
 
   const startScreenShare = useCallback(async (): Promise<MediaStream | null> => {
     try {
-      return await navigator.mediaDevices.getDisplayMedia({ video: true });
+      const s = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      screenStreamRef.current = s;
+      return s;
     } catch { return null; }
+  }, []);
+
+  const stopScreenShare = useCallback(() => {
+    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
+    screenStreamRef.current = null;
   }, []);
 
   const stopMedia = () => {
@@ -58,5 +66,5 @@ export function useMediaDevices() {
     setStream(null);
   };
 
-  return { stream, isMuted, isCameraOff, error, toggleMic, toggleCamera, startScreenShare, stopMedia };
+  return { stream, isMuted, isCameraOff, error, toggleMic, toggleCamera, startScreenShare, stopScreenShare, stopMedia };
 }

@@ -41,6 +41,9 @@ export function useMeetingSocket(meetingId: string | undefined) {
   const socketRef = useRef<Socket | null>(null);
   const peerConnections = useRef<Map<string, RTCPeerConnection>>(new Map());
   const localStreamRef  = useRef<MediaStream | null>(null);
+  const screenShareTrackRef = useRef<MediaStreamTrack | null>(null);
+  const remoteVideoTrackCount = useRef<Map<string, number>>(new Map());
+  const peerOfferFns = useRef<Map<string, () => void>>(new Map());
 
   const endCallbacks = useRef<Map<string, (data: any) => void>>(new Map());
   const redirectCallbacks = useRef<Map<string, (url: string) => void>>(new Map());
@@ -74,6 +77,12 @@ export function useMeetingSocket(meetingId: string | undefined) {
     tracks.forEach((t) => {
       if (!pc.getSenders().some((s) => s.track === t)) { pc.addTrack(t, stream); added++; }
     });
+    // Also add the screen share track if one is currently active
+    const ssTrack = screenShareTrackRef.current;
+    if (ssTrack && ssTrack.readyState === 'live' && !pc.getSenders().some((s) => s.track === ssTrack)) {
+      pc.addTrack(ssTrack, new MediaStream([ssTrack]));
+      added++;
+    }
     log(`addTracksToPeer: stream has ${tracks.length} tracks, added ${added} (senders=${pc.getSenders().length})`);
   }, []);
 
@@ -93,8 +102,9 @@ export function useMeetingSocket(meetingId: string | undefined) {
     addTracksToPeer(pc);
 
     const makeOffer = async () => {
-      if (flags.makingOffer || flags.settingAnswer) { log(`makeOffer skipped (making=${flags.makingOffer} settingAns=${flags.settingAnswer}) ${socketId.slice(-5)}`); return; }
-      if (pc.signalingState !== 'stable') { log(`makeOffer skipped (state=${pc.signalingState}) ${socketId.slice(-5)}`); return; }
+      log(`makeOffer CALLED for ${socketId.slice(-5)}: state=${pc.signalingState}, making=${flags.makingOffer}, settingAns=${flags.settingAnswer}, isInit=${flags.isInitiator}, negotiated=${flags.negotiated}, senders=${pc.getSenders().length}`);
+      if (flags.makingOffer || flags.settingAnswer) { log(`makeOffer SKIPPED (making=${flags.makingOffer} settingAns=${flags.settingAnswer}) ${socketId.slice(-5)}`); return; }
+      if (pc.signalingState !== 'stable') { log(`makeOffer SKIPPED (state=${pc.signalingState}) ${socketId.slice(-5)}`); return; }
       // Non-initiator must NOT offer until its first offer/answer exchange completes —
       // otherwise addTrack's negotiationneeded races with the peer's initial offer.
       if (!flags.isInitiator && !flags.negotiated) {
@@ -121,15 +131,36 @@ export function useMeetingSocket(meetingId: string | undefined) {
 
     pc.ontrack = (e) => {
       const stream = e.streams[0] ?? new MediaStream([e.track]);
-      log(`ontrack from ${socketId.slice(-5)}: tracks=${e.track.kind}, streams=${e.streams.length}`);
+      // Identify screen share: second video track from a peer is the screen share
+      const currentCount = remoteVideoTrackCount.current.get(socketId) ?? 0;
+      const isVideo = e.track?.kind === 'video';
+      const newCount = isVideo ? currentCount + 1 : currentCount;
+      if (isVideo) remoteVideoTrackCount.current.set(socketId, newCount);
+      const isScreenShareTrack = isVideo && newCount > 1;
+      log(`ontrack from ${socketId.slice(-5)}: kind=${e.track.kind}, id=${e.track.id?.slice(0, 8)}, streams=${e.streams.length}, videoCount=${newCount}, isScreen=${isScreenShareTrack}, track.enabled=${e.track.enabled}, track.readyState=${e.track.readyState}`);
       let uid = socketToUser.current.get(socketId);
       if (!uid) {
         const p = useMeetingStore.getState().participants.find(x => x.socketId === socketId);
         if (p) uid = p.user_id;
+        if (p) log(`ontrack: resolved uid from participants store: ${uid?.slice(0, 8)}`);
+      } else {
+        log(`ontrack: resolved uid from socketToUser: ${uid?.slice(0, 8)}`);
       }
       if (uid) {
-        updateParticipant(uid, { stream });
+        if (isScreenShareTrack) {
+          log(`ontrack: updating participant ${uid?.slice(0, 8)} with screenStream (stream id=${stream.id?.slice(0, 8)}, tracks=${stream.getTracks().length})`);
+          updateParticipant(uid, { screenStream: stream });
+          // Clean up when the remote screen share track ends (sharer stopped)
+          e.track.onended = () => {
+            log(`remote screen share track ended from ${socketId.slice(-5)}`);
+            updateParticipant(uid!, { screenStream: undefined, isScreenSharing: false });
+          };
+        } else {
+          log(`ontrack: updating participant ${uid?.slice(0, 8)} with regular stream`);
+          updateParticipant(uid, { stream });
+        }
       } else {
+        log(`ontrack: NO uid found for ${socketId.slice(-5)} — queuing in pendingStreams`);
         pendingStreams.current.set(socketId, stream);
       }
     };
@@ -145,6 +176,7 @@ export function useMeetingSocket(meetingId: string | undefined) {
     if (isInitiator) makeOffer();
 
     peerConnections.current.set(socketId, pc);
+    peerOfferFns.current.set(socketId, makeOffer);
 
     return pc;
   }, [meetingId, updateParticipant, addTracksToPeer]);
@@ -272,6 +304,8 @@ export function useMeetingSocket(meetingId: string | undefined) {
           pendingStreams.current.delete(sid);
           negotiationFlags.current.delete(sid);
           pendingCandidates.current.delete(sid);
+          remoteVideoTrackCount.current.delete(sid);
+          peerOfferFns.current.delete(sid);
         });
         removeParticipant(userId);
       });
@@ -354,6 +388,14 @@ export function useMeetingSocket(meetingId: string | undefined) {
         updateParticipant(userId, { isMuted: muted });
       });
 
+      socket.on('screen-share-state', ({ userId, sharing }: { userId: string; socketId: string; sharing: boolean }) => {
+        log(`screen-share-state: userId=${userId.slice(0, 8)} sharing=${sharing}`);
+        updateParticipant(userId, { isScreenSharing: sharing });
+        if (!sharing) {
+          updateParticipant(userId, { screenStream: undefined });
+        }
+      });
+
       // ── WebRTC signaling (perfect negotiation) ──
       socket.on('webrtc:offer', async ({ fromSocketId, offer }: { fromSocketId: string; offer: RTCSessionDescriptionInit }) => {
         const pc = getOrCreatePeer(fromSocketId, false);
@@ -433,6 +475,10 @@ export function useMeetingSocket(meetingId: string | undefined) {
     return () => {
       log(`hook cleanup for meeting ${meetingId?.slice(0, 8)}`);
       disposed = true;
+      screenShareTrackRef.current?.stop();
+      screenShareTrackRef.current = null;
+      remoteVideoTrackCount.current.clear();
+      peerOfferFns.current.clear();
       socketRef.current?.emit('meeting:leave', { meetingId });
       socketRef.current?.disconnect();
       socketRef.current = null;
@@ -553,8 +599,52 @@ export function useMeetingSocket(meetingId: string | undefined) {
     });
   }, []);
 
+  const addScreenShareTrack = useCallback((track: MediaStreamTrack) => {
+    log(`addScreenShareTrack: adding screen track (${track.kind}, id=${track.id.slice(0, 8)}, ready=${track.readyState}) to ${peerConnections.current.size} peers`);
+    screenShareTrackRef.current = track;
+    peerConnections.current.forEach((pc, sid) => {
+      const flags = negotiationFlags.current.get(sid);
+      log(`  peer ${sid.slice(-5)}: signalingState=${pc.signalingState}, isInitiator=${flags?.isInitiator}, negotiated=${flags?.negotiated}, makingOffer=${flags?.makingOffer}`);
+      const stream = new MediaStream([track]);
+      pc.addTrack(track, stream);
+      log(`  peer ${sid.slice(-5)}: addTrack done, senders=${pc.getSenders().length}`);
+    });
+    // Explicitly trigger renegotiation for each peer to ensure the screen track is sent.
+    // onnegotiationneeded may not fire reliably in all cases.
+    peerConnections.current.forEach((pc, sid) => {
+      const requestOffer = peerOfferFns.current.get(sid);
+      const flags = negotiationFlags.current.get(sid);
+      if (requestOffer) {
+        log(`  scheduling renegotiation for ${sid.slice(-5)} in 100ms (state=${pc.signalingState}, isInit=${flags?.isInitiator}, negotiated=${flags?.negotiated})`);
+        // Small delay to let the track addition settle
+        setTimeout(() => {
+          log(`  executing renegotiation for ${sid.slice(-5)} (state=${pc.signalingState}, isInit=${flags?.isInitiator}, negotiated=${flags?.negotiated})`);
+          requestOffer();
+        }, 100);
+      } else {
+        log(`  NO requestOffer fn for ${sid.slice(-5)} — renegotiation will not happen!`);
+      }
+    });
+  }, []);
+
+  const removeScreenShareTrack = useCallback(() => {
+    const track = screenShareTrackRef.current;
+    if (!track) return;
+    log('removeScreenShareTrack: removing screen track from all peers');
+    track.stop();
+    screenShareTrackRef.current = null;
+    peerConnections.current.forEach((pc) => {
+      pc.getSenders().forEach((sender) => {
+        if (sender.track === track) {
+          try { pc.removeTrack(sender); } catch { /* may already be removed */ }
+        }
+      });
+    });
+  }, []);
+
   const leaveMeeting = useCallback(() => {
     log('leaveMeeting');
+    removeScreenShareTrack();
     if (socketRef.current) {
       socketRef.current.emit('meeting:leave', { meetingId });
       socketRef.current.disconnect();
@@ -563,12 +653,14 @@ export function useMeetingSocket(meetingId: string | undefined) {
     socketToUser.current.clear();
     peerConnections.current.forEach((pc) => pc.close());
     peerConnections.current.clear();
-  }, [meetingId]);
+    peerOfferFns.current.clear();
+  }, [meetingId, removeScreenShareTrack]);
 
   return {
     isConnected, socketError, sttStatus,
     sendChat, startMeeting, endMeeting, onMeetingEnded, onRedirect, onForceLeave, leaveMeeting,
     toggleCamera, toggleMic, raiseHand, screenShareStart, screenShareStop, setLocalStream,
+    addScreenShareTrack, removeScreenShareTrack,
     sendAudioChunk,
   };
 }
