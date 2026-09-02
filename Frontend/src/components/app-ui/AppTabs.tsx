@@ -21,7 +21,7 @@ export function AppTabs({ items, activeId, onChange }: AppTabsProps) {
           <button
             key={item.id}
             onClick={() => onChange(item.id)}
-            className={`relative px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer select-none ${
+            className={`relative px-4 py-2 rounded-lg text-[13px] font-medium transition-colors cursor-pointer select-none ${
               isActive ? 'text-[#f4f4f5]' : 'text-[#71717a] hover:text-[#a1a1aa]'
             }`}
           >
@@ -36,10 +36,10 @@ export function AppTabs({ items, activeId, onChange }: AppTabsProps) {
               {item.label}
               {item.count !== undefined && (
                 <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  className={`text-[10px] px-1.5 py-0.2 rounded-md ${
                     isActive
                       ? 'bg-[#27272a] text-[#f4f4f5] font-semibold'
-                      : 'bg-[#18181b] text-[#71717a]'
+                      : 'bg-[#1c1c21] text-[#71717a]'
                   }`}
                 >
                   {item.count}

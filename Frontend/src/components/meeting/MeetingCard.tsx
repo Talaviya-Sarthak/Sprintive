@@ -76,10 +76,10 @@ export default function MeetingCard({ meeting, currentUserId, onEdit, onDelete }
       variant="dashboard"
       hoverable
       title={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <MeetingTypeBadge type={meetingType} />
           {meeting.sprint_name && (
-            <span className="text-[10px] text-[#71717a] font-mono">{meeting.sprint_name}</span>
+            <span className="text-[11px] text-[#52525b] font-mono">{meeting.sprint_name}</span>
           )}
         </div>
       }
@@ -87,10 +87,10 @@ export default function MeetingCard({ meeting, currentUserId, onEdit, onDelete }
       footer={
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-5 h-5 rounded-full bg-[#1c1c21] border border-[#27272a] flex items-center justify-center text-[#f4f4f5] text-[9px] font-semibold shrink-0">
+            <div className="w-5.5 h-5.5 rounded-full bg-[#1c1c21] border border-[#27272a] flex items-center justify-center text-[#a1a1aa] text-[9px] font-semibold shrink-0">
               {getInitials(hostName)}
             </div>
-            <span className="text-xs text-[#a1a1aa] font-medium truncate">{hostName}</span>
+            <span className="text-[12px] text-[#71717a] font-medium truncate">{hostName}</span>
           </div>
 
           <div className="flex items-center gap-1.5">
@@ -128,23 +128,23 @@ export default function MeetingCard({ meeting, currentUserId, onEdit, onDelete }
       <div>
         <h3
           onClick={() => navigate(`/meetings/${meeting.id}`)}
-          className="text-xs font-semibold text-[#f4f4f5] truncate hover:text-white transition-colors cursor-pointer"
+          className="text-[13px] font-semibold text-[#f4f4f5] truncate hover:text-white transition-colors cursor-pointer"
         >
           {meeting.title}
         </h3>
         {meeting.description && (
-          <p className="text-[11px] text-[#a1a1aa] mt-0.5 line-clamp-1">{meeting.description}</p>
+          <p className="text-[12px] text-[#71717a] mt-0.5 line-clamp-1">{meeting.description}</p>
         )}
 
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2.5 text-[11px] text-[#71717a]">
-          <span className="flex items-center gap-1">
-            <Calendar size={12} className="text-[#a1a1aa]" /> {formatDate(getMeetingDateValue(meeting))}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3 text-[12px] text-[#52525b]">
+          <span className="flex items-center gap-1.5">
+            <Calendar size={12} className="text-[#71717a]" /> {formatDate(getMeetingDateValue(meeting))}
           </span>
-          <span className="flex items-center gap-1">
-            <Clock size={12} /> {formatTimeRange(meeting)}
+          <span className="flex items-center gap-1.5">
+            <Clock size={12} className="text-[#71717a]" /> {formatTimeRange(meeting)}
           </span>
-          <span className="flex items-center gap-1">
-            <Users size={12} /> {meeting.participant_count ?? 0}
+          <span className="flex items-center gap-1.5">
+            <Users size={12} className="text-[#71717a]" /> {meeting.participant_count ?? 0}
           </span>
         </div>
       </div>

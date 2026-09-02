@@ -28,19 +28,19 @@ export function AppTable<T>({
 
   const containerClasses = isDash
     ? 'w-full overflow-x-auto bg-[#141417] border border-[#27272a] rounded-xl'
-    : 'w-full overflow-x-auto bg-[#11131C] border border-[#1E2232] rounded-xl shadow-sm';
+    : 'w-full overflow-x-auto bg-[#141417] border border-[#27272a] rounded-xl';
 
   const headerTrClasses = isDash
-    ? 'border-b border-[#1f1f23] bg-[#121215] text-[10px] font-mono uppercase tracking-wider text-[#71717a]'
-    : 'border-b border-[#181A26] bg-[#0C0D14]/80 text-[10px] font-mono uppercase tracking-wider text-[#64748B]';
+    ? 'border-b border-[#1a1a1e] bg-[#111215] text-[10px] font-mono uppercase tracking-wider text-[#52525b]'
+    : 'border-b border-[#1a1a1e] bg-[#111215] text-[10px] font-mono uppercase tracking-wider text-[#52525b]';
 
   const tbodyClasses = isDash
-    ? 'divide-y divide-[#1f1f23] text-xs text-[#a1a1aa]'
-    : 'divide-y divide-[#181A26] text-xs text-[#CBD5E1]';
+    ? 'divide-y divide-[#1a1a1e] text-[13px] text-[#a1a1aa]'
+    : 'divide-y divide-[#1a1a1e] text-[13px] text-[#a1a1aa]';
 
   const rowHover = isDash
-    ? 'transition-colors hover:bg-[#18181b] hover:text-[#f4f4f5]'
-    : 'transition-colors hover:bg-[#171A26]';
+    ? 'transition-colors hover:bg-[#1c1c21] hover:text-[#f4f4f5]'
+    : 'transition-colors hover:bg-[#1c1c21]';
 
   return (
     <div className={containerClasses}>
@@ -57,7 +57,7 @@ export function AppTable<T>({
         <tbody className={tbodyClasses}>
           {data.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="px-4 py-8 text-center text-[#71717a]">
+              <td colSpan={columns.length} className="px-4 py-10 text-center text-[#52525b]">
                 {emptyMessage}
               </td>
             </tr>

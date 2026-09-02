@@ -26,11 +26,11 @@ const STATUS_META: Record<string, { label: string; tone: 'emerald' | 'red' | 'mo
 };
 
 function UserAvatar({ name, avatar, size = 'md' }: { name?: string; avatar?: string | null; size?: 'sm' | 'md' }) {
-  const wrap = size === 'sm' ? 'w-5 h-5 text-[9px] rounded-full' : 'w-8 h-8 text-xs rounded-lg';
-  const imgWrap = size === 'sm' ? 'rounded-full' : 'rounded-lg';
+  const wrap = size === 'sm' ? 'w-5 h-5 text-[9px] rounded-md' : 'w-8 h-8 text-xs rounded-lg';
+  const imgWrap = size === 'sm' ? 'rounded-md' : 'rounded-lg';
   return (
     <div
-      className={`${wrap} bg-[#1c1c21] border border-[#27272a] flex items-center justify-center text-[#f4f4f5] font-semibold shrink-0 overflow-hidden`}
+      className={`${wrap} bg-[#1c1c21] border border-[#27272a] flex items-center justify-center text-[#a1a1aa] font-semibold shrink-0 overflow-hidden`}
     >
       {avatar ? (
         <img src={avatar} className={`w-full h-full object-cover ${imgWrap}`} alt={name ?? 'User'} />
@@ -118,24 +118,24 @@ function InviteFlow({ teamId, onSent }: { teamId: string; onSent?: (results: Inv
     <div className="space-y-4">
       <AppInput
         icon={<Search size={14} />}
-        placeholder="Search by name or email…"
+        placeholder="Search by name or email..."
         value={query}
         autoFocus
         onChange={e => setQuery(e.target.value)}
       />
 
-      <div className="max-h-52 overflow-y-auto rounded-lg border border-[#27272a] bg-[#121215] divide-y divide-[#1f1f23]">
+      <div className="max-h-52 overflow-y-auto rounded-lg border border-[#27272a] bg-[#111215] divide-y divide-[#1a1a1e]">
         {searching ? (
           <div className="flex items-center justify-center py-8">
             <div className="w-5 h-5 border-2 border-[#27272a] border-t-[#f4f4f5] rounded-full animate-spin" />
           </div>
         ) : trimmed.length === 0 ? (
           <div className="py-8 text-center">
-            <p className="text-xs text-[#71717a]">Start typing to search Sprintive users.</p>
+            <p className="text-[13px] text-[#52525b]">Start typing to search Sprintive users.</p>
           </div>
         ) : visibleResults.length === 0 ? (
           <div className="py-8 text-center">
-            <p className="text-xs text-[#71717a]">No matching users found.</p>
+            <p className="text-[13px] text-[#52525b]">No matching users found.</p>
           </div>
         ) : (
           visibleResults.map(u => {
@@ -145,12 +145,12 @@ function InviteFlow({ teamId, onSent }: { teamId: string; onSent?: (results: Inv
             const alreadyInvited = u.already_invited;
             const isDisabled = alreadyMember || alreadyInvited;
             return (
-              <div key={u.id} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+              <div key={u.id} className="flex items-center justify-between gap-3 px-3.5 py-2.5 hover:bg-[#141417] transition-colors">
                 <div className="flex items-center gap-3 min-w-0">
                   <UserAvatar name={u.name} avatar={u.avatar} />
                   <div className="min-w-0">
-                    <p className="text-xs font-medium text-[#f4f4f5] truncate">{u.name}</p>
-                    <p className="text-[10px] text-[#71717a] truncate">{u.email}</p>
+                    <p className="text-[13px] font-medium text-[#f4f4f5] truncate">{u.name}</p>
+                    <p className="text-[11px] text-[#52525b] truncate">{u.email}</p>
                   </div>
                 </div>
 
@@ -175,7 +175,7 @@ function InviteFlow({ teamId, onSent }: { teamId: string; onSent?: (results: Inv
 
       {selected.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-[11px] font-mono font-medium text-[#71717a] uppercase tracking-wider">
+          <h4 className="text-[11px] font-mono font-semibold text-[#52525b] uppercase tracking-wider">
             Selected Members ({selected.length})
           </h4>
           <div className="flex flex-wrap gap-2">
@@ -185,9 +185,9 @@ function InviteFlow({ teamId, onSent }: { teamId: string; onSent?: (results: Inv
               return (
                 <span
                   key={u.id}
-                  className={`inline-flex items-center gap-2 pl-1.5 pr-1 py-1 rounded-full border text-[11px] font-medium transition-colors ${
+                  className={`inline-flex items-center gap-2 pl-1.5 pr-1 py-1 rounded-md border text-[12px] font-medium transition-colors ${
                     disabled
-                      ? 'bg-[#18181b] border-[#27272a] text-[#71717a]'
+                      ? 'bg-[#1c1c21] border-[#27272a] text-[#52525b]'
                       : 'bg-[#1c1c21] border-[#27272a] text-[#f4f4f5]'
                   }`}
                 >
@@ -197,7 +197,7 @@ function InviteFlow({ teamId, onSent }: { teamId: string; onSent?: (results: Inv
                     <button
                       type="button"
                       onClick={() => handleRemove(u.id)}
-                      className="p-0.5 text-[#71717a] hover:text-[#f4f4f5] hover:bg-[#27272a] rounded-full transition-colors cursor-pointer"
+                      className="p-0.5 text-[#71717a] hover:text-[#f4f4f5] hover:bg-[#27272a] rounded transition-colors cursor-pointer"
                       aria-label={`Remove ${u.name}`}
                     >
                       <X size={11} />
@@ -211,14 +211,14 @@ function InviteFlow({ teamId, onSent }: { teamId: string; onSent?: (results: Inv
       )}
 
       {sentResults && sentResults.length > 0 && (
-        <div className="rounded-lg border border-[#27272a] bg-[#121215] divide-y divide-[#1f1f23]">
+        <div className="rounded-lg border border-[#27272a] bg-[#111215] divide-y divide-[#1a1a1e]">
           {selected.map(u => {
             const r = sentUserById.get(u.id);
             if (!r) return null;
             const meta = STATUS_META[r.status] ?? { label: r.status, tone: 'mono' };
             return (
               <div key={u.id} className="flex items-center justify-between gap-3 px-3.5 py-2">
-                <span className="text-xs text-[#f4f4f5] truncate">{u.name}</span>
+                <span className="text-[13px] text-[#f4f4f5] truncate">{u.name}</span>
                 <AppBadge variant={meta.tone} size="xs">
                   {meta.label}
                 </AppBadge>
@@ -231,7 +231,7 @@ function InviteFlow({ teamId, onSent }: { teamId: string; onSent?: (results: Inv
       {error && <p className="text-[11px] text-red-400 font-medium">{error}</p>}
 
       <div className="flex items-center justify-between gap-3 w-full">
-        <div className="flex items-center gap-1.5 text-[11px] text-[#71717a]">
+        <div className="flex items-center gap-1.5 text-[12px] text-[#52525b]">
           <Users size={13} />
           {selected.length} selected
         </div>

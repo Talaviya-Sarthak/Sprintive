@@ -16,6 +16,11 @@
   .dash-border-subtle {
     border-color: #1f1f23;
   }
+  .transition-base {
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 180ms;
+  }
 }
 
 @theme {
@@ -87,7 +92,7 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 99px;
   }
 
@@ -134,6 +139,17 @@
   }
 }
 
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
 .animate-carousel {
   animation: carousel 35s linear infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, #141417 25%, #1c1c21 50%, #141417 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
 }

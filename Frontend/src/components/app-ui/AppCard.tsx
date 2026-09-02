@@ -25,32 +25,34 @@ export function AppCard({
 
   const containerClasses = isDash
     ? `bg-[#141417] border border-[#27272a] rounded-xl overflow-hidden flex flex-col justify-between ${
-        hoverable ? 'hover:border-[#3f3f46] hover:bg-[#18181b] transition-all duration-150' : ''
+        hoverable ? 'hover:border-[#3f3f46] hover:bg-[#18181b] transition-all duration-200' : ''
       }`
-    : `bg-[#11131C] border border-[#1E2232] rounded-xl overflow-hidden shadow-sm flex flex-col justify-between ${
-        hoverable ? 'hover:border-[#2A2F45] transition-colors duration-150' : ''
+    : `bg-[#141417] border border-[#27272a] rounded-xl overflow-hidden flex flex-col justify-between ${
+        hoverable ? 'hover:border-[#3f3f46] transition-all duration-200' : ''
       }`;
 
-  const headerBorder = isDash ? 'border-b border-[#1f1f23]' : 'border-b border-[#181A26]';
-  const footerBg = isDash ? 'bg-[#121215] border-t border-[#1f1f23] text-[#a1a1aa]' : 'bg-[#0C0D14] border-t border-[#181A26] text-[#94A3B8]';
+  const headerBorder = isDash ? 'border-b border-[#1a1a1e]' : 'border-b border-[#1a1a1e]';
+  const footerBg = isDash
+    ? 'bg-[#111215] border-t border-[#1a1a1e] text-[#71717a]'
+    : 'bg-[#111215] border-t border-[#1a1a1e] text-[#71717a]';
 
   return (
     <motion.div
-      whileHover={hoverable ? { y: -1.5 } : undefined}
-      transition={{ duration: 0.15, ease: 'easeOut' }}
+      whileHover={hoverable ? { y: -2 } : undefined}
+      transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
       className={`${containerClasses} ${className}`}
       {...(props as any)}
     >
       {(title || subtitle || action) && (
-        <div className={`flex items-start justify-between gap-3 px-4 py-3.5 ${headerBorder}`}>
+        <div className={`flex items-start justify-between gap-3 px-5 py-4 ${headerBorder}`}>
           <div className="min-w-0 flex-1">
             {title && (
-              <h3 className={`text-xs font-semibold tracking-tight truncate ${isDash ? 'text-[#f4f4f5]' : 'text-[#F8FAFC]'}`}>
+              <h3 className={`text-[13px] font-semibold tracking-tight truncate ${isDash ? 'text-[#f4f4f5]' : 'text-[#f4f4f5]'}`}>
                 {title}
               </h3>
             )}
             {subtitle && (
-              <p className={`text-[11px] mt-0.5 leading-normal truncate ${isDash ? 'text-[#a1a1aa]' : 'text-[#64748B]'}`}>
+              <p className={`text-[12px] mt-0.5 leading-relaxed truncate ${isDash ? 'text-[#71717a]' : 'text-[#71717a]'}`}>
                 {subtitle}
               </p>
             )}
@@ -59,10 +61,10 @@ export function AppCard({
         </div>
       )}
 
-      <div className="p-4 flex-1">{children}</div>
+      <div className="p-5 flex-1">{children}</div>
 
       {footer && (
-        <div className={`px-4 py-3 flex items-center justify-between text-xs ${footerBg}`}>
+        <div className={`px-5 py-3.5 flex items-center justify-between text-[13px] ${footerBg}`}>
           {footer}
         </div>
       )}

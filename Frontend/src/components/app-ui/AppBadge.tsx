@@ -11,19 +11,19 @@ export function AppBadge({ variant = 'neutral', size = 'xs', children, pulse = f
   const sizeClasses = size === 'xs' ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-0.5 text-[11px]';
 
   const variantStyles: Record<string, string> = {
-    neutral: 'bg-[#171A26] text-[#94A3B8] border-[#232738]',
-    mono: 'bg-[#1f1f23] text-[#a1a1aa] border-[#27272a]',
-    orange: 'bg-[#F97316]/10 text-[#F97316] border-[#F97316]/25',
-    emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25',
-    amber: 'bg-amber-500/10 text-amber-400 border-amber-500/25',
-    blue: 'bg-blue-500/10 text-blue-400 border-blue-500/25',
-    purple: 'bg-purple-500/10 text-purple-400 border-purple-500/25',
-    red: 'bg-red-500/10 text-red-400 border-red-500/25',
+    neutral: 'bg-[#1c1c21] text-[#71717a] border-[#27272a]',
+    mono: 'bg-[#1c1c21] text-[#71717a] border-[#27272a]',
+    orange: 'bg-[#F97316]/10 text-[#F97316] border-[#F97316]/20',
+    emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    amber: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    blue: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    purple: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+    red: 'bg-red-500/10 text-red-400 border-red-500/20',
   };
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border font-medium tracking-tight ${sizeClasses} ${
+      className={`inline-flex items-center gap-1.5 rounded-md border font-medium tracking-tight ${sizeClasses} ${
         variantStyles[variant] || variantStyles.neutral
       }`}
     >
@@ -36,7 +36,7 @@ export function AppBadge({ variant = 'neutral', size = 'xs', children, pulse = f
               ? 'bg-[#F97316]'
               : variant === 'red'
               ? 'bg-red-400'
-              : 'bg-[#94A3B8]'
+              : 'bg-[#71717a]'
           }`}
         />
       )}
