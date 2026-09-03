@@ -110,6 +110,13 @@ export const meetingService = {
     if (!meeting) throw new AppError('Meeting not found', 404);
     if (meeting.status === 'ended' || meeting.status === 'completed') throw new AppError('Meeting has ended', 400);
 
+    if (meeting.status === 'scheduled' && meeting.scheduled_start) {
+      const scheduledStart = new Date(meeting.scheduled_start);
+      if (Date.now() < scheduledStart.getTime()) {
+        throw new AppError('Meeting has not started yet', 400);
+      }
+    }
+
     await meetingRepository.addParticipant(meeting_id, userId, 'participant');
     const participants = await meetingRepository.getParticipants(meeting_id);
     return { meeting: this.transformMeeting(meeting), participants };
@@ -245,7 +252,7 @@ export const meetingService = {
       start_time,
       end_time,
       timezone: m.timezone || 'UTC',
-      duration_minutes: m.duration_minutes || 30,
+      duration_minutes: m.duration_minutes || 0,
       agenda: Array.isArray(m.agenda) ? m.agenda : (typeof m.agenda === 'string' ? JSON.parse(m.agenda) : []),
       participant_count: parseInt(m.participant_count) || 0,
       started_at: m.started_at ? new Date(m.started_at).toISOString() : undefined,

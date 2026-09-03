@@ -34,7 +34,12 @@ export default function TeamSettings() {
   const [color, setColor] = useState('#F97316');
   const [timezone, setTimezone] = useState('UTC');
   const [workingDays, setWorkingDays] = useState<number[]>([1, 2, 3, 4, 5]);
-  const [dailyScrumTime, setDailyScrumTime] = useState('09:00');
+  const getDefaultScrumTime = () => {
+    const now = new Date();
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  };
+
+  const [dailyScrumTime, setDailyScrumTime] = useState(getDefaultScrumTime());
   const [avatarUrl, setAvatarUrl] = useState('');
   const [uploading, setUploading] = useState(false);
 
@@ -58,7 +63,7 @@ export default function TeamSettings() {
         setColor(t.color ?? '#F97316');
         setTimezone(t.timezone ?? 'UTC');
         setWorkingDays((t.working_days as number[]) ?? [1, 2, 3, 4, 5]);
-        setDailyScrumTime(t.daily_scrum_time ?? '09:00');
+        setDailyScrumTime(t.daily_scrum_time ?? getDefaultScrumTime());
         setAvatarUrl(t.avatar_url ?? '');
       })
       .catch(() => setError('Failed to load settings.'))

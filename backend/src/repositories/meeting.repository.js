@@ -5,7 +5,7 @@ export const meetingRepository = {
     const { rows } = await pool.query(
       `INSERT INTO meetings (team_id, title, description, sprint_name, meeting_type, host_id, scheduled_start, scheduled_end, timezone, duration_minutes, agenda)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
-      [team_id, title, description ?? null, sprint_name ?? null, meeting_type ?? 'daily_scrum', host_id, scheduled_start ?? null, scheduled_end ?? null, timezone ?? 'UTC', duration_minutes ?? 30, agenda ? JSON.stringify(agenda) : '[]']
+      [team_id, title, description ?? null, sprint_name ?? null, meeting_type ?? 'daily_scrum', host_id, scheduled_start ?? null, scheduled_end ?? null, timezone ?? 'UTC', duration_minutes, agenda ? JSON.stringify(agenda) : '[]']
     );
     return rows[0];
   },

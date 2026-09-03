@@ -24,14 +24,25 @@ export default function CreateMeeting() {
   const queryTeamId = params.get('team_id') ?? '';
   const initialTeamId = queryTeamId || (teams.length > 0 ? teams[0].id : '');
 
+  const getDefaultStartTime = () => {
+    const now = new Date();
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  };
+
+  const getDefaultEndTime = () => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 30);
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  };
+
   const [form, setForm] = useState({
     team_id: initialTeamId,
     title: '',
     description: '',
     meeting_type: 'daily_scrum' as MeetingType,
     date: new Date().toISOString().split('T')[0],
-    start_time: '10:00',
-    end_time: '10:30',
+    start_time: getDefaultStartTime(),
+    end_time: getDefaultEndTime(),
     sprint_name: '',
   });
 

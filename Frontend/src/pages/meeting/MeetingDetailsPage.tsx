@@ -35,6 +35,17 @@ function formatTime12h(time?: string) {
   return `${hour}:${m.toString().padStart(2, '0')} ${ampm}`;
 }
 
+function isMeetingJoinable(meeting: { status: string; date?: string; start_time?: string; started_at?: string }): boolean {
+  if (meeting.status === 'active') return true;
+  if (meeting.status !== 'scheduled') return false;
+  if (!meeting.date || !meeting.start_time) return false;
+  const [y, m, d] = meeting.date.split('-').map(Number);
+  const [h, min] = meeting.start_time.split(':').map(Number);
+  if ([y, m, d, h, min].some(Number.isNaN)) return false;
+  const scheduledStart = new Date(y, m - 1, d, h, min);
+  return Date.now() >= scheduledStart.getTime();
+}
+
 function formatDateFromNow(targetDate: string, targetTime: string) {
   if (!targetDate || !targetTime) return null;
   const [y, m, d] = targetDate.split('-').map(Number);
@@ -143,12 +154,13 @@ export default function MeetingDetailsPage() {
   const isOwner = meeting.host_id === user?.id || meeting.host_id === 'u1';
   const activeTeamId = teamId || meeting.team_id;
   const teamMembers = getTeamMembers();
+  const canJoin = isMeetingJoinable(meeting);
 
   const infoItems = [
     { label: 'Date', value: formatDateLong(meeting.date ?? meeting.started_at ?? ''), icon: <Clock size={15} /> },
     { label: 'Time', value: `${formatTime12h(meeting.start_time)} - ${formatTime12h(meeting.end_time)}`, icon: <Clock size={15} /> },
     { label: 'Timezone', value: meeting.timezone ?? 'UTC', icon: <Clock size={15} /> },
-    { label: 'Duration', value: `${meeting.duration_minutes ?? 30} minutes`, icon: <Clock size={15} /> },
+    { label: 'Duration', value: `${meeting.duration_minutes} minutes`, icon: <Clock size={15} /> },
     { label: 'Participants', value: `${meeting.participant_count ?? 1} members`, icon: <Users size={15} /> },
     { label: 'Meeting ID', value: meeting.id, icon: <Tag size={15} /> },
   ];
@@ -179,7 +191,7 @@ export default function MeetingDetailsPage() {
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              {meeting.status === 'active' || meeting.status === 'scheduled' ? (
+              {meeting.status === 'active' && (
                 <AppButton
                   variant="mono"
                   size="sm"
@@ -187,7 +199,18 @@ export default function MeetingDetailsPage() {
                 >
                   <Play size={14} className="mr-1.5" /> Join Meeting
                 </AppButton>
-              ) : null}
+              )}
+
+              {meeting.status === 'scheduled' && (
+                <AppButton
+                  variant="mono"
+                  size="sm"
+                  disabled={!canJoin}
+                  onClick={() => navigate(`/meetings/${meeting.id}/lobby`)}
+                >
+                  <Play size={14} className="mr-1.5" /> {canJoin ? 'Join Meeting' : `Starts at ${formatTime12h(meeting.start_time)}`}
+                </AppButton>
+              )}
 
               {meeting.status === 'ended' && (
                 <AppButton
