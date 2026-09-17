@@ -5,8 +5,11 @@ from app.models.transcript import (
     AnalyzeNoiseResponse,
     ParseTranscriptRequest,
     ParsedTranscript,
+    RemoveRepetitionsRequest,
+    RemoveRepetitionsResponse,
 )
 from app.services.transcript_service import TranscriptService
+
 
 logger = logging.getLogger(__name__)
 
@@ -100,3 +103,36 @@ async def analyze_noise_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred while analyzing noise: {str(exc)}",
         )
+
+
+@router.post(
+    "/remove-repetitions",
+    response_model=RemoveRepetitionsResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Remove STT repetitions from structured transcript (Part 3)",
+    description=(
+        "Detects and safely removes consecutive word repetitions, repeated phrases, "
+        "and exact/near duplicate consecutive segments from the same speaker. "
+        "Original verbatim text, speaker, and sequence are preserved 100% untouched."
+    ),
+)
+async def remove_repetitions_endpoint(
+    request: RemoveRepetitionsRequest,
+    service: TranscriptService = Depends(get_transcript_service),
+) -> RemoveRepetitionsResponse:
+    """
+    Handle POST /transcript/remove-repetitions.
+    Delegates to TranscriptService -> RepetitionRemover.
+    """
+    try:
+        return service.remove_repetitions(
+            meeting_id=request.meeting_id,
+            segments=request.segments,
+        )
+    except Exception as exc:
+        logger.exception("Unexpected error while removing repetitions: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while removing repetitions: {str(exc)}",
+        )
+

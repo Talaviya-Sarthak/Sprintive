@@ -13,6 +13,17 @@ class SegmentClassification(str, Enum):
     UNCERTAIN = "UNCERTAIN"
 
 
+class RepetitionType(str, Enum):
+    """Classification of repetition types detected in Part 3."""
+
+    NONE = "NONE"
+    CONSECUTIVE_WORD = "CONSECUTIVE_WORD"
+    REPEATED_PHRASE = "REPEATED_PHRASE"
+    EXACT_SEGMENT_DUPLICATE = "EXACT_SEGMENT_DUPLICATE"
+    NEAR_SEGMENT_DUPLICATE = "NEAR_SEGMENT_DUPLICATE"
+    UNCERTAIN = "UNCERTAIN"
+
+
 class TranscriptSegment(BaseModel):
     """Represents a single structured segment of spoken dialogue."""
 
@@ -38,6 +49,26 @@ class TranscriptSegment(BaseModel):
         description="Confidence score between 0.0 and 1.0 for the classification.",
         ge=0.0,
         le=1.0,
+    )
+    processed_text: Optional[str] = Field(
+        default=None,
+        description="Processed text produced by repetition removal (empty string if marked duplicate).",
+    )
+    repetition_modified: bool = Field(
+        default=False,
+        description="Whether repetition removal modified this segment.",
+    )
+    repetition_type: RepetitionType = Field(
+        default=RepetitionType.NONE,
+        description="Type of repetition detected and processed.",
+    )
+    is_duplicate: bool = Field(
+        default=False,
+        description="Whether this segment is a duplicate of a nearby segment.",
+    )
+    duplicate_of_sequence: Optional[int] = Field(
+        default=None,
+        description="Sequence number of the original segment this is a duplicate of.",
     )
 
     model_config = ConfigDict(
@@ -187,3 +218,88 @@ class AnalyzeNoiseResponse(BaseModel):
             }
         }
     )
+
+
+class RemoveRepetitionsRequest(BaseModel):
+    """Request payload for the repetition removal API endpoint."""
+
+    meeting_id: str = Field(
+        ...,
+        description="Unique identifier of the meeting.",
+    )
+    segments: List[TranscriptSegment] = Field(
+        ...,
+        description="Structured and/or classified transcript segments from Part 2.",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "meeting_id": "meeting_123",
+                "segments": [
+                    {
+                        "sequence": 1,
+                        "speaker": "Sarthak Talaviya",
+                        "text": "Good morning everyone.",
+                        "classification": "CLEAN",
+                        "confidence": 0.99,
+                    },
+                    {
+                        "sequence": 2,
+                        "speaker": "Harshit Pambhar",
+                        "text": "Aló, aló, aló, aló.",
+                        "classification": "POSSIBLE_REPETITION",
+                        "confidence": 0.95,
+                    },
+                ],
+            }
+        }
+    )
+
+
+class RemoveRepetitionsResponse(BaseModel):
+    """Response payload for the repetition removal API endpoint."""
+
+    meeting_id: str = Field(
+        ...,
+        description="Unique identifier of the meeting.",
+    )
+    segments: List[TranscriptSegment] = Field(
+        ...,
+        description="Processed transcript segments with repetition removed and traceability metadata.",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "meeting_id": "meeting_123",
+                "segments": [
+                    {
+                        "sequence": 1,
+                        "speaker": "Sarthak Talaviya",
+                        "text": "Good morning everyone.",
+                        "processed_text": "Good morning everyone.",
+                        "classification": "CLEAN",
+                        "confidence": 0.99,
+                        "repetition_modified": False,
+                        "repetition_type": "NONE",
+                        "is_duplicate": False,
+                        "duplicate_of_sequence": None,
+                    },
+                    {
+                        "sequence": 2,
+                        "speaker": "Harshit Pambhar",
+                        "text": "Aló, aló, aló, aló.",
+                        "processed_text": "Aló.",
+                        "classification": "POSSIBLE_REPETITION",
+                        "confidence": 0.95,
+                        "repetition_modified": True,
+                        "repetition_type": "CONSECUTIVE_WORD",
+                        "is_duplicate": False,
+                        "duplicate_of_sequence": None,
+                    },
+                ],
+            }
+        }
+    )
+

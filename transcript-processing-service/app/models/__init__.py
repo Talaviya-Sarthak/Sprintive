@@ -4,15 +4,22 @@ from app.models.transcript import (
     AnalyzeNoiseResponse,
     ParseTranscriptRequest,
     ParsedTranscript,
+    RemoveRepetitionsRequest,
+    RemoveRepetitionsResponse,
+    RepetitionType,
     SegmentClassification,
     TranscriptSegment,
 )
 
 __all__ = [
     "SegmentClassification",
+    "RepetitionType",
     "TranscriptSegment",
     "ParsedTranscript",
     "ParseTranscriptRequest",
     "AnalyzeNoiseRequest",
     "AnalyzeNoiseResponse",
+    "RemoveRepetitionsRequest",
+    "RemoveRepetitionsResponse",
 ]
+

@@ -1,9 +1,16 @@
 import logging
 from typing import List, Optional
-from app.models.transcript import AnalyzeNoiseResponse, ParsedTranscript, TranscriptSegment
+from app.models.transcript import (
+    AnalyzeNoiseResponse,
+    ParsedTranscript,
+    RemoveRepetitionsResponse,
+    TranscriptSegment,
+)
 from app.services.noise_detector import detect_noise_and_fillers
+from app.services.repetition_remover import remove_repetitions
 from app.services.transcript_parser import parse_transcript
 from app.services.transcript_storage import BaseTranscriptStorage, get_transcript_storage
+
 
 logger = logging.getLogger(__name__)
 
@@ -73,3 +80,30 @@ class TranscriptService:
             meeting_id=meeting_id,
             segments=classified_segments,
         )
+
+    def remove_repetitions(
+        self,
+        meeting_id: str,
+        segments: List[TranscriptSegment],
+    ) -> RemoveRepetitionsResponse:
+        """
+        Run Part 3: Repetition Removal on structured/classified transcript segments.
+
+        Args:
+            meeting_id: The ID of the meeting.
+            segments: List of TranscriptSegment objects from Part 2.
+
+        Returns:
+            RemoveRepetitionsResponse containing processed segments with repetition metadata.
+        """
+        logger.info(
+            "Removing repetitions for meeting_id=%s (%d segments)",
+            meeting_id,
+            len(segments),
+        )
+        processed_segments = remove_repetitions(segments)
+        return RemoveRepetitionsResponse(
+            meeting_id=meeting_id,
+            segments=processed_segments,
+        )
+
