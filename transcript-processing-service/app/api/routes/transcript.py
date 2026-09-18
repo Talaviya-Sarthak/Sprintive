@@ -5,11 +5,14 @@ from app.models.transcript import (
     AnalyzeNoiseResponse,
     FilterRelevanceRequest,
     FilterRelevanceResponse,
+    MergeFragmentsRequest,
+    MergeFragmentsResponse,
     ParseTranscriptRequest,
     ParsedTranscript,
     RemoveRepetitionsRequest,
     RemoveRepetitionsResponse,
 )
+
 
 from app.services.transcript_service import TranscriptService
 
@@ -170,5 +173,38 @@ async def filter_relevance_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred while filtering relevance: {str(exc)}",
         )
+
+
+@router.post(
+    "/merge-fragments",
+    response_model=MergeFragmentsResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Merge split fragments into coherent sentences (Part 5)",
+    description=(
+        "Converts filtered transcript segments into coherent conversational units by merging "
+        "sentence fragments belonging to the same speaker while preserving exact constituent words, "
+        "source sequences, and all upstream metadata."
+    ),
+)
+async def merge_fragments_endpoint(
+    request: MergeFragmentsRequest,
+    service: TranscriptService = Depends(get_transcript_service),
+) -> MergeFragmentsResponse:
+    """
+    Handle POST /transcript/merge-fragments.
+    Delegates to TranscriptService -> FragmentMerger.
+    """
+    try:
+        return service.merge_fragments(
+            meeting_id=request.meeting_id,
+            segments=request.segments,
+        )
+    except Exception as exc:
+        logger.exception("Unexpected error while merging fragments: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while merging fragments: {str(exc)}",
+        )
+
 
 

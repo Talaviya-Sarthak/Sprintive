@@ -3,15 +3,18 @@ from typing import List, Optional
 from app.models.transcript import (
     AnalyzeNoiseResponse,
     FilterRelevanceResponse,
+    MergeFragmentsResponse,
     ParsedTranscript,
     RemoveRepetitionsResponse,
     TranscriptSegment,
 )
+from app.services.fragment_merger import merge_fragments
 from app.services.noise_detector import detect_noise_and_fillers
 from app.services.relevance_filter import filter_irrelevant_content
 from app.services.repetition_remover import remove_repetitions
 from app.services.transcript_parser import parse_transcript
 from app.services.transcript_storage import BaseTranscriptStorage, get_transcript_storage
+
 
 
 
@@ -135,5 +138,32 @@ class TranscriptService:
             meeting_id=meeting_id,
             segments=filtered_segments,
         )
+
+    def merge_fragments(
+        self,
+        meeting_id: str,
+        segments: List[TranscriptSegment],
+    ) -> MergeFragmentsResponse:
+        """
+        Run Part 5: Sentence Segmentation & Fragment Merging on transcript segments.
+
+        Args:
+            meeting_id: The ID of the meeting.
+            segments: List of TranscriptSegment objects from Part 4.
+
+        Returns:
+            MergeFragmentsResponse containing coherent units with source_sequences preserved.
+        """
+        logger.info(
+            "Merging fragments for meeting_id=%s (%d segments)",
+            meeting_id,
+            len(segments),
+        )
+        merged_segments = merge_fragments(segments)
+        return MergeFragmentsResponse(
+            meeting_id=meeting_id,
+            segments=merged_segments,
+        )
+
 
 

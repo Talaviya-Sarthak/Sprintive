@@ -136,3 +136,15 @@ def test_full_pipeline_parts_1_to_4_e2e():
     assert part4_filtered[1].relevance.value == "MEETING_CONTENT"
     assert part4_filtered[1].include_in_meeting is True
 
+    # Part 5: Fragment Merging
+    from app.services.fragment_merger import merge_fragments
+
+    part5_merged = merge_fragments(part4_filtered)
+    assert len(part5_merged) > 0
+
+    # Verify source sequences are preserved in all segments
+    for seg in part5_merged:
+        assert len(seg.source_sequences) >= 1
+        assert seg.speaker != "UNKNOWN" or not seg.merged
+
+

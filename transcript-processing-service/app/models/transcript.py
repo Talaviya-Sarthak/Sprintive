@@ -99,6 +99,15 @@ class TranscriptSegment(BaseModel):
         default=None,
         description="Reason or rationale for the relevance classification decision.",
     )
+    source_sequences: List[int] = Field(
+        default_factory=list,
+        description="List of original Part 1 sequence IDs represented in this segment.",
+    )
+    merged: bool = Field(
+        default=False,
+        description="Whether this segment is a merged conversational unit composed of multiple fragments.",
+    )
+
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -409,5 +418,86 @@ class FilterRelevanceResponse(BaseModel):
             }
         }
     )
+
+
+class MergeFragmentsRequest(BaseModel):
+    """Request payload for the sentence segmentation and fragment merging API endpoint."""
+
+    meeting_id: str = Field(
+        ...,
+        description="Unique identifier of the meeting.",
+    )
+    segments: List[TranscriptSegment] = Field(
+        ...,
+        description="Transcript segments from Part 4 to segment and merge.",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "meeting_id": "meeting_123",
+                "segments": [
+                    {
+                        "sequence": 11,
+                        "speaker": "Sarthak Talaviya",
+                        "text": "Before we begin,",
+                        "processed_text": "Before we begin,",
+                        "relevance": "MEETING_CONTENT",
+                        "include_in_meeting": True,
+                    },
+                    {
+                        "sequence": 12,
+                        "speaker": "Sarthak Talaviya",
+                        "text": "does anyone have any blockers",
+                        "processed_text": "does anyone have any blockers",
+                        "relevance": "MEETING_CONTENT",
+                        "include_in_meeting": True,
+                    },
+                    {
+                        "sequence": 13,
+                        "speaker": "Sarthak Talaviya",
+                        "text": "from yesterday?",
+                        "processed_text": "from yesterday?",
+                        "relevance": "MEETING_CONTENT",
+                        "include_in_meeting": True,
+                    },
+                ],
+            }
+        }
+    )
+
+
+class MergeFragmentsResponse(BaseModel):
+    """Response payload for the sentence segmentation and fragment merging API endpoint."""
+
+    meeting_id: str = Field(
+        ...,
+        description="Unique identifier of the meeting.",
+    )
+    segments: List[TranscriptSegment] = Field(
+        ...,
+        description="Coherent transcript units with fragments merged and source_sequences preserved.",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "meeting_id": "meeting_123",
+                "segments": [
+                    {
+                        "sequence": 11,
+                        "source_sequences": [11, 12, 13],
+                        "speaker": "Sarthak Talaviya",
+                        "text": "Before we begin, does anyone have any blockers from yesterday?",
+                        "processed_text": "Before we begin, does anyone have any blockers from yesterday?",
+                        "relevance": "MEETING_CONTENT",
+                        "include_in_meeting": True,
+                        "merged": True,
+                    }
+                ],
+            }
+        }
+    )
+
 
 

@@ -4,6 +4,8 @@ from app.models.transcript import (
     AnalyzeNoiseResponse,
     FilterRelevanceRequest,
     FilterRelevanceResponse,
+    MergeFragmentsRequest,
+    MergeFragmentsResponse,
     ParseTranscriptRequest,
     ParsedTranscript,
     RelevanceCategory,
@@ -27,6 +29,9 @@ __all__ = [
     "RemoveRepetitionsResponse",
     "FilterRelevanceRequest",
     "FilterRelevanceResponse",
+    "MergeFragmentsRequest",
+    "MergeFragmentsResponse",
 ]
+
 
 
