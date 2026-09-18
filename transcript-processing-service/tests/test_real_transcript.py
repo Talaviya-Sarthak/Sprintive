@@ -82,3 +82,57 @@ def test_real_sprintive_transcript_integration():
     assert parsed.segments[12].speaker == "Sarthak Talaviya"
     assert parsed.segments[12].text == "Let's wait for the health check."
     assert len(parsed.warnings) == 1
+
+
+def test_full_pipeline_parts_1_to_4_e2e():
+    """
+    Test End-to-End Pipeline:
+    Part 1: Raw Transcript -> Parse
+    Part 2: Structured Segments -> Noise & Filler Detection
+    Part 3: Classified Segments -> Repetition Removal
+    Part 4: Filter Relevance
+    """
+    from app.services.noise_detector import detect_noise_and_fillers
+    from app.services.repetition_remover import remove_repetitions
+    from app.services.relevance_filter import filter_irrelevant_content
+
+    fixture_path = os.path.join(os.path.dirname(__file__), "fixtures", "sample_real_transcript.txt")
+    with open(fixture_path, "r", encoding="utf-8") as f:
+        raw_text = f.read()
+
+    # Part 1: Parsing
+    part1_parsed = parse_transcript(raw_text, meeting_id="meeting_e2e_001")
+    assert len(part1_parsed.segments) == 13
+
+    # Part 2: Noise & Filler Detection
+    part2_classified = detect_noise_and_fillers(part1_parsed.segments)
+    assert len(part2_classified) == 13
+
+    # Part 3: Repetition Removal
+    part3_processed = remove_repetitions(part2_classified)
+    assert len(part3_processed) == 13
+
+    # Verify repetition was removed in segment 7 ("ready ready." -> "ready.")
+    seg7 = part3_processed[6]
+    assert "ready ready." in seg7.text  # Verbatim text preserved!
+    assert "ready." in seg7.processed_text
+    assert seg7.repetition_modified is True
+
+    # Part 4: Relevance Filtering
+    part4_filtered = filter_irrelevant_content(part3_processed)
+    assert len(part4_filtered) == 13
+
+    # Invariants check
+    for idx, (p1, p4) in enumerate(zip(part1_parsed.segments, part4_filtered)):
+        assert p4.sequence == p1.sequence
+        assert p4.speaker == p1.speaker
+        assert p4.text == p1.text  # Raw verbatim never modified!
+
+    # Meeting content check: Segment 1 is meeting start
+    assert part4_filtered[0].relevance.value == "MEETING_CONTENT"
+    assert part4_filtered[0].include_in_meeting is True
+
+    # Technical discussion: Segment 2 (database connection issue)
+    assert part4_filtered[1].relevance.value == "MEETING_CONTENT"
+    assert part4_filtered[1].include_in_meeting is True
+

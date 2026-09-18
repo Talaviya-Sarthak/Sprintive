@@ -3,11 +3,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.models.transcript import (
     AnalyzeNoiseRequest,
     AnalyzeNoiseResponse,
+    FilterRelevanceRequest,
+    FilterRelevanceResponse,
     ParseTranscriptRequest,
     ParsedTranscript,
     RemoveRepetitionsRequest,
     RemoveRepetitionsResponse,
 )
+
 from app.services.transcript_service import TranscriptService
 
 
@@ -135,4 +138,37 @@ async def remove_repetitions_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred while removing repetitions: {str(exc)}",
         )
+
+
+@router.post(
+    "/filter-relevance",
+    response_model=FilterRelevanceResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Filter pre-meeting and irrelevant content (Part 4)",
+    description=(
+        "Identifies pre-meeting conversation, audio checks, connection checks, "
+        "and irrelevant content while strictly preserving meeting content, technical "
+        "discussions, speaker boundaries, and raw verbatim text."
+    ),
+)
+async def filter_relevance_endpoint(
+    request: FilterRelevanceRequest,
+    service: TranscriptService = Depends(get_transcript_service),
+) -> FilterRelevanceResponse:
+    """
+    Handle POST /transcript/filter-relevance.
+    Delegates to TranscriptService -> RelevanceFilter.
+    """
+    try:
+        return service.filter_relevance(
+            meeting_id=request.meeting_id,
+            segments=request.segments,
+        )
+    except Exception as exc:
+        logger.exception("Unexpected error while filtering relevance: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while filtering relevance: {str(exc)}",
+        )
+
 

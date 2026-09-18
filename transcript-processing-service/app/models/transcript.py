@@ -24,6 +24,17 @@ class RepetitionType(str, Enum):
     UNCERTAIN = "UNCERTAIN"
 
 
+class RelevanceCategory(str, Enum):
+    """Relevance classification category for Part 4 filtering."""
+
+    MEETING_CONTENT = "MEETING_CONTENT"
+    PRE_MEETING = "PRE_MEETING"
+    AUDIO_CHECK = "AUDIO_CHECK"
+    CONNECTION_CHECK = "CONNECTION_CHECK"
+    IRRELEVANT = "IRRELEVANT"
+    UNCERTAIN = "UNCERTAIN"
+
+
 class TranscriptSegment(BaseModel):
     """Represents a single structured segment of spoken dialogue."""
 
@@ -69,6 +80,24 @@ class TranscriptSegment(BaseModel):
     duplicate_of_sequence: Optional[int] = Field(
         default=None,
         description="Sequence number of the original segment this is a duplicate of.",
+    )
+    relevance: Optional[RelevanceCategory] = Field(
+        default=None,
+        description="Detected relevance category (MEETING_CONTENT, PRE_MEETING, AUDIO_CHECK, CONNECTION_CHECK, IRRELEVANT, UNCERTAIN).",
+    )
+    include_in_meeting: bool = Field(
+        default=True,
+        description="Whether this segment should be included in the meeting transcript.",
+    )
+    filter_confidence: Optional[float] = Field(
+        default=None,
+        description="Confidence score between 0.0 and 1.0 for the relevance decision.",
+        ge=0.0,
+        le=1.0,
+    )
+    filter_reason: Optional[str] = Field(
+        default=None,
+        description="Reason or rationale for the relevance classification decision.",
     )
 
     model_config = ConfigDict(
@@ -302,4 +331,83 @@ class RemoveRepetitionsResponse(BaseModel):
             }
         }
     )
+
+
+class FilterRelevanceRequest(BaseModel):
+    """Request payload for the relevance filtering API endpoint."""
+
+    meeting_id: str = Field(
+        ...,
+        description="Unique identifier of the meeting.",
+    )
+    segments: List[TranscriptSegment] = Field(
+        ...,
+        description="Transcript segments from Part 3 to filter for relevance.",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "meeting_id": "meeting_123",
+                "segments": [
+                    {
+                        "sequence": 1,
+                        "speaker": "Harshit Pambhar",
+                        "text": "Hello, can you hear me?",
+                        "processed_text": "Hello, can you hear me?",
+                    },
+                    {
+                        "sequence": 2,
+                        "speaker": "Sarthak Talaviya",
+                        "text": "Good morning everyone. Let's get started with today's meeting.",
+                        "processed_text": "Good morning everyone. Let's get started with today's meeting.",
+                    },
+                ],
+            }
+        }
+    )
+
+
+class FilterRelevanceResponse(BaseModel):
+    """Response payload for the relevance filtering API endpoint."""
+
+    meeting_id: str = Field(
+        ...,
+        description="Unique identifier of the meeting.",
+    )
+    segments: List[TranscriptSegment] = Field(
+        ...,
+        description="Processed transcript segments with relevance metadata and include_in_meeting decision.",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "meeting_id": "meeting_123",
+                "segments": [
+                    {
+                        "sequence": 1,
+                        "speaker": "Harshit Pambhar",
+                        "text": "Hello, can you hear me?",
+                        "processed_text": "Hello, can you hear me?",
+                        "relevance": "AUDIO_CHECK",
+                        "include_in_meeting": False,
+                        "filter_confidence": 0.95,
+                        "filter_reason": "Microphone and audio check",
+                    },
+                    {
+                        "sequence": 2,
+                        "speaker": "Sarthak Talaviya",
+                        "text": "Good morning everyone. Let's get started with today's meeting.",
+                        "processed_text": "Good morning everyone. Let's get started with today's meeting.",
+                        "relevance": "MEETING_CONTENT",
+                        "include_in_meeting": True,
+                        "filter_confidence": 0.99,
+                        "filter_reason": "Explicit meeting start signal",
+                    },
+                ],
+            }
+        }
+    )
+
 

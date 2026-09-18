@@ -2,14 +2,17 @@ import logging
 from typing import List, Optional
 from app.models.transcript import (
     AnalyzeNoiseResponse,
+    FilterRelevanceResponse,
     ParsedTranscript,
     RemoveRepetitionsResponse,
     TranscriptSegment,
 )
 from app.services.noise_detector import detect_noise_and_fillers
+from app.services.relevance_filter import filter_irrelevant_content
 from app.services.repetition_remover import remove_repetitions
 from app.services.transcript_parser import parse_transcript
 from app.services.transcript_storage import BaseTranscriptStorage, get_transcript_storage
+
 
 
 logger = logging.getLogger(__name__)
@@ -106,4 +109,31 @@ class TranscriptService:
             meeting_id=meeting_id,
             segments=processed_segments,
         )
+
+    def filter_relevance(
+        self,
+        meeting_id: str,
+        segments: List[TranscriptSegment],
+    ) -> FilterRelevanceResponse:
+        """
+        Run Part 4: Pre-Meeting & Irrelevant Content Filtering on transcript segments.
+
+        Args:
+            meeting_id: The ID of the meeting.
+            segments: List of TranscriptSegment objects from Part 3.
+
+        Returns:
+            FilterRelevanceResponse containing segments with relevance classification and include_in_meeting.
+        """
+        logger.info(
+            "Filtering relevance for meeting_id=%s (%d segments)",
+            meeting_id,
+            len(segments),
+        )
+        filtered_segments = filter_irrelevant_content(segments)
+        return FilterRelevanceResponse(
+            meeting_id=meeting_id,
+            segments=filtered_segments,
+        )
+
 

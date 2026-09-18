@@ -2,8 +2,11 @@
 from app.models.transcript import (
     AnalyzeNoiseRequest,
     AnalyzeNoiseResponse,
+    FilterRelevanceRequest,
+    FilterRelevanceResponse,
     ParseTranscriptRequest,
     ParsedTranscript,
+    RelevanceCategory,
     RemoveRepetitionsRequest,
     RemoveRepetitionsResponse,
     RepetitionType,
@@ -14,6 +17,7 @@ from app.models.transcript import (
 __all__ = [
     "SegmentClassification",
     "RepetitionType",
+    "RelevanceCategory",
     "TranscriptSegment",
     "ParsedTranscript",
     "ParseTranscriptRequest",
@@ -21,5 +25,8 @@ __all__ = [
     "AnalyzeNoiseResponse",
     "RemoveRepetitionsRequest",
     "RemoveRepetitionsResponse",
+    "FilterRelevanceRequest",
+    "FilterRelevanceResponse",
 ]
+
 
