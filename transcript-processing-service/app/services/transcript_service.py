@@ -2,6 +2,7 @@ import logging
 from typing import List, Optional
 from app.models.transcript import (
     AnalyzeNoiseResponse,
+    CorrectSTTResponse,
     FilterRelevanceResponse,
     MergeFragmentsResponse,
     ParsedTranscript,
@@ -12,8 +13,10 @@ from app.services.fragment_merger import merge_fragments
 from app.services.noise_detector import detect_noise_and_fillers
 from app.services.relevance_filter import filter_irrelevant_content
 from app.services.repetition_remover import remove_repetitions
+from app.services.stt_corrector import correct_stt_segments
 from app.services.transcript_parser import parse_transcript
 from app.services.transcript_storage import BaseTranscriptStorage, get_transcript_storage
+from app.services.llm_client import BaseLLMClient
 
 
 
@@ -163,6 +166,37 @@ class TranscriptService:
         return MergeFragmentsResponse(
             meeting_id=meeting_id,
             segments=merged_segments,
+        )
+
+    def correct_stt(
+        self,
+        meeting_id: str,
+        segments: List[TranscriptSegment],
+        llm_client: Optional[BaseLLMClient] = None,
+    ) -> CorrectSTTResponse:
+        """
+        Run Part 6: STT Error Correction on transcript segments.
+
+        Args:
+            meeting_id: The ID of the meeting.
+            segments: List of TranscriptSegment objects from Part 5.
+            llm_client: Optional LLM client (defaults to configured client).
+
+        Returns:
+            CorrectSTTResponse containing segments with stt_corrected_text and traceability metadata.
+        """
+        logger.info(
+            "Correcting STT errors for meeting_id=%s (%d segments)",
+            meeting_id,
+            len(segments),
+        )
+        corrected_segments = correct_stt_segments(
+            segments=segments,
+            llm_client=llm_client,
+        )
+        return CorrectSTTResponse(
+            meeting_id=meeting_id,
+            segments=corrected_segments,
         )
 
 

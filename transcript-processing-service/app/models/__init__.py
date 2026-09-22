@@ -13,6 +13,10 @@ from app.models.transcript import (
     RemoveRepetitionsResponse,
     RepetitionType,
     SegmentClassification,
+    STTCorrectionLLMOutput,
+    STTErrorType,
+    CorrectSTTRequest,
+    CorrectSTTResponse,
     TranscriptSegment,
 )
 
@@ -31,6 +35,10 @@ __all__ = [
     "FilterRelevanceResponse",
     "MergeFragmentsRequest",
     "MergeFragmentsResponse",
+    "STTErrorType",
+    "STTCorrectionLLMOutput",
+    "CorrectSTTRequest",
+    "CorrectSTTResponse",
 ]
 
 

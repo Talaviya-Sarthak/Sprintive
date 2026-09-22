@@ -3,6 +3,10 @@
 > **Modules Implemented:**
 > - **Module 1: Transcript Parsing (Foundation)**
 > - **Module 2: Noise & Filler Detection (Classification)**
+> - **Module 3: Repetition Removal (Deduplication)**
+> - **Module 4: Pre-Meeting & Irrelevant Content Filtering**
+> - **Module 5: Sentence Segmentation & Fragment Merging**
+> - **Module 6: STT Error Correction (Acoustic Correction with Traceability)**
 
 The **Sprintive Transcript Processing Service** is a modular Python/FastAPI service responsible for transforming raw meeting transcripts stored in Supabase into structured, validated data suitable for downstream AI analysis.
 
@@ -277,6 +281,53 @@ All 39 unit and integration tests will execute, covering:
       "text": "[Background typing noise and low hum]",
       "classification": "NOISE",
       "confidence": 0.98
+    }
+  ]
+}
+```
+
+---
+
+### Endpoint: `POST /transcript/correct-stt` (Part 6)
+
+Corrects speech-to-text recognition errors using structured LLM analysis while strictly preserving raw text, processed text, speaker, and language.
+
+#### Request Payload
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 15,
+      "source_sequences": [15, 16],
+      "speaker": "Harshit Pambhar",
+      "text": "I have one issue with the date abase connection.",
+      "processed_text": "I have one issue with the date abase connection.",
+      "merged": true,
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+#### Successful Response (`200 OK`)
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 15,
+      "source_sequences": [15, 16],
+      "speaker": "Harshit Pambhar",
+      "text": "I have one issue with the date abase connection.",
+      "processed_text": "I have one issue with the date abase connection.",
+      "stt_corrected_text": "I have one issue with the database connection.",
+      "stt_modified": true,
+      "stt_confidence": 0.96,
+      "stt_error_type": "TECHNICAL_TERM_MISRECOGNITION",
+      "stt_reason": "Likely STT recognition error for technical term",
+      "merged": true,
+      "include_in_meeting": true
     }
   ]
 }

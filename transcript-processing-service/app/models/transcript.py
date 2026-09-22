@@ -35,6 +35,18 @@ class RelevanceCategory(str, Enum):
     UNCERTAIN = "UNCERTAIN"
 
 
+class STTErrorType(str, Enum):
+    """Diagnostic categories for speech-to-text recognition errors in Part 6."""
+
+    PHONETIC_MISRECOGNITION = "PHONETIC_MISRECOGNITION"
+    TECHNICAL_TERM_MISRECOGNITION = "TECHNICAL_TERM_MISRECOGNITION"
+    WORD_BOUNDARY_ERROR = "WORD_BOUNDARY_ERROR"
+    HOMOPHONE_OR_SIMILAR_SOUND = "HOMOPHONE_OR_SIMILAR_SOUND"
+    PARTIAL_WORD_ERROR = "PARTIAL_WORD_ERROR"
+    CONTEXTUAL_RECOGNITION_ERROR = "CONTEXTUAL_RECOGNITION_ERROR"
+    UNKNOWN = "UNKNOWN"
+
+
 class TranscriptSegment(BaseModel):
     """Represents a single structured segment of spoken dialogue."""
 
@@ -106,6 +118,28 @@ class TranscriptSegment(BaseModel):
     merged: bool = Field(
         default=False,
         description="Whether this segment is a merged conversational unit composed of multiple fragments.",
+    )
+    stt_corrected_text: Optional[str] = Field(
+        default=None,
+        description="Text produced after speech-to-text error correction.",
+    )
+    stt_modified: bool = Field(
+        default=False,
+        description="Whether STT error correction modified this segment.",
+    )
+    stt_confidence: Optional[float] = Field(
+        default=None,
+        description="Confidence score between 0.0 and 1.0 for the STT correction decision.",
+        ge=0.0,
+        le=1.0,
+    )
+    stt_error_type: Optional[STTErrorType] = Field(
+        default=None,
+        description="Diagnostic category of detected STT error, if any.",
+    )
+    stt_reason: Optional[str] = Field(
+        default=None,
+        description="Rationale or explanation for the STT correction or non-correction decision.",
     )
 
 
@@ -493,6 +527,102 @@ class MergeFragmentsResponse(BaseModel):
                         "relevance": "MEETING_CONTENT",
                         "include_in_meeting": True,
                         "merged": True,
+                    }
+                ],
+            }
+        }
+    )
+
+
+class STTCorrectionLLMOutput(BaseModel):
+    """Structured response schema expected from LLM for STT error correction."""
+
+    corrected_text: str = Field(
+        ...,
+        description="Corrected text if an STT error was detected with high confidence, or the original text unchanged.",
+    )
+    modified: bool = Field(
+        ...,
+        description="True if an STT error was corrected; False if the original text was preserved unchanged.",
+    )
+    confidence: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Application-level confidence estimate between 0.0 and 1.0.",
+    )
+    error_type: Optional[STTErrorType] = Field(
+        default=None,
+        description="Diagnostic category of the STT error, if modified=True.",
+    )
+    reason: Optional[str] = Field(
+        default=None,
+        description="Brief justification of why the correction was made or why original text was preserved.",
+    )
+
+
+class CorrectSTTRequest(BaseModel):
+    """Request payload for the STT error correction API endpoint."""
+
+    meeting_id: str = Field(
+        ...,
+        description="Unique identifier of the meeting.",
+    )
+    segments: List[TranscriptSegment] = Field(
+        ...,
+        description="Transcript segments from Part 5 to analyze and correct for STT errors.",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "meeting_id": "meeting_123",
+                "segments": [
+                    {
+                        "sequence": 15,
+                        "source_sequences": [15, 16],
+                        "speaker": "Harshit Pambhar",
+                        "text": "I have one issue with the date abase connection.",
+                        "processed_text": "I have one issue with the date abase connection.",
+                        "merged": True,
+                        "include_in_meeting": True,
+                    }
+                ],
+            }
+        }
+    )
+
+
+class CorrectSTTResponse(BaseModel):
+    """Response payload for the STT error correction API endpoint."""
+
+    meeting_id: str = Field(
+        ...,
+        description="Unique identifier of the meeting.",
+    )
+    segments: List[TranscriptSegment] = Field(
+        ...,
+        description="Transcript segments with stt_corrected_text and traceability metadata.",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "meeting_id": "meeting_123",
+                "segments": [
+                    {
+                        "sequence": 15,
+                        "source_sequences": [15, 16],
+                        "speaker": "Harshit Pambhar",
+                        "text": "I have one issue with the date abase connection.",
+                        "processed_text": "I have one issue with the date abase connection.",
+                        "stt_corrected_text": "I have one issue with the database connection.",
+                        "stt_modified": True,
+                        "stt_confidence": 0.96,
+                        "stt_error_type": "TECHNICAL_TERM_MISRECOGNITION",
+                        "stt_reason": "Likely STT recognition error for technical term",
+                        "merged": True,
+                        "include_in_meeting": True,
                     }
                 ],
             }

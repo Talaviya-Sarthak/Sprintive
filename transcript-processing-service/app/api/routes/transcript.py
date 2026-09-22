@@ -3,6 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.models.transcript import (
     AnalyzeNoiseRequest,
     AnalyzeNoiseResponse,
+    CorrectSTTRequest,
+    CorrectSTTResponse,
     FilterRelevanceRequest,
     FilterRelevanceResponse,
     MergeFragmentsRequest,
@@ -204,6 +206,38 @@ async def merge_fragments_endpoint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred while merging fragments: {str(exc)}",
+        )
+
+
+@router.post(
+    "/correct-stt",
+    response_model=CorrectSTTResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Correct STT errors in structured transcript (Part 6)",
+    description=(
+        "Identifies and corrects high-confidence speech-to-text recognition errors "
+        "while strictly preserving original meaning, language, speaker, and intent. "
+        "The original raw text and upstream processed_text are preserved 100% untouched."
+    ),
+)
+async def correct_stt_endpoint(
+    request: CorrectSTTRequest,
+    service: TranscriptService = Depends(get_transcript_service),
+) -> CorrectSTTResponse:
+    """
+    Handle POST /transcript/correct-stt.
+    Delegates to TranscriptService -> STTCorrector.
+    """
+    try:
+        return service.correct_stt(
+            meeting_id=request.meeting_id,
+            segments=request.segments,
+        )
+    except Exception as exc:
+        logger.exception("Unexpected error while correcting STT errors: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while correcting STT errors: {str(exc)}",
         )
 
 
