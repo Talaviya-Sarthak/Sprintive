@@ -9,6 +9,8 @@ from app.models.transcript import (
     FilterRelevanceResponse,
     MergeFragmentsRequest,
     MergeFragmentsResponse,
+    NormalizeGrammarRequest,
+    NormalizeGrammarResponse,
     ParseTranscriptRequest,
     ParsedTranscript,
     RemoveRepetitionsRequest,
@@ -238,6 +240,39 @@ async def correct_stt_endpoint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred while correcting STT errors: {str(exc)}",
+        )
+
+
+@router.post(
+    "/normalize-grammar",
+    response_model=NormalizeGrammarResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Normalize grammar and punctuation in transcript (Part 7)",
+    description=(
+        "Improves grammatical readability and normalizes punctuation across "
+        "transcript segments while strictly preserving meaning, speaker intent, "
+        "conversational tone, language, and conversation structure. "
+        "Original raw text, processed text, and STT-corrected text remain 100% untouched."
+    ),
+)
+async def normalize_grammar_endpoint(
+    request: NormalizeGrammarRequest,
+    service: TranscriptService = Depends(get_transcript_service),
+) -> NormalizeGrammarResponse:
+    """
+    Handle POST /transcript/normalize-grammar.
+    Delegates to TranscriptService -> GrammarNormalizer.
+    """
+    try:
+        return service.normalize_grammar(
+            meeting_id=request.meeting_id,
+            segments=request.segments,
+        )
+    except Exception as exc:
+        logger.exception("Unexpected error while normalizing grammar: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while normalizing grammar: {str(exc)}",
         )
 
 

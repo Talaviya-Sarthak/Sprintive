@@ -7,6 +7,7 @@
 > - **Module 4: Pre-Meeting & Irrelevant Content Filtering**
 > - **Module 5: Sentence Segmentation & Fragment Merging**
 > - **Module 6: STT Error Correction (Acoustic Correction with Traceability)**
+> - **Module 7: Grammar & Punctuation Normalization (Readability & Punctuation)**
 
 The **Sprintive Transcript Processing Service** is a modular Python/FastAPI service responsible for transforming raw meeting transcripts stored in Supabase into structured, validated data suitable for downstream AI analysis.
 
@@ -326,6 +327,61 @@ Corrects speech-to-text recognition errors using structured LLM analysis while s
       "stt_confidence": 0.96,
       "stt_error_type": "TECHNICAL_TERM_MISRECOGNITION",
       "stt_reason": "Likely STT recognition error for technical term",
+      "merged": true,
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+---
+
+### Endpoint: `POST /transcript/normalize-grammar` (Part 7)
+
+Improves grammatical readability and normalizes punctuation across transcript segments while strictly preserving speaker intent, conversational tone, meaning, language, and conversation structure.
+
+#### Request Payload
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 15,
+      "source_sequences": [15, 16],
+      "speaker": "Harshit Pambhar",
+      "text": "I have one issue with the date abase connection.",
+      "processed_text": "I have one issue with the date abase connection.",
+      "stt_corrected_text": "I have one issue with the database connection.",
+      "stt_modified": true,
+      "merged": true,
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+#### Successful Response (`200 OK`)
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 15,
+      "source_sequences": [15, 16],
+      "speaker": "Harshit Pambhar",
+      "text": "I have one issue with the date abase connection.",
+      "processed_text": "I have one issue with the date abase connection.",
+      "stt_corrected_text": "I have one issue with the database connection.",
+      "stt_modified": true,
+      "grammar_corrected_text": "I have an issue with the database connection.",
+      "grammar_modified": true,
+      "grammar_confidence": 0.95,
+      "grammar_changes": [
+        {
+          "type": "GRAMMAR",
+          "description": "Adjusted article for grammatical readability"
+        }
+      ],
       "merged": true,
       "include_in_meeting": true
     }

@@ -27,6 +27,11 @@ class Settings(BaseSettings):
     STT_CONTEXT_BEFORE: int = 2
     STT_CONTEXT_AFTER: int = 2
 
+    # Grammar and Punctuation Normalization settings (Part 7)
+    GRAMMAR_CONFIDENCE_THRESHOLD: float = 0.85
+    GRAMMAR_CONTEXT_BEFORE: int = 2
+    GRAMMAR_CONTEXT_AFTER: int = 2
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

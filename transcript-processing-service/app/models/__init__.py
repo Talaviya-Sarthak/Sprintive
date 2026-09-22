@@ -17,6 +17,11 @@ from app.models.transcript import (
     STTErrorType,
     CorrectSTTRequest,
     CorrectSTTResponse,
+    GrammarChangeDetail,
+    GrammarChangeType,
+    GrammarNormalizationLLMOutput,
+    NormalizeGrammarRequest,
+    NormalizeGrammarResponse,
     TranscriptSegment,
 )
 
@@ -39,6 +44,11 @@ __all__ = [
     "STTCorrectionLLMOutput",
     "CorrectSTTRequest",
     "CorrectSTTResponse",
+    "GrammarChangeType",
+    "GrammarChangeDetail",
+    "GrammarNormalizationLLMOutput",
+    "NormalizeGrammarRequest",
+    "NormalizeGrammarResponse",
 ]
 
 

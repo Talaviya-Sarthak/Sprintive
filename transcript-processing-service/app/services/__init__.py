@@ -6,6 +6,7 @@ from app.services.llm_client import (
     get_llm_client,
     set_llm_client,
 )
+from app.services.grammar_normalizer import normalize_grammar_and_punctuation
 from app.services.noise_detector import detect_noise_and_fillers
 from app.services.relevance_filter import filter_irrelevant_content
 from app.services.repetition_remover import remove_repetitions
@@ -25,6 +26,7 @@ __all__ = [
     "filter_irrelevant_content",
     "merge_fragments",
     "correct_stt_segments",
+    "normalize_grammar_and_punctuation",
     "BaseLLMClient",
     "OpenAICompatibleLLMClient",
     "MockLLMClient",

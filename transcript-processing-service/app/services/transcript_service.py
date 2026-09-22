@@ -5,11 +5,13 @@ from app.models.transcript import (
     CorrectSTTResponse,
     FilterRelevanceResponse,
     MergeFragmentsResponse,
+    NormalizeGrammarResponse,
     ParsedTranscript,
     RemoveRepetitionsResponse,
     TranscriptSegment,
 )
 from app.services.fragment_merger import merge_fragments
+from app.services.grammar_normalizer import normalize_grammar_and_punctuation
 from app.services.noise_detector import detect_noise_and_fillers
 from app.services.relevance_filter import filter_irrelevant_content
 from app.services.repetition_remover import remove_repetitions
@@ -197,6 +199,37 @@ class TranscriptService:
         return CorrectSTTResponse(
             meeting_id=meeting_id,
             segments=corrected_segments,
+        )
+
+    def normalize_grammar(
+        self,
+        meeting_id: str,
+        segments: List[TranscriptSegment],
+        llm_client: Optional[BaseLLMClient] = None,
+    ) -> NormalizeGrammarResponse:
+        """
+        Run Part 7: Grammar & Punctuation Normalization on transcript segments.
+
+        Args:
+            meeting_id: The ID of the meeting.
+            segments: List of TranscriptSegment objects from Part 6.
+            llm_client: Optional LLM client (defaults to configured client).
+
+        Returns:
+            NormalizeGrammarResponse containing segments with grammar_corrected_text and metadata.
+        """
+        logger.info(
+            "Normalizing grammar & punctuation for meeting_id=%s (%d segments)",
+            meeting_id,
+            len(segments),
+        )
+        normalized_segments = normalize_grammar_and_punctuation(
+            segments=segments,
+            llm_client=llm_client,
+        )
+        return NormalizeGrammarResponse(
+            meeting_id=meeting_id,
+            segments=normalized_segments,
         )
 
 

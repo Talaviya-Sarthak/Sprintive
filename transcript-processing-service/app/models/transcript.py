@@ -47,6 +47,28 @@ class STTErrorType(str, Enum):
     UNKNOWN = "UNKNOWN"
 
 
+class GrammarChangeType(str, Enum):
+    """Categories of grammar and punctuation normalization changes."""
+
+    GRAMMAR = "GRAMMAR"
+    PUNCTUATION = "PUNCTUATION"
+    CAPITALIZATION = "CAPITALIZATION"
+    WORD_ORDER = "WORD_ORDER"
+
+
+class GrammarChangeDetail(BaseModel):
+    """Detailed record of a single grammar or punctuation change."""
+
+    type: GrammarChangeType = Field(
+        ...,
+        description="Category of the change made (GRAMMAR, PUNCTUATION, CAPITALIZATION, WORD_ORDER).",
+    )
+    description: str = Field(
+        ...,
+        description="Human-readable description of what was adjusted.",
+    )
+
+
 class TranscriptSegment(BaseModel):
     """Represents a single structured segment of spoken dialogue."""
 
@@ -140,6 +162,28 @@ class TranscriptSegment(BaseModel):
     stt_reason: Optional[str] = Field(
         default=None,
         description="Rationale or explanation for the STT correction or non-correction decision.",
+    )
+    grammar_corrected_text: Optional[str] = Field(
+        default=None,
+        description="Text produced after grammar and punctuation normalization.",
+    )
+    grammar_modified: bool = Field(
+        default=False,
+        description="Whether grammar/punctuation normalization modified this segment.",
+    )
+    grammar_confidence: Optional[float] = Field(
+        default=None,
+        description="Confidence score between 0.0 and 1.0 for the grammar normalization decision.",
+        ge=0.0,
+        le=1.0,
+    )
+    grammar_changes: List[GrammarChangeDetail] = Field(
+        default_factory=list,
+        description="List of specific grammatical or punctuation modifications applied.",
+    )
+    grammar_reason: Optional[str] = Field(
+        default=None,
+        description="Rationale or explanation for the grammar normalization decision.",
     )
 
 
@@ -623,6 +667,100 @@ class CorrectSTTResponse(BaseModel):
                         "stt_reason": "Likely STT recognition error for technical term",
                         "merged": True,
                         "include_in_meeting": True,
+                    }
+                ],
+            }
+        }
+    )
+
+
+class GrammarNormalizationLLMOutput(BaseModel):
+    """Structured response schema expected from LLM for grammar and punctuation normalization."""
+
+    corrected_text: str = Field(
+        ...,
+        description="Grammatically normalized and punctuated text, or the input text unchanged.",
+    )
+    modified: bool = Field(
+        ...,
+        description="True if grammar or punctuation was adjusted; False if input text was preserved unchanged.",
+    )
+    confidence: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Application-level confidence estimate between 0.0 and 1.0.",
+    )
+    changes: List[GrammarChangeDetail] = Field(
+        default_factory=list,
+        description="List of specific grammatical, punctuation, capitalization, or word-order changes applied.",
+    )
+    reason: Optional[str] = Field(
+        default=None,
+        description="Brief justification for the changes applied or why input text was preserved.",
+    )
+
+
+class NormalizeGrammarRequest(BaseModel):
+    """Request payload for the grammar normalization API endpoint."""
+
+    meeting_id: str = Field(
+        ...,
+        description="Unique identifier of the meeting.",
+    )
+    segments: List[TranscriptSegment] = Field(
+        ...,
+        description="Transcript segments from Part 6 to normalize for grammar and punctuation.",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "meeting_id": "meeting_123",
+                "segments": [
+                    {
+                        "sequence": 15,
+                        "source_sequences": [15, 16],
+                        "speaker": "Harshit Pambhar",
+                        "text": "I have one issue with the date abase connection.",
+                        "processed_text": "I have one issue with the date abase connection.",
+                        "stt_corrected_text": "I have one issue with the database connection.",
+                        "stt_modified": True,
+                    }
+                ],
+            }
+        }
+    )
+
+
+class NormalizeGrammarResponse(BaseModel):
+    """Response payload for the grammar normalization API endpoint."""
+
+    meeting_id: str = Field(
+        ...,
+        description="Unique identifier of the meeting.",
+    )
+    segments: List[TranscriptSegment] = Field(
+        ...,
+        description="Transcript segments with grammar_corrected_text and complete traceability metadata.",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "meeting_id": "meeting_123",
+                "segments": [
+                    {
+                        "sequence": 15,
+                        "source_sequences": [15, 16],
+                        "speaker": "Harshit Pambhar",
+                        "text": "I have one issue with the date abase connection.",
+                        "processed_text": "I have one issue with the date abase connection.",
+                        "stt_corrected_text": "I have one issue with the database connection.",
+                        "stt_modified": True,
+                        "grammar_corrected_text": "I have an issue with the database connection.",
+                        "grammar_modified": True,
+                        "grammar_confidence": 0.95,
                     }
                 ],
             }
