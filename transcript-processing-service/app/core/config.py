@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     GRAMMAR_CONTEXT_BEFORE: int = 2
     GRAMMAR_CONTEXT_AFTER: int = 2
 
+    # Technical Terminology Normalization settings (Part 8)
+    TERMINOLOGY_CONFIDENCE_THRESHOLD: float = 0.90
+    TERMINOLOGY_CONTEXT_BEFORE: int = 2
+    TERMINOLOGY_CONTEXT_AFTER: int = 2
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

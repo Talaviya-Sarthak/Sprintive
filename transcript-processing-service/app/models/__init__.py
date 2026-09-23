@@ -22,6 +22,11 @@ from app.models.transcript import (
     GrammarNormalizationLLMOutput,
     NormalizeGrammarRequest,
     NormalizeGrammarResponse,
+    NormalizeTerminologyRequest,
+    NormalizeTerminologyResponse,
+    TerminologyAnalysisLLMOutput,
+    TerminologyChangeDetail,
+    TerminologyChangeType,
     TranscriptSegment,
 )
 
@@ -49,6 +54,11 @@ __all__ = [
     "GrammarNormalizationLLMOutput",
     "NormalizeGrammarRequest",
     "NormalizeGrammarResponse",
+    "TerminologyChangeType",
+    "TerminologyChangeDetail",
+    "TerminologyAnalysisLLMOutput",
+    "NormalizeTerminologyRequest",
+    "NormalizeTerminologyResponse",
 ]
 
 

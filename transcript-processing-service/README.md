@@ -8,6 +8,7 @@
 > - **Module 5: Sentence Segmentation & Fragment Merging**
 > - **Module 6: STT Error Correction (Acoustic Correction with Traceability)**
 > - **Module 7: Grammar & Punctuation Normalization (Readability & Punctuation)**
+> - **Module 8: Technical Terminology Normalization (Canonical Technical Vocabulary)**
 
 The **Sprintive Transcript Processing Service** is a modular Python/FastAPI service responsible for transforming raw meeting transcripts stored in Supabase into structured, validated data suitable for downstream AI analysis.
 
@@ -388,3 +389,69 @@ Improves grammatical readability and normalizes punctuation across transcript se
   ]
 }
 ```
+
+---
+
+### Endpoint: `POST /transcript/normalize-terminology` (Part 8)
+
+Normalizes software engineering and technical vocabulary into official canonical casing and spelling (e.g. `post gre SQL` &rarr; `PostgreSQL`, `fast api` &rarr; `FastAPI`, `web rtc` &rarr; `WebRTC`, `node js` &rarr; `Node.js`) while preserving ordinary words, multilingual dialogue, code identifiers (`getUserAPI`), and API paths (`/api/users`).
+
+#### Request Payload
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 15,
+      "source_sequences": [15, 16],
+      "speaker": "Harshit Pambhar",
+      "text": "We are connecting to post gre SQL using fast api.",
+      "processed_text": "We are connecting to post gre SQL using fast api.",
+      "stt_corrected_text": "We are connecting to post gre SQL using fast api.",
+      "grammar_corrected_text": "We are connecting to post gre SQL using fast api.",
+      "merged": true,
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+#### Successful Response (`200 OK`)
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 15,
+      "source_sequences": [15, 16],
+      "speaker": "Harshit Pambhar",
+      "text": "We are connecting to post gre SQL using fast api.",
+      "processed_text": "We are connecting to post gre SQL using fast api.",
+      "stt_corrected_text": "We are connecting to post gre SQL using fast api.",
+      "grammar_corrected_text": "We are connecting to post gre SQL using fast api.",
+      "terminology_normalized_text": "We are connecting to PostgreSQL using FastAPI.",
+      "terminology_modified": true,
+      "terminology_changes": [
+        {
+          "original_term": "post gre SQL",
+          "canonical_term": "PostgreSQL",
+          "change_type": "DETERMINISTIC_DICTIONARY",
+          "confidence": 1.0,
+          "reason": "Canonical dictionary normalization"
+        },
+        {
+          "original_term": "fast api",
+          "canonical_term": "FastAPI",
+          "change_type": "DETERMINISTIC_DICTIONARY",
+          "confidence": 1.0,
+          "reason": "Canonical dictionary normalization"
+        }
+      ],
+      "possible_unknown_terms": [],
+      "merged": true,
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+

@@ -69,6 +69,32 @@ class GrammarChangeDetail(BaseModel):
     )
 
 
+class TerminologyChangeType(str, Enum):
+    """Categories of technical terminology normalization changes."""
+
+    CANONICAL_TERM = "CANONICAL_TERM"
+    CASE_NORMALIZATION = "CASE_NORMALIZATION"
+    SPELLING_VARIANT = "SPELLING_VARIANT"
+    CONTEXT_DISAMBIGUATION = "CONTEXT_DISAMBIGUATION"
+
+
+class TerminologyChangeDetail(BaseModel):
+    """Detailed record of a single technical terminology normalization change."""
+
+    original: str = Field(
+        ...,
+        description="Original term or phrase found in transcript before normalization.",
+    )
+    normalized: str = Field(
+        ...,
+        description="Canonical normalized technical term.",
+    )
+    type: TerminologyChangeType = Field(
+        default=TerminologyChangeType.CANONICAL_TERM,
+        description="Category of technical terminology change.",
+    )
+
+
 class TranscriptSegment(BaseModel):
     """Represents a single structured segment of spoken dialogue."""
 
@@ -184,6 +210,22 @@ class TranscriptSegment(BaseModel):
     grammar_reason: Optional[str] = Field(
         default=None,
         description="Rationale or explanation for the grammar normalization decision.",
+    )
+    terminology_normalized_text: Optional[str] = Field(
+        default=None,
+        description="Text produced after technical terminology normalization.",
+    )
+    terminology_modified: bool = Field(
+        default=False,
+        description="Whether technical terminology normalization modified this segment.",
+    )
+    terminology_changes: List[TerminologyChangeDetail] = Field(
+        default_factory=list,
+        description="List of technical terminology modifications applied to this segment.",
+    )
+    possible_unknown_terms: List[str] = Field(
+        default_factory=list,
+        description="Detected potential technical terms that were not present in the dictionary.",
     )
 
 
@@ -761,6 +803,107 @@ class NormalizeGrammarResponse(BaseModel):
                         "grammar_corrected_text": "I have an issue with the database connection.",
                         "grammar_modified": True,
                         "grammar_confidence": 0.95,
+                    }
+                ],
+            }
+        }
+    )
+
+
+class TerminologyAnalysisLLMOutput(BaseModel):
+    """Structured response schema expected from LLM for ambiguous technical term evaluation."""
+
+    term: str = Field(
+        ...,
+        description="The candidate term evaluated.",
+    )
+    is_technical: bool = Field(
+        ...,
+        description="True if the term in context refers to the technical framework/concept; False if ordinary language.",
+    )
+    canonical_term: Optional[str] = Field(
+        default=None,
+        description="The canonical technical term to use if is_technical is True, or null.",
+    )
+    confidence: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Application-level confidence estimate between 0.0 and 1.0.",
+    )
+    reason: Optional[str] = Field(
+        default=None,
+        description="Brief justification for why the term was or was not considered technical in context.",
+    )
+
+
+class NormalizeTerminologyRequest(BaseModel):
+    """Request payload for the technical terminology normalization API endpoint."""
+
+    meeting_id: str = Field(
+        ...,
+        description="Unique identifier of the meeting.",
+    )
+    segments: List[TranscriptSegment] = Field(
+        ...,
+        description="Transcript segments from Part 7 to normalize for technical terminology.",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "meeting_id": "meeting_123",
+                "segments": [
+                    {
+                        "sequence": 15,
+                        "source_sequences": [15, 16],
+                        "speaker": "Harshit Pambhar",
+                        "text": "The post gre SQL database is connected to the fast api backend.",
+                        "grammar_corrected_text": "The post gre SQL database is connected to the fast api backend.",
+                    }
+                ],
+            }
+        }
+    )
+
+
+class NormalizeTerminologyResponse(BaseModel):
+    """Response payload for the technical terminology normalization API endpoint."""
+
+    meeting_id: str = Field(
+        ...,
+        description="Unique identifier of the meeting.",
+    )
+    segments: List[TranscriptSegment] = Field(
+        ...,
+        description="Transcript segments with terminology_normalized_text and complete traceability metadata.",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "meeting_id": "meeting_123",
+                "segments": [
+                    {
+                        "sequence": 15,
+                        "source_sequences": [15, 16],
+                        "speaker": "Harshit Pambhar",
+                        "text": "The post gre SQL database is connected to the fast api backend.",
+                        "grammar_corrected_text": "The post gre SQL database is connected to the fast api backend.",
+                        "terminology_normalized_text": "The PostgreSQL database is connected to the FastAPI backend.",
+                        "terminology_modified": True,
+                        "terminology_changes": [
+                            {
+                                "original": "post gre SQL",
+                                "normalized": "PostgreSQL",
+                                "type": "CANONICAL_TERM",
+                            },
+                            {
+                                "original": "fast api",
+                                "normalized": "FastAPI",
+                                "type": "CANONICAL_TERM",
+                            },
+                        ],
                     }
                 ],
             }

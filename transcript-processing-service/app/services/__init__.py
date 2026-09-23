@@ -11,6 +11,7 @@ from app.services.noise_detector import detect_noise_and_fillers
 from app.services.relevance_filter import filter_irrelevant_content
 from app.services.repetition_remover import remove_repetitions
 from app.services.stt_corrector import correct_stt_segments
+from app.services.terminology_normalizer import normalize_terminology
 from app.services.transcript_parser import parse_transcript
 from app.services.transcript_service import TranscriptService
 from app.services.transcript_storage import (
@@ -27,6 +28,7 @@ __all__ = [
     "merge_fragments",
     "correct_stt_segments",
     "normalize_grammar_and_punctuation",
+    "normalize_terminology",
     "BaseLLMClient",
     "OpenAICompatibleLLMClient",
     "MockLLMClient",

@@ -11,6 +11,8 @@ from app.models.transcript import (
     MergeFragmentsResponse,
     NormalizeGrammarRequest,
     NormalizeGrammarResponse,
+    NormalizeTerminologyRequest,
+    NormalizeTerminologyResponse,
     ParseTranscriptRequest,
     ParsedTranscript,
     RemoveRepetitionsRequest,
@@ -273,6 +275,39 @@ async def normalize_grammar_endpoint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred while normalizing grammar: {str(exc)}",
+        )
+
+
+@router.post(
+    "/normalize-terminology",
+    response_model=NormalizeTerminologyResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Normalize technical terminology in transcript (Part 8)",
+    description=(
+        "Normalizes technical terminology to canonical representation and casing "
+        "using controlled dictionary mappings and context-aware disambiguation. "
+        "Original raw text, processed text, STT-corrected text, and grammar-corrected text "
+        "remain 100% untouched."
+    ),
+)
+async def normalize_terminology_endpoint(
+    request: NormalizeTerminologyRequest,
+    service: TranscriptService = Depends(get_transcript_service),
+) -> NormalizeTerminologyResponse:
+    """
+    Handle POST /transcript/normalize-terminology.
+    Delegates to TranscriptService -> TerminologyNormalizer.
+    """
+    try:
+        return service.normalize_terminology(
+            meeting_id=request.meeting_id,
+            segments=request.segments,
+        )
+    except Exception as exc:
+        logger.exception("Unexpected error while normalizing terminology: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while normalizing terminology: {str(exc)}",
         )
 
 

@@ -6,6 +6,7 @@ from app.models.transcript import (
     FilterRelevanceResponse,
     MergeFragmentsResponse,
     NormalizeGrammarResponse,
+    NormalizeTerminologyResponse,
     ParsedTranscript,
     RemoveRepetitionsResponse,
     TranscriptSegment,
@@ -16,6 +17,7 @@ from app.services.noise_detector import detect_noise_and_fillers
 from app.services.relevance_filter import filter_irrelevant_content
 from app.services.repetition_remover import remove_repetitions
 from app.services.stt_corrector import correct_stt_segments
+from app.services.terminology_normalizer import normalize_terminology
 from app.services.transcript_parser import parse_transcript
 from app.services.transcript_storage import BaseTranscriptStorage, get_transcript_storage
 from app.services.llm_client import BaseLLMClient
@@ -228,6 +230,37 @@ class TranscriptService:
             llm_client=llm_client,
         )
         return NormalizeGrammarResponse(
+            meeting_id=meeting_id,
+            segments=normalized_segments,
+        )
+
+    def normalize_terminology(
+        self,
+        meeting_id: str,
+        segments: List[TranscriptSegment],
+        llm_client: Optional[BaseLLMClient] = None,
+    ) -> NormalizeTerminologyResponse:
+        """
+        Run Part 8: Technical Terminology Normalization on transcript segments.
+
+        Args:
+            meeting_id: The ID of the meeting.
+            segments: List of TranscriptSegment objects from Part 7.
+            llm_client: Optional LLM client for context disambiguation.
+
+        Returns:
+            NormalizeTerminologyResponse containing segments with terminology_normalized_text and metadata.
+        """
+        logger.info(
+            "Normalizing technical terminology for meeting_id=%s (%d segments)",
+            meeting_id,
+            len(segments),
+        )
+        normalized_segments = normalize_terminology(
+            segments=segments,
+            llm_client=llm_client,
+        )
+        return NormalizeTerminologyResponse(
             meeting_id=meeting_id,
             segments=normalized_segments,
         )
