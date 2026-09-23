@@ -10,6 +10,7 @@
 > - **Module 7: Grammar & Punctuation Normalization (Readability & Punctuation)**
 > - **Module 8: Technical Terminology Normalization (Canonical Technical Vocabulary)**
 > - **Module 9: Contextual Consistency Check (Logical & Domain Validation)**
+> - **Module 10: Speaker Attribution Validation (Conversational & Turn-Taking Plausibility)**
 
 The **Sprintive Transcript Processing Service** is a modular Python/FastAPI service responsible for transforming raw meeting transcripts stored in Supabase into structured, validated data suitable for downstream AI analysis.
 
@@ -535,5 +536,109 @@ Validates whether the processed transcript remains logically, factually, and con
   ]
 }
 ```
+
+---
+
+### Endpoint: `POST /transcript/validate-speakers` (Part 10)
+
+Validates whether spoken dialogue is plausibly attributed to the labeled speaker based on surrounding conversational context, syntactic continuity, and question-response turn-taking patterns.
+
+Adheres strictly to the principle:
+$$\text{VALIDATE} \longrightarrow \text{FLAG} \longrightarrow \text{SUGGEST (if justified)} \longrightarrow \text{PRESERVE ORIGINAL SPEAKER}$$
+
+Under no circumstances is the original `speaker` field overwritten, nor is any transcript text rewritten.
+
+#### Request Payload
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 15,
+      "speaker": "Sarthak Talaviya",
+      "text": "Harshit, can you explain the database issue?",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 16,
+      "speaker": "Harshit Pambhar",
+      "text": "Yes. The database connection is failing during API testing.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 17,
+      "speaker": "Sarthak Talaviya",
+      "text": "We need to investigate the database",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 18,
+      "speaker": "Harshit Pambhar",
+      "text": "connection issue first.",
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+#### Successful Response (`200 OK`)
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 15,
+      "speaker": "Sarthak Talaviya",
+      "text": "Harshit, can you explain the database issue?",
+      "speaker_validation_status": "VALID",
+      "speaker_confidence": 0.96,
+      "speaker_flags": [],
+      "suggested_speaker": null,
+      "speaker_correction": null,
+      "speaker_validation_reason": "Direct question addressed to team member.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 16,
+      "speaker": "Harshit Pambhar",
+      "text": "Yes. The database connection is failing during API testing.",
+      "speaker_validation_status": "VALID",
+      "speaker_confidence": 0.98,
+      "speaker_flags": [],
+      "suggested_speaker": null,
+      "speaker_correction": null,
+      "speaker_validation_reason": "Expected direct answer from addressed speaker.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 17,
+      "speaker": "Sarthak Talaviya",
+      "text": "We need to investigate the database",
+      "speaker_validation_status": "VALID",
+      "speaker_confidence": 0.92,
+      "speaker_flags": [],
+      "suggested_speaker": null,
+      "speaker_correction": null,
+      "speaker_validation_reason": "Valid statement.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 18,
+      "speaker": "Harshit Pambhar",
+      "text": "connection issue first.",
+      "speaker_validation_status": "POSSIBLE_MISATTRIBUTION",
+      "speaker_confidence": 0.86,
+      "speaker_flags": [
+        "POSSIBLE_FRAGMENT_MISATTRIBUTION"
+      ],
+      "suggested_speaker": "Sarthak Talaviya",
+      "speaker_correction": null,
+      "speaker_validation_reason": "The segment appears syntactically connected to Sarthak Talaviya's unfinished sentence ('We need to investigate the database'), suggesting a possible fragment continuation mismatch.",
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
 
 

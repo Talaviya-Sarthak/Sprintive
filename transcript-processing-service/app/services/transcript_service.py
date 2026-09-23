@@ -11,6 +11,7 @@ from app.models.transcript import (
     RemoveRepetitionsResponse,
     TranscriptSegment,
     ValidateContextResponse,
+    ValidateSpeakersResponse,
 )
 from app.services.contextual_validator import validate_context
 from app.services.fragment_merger import merge_fragments
@@ -18,6 +19,7 @@ from app.services.grammar_normalizer import normalize_grammar_and_punctuation
 from app.services.noise_detector import detect_noise_and_fillers
 from app.services.relevance_filter import filter_irrelevant_content
 from app.services.repetition_remover import remove_repetitions
+from app.services.speaker_validator import validate_speakers
 from app.services.stt_corrector import correct_stt_segments
 from app.services.terminology_normalizer import normalize_terminology
 from app.services.transcript_parser import parse_transcript
@@ -294,6 +296,37 @@ class TranscriptService:
             llm_client=llm_client,
         )
         return ValidateContextResponse(
+            meeting_id=meeting_id,
+            segments=validated_segments,
+        )
+
+    def validate_speakers(
+        self,
+        meeting_id: str,
+        segments: List[TranscriptSegment],
+        llm_client: Optional[BaseLLMClient] = None,
+    ) -> ValidateSpeakersResponse:
+        """
+        Run Part 10: Speaker Attribution Validation on transcript segments.
+
+        Args:
+            meeting_id: The ID of the meeting.
+            segments: List of TranscriptSegment objects from Part 9.
+            llm_client: Optional LLM client (defaults to configured client).
+
+        Returns:
+            ValidateSpeakersResponse containing segments decorated with speaker attribution validation metadata.
+        """
+        logger.info(
+            "Validating speaker attribution for meeting_id=%s (%d segments)",
+            meeting_id,
+            len(segments),
+        )
+        validated_segments = validate_speakers(
+            segments=segments,
+            llm_client=llm_client,
+        )
+        return ValidateSpeakersResponse(
             meeting_id=meeting_id,
             segments=validated_segments,
         )

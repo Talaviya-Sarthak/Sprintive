@@ -16,6 +16,10 @@ from app.prompts.contextual_validation import (
     CONTEXTUAL_VALIDATION_SYSTEM_PROMPT,
     build_contextual_validation_user_prompt,
 )
+from app.prompts.speaker_validation import (
+    SPEAKER_VALIDATION_SYSTEM_PROMPT,
+    build_speaker_validation_user_prompt,
+)
 
 __all__ = [
     "SYSTEM_PROMPT",
@@ -26,4 +30,6 @@ __all__ = [
     "build_terminology_disambiguation_user_prompt",
     "CONTEXTUAL_VALIDATION_SYSTEM_PROMPT",
     "build_contextual_validation_user_prompt",
+    "SPEAKER_VALIDATION_SYSTEM_PROMPT",
+    "build_speaker_validation_user_prompt",
 ]

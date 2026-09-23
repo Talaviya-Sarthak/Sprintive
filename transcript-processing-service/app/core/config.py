@@ -42,6 +42,12 @@ class Settings(BaseSettings):
     CONTEXT_BEFORE: int = 3
     CONTEXT_AFTER: int = 3
 
+    # Speaker Attribution Validation settings (Part 10)
+    SPEAKER_CONFIDENCE_STRONG: float = 0.90
+    SPEAKER_CONFIDENCE_REVIEW: float = 0.75
+    SPEAKER_CONTEXT_BEFORE: int = 3
+    SPEAKER_CONTEXT_AFTER: int = 3
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

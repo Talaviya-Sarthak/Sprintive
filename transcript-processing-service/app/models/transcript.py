@@ -1,6 +1,12 @@
 from enum import Enum
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, ConfigDict, Field
+
+from app.models.speaker_validation import (
+    SpeakerFlagType,
+    SpeakerValidationResult,
+    SpeakerValidationStatus,
+)
 
 
 class SegmentClassification(str, Enum):
@@ -301,6 +307,32 @@ class TranscriptSegment(BaseModel):
     context_reason: Optional[str] = Field(
         default=None,
         description="Explanation or reasoning for the contextual validation decision.",
+    )
+    speaker_validation_status: Optional[SpeakerValidationStatus] = Field(
+        default=None,
+        description="Plausibility status of speaker attribution (VALID, POSSIBLE_MISATTRIBUTION, AMBIGUOUS, INSUFFICIENT_CONTEXT).",
+    )
+    speaker_confidence: Optional[float] = Field(
+        default=None,
+        description="Confidence score between 0.0 and 1.0 for the speaker attribution assessment.",
+        ge=0.0,
+        le=1.0,
+    )
+    speaker_flags: List[SpeakerFlagType] = Field(
+        default_factory=list,
+        description="List of attribution flags raised during Part 10 validation.",
+    )
+    suggested_speaker: Optional[str] = Field(
+        default=None,
+        description="Alternative speaker candidate from existing transcript speakers, if justified.",
+    )
+    speaker_correction: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Detailed correction metadata if future diarization authorizes a change (None by default).",
+    )
+    speaker_validation_reason: Optional[str] = Field(
+        default=None,
+        description="Explanation or rationale for the speaker attribution validation decision.",
     )
 
 
@@ -1046,6 +1078,88 @@ class ValidateContextResponse(BaseModel):
                         "context_flags": [],
                         "context_reason": "Statement is consistent with conversation context.",
                     }
+                ],
+            }
+        }
+    )
+
+
+class ValidateSpeakersRequest(BaseModel):
+    """Request payload for the speaker attribution validation API endpoint (Part 10)."""
+
+    meeting_id: Optional[str] = Field(
+        default="default_meeting",
+        description="Unique identifier of the meeting.",
+    )
+    segments: List[TranscriptSegment] = Field(
+        ...,
+        description="Ordered list of transcript segments output by Part 9 (contextual consistency check).",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "meeting_id": "meeting_123",
+                "segments": [
+                    {
+                        "sequence": 15,
+                        "speaker": "Sarthak Talaviya",
+                        "text": "Harshit, can you explain the database issue?",
+                        "context_status": "CONSISTENT",
+                        "context_flags": [],
+                    },
+                    {
+                        "sequence": 16,
+                        "speaker": "Harshit Pambhar",
+                        "text": "Yes. I have one issue with the database connection.",
+                        "context_status": "CONSISTENT",
+                        "context_flags": [],
+                    },
+                ],
+            }
+        }
+    )
+
+
+class ValidateSpeakersResponse(BaseModel):
+    """Response payload for the speaker attribution validation API endpoint (Part 10)."""
+
+    meeting_id: str = Field(
+        ...,
+        description="Unique identifier of the meeting.",
+    )
+    segments: List[TranscriptSegment] = Field(
+        ...,
+        description="Transcript segments with speaker attribution validation metadata added.",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "meeting_id": "meeting_123",
+                "segments": [
+                    {
+                        "sequence": 15,
+                        "speaker": "Sarthak Talaviya",
+                        "text": "Harshit, can you explain the database issue?",
+                        "speaker_validation_status": "VALID",
+                        "speaker_confidence": 0.96,
+                        "speaker_flags": [],
+                        "suggested_speaker": None,
+                        "speaker_correction": None,
+                        "speaker_validation_reason": "Direct question addressed to team member.",
+                    },
+                    {
+                        "sequence": 16,
+                        "speaker": "Harshit Pambhar",
+                        "text": "Yes. I have one issue with the database connection.",
+                        "speaker_validation_status": "VALID",
+                        "speaker_confidence": 0.98,
+                        "speaker_flags": [],
+                        "suggested_speaker": None,
+                        "speaker_correction": None,
+                        "speaker_validation_reason": "Expected direct answer from addressed speaker.",
+                    },
                 ],
             }
         }

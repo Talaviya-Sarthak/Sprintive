@@ -33,6 +33,11 @@ from app.models.transcript import (
     ContextValidationLLMOutput,
     ValidateContextRequest,
     ValidateContextResponse,
+    SpeakerValidationStatus,
+    SpeakerFlagType,
+    SpeakerValidationResult,
+    ValidateSpeakersRequest,
+    ValidateSpeakersResponse,
     TranscriptSegment,
 )
 
@@ -71,6 +76,11 @@ __all__ = [
     "ContextValidationLLMOutput",
     "ValidateContextRequest",
     "ValidateContextResponse",
+    "SpeakerValidationStatus",
+    "SpeakerFlagType",
+    "SpeakerValidationResult",
+    "ValidateSpeakersRequest",
+    "ValidateSpeakersResponse",
 ]
 
 

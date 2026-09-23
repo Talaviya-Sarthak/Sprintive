@@ -19,6 +19,8 @@ from app.models.transcript import (
     RemoveRepetitionsResponse,
     ValidateContextRequest,
     ValidateContextResponse,
+    ValidateSpeakersRequest,
+    ValidateSpeakersResponse,
 )
 
 
@@ -342,6 +344,39 @@ async def validate_context_endpoint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred while validating contextual consistency: {str(exc)}",
+        )
+
+
+@router.post(
+    "/validate-speakers",
+    response_model=ValidateSpeakersResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Validate speaker attribution in transcript (Part 10)",
+    description=(
+        "Validates whether transcript dialogue is plausibly attributed to the labeled speaker "
+        "based on conversational context, syntactic continuity, and turn-taking evidence. "
+        "Under no circumstances is the original speaker label overwritten or transcript text modified."
+    ),
+)
+async def validate_speakers_endpoint(
+    request: ValidateSpeakersRequest,
+    service: TranscriptService = Depends(get_transcript_service),
+) -> ValidateSpeakersResponse:
+    """
+    Handle POST /transcript/validate-speakers.
+    Delegates to TranscriptService -> SpeakerValidator.
+    """
+    try:
+        meeting_id = request.meeting_id or "default_meeting"
+        return service.validate_speakers(
+            meeting_id=meeting_id,
+            segments=request.segments,
+        )
+    except Exception as exc:
+        logger.exception("Unexpected error while validating speaker attribution: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while validating speaker attribution: {str(exc)}",
         )
 
 
