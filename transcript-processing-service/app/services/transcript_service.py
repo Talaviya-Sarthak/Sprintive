@@ -10,7 +10,9 @@ from app.models.transcript import (
     ParsedTranscript,
     RemoveRepetitionsResponse,
     TranscriptSegment,
+    ValidateContextResponse,
 )
+from app.services.contextual_validator import validate_context
 from app.services.fragment_merger import merge_fragments
 from app.services.grammar_normalizer import normalize_grammar_and_punctuation
 from app.services.noise_detector import detect_noise_and_fillers
@@ -263,6 +265,37 @@ class TranscriptService:
         return NormalizeTerminologyResponse(
             meeting_id=meeting_id,
             segments=normalized_segments,
+        )
+
+    def validate_context(
+        self,
+        meeting_id: str,
+        segments: List[TranscriptSegment],
+        llm_client: Optional[BaseLLMClient] = None,
+    ) -> ValidateContextResponse:
+        """
+        Run Part 9: Contextual Consistency Check on transcript segments.
+
+        Args:
+            meeting_id: The ID of the meeting.
+            segments: List of TranscriptSegment objects from Part 8.
+            llm_client: Optional LLM client (defaults to configured client).
+
+        Returns:
+            ValidateContextResponse containing segments decorated with contextual validation metadata.
+        """
+        logger.info(
+            "Validating contextual consistency for meeting_id=%s (%d segments)",
+            meeting_id,
+            len(segments),
+        )
+        validated_segments = validate_context(
+            segments=segments,
+            llm_client=llm_client,
+        )
+        return ValidateContextResponse(
+            meeting_id=meeting_id,
+            segments=validated_segments,
         )
 
 

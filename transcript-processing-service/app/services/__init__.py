@@ -1,3 +1,4 @@
+from app.services.contextual_validator import validate_context
 from app.services.fragment_merger import merge_fragments
 from app.services.llm_client import (
     BaseLLMClient,
@@ -29,6 +30,7 @@ __all__ = [
     "correct_stt_segments",
     "normalize_grammar_and_punctuation",
     "normalize_terminology",
+    "validate_context",
     "BaseLLMClient",
     "OpenAICompatibleLLMClient",
     "MockLLMClient",

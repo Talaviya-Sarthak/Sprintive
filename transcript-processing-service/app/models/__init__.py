@@ -27,6 +27,12 @@ from app.models.transcript import (
     TerminologyAnalysisLLMOutput,
     TerminologyChangeDetail,
     TerminologyChangeType,
+    ContextValidationStatus,
+    ContextFlagType,
+    ContextFlagDetail,
+    ContextValidationLLMOutput,
+    ValidateContextRequest,
+    ValidateContextResponse,
     TranscriptSegment,
 )
 
@@ -59,6 +65,12 @@ __all__ = [
     "TerminologyAnalysisLLMOutput",
     "NormalizeTerminologyRequest",
     "NormalizeTerminologyResponse",
+    "ContextValidationStatus",
+    "ContextFlagType",
+    "ContextFlagDetail",
+    "ContextValidationLLMOutput",
+    "ValidateContextRequest",
+    "ValidateContextResponse",
 ]
 
 

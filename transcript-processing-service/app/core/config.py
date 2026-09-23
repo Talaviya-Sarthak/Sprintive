@@ -37,6 +37,11 @@ class Settings(BaseSettings):
     TERMINOLOGY_CONTEXT_BEFORE: int = 2
     TERMINOLOGY_CONTEXT_AFTER: int = 2
 
+    # Contextual Consistency Check settings (Part 9)
+    CONTEXT_CONFIDENCE_THRESHOLD: float = 0.80
+    CONTEXT_BEFORE: int = 3
+    CONTEXT_AFTER: int = 3
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

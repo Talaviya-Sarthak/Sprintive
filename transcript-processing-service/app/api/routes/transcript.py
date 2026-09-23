@@ -17,6 +17,8 @@ from app.models.transcript import (
     ParsedTranscript,
     RemoveRepetitionsRequest,
     RemoveRepetitionsResponse,
+    ValidateContextRequest,
+    ValidateContextResponse,
 )
 
 
@@ -308,6 +310,38 @@ async def normalize_terminology_endpoint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred while normalizing terminology: {str(exc)}",
+        )
+
+
+@router.post(
+    "/validate-context",
+    response_model=ValidateContextResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Validate contextual consistency of transcript (Part 9)",
+    description=(
+        "Validates whether the processed transcript remains logically and contextually "
+        "consistent with surrounding conversation. Adheres strictly to the principle: "
+        "CHECK -> FLAG -> PRESERVE. Under no circumstances is transcript text modified or rewritten."
+    ),
+)
+async def validate_context_endpoint(
+    request: ValidateContextRequest,
+    service: TranscriptService = Depends(get_transcript_service),
+) -> ValidateContextResponse:
+    """
+    Handle POST /transcript/validate-context.
+    Delegates to TranscriptService -> ContextualValidator.
+    """
+    try:
+        return service.validate_context(
+            meeting_id=request.meeting_id,
+            segments=request.segments,
+        )
+    except Exception as exc:
+        logger.exception("Unexpected error while validating contextual consistency: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while validating contextual consistency: {str(exc)}",
         )
 
 

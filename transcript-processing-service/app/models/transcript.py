@@ -95,6 +95,63 @@ class TerminologyChangeDetail(BaseModel):
     )
 
 
+class ContextValidationStatus(str, Enum):
+    """Contextual consistency status categories for Part 9."""
+
+    CONSISTENT = "CONSISTENT"
+    POSSIBLE_INCONSISTENCY = "POSSIBLE_INCONSISTENCY"
+    AMBIGUOUS = "AMBIGUOUS"
+    INSUFFICIENT_CONTEXT = "INSUFFICIENT_CONTEXT"
+
+
+class ContextFlagType(str, Enum):
+    """Specific contextual issue or flag categories."""
+
+    TECHNICAL_CONTEXT_MISMATCH = "TECHNICAL_CONTEXT_MISMATCH"
+    TERM_INCONSISTENCY = "TERM_INCONSISTENCY"
+    TOPIC_DISCONTINUITY = "TOPIC_DISCONTINUITY"
+    REFERENCE_MISMATCH = "REFERENCE_MISMATCH"
+    POSSIBLE_PROCESSING_ERROR = "POSSIBLE_PROCESSING_ERROR"
+    CONTRADICTION = "CONTRADICTION"
+    AMBIGUOUS_REFERENCE = "AMBIGUOUS_REFERENCE"
+
+
+class ContextFlagDetail(BaseModel):
+    """Detailed record of a single contextual consistency flag."""
+
+    type: ContextFlagType = Field(
+        ...,
+        description="Category of the contextual issue or anomaly.",
+    )
+    description: str = Field(
+        ...,
+        description="Human-readable explanation of why this flag was raised.",
+    )
+
+
+class ContextValidationLLMOutput(BaseModel):
+    """Structured output expected from LLM during contextual consistency validation."""
+
+    status: ContextValidationStatus = Field(
+        ...,
+        description="Overall contextual consistency status.",
+    )
+    confidence: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Confidence score between 0.0 and 1.0.",
+    )
+    flags: List[ContextFlagDetail] = Field(
+        default_factory=list,
+        description="List of specific contextual issues flagged.",
+    )
+    reason: str = Field(
+        ...,
+        description="Brief contextual explanation.",
+    )
+
+
 class TranscriptSegment(BaseModel):
     """Represents a single structured segment of spoken dialogue."""
 
@@ -226,6 +283,24 @@ class TranscriptSegment(BaseModel):
     possible_unknown_terms: List[str] = Field(
         default_factory=list,
         description="Detected potential technical terms that were not present in the dictionary.",
+    )
+    context_status: Optional[ContextValidationStatus] = Field(
+        default=None,
+        description="Contextual consistency status from Part 9 validation (CONSISTENT, POSSIBLE_INCONSISTENCY, AMBIGUOUS, INSUFFICIENT_CONTEXT).",
+    )
+    context_confidence: Optional[float] = Field(
+        default=None,
+        description="Confidence score between 0.0 and 1.0 for the contextual validation decision.",
+        ge=0.0,
+        le=1.0,
+    )
+    context_flags: List[ContextFlagDetail] = Field(
+        default_factory=list,
+        description="Contextual flags raised during Part 9 validation.",
+    )
+    context_reason: Optional[str] = Field(
+        default=None,
+        description="Explanation or reasoning for the contextual validation decision.",
     )
 
 
@@ -904,6 +979,72 @@ class NormalizeTerminologyResponse(BaseModel):
                                 "type": "CANONICAL_TERM",
                             },
                         ],
+                    }
+                ],
+            }
+        }
+    )
+
+
+class ValidateContextRequest(BaseModel):
+    """Request payload for the contextual consistency validation API endpoint (Part 9)."""
+
+    meeting_id: str = Field(
+        ...,
+        description="Unique identifier of the meeting.",
+    )
+    segments: List[TranscriptSegment] = Field(
+        ...,
+        description="Ordered list of transcript segments output by Part 8 (terminology normalization).",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "meeting_id": "meeting_123",
+                "segments": [
+                    {
+                        "sequence": 15,
+                        "source_sequences": [15, 16],
+                        "speaker": "Harshit Pambhar",
+                        "text": "I have an issue with the date abase connection.",
+                        "grammar_corrected_text": "I have an issue with the database connection.",
+                        "terminology_normalized_text": "I have an issue with the database connection.",
+                    }
+                ],
+            }
+        }
+    )
+
+
+class ValidateContextResponse(BaseModel):
+    """Response payload for the contextual consistency validation API endpoint (Part 9)."""
+
+    meeting_id: str = Field(
+        ...,
+        description="Unique identifier of the meeting.",
+    )
+    segments: List[TranscriptSegment] = Field(
+        ...,
+        description="Transcript segments with contextual validation metadata added.",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "meeting_id": "meeting_123",
+                "segments": [
+                    {
+                        "sequence": 15,
+                        "source_sequences": [15, 16],
+                        "speaker": "Harshit Pambhar",
+                        "text": "I have an issue with the date abase connection.",
+                        "grammar_corrected_text": "I have an issue with the database connection.",
+                        "terminology_normalized_text": "I have an issue with the database connection.",
+                        "context_status": "CONSISTENT",
+                        "context_confidence": 0.95,
+                        "context_flags": [],
+                        "context_reason": "Statement is consistent with conversation context.",
                     }
                 ],
             }

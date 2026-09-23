@@ -9,6 +9,7 @@
 > - **Module 6: STT Error Correction (Acoustic Correction with Traceability)**
 > - **Module 7: Grammar & Punctuation Normalization (Readability & Punctuation)**
 > - **Module 8: Technical Terminology Normalization (Canonical Technical Vocabulary)**
+> - **Module 9: Contextual Consistency Check (Logical & Domain Validation)**
 
 The **Sprintive Transcript Processing Service** is a modular Python/FastAPI service responsible for transforming raw meeting transcripts stored in Supabase into structured, validated data suitable for downstream AI analysis.
 
@@ -447,11 +448,92 @@ Normalizes software engineering and technical vocabulary into official canonical
           "reason": "Canonical dictionary normalization"
         }
       ],
-      "possible_unknown_terms": [],
       "merged": true,
       "include_in_meeting": true
     }
   ]
 }
 ```
+
+---
+
+### Endpoint: `POST /transcript/validate-context` (Part 9)
+
+Validates whether the processed transcript remains logically, factually, and contextually consistent with surrounding conversation. Adheres strictly to the principle **CHECK &rarr; FLAG &rarr; PRESERVE**. Under no circumstances is transcript text modified or rewritten.
+
+#### Request Payload
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 15,
+      "source_sequences": [15, 16],
+      "speaker": "Harshit Pambhar",
+      "text": "The API is failing.",
+      "processed_text": "The API is failing.",
+      "stt_corrected_text": "The API is failing.",
+      "grammar_corrected_text": "The API is failing.",
+      "terminology_normalized_text": "The API is failing.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 16,
+      "source_sequences": [17],
+      "speaker": "Sarthak Talaviya",
+      "text": "Let's check the React database.",
+      "processed_text": "Let's check the React database.",
+      "stt_corrected_text": "Let's check the React database.",
+      "grammar_corrected_text": "Let's check the React database.",
+      "terminology_normalized_text": "Let's check the React database.",
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+#### Successful Response (`200 OK`)
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 15,
+      "source_sequences": [15, 16],
+      "speaker": "Harshit Pambhar",
+      "text": "The API is failing.",
+      "processed_text": "The API is failing.",
+      "stt_corrected_text": "The API is failing.",
+      "grammar_corrected_text": "The API is failing.",
+      "terminology_normalized_text": "The API is failing.",
+      "context_status": "CONSISTENT",
+      "context_confidence": 0.96,
+      "context_flags": [],
+      "context_reason": "Statement is clear and consistent with conversation.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 16,
+      "source_sequences": [17],
+      "speaker": "Sarthak Talaviya",
+      "text": "Let's check the React database.",
+      "processed_text": "Let's check the React database.",
+      "stt_corrected_text": "Let's check the React database.",
+      "grammar_corrected_text": "Let's check the React database.",
+      "terminology_normalized_text": "Let's check the React database.",
+      "context_status": "POSSIBLE_INCONSISTENCY",
+      "context_confidence": 0.88,
+      "context_flags": [
+        {
+          "type": "TECHNICAL_CONTEXT_MISMATCH",
+          "description": "The phrase 'React database' combines a frontend UI library with a database concept, which is unusual and may represent an error."
+        }
+      ],
+      "context_reason": "The phrase 'React database' combines a frontend UI library with a database concept, which is unusual and may represent an error.",
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
 

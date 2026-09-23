@@ -161,12 +161,16 @@ class MockLLMClient(BaseLLMClient):
     def __init__(
         self,
         default_response_fn: Optional[Callable[[str, str], Any]] = None,
+        default_response: Optional[Any] = None,
         exact_matches: Optional[Dict[str, Any]] = None,
         simulate_timeout: bool = False,
         simulate_api_error: bool = False,
         simulate_invalid_json: bool = False,
     ):
-        self.default_response_fn = default_response_fn
+        if default_response is not None and default_response_fn is None:
+            self.default_response_fn = lambda s, u: default_response
+        else:
+            self.default_response_fn = default_response_fn
         self.exact_matches = exact_matches or {}
         self.simulate_timeout = simulate_timeout
         self.simulate_api_error = simulate_api_error
