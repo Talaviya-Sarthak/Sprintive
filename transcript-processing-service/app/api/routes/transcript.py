@@ -26,6 +26,10 @@ from app.models.transcript import (
     ValidateSemanticsRequest,
     ValidateSemanticsResponse,
 )
+from app.models.final_transcript import (
+    FormatFinalTranscriptRequest,
+    FormatFinalTranscriptResponse,
+)
 
 
 from app.services.transcript_service import TranscriptService
@@ -447,6 +451,40 @@ async def validate_semantics_endpoint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred while validating semantic preservation: {str(exc)}",
+        )
+
+
+@router.post(
+    "/format-final",
+    response_model=FormatFinalTranscriptResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Format and serialize final clean AI-ready transcript (Part 13)",
+    description=(
+        "Converts validated internal transcript segments into a clean, deterministic AI-ready transcript. "
+        "Selects the safest final validated text and authoritative speaker, filters irrelevant dialogue, "
+        "preserves chronological order, and strips internal pipeline metadata."
+    ),
+)
+async def format_final_endpoint(
+    request: FormatFinalTranscriptRequest,
+    service: TranscriptService = Depends(get_transcript_service),
+) -> FormatFinalTranscriptResponse:
+    """
+    Handle POST /transcript/format-final.
+    Delegates to TranscriptService -> TranscriptFormatter.
+    """
+    try:
+        meeting_id = request.meeting_id or "default_meeting"
+        return service.format_final(
+            meeting_id=meeting_id,
+            segments=request.segments,
+            config=request.config,
+        )
+    except Exception as exc:
+        logger.exception("Unexpected error while formatting final transcript: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while formatting final transcript: {str(exc)}",
         )
 
 

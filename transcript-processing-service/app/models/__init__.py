@@ -53,6 +53,14 @@ from app.models.transcript import (
     ValidateSemanticsResponse,
     TranscriptSegment,
 )
+from app.models.final_transcript import (
+    FinalizationStatus,
+    FinalizationWarning,
+    FinalSegment,
+    FinalizationResult,
+    FormatFinalTranscriptRequest,
+    FormatFinalTranscriptResponse,
+)
 
 __all__ = [
     "SegmentClassification",
@@ -107,6 +115,12 @@ __all__ = [
     "ExtractedSemanticEntities",
     "ValidateSemanticsRequest",
     "ValidateSemanticsResponse",
+    "FinalizationStatus",
+    "FinalizationWarning",
+    "FinalSegment",
+    "FinalizationResult",
+    "FormatFinalTranscriptRequest",
+    "FormatFinalTranscriptResponse",
 ]
 
 

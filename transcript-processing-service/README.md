@@ -13,6 +13,7 @@
 > - **Module 10: Speaker Attribution Validation (Conversational & Turn-Taking Plausibility)**
 > - **Module 11: Language Preservation Check (Multilingual & Code-Switching Integrity)**
 > - **Module 12: Semantic Preservation Validation (Meaning & Intent Verification)**
+> - **Module 13: Final Transcript Formatting (AI-Ready Presentation & Serialization)**
 
 The **Sprintive Transcript Processing Service** is a modular Python/FastAPI service responsible for transforming raw meeting transcripts stored in Supabase into structured, validated data suitable for downstream AI analysis.
 
@@ -841,5 +842,101 @@ Verifies that transcript cleaning across upstream stages has preserved the **mea
       "include_in_meeting": true
     }
   ]
+}
+```
+
+---
+
+## 17. Part 13 — Final Transcript Formatting
+
+### Endpoint
+`POST /transcript/format-final`
+
+### Description
+Converts the validated internal transcript segments from earlier pipeline stages (Parts 1–12) into a clean, deterministic, AI-ready transcript representation suitable for consumption by downstream AI Scrum Agents and human inspection.
+
+**Core Principles**:
+- **PRESENTATION & SERIALIZATION ONLY**: Strictly deterministic. Does **not** use an LLM and does **not** introduce new corrections, translations, summarizations, or speaker reassignment.
+- **ZERO REWRITING OF VALIDATED DIALOGUE**: Formats and serializes already-validated content without modifying validated spoken words.
+- **CENTRALIZED HIERARCHICAL TEXT SELECTION**: Selects the safest text based on validation metadata:
+  $$\text{terminology\_normalized\_text} \longrightarrow \text{grammar\_corrected\_text} \longrightarrow \text{stt\_corrected\_text} \longrightarrow \text{processed\_text} \longrightarrow \text{text}$$
+- **SAFE FALLBACK POLICY**:
+  - If `semantic_status == SEMANTICALLY_CHANGED`, rejects the risky processed candidate, falls back to safe original text, and logs a warning.
+  - If `language_preservation_status == LANGUAGE_CHANGED`, rejects accidental translations and falls back to original multilingual text with a warning.
+- **AUTHORITATIVE SPEAKER SELECTION**:
+  - Uses `validated_speaker` only when an authoritative correction exists.
+  - `suggested_speaker` from Part 10 is **never** applied automatically.
+- **EXCLUSION OF FILTERED CONTENT**:
+  - Segments flagged as pre-meeting, audio checks, or irrelevant (`include_in_meeting == False`) are excluded from final output while remaining preserved internally for auditability.
+- **METADATA STRIPPING**:
+  - Strips dozens of internal pipeline flags from the final AI representation, producing clean `sequence`, `speaker`, and `text` segments.
+- **CHRONOLOGICAL ORDER PRESERVATION**:
+  - Strictly preserves chronological sequence order (using `source_sequences` for merged sentence fragments).
+- **UTF-8 COMPLIANCE**:
+  - Generates `cleaned_conversation.txt` in UTF-8 format to preserve multilingual dialogue (Hindi, Spanish, code-switching).
+
+### Finalization Status
+- `READY`: All segments formatted cleanly without critical or non-blocking warnings.
+- `READY_WITH_WARNINGS`: Formatted successfully with non-blocking warnings (e.g. semantic/language fallbacks, possible semantic changes).
+- `BLOCKED`: Critical contradiction or structural failure encountered when blocking policy is active.
+
+### Example Request
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 1,
+      "speaker": "Sarthak Talaviya",
+      "text": "Can everyone hear me? Audio check.",
+      "include_in_meeting": false
+    },
+    {
+      "sequence": 2,
+      "speaker": "Sarthak Talaviya",
+      "text": "Good morning, everyone. Let's start the meeting.",
+      "terminology_normalized_text": "Good morning everyone, let's start the meeting.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 3,
+      "speaker": "Harshit Pambhar",
+      "text": "I don't have access to the database.",
+      "terminology_normalized_text": "I have access to the database.",
+      "semantic_status": "SEMANTICALLY_CHANGED",
+      "semantic_flags": ["NEGATION_CHANGED"],
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+### Example Response
+```json
+{
+  "meeting_id": "meeting_123",
+  "status": "READY_WITH_WARNINGS",
+  "transcript_text": "Sarthak Talaviya: Good morning everyone, let's start the meeting.\n\nHarshit Pambhar: I don't have access to the database.",
+  "segments": [
+    {
+      "sequence": 2,
+      "speaker": "Sarthak Talaviya",
+      "text": "Good morning everyone, let's start the meeting."
+    },
+    {
+      "sequence": 3,
+      "speaker": "Harshit Pambhar",
+      "text": "I don't have access to the database."
+    }
+  ],
+  "warnings": [
+    {
+      "sequence": 3,
+      "type": "SEMANTIC_CHANGE_FALLBACK",
+      "message": "Processed text changed meaning (NEGATION_CHANGED); falling back to safe original text."
+    }
+  ],
+  "included_segments": 2,
+  "excluded_segments": 1
 }
 ```

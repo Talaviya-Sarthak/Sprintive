@@ -17,6 +17,16 @@ from app.services.language_validator import (
     validate_language_preservation,
 )
 from app.services.semantic_validator import validate_semantic_preservation
+from app.services.final_text_selector import (
+    get_final_text,
+    select_final_speaker,
+    select_final_text,
+)
+from app.services.final_validator import validate_final_structure
+from app.services.transcript_formatter import (
+    format_final_transcript,
+    save_cleaned_conversation_txt,
+)
 from app.services.stt_corrector import correct_stt_segments
 from app.services.terminology_normalizer import normalize_terminology
 from app.services.transcript_parser import parse_transcript
@@ -41,6 +51,12 @@ __all__ = [
     "validate_language_preservation",
     "calculate_transcript_language_profile",
     "validate_semantic_preservation",
+    "format_final_transcript",
+    "select_final_text",
+    "get_final_text",
+    "select_final_speaker",
+    "validate_final_structure",
+    "save_cleaned_conversation_txt",
     "BaseLLMClient",
     "OpenAICompatibleLLMClient",
     "MockLLMClient",

@@ -15,11 +15,17 @@ from app.models.transcript import (
     ValidateLanguageResponse,
     ValidateSemanticsResponse,
 )
+from app.models.final_transcript import (
+    FinalizationResult,
+    FormatFinalTranscriptResponse,
+)
+from app.config.formatting import FormattingConfig
 from app.services.contextual_validator import validate_context
 from app.services.fragment_merger import merge_fragments
 from app.services.grammar_normalizer import normalize_grammar_and_punctuation
 from app.services.language_validator import validate_language_preservation
 from app.services.semantic_validator import validate_semantic_preservation
+from app.services.transcript_formatter import format_final_transcript
 from app.services.noise_detector import detect_noise_and_fillers
 from app.services.relevance_filter import filter_irrelevant_content
 from app.services.repetition_remover import remove_repetitions
@@ -403,6 +409,43 @@ class TranscriptService:
         return ValidateSemanticsResponse(
             meeting_id=meeting_id,
             segments=validated_segments,
+        )
+
+    def format_final(
+        self,
+        meeting_id: str,
+        segments: List[TranscriptSegment],
+        config: Optional[FormattingConfig] = None,
+    ) -> FormatFinalTranscriptResponse:
+        """
+        Run Part 13: Final Transcript Formatting on transcript segments.
+
+        Args:
+            meeting_id: The ID of the meeting.
+            segments: List of TranscriptSegment objects from upstream stages.
+            config: Optional formatting configuration.
+
+        Returns:
+            FormatFinalTranscriptResponse containing clean AI-ready text and final segments.
+        """
+        logger.info(
+            "Formatting final transcript for meeting_id=%s (%d segments)",
+            meeting_id,
+            len(segments),
+        )
+        res = format_final_transcript(
+            segments=segments,
+            config=config,
+            meeting_id=meeting_id,
+        )
+        return FormatFinalTranscriptResponse(
+            meeting_id=meeting_id,
+            status=res.status,
+            transcript_text=res.transcript_text,
+            segments=res.segments,
+            warnings=res.warnings,
+            included_segments=res.included_segments,
+            excluded_segments=res.excluded_segments,
         )
 
 

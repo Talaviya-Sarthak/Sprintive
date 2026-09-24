@@ -343,6 +343,10 @@ class TranscriptSegment(BaseModel):
         default=None,
         description="Detailed correction metadata if future diarization authorizes a change (None by default).",
     )
+    validated_speaker: Optional[str] = Field(
+        default=None,
+        description="Authoritative validated speaker identity if an authoritative correction was made.",
+    )
     speaker_validation_reason: Optional[str] = Field(
         default=None,
         description="Explanation or rationale for the speaker attribution validation decision.",
