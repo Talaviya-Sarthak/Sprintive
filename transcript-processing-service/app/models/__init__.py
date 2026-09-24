@@ -45,6 +45,12 @@ from app.models.transcript import (
     TranscriptLanguageProfile,
     ValidateLanguageRequest,
     ValidateLanguageResponse,
+    SemanticValidationStatus,
+    SemanticFlagType,
+    SemanticValidationResult,
+    ExtractedSemanticEntities,
+    ValidateSemanticsRequest,
+    ValidateSemanticsResponse,
     TranscriptSegment,
 )
 
@@ -95,6 +101,12 @@ __all__ = [
     "TranscriptLanguageProfile",
     "ValidateLanguageRequest",
     "ValidateLanguageResponse",
+    "SemanticValidationStatus",
+    "SemanticFlagType",
+    "SemanticValidationResult",
+    "ExtractedSemanticEntities",
+    "ValidateSemanticsRequest",
+    "ValidateSemanticsResponse",
 ]
 
 

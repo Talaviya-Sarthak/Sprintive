@@ -24,6 +24,10 @@ from app.prompts.language_validation import (
     LANGUAGE_VALIDATION_SYSTEM_PROMPT,
     build_language_validation_user_prompt,
 )
+from app.prompts.semantic_validation import (
+    SEMANTIC_VALIDATION_SYSTEM_PROMPT,
+    build_semantic_validation_user_prompt,
+)
 
 __all__ = [
     "SYSTEM_PROMPT",
@@ -38,4 +42,6 @@ __all__ = [
     "build_speaker_validation_user_prompt",
     "LANGUAGE_VALIDATION_SYSTEM_PROMPT",
     "build_language_validation_user_prompt",
+    "SEMANTIC_VALIDATION_SYSTEM_PROMPT",
+    "build_semantic_validation_user_prompt",
 ]

@@ -23,6 +23,8 @@ from app.models.transcript import (
     ValidateSpeakersResponse,
     ValidateLanguageRequest,
     ValidateLanguageResponse,
+    ValidateSemanticsRequest,
+    ValidateSemanticsResponse,
 )
 
 
@@ -412,6 +414,39 @@ async def validate_language_endpoint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred while validating language preservation: {str(exc)}",
+        )
+
+
+@router.post(
+    "/validate-semantics",
+    response_model=ValidateSemanticsResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Validate semantic preservation in transcript (Part 12)",
+    description=(
+        "Verifies that the transcript-cleaning pipeline has preserved the original meaning, "
+        "facts, intent, commitments, and relationships of the conversation. "
+        "Strictly a validation stage; never rewrites or alters dialogue."
+    ),
+)
+async def validate_semantics_endpoint(
+    request: ValidateSemanticsRequest,
+    service: TranscriptService = Depends(get_transcript_service),
+) -> ValidateSemanticsResponse:
+    """
+    Handle POST /transcript/validate-semantics.
+    Delegates to TranscriptService -> SemanticValidator.
+    """
+    try:
+        meeting_id = request.meeting_id or "default_meeting"
+        return service.validate_semantics(
+            meeting_id=meeting_id,
+            segments=request.segments,
+        )
+    except Exception as exc:
+        logger.exception("Unexpected error while validating semantic preservation: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while validating semantic preservation: {str(exc)}",
         )
 
 

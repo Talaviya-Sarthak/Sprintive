@@ -14,6 +14,12 @@ from app.models.language_validation import (
     SegmentLanguageProfile,
     TranscriptLanguageProfile,
 )
+from app.models.semantic_validation import (
+    ExtractedSemanticEntities,
+    SemanticFlagType,
+    SemanticValidationResult,
+    SemanticValidationStatus,
+)
 
 
 class SegmentClassification(str, Enum):
@@ -382,6 +388,28 @@ class TranscriptSegment(BaseModel):
     language_validation_reason: Optional[str] = Field(
         default=None,
         description="Detailed explanation or rationale for the language validation decision.",
+    )
+    semantic_status: Optional[SemanticValidationStatus] = Field(
+        default=None,
+        description="Preservation status of original semantic meaning (SEMANTICALLY_PRESERVED, POSSIBLE_SEMANTIC_CHANGE, SEMANTICALLY_CHANGED, AMBIGUOUS, INSUFFICIENT_CONTEXT).",
+    )
+    semantic_confidence: Optional[float] = Field(
+        default=None,
+        description="Confidence score between 0.0 and 1.0 for the semantic preservation assessment.",
+        ge=0.0,
+        le=1.0,
+    )
+    semantic_flags: List[str] = Field(
+        default_factory=list,
+        description="List of specific semantic change flags raised.",
+    )
+    semantic_changed_elements: List[str] = Field(
+        default_factory=list,
+        description="List of specific semantic element names that were modified.",
+    )
+    semantic_validation_reason: Optional[str] = Field(
+        default=None,
+        description="Detailed explanation or rationale for the semantic validation assessment.",
     )
 
 
@@ -1287,6 +1315,68 @@ class ValidateLanguageResponse(BaseModel):
                     "mixed_language_segments": 1,
                     "language_change_flags": 0,
                 },
+            }
+        }
+    )
+
+
+class ValidateSemanticsRequest(BaseModel):
+    """Request payload for semantic preservation validation API endpoint (Part 12)."""
+
+    meeting_id: Optional[str] = Field(
+        default="default_meeting",
+        description="Unique identifier of the meeting.",
+    )
+    segments: List[TranscriptSegment] = Field(
+        ...,
+        description="List of transcript segments to validate for semantic preservation.",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "meeting_id": "meeting_123",
+                "segments": [
+                    {
+                        "sequence": 1,
+                        "speaker": "Sarthak Talaviya",
+                        "text": "Good morning, everyone. Let's start the meeting.",
+                        "terminology_normalized_text": "Good morning everyone, let's start the meeting.",
+                    }
+                ],
+            }
+        }
+    )
+
+
+class ValidateSemanticsResponse(BaseModel):
+    """Response payload for semantic preservation validation API endpoint (Part 12)."""
+
+    meeting_id: str = Field(
+        ...,
+        description="Unique identifier of the meeting.",
+    )
+    segments: List[TranscriptSegment] = Field(
+        ...,
+        description="Transcript segments with semantic preservation validation metadata added.",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "meeting_id": "meeting_123",
+                "segments": [
+                    {
+                        "sequence": 1,
+                        "speaker": "Sarthak Talaviya",
+                        "text": "Good morning, everyone. Let's start the meeting.",
+                        "semantic_status": "SEMANTICALLY_PRESERVED",
+                        "semantic_confidence": 0.98,
+                        "semantic_flags": [],
+                        "semantic_changed_elements": [],
+                        "semantic_validation_reason": "Punctuation and casing normalized without changing original meaning.",
+                    }
+                ],
             }
         }
     )

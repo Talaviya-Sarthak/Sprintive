@@ -11,6 +11,8 @@
 > - **Module 8: Technical Terminology Normalization (Canonical Technical Vocabulary)**
 > - **Module 9: Contextual Consistency Check (Logical & Domain Validation)**
 > - **Module 10: Speaker Attribution Validation (Conversational & Turn-Taking Plausibility)**
+> - **Module 11: Language Preservation Check (Multilingual & Code-Switching Integrity)**
+> - **Module 12: Semantic Preservation Validation (Meaning & Intent Verification)**
 
 The **Sprintive Transcript Processing Service** is a modular Python/FastAPI service responsible for transforming raw meeting transcripts stored in Supabase into structured, validated data suitable for downstream AI analysis.
 
@@ -728,5 +730,116 @@ Verifies that the transcript-cleaning pipeline has preserved the original langua
     "mixed_language_segments": 1,
     "language_change_flags": 1
   }
+}
+```
+
+---
+
+## 16. Part 12 — Semantic Preservation Validation
+
+### Endpoint
+`POST /transcript/validate-semantics`
+
+### Description
+Verifies that transcript cleaning across upstream stages has preserved the **meaning, facts, intent, and commitments** of the original conversation. It operates strictly as a validation stage ($\text{VALIDATE} \longrightarrow \text{FLAG} \longrightarrow \text{PRESERVE}$) and never rewrites transcript text or reassigns speakers.
+
+**Core Principles**:
+- **MEANING & INTENT PRESERVATION**: Verifies factual statements, negations, quantities, numbers, dates, times, deadlines, technical entities, people references, actions, decisions, commitments, blockers, causality, and certainty/modality.
+- **ZERO REWRITING GUARANTEE**: Strictly never modifies transcript text (`text`, `processed_text`, etc.) or speaker labels (`assert output["text"] == input["text"]` and `assert output["speaker"] == input["speaker"]`).
+- **CONSERVATIVE VALIDATION**: Prefers `POSSIBLE_SEMANTIC_CHANGE` or `AMBIGUOUS` over assuming a change is correct. Never invents corrections.
+- **HIERARCHICAL INPUT RETRIEVAL**: Uses original `text` as baseline and selects the latest trustworthy processed text (`terminology_normalized_text` $\rightarrow$ `grammar_corrected_text` $\rightarrow$ `stt_corrected_text` $\rightarrow$ `processed_text` $\rightarrow$ `text`).
+- **TWO-TIER HYBRID ARCHITECTURE**:
+  1. *Deterministic Rule Engine* (`semantic_rules.py` + `entity_extractor.py`): High-precision regex & rule extraction for negations, quantities, numbers, dates, times, technical entities, questions, uncertainty, and stylistic equivalence.
+  2. *LLM Semantic Engine* (`semantic_validator.py` + `prompts/semantic_validation.py`): Pydantic-structured LLM validation for nuanced meaning, causal relationships, and intent changes with surrounding context ($\pm 3$ segments).
+- **RESILIENT FALLBACK**: If the LLM is unavailable or fails, returns deterministic findings or marks `INSUFFICIENT_CONTEXT` without crashing the pipeline.
+
+### Status Enum
+- `SEMANTICALLY_PRESERVED`: The cleaned text retains the exact meaning and intent of the original.
+- `POSSIBLE_SEMANTIC_CHANGE`: Evidence of possible meaning shift, but insufficient certainty.
+- `SEMANTICALLY_CHANGED`: Cleaned text clearly changes a meaningful fact, negation, entity, or intent.
+- `AMBIGUOUS`: Divergence cannot be reliably categorized without further evidence.
+- `INSUFFICIENT_CONTEXT`: Necessary surrounding context unavailable or service evaluation failed safely.
+
+### Example Request
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 1,
+      "speaker": "Sarthak Talaviya",
+      "text": "Good morning, everyone. Let's start the meeting.",
+      "terminology_normalized_text": "Good morning everyone, let's start the meeting.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 2,
+      "speaker": "Harshit Pambhar",
+      "text": "The API is not working.",
+      "terminology_normalized_text": "The API is working.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 3,
+      "speaker": "Harshit Pambhar",
+      "text": "We have 3 blockers.",
+      "terminology_normalized_text": "We have 5 blockers.",
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+### Example Response
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 1,
+      "speaker": "Sarthak Talaviya",
+      "text": "Good morning, everyone. Let's start the meeting.",
+      "terminology_normalized_text": "Good morning everyone, let's start the meeting.",
+      "semantic_status": "SEMANTICALLY_PRESERVED",
+      "semantic_confidence": 0.98,
+      "semantic_flags": [],
+      "semantic_changed_elements": [],
+      "semantic_validation_reason": "Punctuation or capitalization normalization only; semantic meaning is fully preserved.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 2,
+      "speaker": "Harshit Pambhar",
+      "text": "The API is not working.",
+      "terminology_normalized_text": "The API is working.",
+      "semantic_status": "SEMANTICALLY_CHANGED",
+      "semantic_confidence": 0.98,
+      "semantic_flags": [
+        "NEGATION_CHANGED"
+      ],
+      "semantic_changed_elements": [
+        "negation"
+      ],
+      "semantic_validation_reason": "Negation polarities differ: original has {'not'}, processed has set().",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 3,
+      "speaker": "Harshit Pambhar",
+      "text": "We have 3 blockers.",
+      "terminology_normalized_text": "We have 5 blockers.",
+      "semantic_status": "SEMANTICALLY_CHANGED",
+      "semantic_confidence": 0.98,
+      "semantic_flags": [
+        "QUANTITY_CHANGED",
+        "NUMBER_CHANGED"
+      ],
+      "semantic_changed_elements": [
+        "number_or_quantity"
+      ],
+      "semantic_validation_reason": "Numeric values differ: original has {'3': 1}, processed has {'5': 1}.",
+      "include_in_meeting": true
+    }
+  ]
 }
 ```

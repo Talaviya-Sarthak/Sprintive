@@ -52,6 +52,12 @@ class Settings(BaseSettings):
     LANGUAGE_CONFIDENCE_STRONG: float = 0.90
     LANGUAGE_CONFIDENCE_REVIEW: float = 0.75
 
+    # Semantic Preservation Validation settings (Part 12)
+    SEMANTIC_CONFIDENCE_STRONG: float = 0.90
+    SEMANTIC_CONFIDENCE_REVIEW: float = 0.75
+    SEMANTIC_CONTEXT_BEFORE: int = 3
+    SEMANTIC_CONTEXT_AFTER: int = 3
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

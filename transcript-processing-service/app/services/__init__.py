@@ -16,6 +16,7 @@ from app.services.language_validator import (
     calculate_transcript_language_profile,
     validate_language_preservation,
 )
+from app.services.semantic_validator import validate_semantic_preservation
 from app.services.stt_corrector import correct_stt_segments
 from app.services.terminology_normalizer import normalize_terminology
 from app.services.transcript_parser import parse_transcript
@@ -39,6 +40,7 @@ __all__ = [
     "validate_speakers",
     "validate_language_preservation",
     "calculate_transcript_language_profile",
+    "validate_semantic_preservation",
     "BaseLLMClient",
     "OpenAICompatibleLLMClient",
     "MockLLMClient",

@@ -8,5 +8,6 @@ from app.config.grammar import *  # noqa: F401, F403
 from app.config.context import *  # noqa: F401, F403
 from app.config.speaker import *  # noqa: F401, F403
 from app.config.language import *  # noqa: F401, F403
+from app.config.semantic import *  # noqa: F401, F403
 
 

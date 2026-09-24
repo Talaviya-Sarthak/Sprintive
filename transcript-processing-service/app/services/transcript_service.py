@@ -13,11 +13,13 @@ from app.models.transcript import (
     ValidateContextResponse,
     ValidateSpeakersResponse,
     ValidateLanguageResponse,
+    ValidateSemanticsResponse,
 )
 from app.services.contextual_validator import validate_context
 from app.services.fragment_merger import merge_fragments
 from app.services.grammar_normalizer import normalize_grammar_and_punctuation
 from app.services.language_validator import validate_language_preservation
+from app.services.semantic_validator import validate_semantic_preservation
 from app.services.noise_detector import detect_noise_and_fillers
 from app.services.relevance_filter import filter_irrelevant_content
 from app.services.repetition_remover import remove_repetitions
@@ -364,6 +366,43 @@ class TranscriptService:
             meeting_id=meeting_id,
             segments=validated_segments,
             transcript_language_profile=transcript_profile,
+        )
+
+    def validate_semantics(
+        self,
+        meeting_id: str,
+        segments: List[TranscriptSegment],
+        llm_client: Optional[BaseLLMClient] = None,
+        context_before: Optional[int] = None,
+        context_after: Optional[int] = None,
+    ) -> ValidateSemanticsResponse:
+        """
+        Run Part 12: Semantic Preservation Validation on transcript segments.
+
+        Args:
+            meeting_id: The ID of the meeting.
+            segments: List of TranscriptSegment objects from Part 11.
+            llm_client: Optional LLM client (defaults to configured client).
+            context_before: Context window size before current segment.
+            context_after: Context window size after current segment.
+
+        Returns:
+            ValidateSemanticsResponse containing segments decorated with semantic preservation metadata.
+        """
+        logger.info(
+            "Validating semantic preservation for meeting_id=%s (%d segments)",
+            meeting_id,
+            len(segments),
+        )
+        validated_segments = validate_semantic_preservation(
+            segments=segments,
+            llm_client=llm_client,
+            context_before_count=context_before,
+            context_after_count=context_after,
+        )
+        return ValidateSemanticsResponse(
+            meeting_id=meeting_id,
+            segments=validated_segments,
         )
 
 
