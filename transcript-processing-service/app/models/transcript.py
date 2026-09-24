@@ -7,6 +7,13 @@ from app.models.speaker_validation import (
     SpeakerValidationResult,
     SpeakerValidationStatus,
 )
+from app.models.language_validation import (
+    LanguageFlagType,
+    LanguagePreservationStatus,
+    LanguageValidationResult,
+    SegmentLanguageProfile,
+    TranscriptLanguageProfile,
+)
 
 
 class SegmentClassification(str, Enum):
@@ -333,6 +340,48 @@ class TranscriptSegment(BaseModel):
     speaker_validation_reason: Optional[str] = Field(
         default=None,
         description="Explanation or rationale for the speaker attribution validation decision.",
+    )
+    language_preservation_status: Optional[LanguagePreservationStatus] = Field(
+        default=None,
+        description="Preservation status of original language usage (PRESERVED, POSSIBLE_LANGUAGE_CHANGE, LANGUAGE_CHANGED, AMBIGUOUS, INSUFFICIENT_CONTEXT).",
+    )
+    language_confidence: Optional[float] = Field(
+        default=None,
+        description="Confidence score between 0.0 and 1.0 for the language preservation assessment.",
+        ge=0.0,
+        le=1.0,
+    )
+    language_flags: List[str] = Field(
+        default_factory=list,
+        description="List of structured flags raised regarding language preservation.",
+    )
+    original_languages: List[str] = Field(
+        default_factory=list,
+        description="List of detected languages in the original text.",
+    )
+    processed_languages: List[str] = Field(
+        default_factory=list,
+        description="List of detected languages in the processed text.",
+    )
+    original_primary_language: Optional[str] = Field(
+        default=None,
+        description="Primary language code detected in original text.",
+    )
+    processed_primary_language: Optional[str] = Field(
+        default=None,
+        description="Primary language code detected in processed text.",
+    )
+    original_mixed_language: bool = Field(
+        default=False,
+        description="Whether original text was classified as mixed-language / code-switching.",
+    )
+    processed_mixed_language: bool = Field(
+        default=False,
+        description="Whether processed text was classified as mixed-language / code-switching.",
+    )
+    language_validation_reason: Optional[str] = Field(
+        default=None,
+        description="Detailed explanation or rationale for the language validation decision.",
     )
 
 
@@ -1166,4 +1215,78 @@ class ValidateSpeakersResponse(BaseModel):
     )
 
 
+class ValidateLanguageRequest(BaseModel):
+    """Request payload for the language preservation validation API endpoint (Part 11)."""
 
+    meeting_id: Optional[str] = Field(
+        default="default_meeting",
+        description="Unique identifier of the meeting.",
+    )
+    segments: List[TranscriptSegment] = Field(
+        ...,
+        description="List of transcript segments to validate for language preservation.",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "meeting_id": "meeting_123",
+                "segments": [
+                    {
+                        "sequence": 1,
+                        "speaker": "Sarthak Talaviya",
+                        "text": "हाँ बोल, database connection check कर.",
+                        "terminology_normalized_text": "हाँ बोल, database connection check कर.",
+                    }
+                ],
+            }
+        }
+    )
+
+
+class ValidateLanguageResponse(BaseModel):
+    """Response payload for the language preservation validation API endpoint (Part 11)."""
+
+    meeting_id: str = Field(
+        ...,
+        description="Unique identifier of the meeting.",
+    )
+    segments: List[TranscriptSegment] = Field(
+        ...,
+        description="Transcript segments with language preservation validation metadata added.",
+    )
+    transcript_language_profile: TranscriptLanguageProfile = Field(
+        ...,
+        description="Aggregate language profile of the entire transcript.",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "meeting_id": "meeting_123",
+                "segments": [
+                    {
+                        "sequence": 1,
+                        "speaker": "Sarthak Talaviya",
+                        "text": "हाँ बोल, database connection check कर.",
+                        "language_preservation_status": "PRESERVED",
+                        "language_confidence": 0.96,
+                        "language_flags": [],
+                        "original_languages": ["hi", "en"],
+                        "processed_languages": ["hi", "en"],
+                        "original_primary_language": "hi",
+                        "processed_primary_language": "hi",
+                        "original_mixed_language": True,
+                        "processed_mixed_language": True,
+                        "language_validation_reason": "Hindi and English content remain present and the mixed-language structure is preserved.",
+                    }
+                ],
+                "transcript_language_profile": {
+                    "primary_language": "hi",
+                    "languages_detected": ["hi", "en"],
+                    "mixed_language_segments": 1,
+                    "language_change_flags": 0,
+                },
+            }
+        }
+    )

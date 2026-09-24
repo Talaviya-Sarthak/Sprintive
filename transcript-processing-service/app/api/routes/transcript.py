@@ -21,6 +21,8 @@ from app.models.transcript import (
     ValidateContextResponse,
     ValidateSpeakersRequest,
     ValidateSpeakersResponse,
+    ValidateLanguageRequest,
+    ValidateLanguageResponse,
 )
 
 
@@ -377,6 +379,39 @@ async def validate_speakers_endpoint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred while validating speaker attribution: {str(exc)}",
+        )
+
+
+@router.post(
+    "/validate-language",
+    response_model=ValidateLanguageResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Validate language preservation in transcript (Part 11)",
+    description=(
+        "Verifies that the transcript-cleaning pipeline has preserved the original language "
+        "characteristics, multilingual expressions, code-switching, and technical terminology. "
+        "Strictly a validation stage; never translates or rewrites dialogue."
+    ),
+)
+async def validate_language_endpoint(
+    request: ValidateLanguageRequest,
+    service: TranscriptService = Depends(get_transcript_service),
+) -> ValidateLanguageResponse:
+    """
+    Handle POST /transcript/validate-language.
+    Delegates to TranscriptService -> LanguageValidator.
+    """
+    try:
+        meeting_id = request.meeting_id or "default_meeting"
+        return service.validate_language(
+            meeting_id=meeting_id,
+            segments=request.segments,
+        )
+    except Exception as exc:
+        logger.exception("Unexpected error while validating language preservation: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while validating language preservation: {str(exc)}",
         )
 
 

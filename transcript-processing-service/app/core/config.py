@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     SPEAKER_CONTEXT_BEFORE: int = 3
     SPEAKER_CONTEXT_AFTER: int = 3
 
+    # Language Preservation Check settings (Part 11)
+    LANGUAGE_CONFIDENCE_STRONG: float = 0.90
+    LANGUAGE_CONFIDENCE_REVIEW: float = 0.75
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

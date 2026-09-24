@@ -38,6 +38,13 @@ from app.models.transcript import (
     SpeakerValidationResult,
     ValidateSpeakersRequest,
     ValidateSpeakersResponse,
+    LanguagePreservationStatus,
+    LanguageFlagType,
+    LanguageValidationResult,
+    SegmentLanguageProfile,
+    TranscriptLanguageProfile,
+    ValidateLanguageRequest,
+    ValidateLanguageResponse,
     TranscriptSegment,
 )
 
@@ -81,6 +88,13 @@ __all__ = [
     "SpeakerValidationResult",
     "ValidateSpeakersRequest",
     "ValidateSpeakersResponse",
+    "LanguagePreservationStatus",
+    "LanguageFlagType",
+    "LanguageValidationResult",
+    "SegmentLanguageProfile",
+    "TranscriptLanguageProfile",
+    "ValidateLanguageRequest",
+    "ValidateLanguageResponse",
 ]
 
 

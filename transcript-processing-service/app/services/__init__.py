@@ -12,6 +12,10 @@ from app.services.noise_detector import detect_noise_and_fillers
 from app.services.relevance_filter import filter_irrelevant_content
 from app.services.repetition_remover import remove_repetitions
 from app.services.speaker_validator import validate_speakers
+from app.services.language_validator import (
+    calculate_transcript_language_profile,
+    validate_language_preservation,
+)
 from app.services.stt_corrector import correct_stt_segments
 from app.services.terminology_normalizer import normalize_terminology
 from app.services.transcript_parser import parse_transcript
@@ -33,6 +37,8 @@ __all__ = [
     "normalize_terminology",
     "validate_context",
     "validate_speakers",
+    "validate_language_preservation",
+    "calculate_transcript_language_profile",
     "BaseLLMClient",
     "OpenAICompatibleLLMClient",
     "MockLLMClient",

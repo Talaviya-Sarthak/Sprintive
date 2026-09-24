@@ -640,5 +640,93 @@ Under no circumstances is the original `speaker` field overwritten, nor is any t
 }
 ```
 
+---
 
+## 15. Part 11 — Language Preservation Check
 
+### Endpoint
+`POST /transcript/validate-language`
+
+### Description
+Verifies that the transcript-cleaning pipeline has preserved the original language characteristics, multilingual expressions, code-switching, and technical terminology of the speaker's dialogue.
+
+**Core Principles**:
+- **VALIDATION, NOT TRANSLATION**: Validates language usage without translating or rewriting dialogue.
+- **ZERO REWRITING GUARANTEE**: Never modifies transcript text (`text`, `processed_text`, `stt_corrected_text`, `grammar_corrected_text`, `terminology_normalized_text`) or speaker labels (`assert output["text"] == input["text"]` and `assert output["speaker"] == input["speaker"]`).
+- **TECHNICAL VOCABULARY EXEMPTION**: Legitimate technical terminology (e.g. `database`, `connection`, `PostgreSQL`, `Supabase`, `API`) inside Hindi, Spanish, or mixed-language speech is protected and not flagged as language change.
+- **FORMATTING NORMALIZATION EXEMPTION**: Punctuation and capitalization adjustments from upstream stages evaluate as `PRESERVED`.
+- **TRANSCRIPT-LEVEL PROFILE**: Aggregates a transcript-wide profile (`primary_language`, `languages_detected`, `mixed_language_segments`, `language_change_flags`).
+
+### Example Request
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 1,
+      "speaker": "Harshit Pambhar",
+      "text": "हाँ बोल, database connection check कर.",
+      "terminology_normalized_text": "हाँ, बोल। Database connection check कर.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 2,
+      "speaker": "Harshit Pambhar",
+      "text": "हाँ बोल, बाद में discuss करते हैं.",
+      "terminology_normalized_text": "Yes, speak. We will discuss it later.",
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+### Example Response
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 1,
+      "speaker": "Harshit Pambhar",
+      "text": "हाँ बोल, database connection check कर.",
+      "language_preservation_status": "PRESERVED",
+      "language_confidence": 0.98,
+      "language_flags": [],
+      "original_languages": ["en", "hi"],
+      "processed_languages": ["en", "hi"],
+      "original_primary_language": "hi",
+      "processed_primary_language": "hi",
+      "original_mixed_language": true,
+      "processed_mixed_language": true,
+      "language_validation_reason": "Differences are solely punctuation, spacing, or capitalization normalization; language preserved.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 2,
+      "speaker": "Harshit Pambhar",
+      "text": "हाँ बोल, बाद में discuss करते हैं.",
+      "language_preservation_status": "LANGUAGE_CHANGED",
+      "language_confidence": 0.96,
+      "language_flags": [
+        "UNEXPECTED_TRANSLATION",
+        "NON_ENGLISH_CONTENT_MODIFIED",
+        "MIXED_LANGUAGE_LOST"
+      ],
+      "original_languages": ["en", "hi"],
+      "processed_languages": ["en"],
+      "original_primary_language": "hi",
+      "processed_primary_language": "en",
+      "original_mixed_language": true,
+      "processed_mixed_language": false,
+      "language_validation_reason": "Devanagari script in original text was removed or translated into Latin script.",
+      "include_in_meeting": true
+    }
+  ],
+  "transcript_language_profile": {
+    "primary_language": "hi",
+    "languages_detected": ["en", "hi"],
+    "mixed_language_segments": 1,
+    "language_change_flags": 1
+  }
+}
+```

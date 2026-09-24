@@ -12,10 +12,12 @@ from app.models.transcript import (
     TranscriptSegment,
     ValidateContextResponse,
     ValidateSpeakersResponse,
+    ValidateLanguageResponse,
 )
 from app.services.contextual_validator import validate_context
 from app.services.fragment_merger import merge_fragments
 from app.services.grammar_normalizer import normalize_grammar_and_punctuation
+from app.services.language_validator import validate_language_preservation
 from app.services.noise_detector import detect_noise_and_fillers
 from app.services.relevance_filter import filter_irrelevant_content
 from app.services.repetition_remover import remove_repetitions
@@ -329,6 +331,39 @@ class TranscriptService:
         return ValidateSpeakersResponse(
             meeting_id=meeting_id,
             segments=validated_segments,
+        )
+
+    def validate_language(
+        self,
+        meeting_id: str,
+        segments: List[TranscriptSegment],
+        llm_client: Optional[BaseLLMClient] = None,
+    ) -> ValidateLanguageResponse:
+        """
+        Run Part 11: Language Preservation Check on transcript segments.
+
+        Args:
+            meeting_id: The ID of the meeting.
+            segments: List of TranscriptSegment objects from Part 10.
+            llm_client: Optional LLM client (defaults to configured client).
+
+        Returns:
+            ValidateLanguageResponse containing segments decorated with language preservation metadata
+            and the overall transcript language profile.
+        """
+        logger.info(
+            "Validating language preservation for meeting_id=%s (%d segments)",
+            meeting_id,
+            len(segments),
+        )
+        validated_segments, transcript_profile = validate_language_preservation(
+            segments=segments,
+            llm_client=llm_client,
+        )
+        return ValidateLanguageResponse(
+            meeting_id=meeting_id,
+            segments=validated_segments,
+            transcript_language_profile=transcript_profile,
         )
 
 
