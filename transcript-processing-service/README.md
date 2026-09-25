@@ -15,6 +15,8 @@
 > - **Module 12: Semantic Preservation Validation (Meaning & Intent Verification)**
 > - **Module 13: Final Transcript Formatting (AI-Ready Presentation & Serialization)**
 > - **Module 14: Storage & Processing Metadata Persistence (Supabase Storage & Lifecycle Tracking)**
+> - **Module 15: Transcript Processing Orchestrator (Central Multi-Stage Pipeline & Concurrency Control)**
+
 
 The **Sprintive Transcript Processing Service** is a modular Python/FastAPI service responsible for transforming raw meeting transcripts stored in Supabase into structured, validated data suitable for downstream AI analysis.
 
@@ -994,3 +996,139 @@ $$\text{PENDING} \longrightarrow \text{PROCESSING} \longrightarrow \text{CLEANIN
   "error": null
 }
 ```
+
+---
+
+## 19. Part 15 — Transcript Processing Orchestrator
+
+The **Transcript Processing Orchestrator** is the central workflow coordinator connecting all 14 stages of the Sprintive transcript-cleaning pipeline into one unified, resilient, and production-ready system.
+
+### Architecture
+
+```text
+Node / Express Backend
+        │ (Meeting ended)
+        ▼
+POST /transcript/process (FastAPI)
+        │
+        ▼
+Transcript Orchestrator
+        ├── 1. Parser (app/services/transcript_parser.py)
+        ├── 2. Noise Analyzer (app/services/noise_detector.py)
+        ├── 3. Repetition Remover (app/services/repetition_remover.py)
+        ├── 4. Relevance Filter (app/services/relevance_filter.py)
+        ├── 5. Fragment Merger (app/services/fragment_merger.py)
+        │       └── (Status -> CLEANING complete)
+        ├── 6. STT Corrector (app/services/stt_corrector.py)
+        ├── 7. Grammar Normalizer (app/services/grammar_normalizer.py)
+        ├── 8. Terminology Normalizer (app/services/terminology_normalizer.py)
+        │       └── (Status -> VALIDATING started)
+        ├── 9. Context Validator (app/services/contextual_validator.py)
+        ├── 10. Speaker Validator (app/services/speaker_validator.py)
+        ├── 11. Language Validator (app/services/language_validator.py)
+        ├── 12. Semantic Validator (app/services/semantic_validator.py)
+        ├── 13. Final Formatter (app/services/transcript_formatter.py)
+        └── 14. Storage Service (app/services/storage_service.py)
+        │
+        ▼
+Supabase Storage (processed/cleaned_conversation.txt)
+        │
+        ▼
+PostgreSQL / Neon Metadata (READY_FOR_AI)
+        │
+        ▼
+AI Agent Pipeline (Scrum Analysis, Action Items, Blockers)
+```
+
+### Core Design Principles
+
+1. **Separation of Concerns**: The orchestrator contains zero text cleaning or validation logic directly. All transformations, linguistic rules, dictionary lookups, and LLM queries remain isolated in modular stage services.
+2. **Immutable Raw Transcript**: `meetings/{meeting_id}/raw/conversation.txt` is strictly read-only and is never modified or overwritten under any circumstances.
+3. **Strict Stage Ordering**:
+   $$\text{parse} \rightarrow \text{noise} \rightarrow \text{repetition} \rightarrow \text{relevance} \rightarrow \text{merge} \rightarrow \text{stt} \rightarrow \text{grammar} \rightarrow \text{terminology} \rightarrow \text{context} \rightarrow \text{speaker} \rightarrow \text{language} \rightarrow \text{semantic} \rightarrow \text{format} \rightarrow \text{store}$$
+4. **Resilient LLM Fallback**: If an LLM call fails or times out in any enhancement or validation stage, the stage defaults gracefully to its deterministic safe fallback, allowing pipeline processing to complete without crashing.
+5. **Concurrency & Idempotency Guard**: Atomic database status checking prevents duplicate processing jobs from processing the same meeting simultaneously (HTTP 409 Conflict). Subsequent attempts cleanly increment the attempt counter without duplicate storage files.
+6. **Strict READY_FOR_AI Boundary**: Status is set to `READY_FOR_AI` if and only if the cleaned transcript is verified in storage, is non-empty, and all validation checks pass. AI agents never consume uncleaned raw transcripts.
+
+### Complete Lifecycle State Machine
+
+$$\text{PENDING} \longrightarrow \text{PROCESSING} \longrightarrow \text{CLEANING} \longrightarrow \text{VALIDATING} \longrightarrow \text{COMPLETED} \longrightarrow \text{READY\_FOR\_AI}$$
+$$\text{Any Fatal Failure} \longrightarrow \text{FAILED} \quad (\text{retry} \rightarrow \text{PROCESSING})$$
+
+### API Endpoints
+
+#### 1. Initiate Transcript Processing
+`POST /transcript/process`
+
+**Request Body**:
+```json
+{
+  "meeting_id": "meeting-123",
+  "raw_transcript_path": "meetings/meeting-123/raw/conversation.txt",
+  "async_processing": false
+}
+```
+
+**Response (Synchronous: HTTP 200 OK)**:
+```json
+{
+  "accepted": true,
+  "meeting_id": "meeting-123",
+  "processing_status": "READY_FOR_AI",
+  "current_stage": "store",
+  "attempt": 1,
+  "cleaner_version": "1.0.0",
+  "cleaned_transcript_path": "meetings/meeting-123/processed/cleaned_conversation.txt",
+  "duration_ms": 320,
+  "metrics": {
+    "total_segments": 10,
+    "included_segments": 9,
+    "excluded_segments": 1,
+    "noise_segments": 0,
+    "repetition_segments": 0,
+    "stt_modified_segments": 1
+  },
+  "warnings": []
+}
+```
+
+**Response (Asynchronous: HTTP 202 Accepted)**:
+```json
+{
+  "accepted": true,
+  "meeting_id": "meeting-123",
+  "processing_status": "PENDING",
+  "attempt": 1,
+  "cleaner_version": "1.0.0",
+  "message": "Transcript processing scheduled in background."
+}
+```
+
+#### 2. Get Processing Status & Metrics
+`GET /transcript/status/{meeting_id}`
+
+**Response (HTTP 200 OK)**:
+```json
+{
+  "meeting_id": "meeting-123",
+  "raw_transcript_path": "meetings/meeting-123/raw/conversation.txt",
+  "cleaned_transcript_path": "meetings/meeting-123/processed/cleaned_conversation.txt",
+  "processing_status": "READY_FOR_AI",
+  "current_stage": "store",
+  "attempt": 1,
+  "cleaner_version": "1.0.0",
+  "duration_ms": 320,
+  "metrics": {
+    "total_segments": 10,
+    "included_segments": 9,
+    "excluded_segments": 1,
+    "noise_segments": 0,
+    "stt_modified_segments": 1
+  },
+  "warnings": [],
+  "created_at": "2026-09-25T10:00:00Z",
+  "started_at": "2026-09-25T10:00:01Z",
+  "completed_at": "2026-09-25T10:00:02Z"
+}
+```
+

@@ -317,6 +317,18 @@ class TranscriptStorageService:
         target_path = build_cleaned_transcript_path(meeting_id)
         return self.provider.exists(target_path)
 
+    def get_raw_transcript(self, meeting_id: str, raw_path: Optional[str] = None) -> str:
+        """Retrieve the raw transcript text from storage."""
+        valid_id = validate_meeting_id(meeting_id)
+        target_path = raw_path or build_raw_transcript_path(valid_id)
+        return self.provider.get_text(target_path)
+
+    def raw_transcript_exists(self, meeting_id: str, raw_path: Optional[str] = None) -> bool:
+        """Check whether the raw transcript exists in storage."""
+        valid_id = validate_meeting_id(meeting_id)
+        target_path = raw_path or build_raw_transcript_path(valid_id)
+        return self.provider.exists(target_path)
+
 
 def get_storage_service(
     config: Optional[StorageConfig] = None,

@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response, status
 from app.models.transcript import (
     AnalyzeNoiseRequest,
     AnalyzeNoiseResponse,
@@ -31,8 +31,13 @@ from app.models.final_transcript import (
     FormatFinalTranscriptResponse,
 )
 from app.models.processing import (
+    ProcessingRecord,
     StoreFinalTranscriptRequest,
     StoreFinalTranscriptResponse,
+)
+from app.models.orchestrator import (
+    ProcessTranscriptRequest,
+    ProcessTranscriptResponse,
 )
 from app.config.storage import InvalidMeetingIdError
 from app.services.storage_service import (
@@ -40,8 +45,14 @@ from app.services.storage_service import (
     TranscriptUploadError,
     TranscriptVerificationError,
 )
-
-
+from app.services.transcript_orchestrator import (
+    ConcurrentProcessingError,
+    EmptyTranscriptError,
+    MissingRawTranscriptError,
+    NonRetryableStageError,
+    PipelineStageError,
+    RetryableStageError,
+)
 from app.services.transcript_service import TranscriptService
 
 
@@ -542,6 +553,120 @@ async def store_final_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred while persisting final transcript: {str(exc)}",
         )
+
+
+@router.post(
+    "/process",
+    response_model=ProcessTranscriptResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Orchestrate the complete transcript processing pipeline (Part 15)",
+    description=(
+        "Executes the full 14-stage transcript processing pipeline: parse -> noise -> repetition "
+        "-> relevance -> merge -> stt -> grammar -> terminology -> context -> speaker -> language "
+        "-> semantic -> format -> store. Guarantees raw transcript immutability, safe fallbacks, "
+        "and updates processing lifecycle status to READY_FOR_AI upon successful completion."
+    ),
+)
+async def process_transcript_endpoint(
+    request: ProcessTranscriptRequest,
+    response: Response,
+    background_tasks: BackgroundTasks,
+    service: TranscriptService = Depends(get_transcript_service),
+) -> ProcessTranscriptResponse:
+    """
+    Handle POST /transcript/process.
+    Executes or schedules the full 14-stage orchestrator pipeline.
+    """
+    try:
+        if request.async_processing:
+            existing = service.get_processing_status(request.meeting_id)
+            if existing and existing.processing_status in ("PROCESSING", "CLEANING", "VALIDATING"):
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Meeting '{request.meeting_id}' is already being processed.",
+                )
+            background_tasks.add_task(
+                service.process_transcript,
+                meeting_id=request.meeting_id,
+                raw_text=request.raw_text,
+                raw_transcript_path=request.raw_transcript_path,
+            )
+            response.status_code = status.HTTP_202_ACCEPTED
+            return ProcessTranscriptResponse(
+                accepted=True,
+                meeting_id=request.meeting_id,
+                processing_status="PENDING",
+                attempt=(existing.attempt if existing else 0) + 1,
+                message="Transcript processing scheduled in background.",
+            )
+        else:
+            result = await service.process_transcript(
+                meeting_id=request.meeting_id,
+                raw_text=request.raw_text,
+                raw_transcript_path=request.raw_transcript_path,
+            )
+            return result
+    except HTTPException:
+        raise
+    except InvalidMeetingIdError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    except MissingRawTranscriptError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    except ConcurrentProcessingError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
+    except (EmptyTranscriptError, NonRetryableStageError) as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+    except PipelineStageError as exc:
+        logger.error("Pipeline stage error in orchestrator: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Pipeline stage failure: {str(exc)}",
+        )
+    except Exception as exc:
+        logger.exception("Unexpected error in orchestrator endpoint: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Transcript processing failed: {str(exc)}",
+        )
+
+
+@router.get(
+    "/status/{meeting_id}",
+    response_model=ProcessingRecord,
+    status_code=status.HTTP_200_OK,
+    summary="Get transcript processing status and lifecycle metadata (Part 15)",
+    description=(
+        "Retrieves the current processing state, active stage, attempt count, "
+        "metrics, and execution duration for a meeting transcript."
+    ),
+)
+async def get_processing_status_endpoint(
+    meeting_id: str,
+    service: TranscriptService = Depends(get_transcript_service),
+) -> ProcessingRecord:
+    """
+    Handle GET /transcript/status/{meeting_id}.
+    Retrieves the current ProcessingRecord for the specified meeting.
+    """
+    try:
+        record = service.get_processing_status(meeting_id)
+        if not record:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No processing record found for meeting '{meeting_id}'.",
+            )
+        return record
+    except HTTPException:
+        raise
+    except InvalidMeetingIdError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    except Exception as exc:
+        logger.exception("Unexpected error fetching processing status: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve processing status: {str(exc)}",
+        )
+
 
 
 

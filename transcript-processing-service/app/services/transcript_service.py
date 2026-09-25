@@ -20,12 +20,20 @@ from app.models.final_transcript import (
     FormatFinalTranscriptResponse,
 )
 from app.models.processing import (
+    ProcessingRecord,
     StoreFinalTranscriptResponse,
+)
+from app.models.orchestrator import (
+    ProcessTranscriptResponse,
 )
 from app.config.formatting import FormattingConfig
 from app.services.processing_service import (
     ProcessingService,
     get_processing_service,
+)
+from app.services.transcript_orchestrator import (
+    TranscriptOrchestrator,
+    get_transcript_orchestrator,
 )
 from app.services.contextual_validator import validate_context
 from app.services.fragment_merger import merge_fragments
@@ -40,6 +48,10 @@ from app.services.speaker_validator import validate_speakers
 from app.services.stt_corrector import correct_stt_segments
 from app.services.terminology_normalizer import normalize_terminology
 from app.services.transcript_parser import parse_transcript
+from app.services.transcript_repository import (
+    BaseTranscriptRepository,
+    get_transcript_repository,
+)
 from app.services.transcript_storage import BaseTranscriptStorage, get_transcript_storage
 from app.services.llm_client import BaseLLMClient
 
@@ -55,8 +67,13 @@ class TranscriptService:
     and runs downstream modular processing pipelines (such as noise & filler detection).
     """
 
-    def __init__(self, storage: Optional[BaseTranscriptStorage] = None):
+    def __init__(
+        self,
+        storage: Optional[BaseTranscriptStorage] = None,
+        orchestrator: Optional[TranscriptOrchestrator] = None,
+    ):
         self.storage = storage or get_transcript_storage()
+        self.orchestrator = orchestrator or get_transcript_orchestrator()
 
     def process_and_parse(
         self,
@@ -491,6 +508,37 @@ class TranscriptService:
             processing_status=record.processing_status,
             error=record.error,
         )
+
+    async def process_transcript(
+        self,
+        meeting_id: str,
+        raw_text: Optional[str] = None,
+        raw_transcript_path: Optional[str] = None,
+        formatting_config: Optional[FormattingConfig] = None,
+        enforce_concurrency: bool = True,
+        orchestrator: Optional[TranscriptOrchestrator] = None,
+    ) -> ProcessTranscriptResponse:
+        """
+        Run Part 15: Execute complete 14-stage transcript cleaning orchestration.
+        """
+        orch = orchestrator or get_transcript_orchestrator()
+        return await orch.process_transcript(
+            meeting_id=meeting_id,
+            raw_text=raw_text,
+            raw_transcript_path=raw_transcript_path,
+            formatting_config=formatting_config,
+            enforce_concurrency=enforce_concurrency,
+        )
+
+    def get_processing_status(
+        self,
+        meeting_id: str,
+    ) -> Optional[ProcessingRecord]:
+        """
+        Retrieve current processing metadata record for a meeting.
+        """
+        return self.orchestrator.repository.get_record(meeting_id)
+
 
 
 

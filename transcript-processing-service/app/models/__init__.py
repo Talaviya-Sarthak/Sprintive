@@ -67,6 +67,12 @@ from app.models.processing import (
     StoreFinalTranscriptRequest,
     StoreFinalTranscriptResponse,
 )
+from app.models.orchestrator import (
+    StageResult,
+    ProcessingContext,
+    ProcessTranscriptRequest,
+    ProcessTranscriptResponse,
+)
 
 __all__ = [
     "SegmentClassification",
@@ -131,6 +137,10 @@ __all__ = [
     "ProcessingRecord",
     "StoreFinalTranscriptRequest",
     "StoreFinalTranscriptResponse",
+    "StageResult",
+    "ProcessingContext",
+    "ProcessTranscriptRequest",
+    "ProcessTranscriptResponse",
 ]
 
 

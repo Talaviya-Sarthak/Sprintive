@@ -62,6 +62,26 @@ class ProcessingRecord(BaseModel):
         default="1.0.0",
         description="Pipeline version used to generate the cleaned transcript.",
     )
+    current_stage: Optional[str] = Field(
+        default=None,
+        description="Currently executing pipeline stage.",
+    )
+    error_stage: Optional[str] = Field(
+        default=None,
+        description="Stage where processing failure occurred, if any.",
+    )
+    duration_ms: Optional[int] = Field(
+        default=None,
+        description="Total duration in milliseconds for the pipeline execution.",
+    )
+    metrics: dict = Field(
+        default_factory=dict,
+        description="Stage and pipeline processing metrics.",
+    )
+    warnings: list[str] = Field(
+        default_factory=list,
+        description="Accumulated warnings from all pipeline stages.",
+    )
 
     model_config = ConfigDict(populate_by_name=True)
 

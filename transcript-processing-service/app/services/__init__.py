@@ -55,6 +55,16 @@ from app.services.processing_service import (
     ProcessingService,
     get_processing_service,
 )
+from app.services.transcript_orchestrator import (
+    TranscriptOrchestrator,
+    get_transcript_orchestrator,
+    ProcessingError,
+    RetryableProcessingError,
+    NonRetryableProcessingError,
+    MissingRawTranscriptError,
+    EmptyTranscriptError,
+    FinalizationBlockedError,
+)
 
 __all__ = [
     "parse_transcript",
@@ -98,6 +108,14 @@ __all__ = [
     "get_transcript_repository",
     "ProcessingService",
     "get_processing_service",
+    "TranscriptOrchestrator",
+    "get_transcript_orchestrator",
+    "ProcessingError",
+    "RetryableProcessingError",
+    "NonRetryableProcessingError",
+    "MissingRawTranscriptError",
+    "EmptyTranscriptError",
+    "FinalizationBlockedError",
 ]
 
 
