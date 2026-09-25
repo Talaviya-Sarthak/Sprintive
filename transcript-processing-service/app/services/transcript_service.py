@@ -19,7 +19,14 @@ from app.models.final_transcript import (
     FinalizationResult,
     FormatFinalTranscriptResponse,
 )
+from app.models.processing import (
+    StoreFinalTranscriptResponse,
+)
 from app.config.formatting import FormattingConfig
+from app.services.processing_service import (
+    ProcessingService,
+    get_processing_service,
+)
 from app.services.contextual_validator import validate_context
 from app.services.fragment_merger import merge_fragments
 from app.services.grammar_normalizer import normalize_grammar_and_punctuation
@@ -446,6 +453,43 @@ class TranscriptService:
             warnings=res.warnings,
             included_segments=res.included_segments,
             excluded_segments=res.excluded_segments,
+        )
+
+    def store_final(
+        self,
+        meeting_id: str,
+        transcript_text: str,
+        raw_transcript_path: Optional[str] = None,
+        overwrite: Optional[bool] = None,
+        processing_service: Optional[ProcessingService] = None,
+    ) -> StoreFinalTranscriptResponse:
+        """
+        Run Part 14: Store final clean transcript in storage and update processing metadata.
+
+        Args:
+            meeting_id: The ID of the meeting.
+            transcript_text: Final clean transcript string.
+            raw_transcript_path: Optional immutable raw transcript path.
+            overwrite: Whether to overwrite existing processed artifact.
+            processing_service: Optional processing service instance.
+
+        Returns:
+            StoreFinalTranscriptResponse containing status and storage path.
+        """
+        logger.info("Persisting final transcript for meeting_id=%s", meeting_id)
+        proc_service = processing_service or get_processing_service()
+        record = proc_service.store_final_transcript(
+            meeting_id=meeting_id,
+            transcript_text=transcript_text,
+            raw_transcript_path=raw_transcript_path,
+            overwrite=overwrite,
+        )
+        return StoreFinalTranscriptResponse(
+            success=True,
+            meeting_id=record.meeting_id,
+            cleaned_transcript_path=record.cleaned_transcript_path or "",
+            processing_status=record.processing_status,
+            error=record.error,
         )
 
 

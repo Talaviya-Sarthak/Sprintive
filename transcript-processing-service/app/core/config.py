@@ -58,6 +58,13 @@ class Settings(BaseSettings):
     SEMANTIC_CONTEXT_BEFORE: int = 3
     SEMANTIC_CONTEXT_AFTER: int = 3
 
+    # Storage and Processing Persistence settings (Part 14)
+    SUPABASE_URL: str = ""
+    SUPABASE_SERVICE_ROLE_KEY: str = ""
+    SUPABASE_STORAGE_BUCKET: str = "meetings"
+    CLEANER_VERSION: str = "1.0.0"
+    OVERWRITE_PROCESSED_TRANSCRIPT: bool = True
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

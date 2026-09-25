@@ -30,6 +30,16 @@ from app.models.final_transcript import (
     FormatFinalTranscriptRequest,
     FormatFinalTranscriptResponse,
 )
+from app.models.processing import (
+    StoreFinalTranscriptRequest,
+    StoreFinalTranscriptResponse,
+)
+from app.config.storage import InvalidMeetingIdError
+from app.services.storage_service import (
+    TranscriptStorageError,
+    TranscriptUploadError,
+    TranscriptVerificationError,
+)
 
 
 from app.services.transcript_service import TranscriptService
@@ -485,6 +495,52 @@ async def format_final_endpoint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred while formatting final transcript: {str(exc)}",
+        )
+
+
+@router.post(
+    "/store-final",
+    response_model=StoreFinalTranscriptResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Store final clean transcript in storage and update metadata (Part 14)",
+    description=(
+        "Persists the final cleaned transcript produced by Part 13 to Supabase Storage or Local Storage. "
+        "Strictly guarantees raw transcript is never overwritten, enforces UTF-8, verifies upload, "
+        "and updates processing lifecycle status to READY_FOR_AI."
+    ),
+)
+async def store_final_endpoint(
+    request: StoreFinalTranscriptRequest,
+    service: TranscriptService = Depends(get_transcript_service),
+) -> StoreFinalTranscriptResponse:
+    """
+    Handle POST /transcript/store-final.
+    Delegates to TranscriptService -> ProcessingService -> StorageService & Repository.
+    """
+    try:
+        return service.store_final(
+            meeting_id=request.meeting_id,
+            transcript_text=request.transcript_text,
+            raw_transcript_path=request.raw_transcript_path,
+            overwrite=request.overwrite,
+        )
+    except InvalidMeetingIdError as exc:
+        logger.warning("Rejected invalid meeting_id in store_final: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid meeting_id: {str(exc)}",
+        )
+    except (TranscriptUploadError, TranscriptVerificationError, TranscriptStorageError) as exc:
+        logger.error("Storage error in store_final: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Transcript storage operation failed: {str(exc)}",
+        )
+    except Exception as exc:
+        logger.exception("Unexpected error while storing final transcript: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while persisting final transcript: {str(exc)}",
         )
 
 

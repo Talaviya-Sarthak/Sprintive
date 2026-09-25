@@ -10,5 +10,6 @@ from app.config.speaker import *  # noqa: F401, F403
 from app.config.language import *  # noqa: F401, F403
 from app.config.semantic import *  # noqa: F401, F403
 from app.config.formatting import *  # noqa: F401, F403
+from app.config.storage import *  # noqa: F401, F403
 
 

@@ -61,6 +61,12 @@ from app.models.final_transcript import (
     FormatFinalTranscriptRequest,
     FormatFinalTranscriptResponse,
 )
+from app.models.processing import (
+    ProcessingStatus,
+    ProcessingRecord,
+    StoreFinalTranscriptRequest,
+    StoreFinalTranscriptResponse,
+)
 
 __all__ = [
     "SegmentClassification",
@@ -121,6 +127,10 @@ __all__ = [
     "FinalizationResult",
     "FormatFinalTranscriptRequest",
     "FormatFinalTranscriptResponse",
+    "ProcessingStatus",
+    "ProcessingRecord",
+    "StoreFinalTranscriptRequest",
+    "StoreFinalTranscriptResponse",
 ]
 
 

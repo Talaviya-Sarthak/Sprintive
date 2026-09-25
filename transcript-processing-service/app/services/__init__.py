@@ -36,6 +36,25 @@ from app.services.transcript_storage import (
     LocalTranscriptStorage,
     get_transcript_storage,
 )
+from app.services.storage_service import (
+    TranscriptStorageError,
+    TranscriptUploadError,
+    TranscriptVerificationError,
+    BaseStorageProvider,
+    LocalStorageProvider,
+    SupabaseStorageProvider,
+    TranscriptStorageService,
+    get_storage_service,
+)
+from app.services.transcript_repository import (
+    BaseTranscriptRepository,
+    InMemoryTranscriptRepository,
+    get_transcript_repository,
+)
+from app.services.processing_service import (
+    ProcessingService,
+    get_processing_service,
+)
 
 __all__ = [
     "parse_transcript",
@@ -66,6 +85,19 @@ __all__ = [
     "LocalTranscriptStorage",
     "get_transcript_storage",
     "TranscriptService",
+    "TranscriptStorageError",
+    "TranscriptUploadError",
+    "TranscriptVerificationError",
+    "BaseStorageProvider",
+    "LocalStorageProvider",
+    "SupabaseStorageProvider",
+    "TranscriptStorageService",
+    "get_storage_service",
+    "BaseTranscriptRepository",
+    "InMemoryTranscriptRepository",
+    "get_transcript_repository",
+    "ProcessingService",
+    "get_processing_service",
 ]
 
 

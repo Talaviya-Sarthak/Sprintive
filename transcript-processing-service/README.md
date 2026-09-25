@@ -14,6 +14,7 @@
 > - **Module 11: Language Preservation Check (Multilingual & Code-Switching Integrity)**
 > - **Module 12: Semantic Preservation Validation (Meaning & Intent Verification)**
 > - **Module 13: Final Transcript Formatting (AI-Ready Presentation & Serialization)**
+> - **Module 14: Storage & Processing Metadata Persistence (Supabase Storage & Lifecycle Tracking)**
 
 The **Sprintive Transcript Processing Service** is a modular Python/FastAPI service responsible for transforming raw meeting transcripts stored in Supabase into structured, validated data suitable for downstream AI analysis.
 
@@ -938,5 +939,58 @@ Converts the validated internal transcript segments from earlier pipeline stages
   ],
   "included_segments": 2,
   "excluded_segments": 1
+}
+```
+
+---
+
+## 18. Part 14 — Storage & Processing Metadata Persistence
+
+### Endpoint
+`POST /transcript/store-final`
+
+### Description
+Safely persists the finalized clean transcript produced by Part 13 to Supabase Storage (or configured storage backend), enforces strict UTF-8 multi-language encoding, guarantees that the raw immutable transcript is **never overwritten**, records database metadata, and marks the meeting transcript as `READY_FOR_AI`.
+
+**Core Principles**:
+- **STRICT RAW TRANSCRIPT PROTECTION**:
+  - Raw transcript: `meetings/{meeting_id}/raw/conversation.txt` remains 100% untouched.
+  - Processed transcript: Saved deterministically to `meetings/{meeting_id}/processed/cleaned_conversation.txt`.
+- **CORRECT ORDER OF OPERATIONS**:
+  $$\text{Upload Cleaned File} \longrightarrow \text{Verify In Storage} \longrightarrow \text{Update Database Metadata} \longrightarrow \text{Mark READY\_FOR\_AI}$$
+- **SAFE MEETING ID VALIDATION**:
+  - Rejects path traversal sequences (`../`, `./`, `/`, `\`, null bytes).
+  - Enforces safe alphanumeric, hyphen, and underscore meeting identifiers (e.g. UUIDs or `meeting-123`).
+- **UTF-8 ENCODING & CONTENT-TYPE**:
+  - Encoded strictly in UTF-8 to preserve Hindi (Devanagari), Spanish, English, and code-switching dialogue.
+  - MIME Content-Type: `text/plain; charset=utf-8`.
+- **RETRY IDEMPOTENCY & PARTIAL FAILURE RECOVERY**:
+  - Uses a deterministic storage path (`meetings/{meeting_id}/processed/cleaned_conversation.txt`).
+  - If upload succeeds but database update encounters a transient failure, subsequent retries reconcile metadata without generating duplicate filenames (`cleaned_conversation_2.txt`).
+- **METADATA LIFECYCLE TRACKING**:
+  - Tracks `meeting_id`, `raw_transcript_path`, `cleaned_transcript_path`, `processing_status` (`READY_FOR_AI`), `attempt`, `cleaner_version`, `created_at`, `started_at`, `completed_at`, and `error`.
+- **SECURITY & CREDENTIAL PROTECTION**:
+  - `SUPABASE_SERVICE_ROLE_KEY` is kept strictly backend-internal. It is **never** returned by the API or exposed in error messages.
+
+### Processing Status Transition
+$$\text{PENDING} \longrightarrow \text{PROCESSING} \longrightarrow \text{CLEANING} \longrightarrow \text{VALIDATING} \longrightarrow \text{COMPLETED} \longrightarrow \text{READY\_FOR\_AI}$$
+
+### Example Request
+```json
+{
+  "meeting_id": "meeting-123",
+  "transcript_text": "Sarthak Talaviya: Good morning, everyone. Let's start the meeting.\n\nHarshit Pambhar: Good morning. I am ready.",
+  "raw_transcript_path": "meetings/meeting-123/raw/conversation.txt"
+}
+```
+
+### Example Response
+```json
+{
+  "success": true,
+  "meeting_id": "meeting-123",
+  "cleaned_transcript_path": "meetings/meeting-123/processed/cleaned_conversation.txt",
+  "processing_status": "READY_FOR_AI",
+  "error": null
 }
 ```
