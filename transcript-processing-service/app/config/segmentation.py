@@ -1,0 +1,17 @@
+"""Configuration re-exports for sentence segmentation and fragment merging."""
+
+from app.core.segmentation import (
+    CONTINUATION_ENDING_PUNCTUATION,
+    CONTINUATION_START_WORDS,
+    DANGLING_END_WORDS,
+    FRAGMENT_LOOKBACK,
+    SENTENCE_TERMINAL_PUNCTUATION,
+)
+
+__all__ = [
+    "FRAGMENT_LOOKBACK",
+    "SENTENCE_TERMINAL_PUNCTUATION",
+    "CONTINUATION_ENDING_PUNCTUATION",
+    "DANGLING_END_WORDS",
+    "CONTINUATION_START_WORDS",
+]

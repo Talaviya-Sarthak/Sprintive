@@ -5,7 +5,7 @@ export const meetingRepository = {
     const { rows } = await pool.query(
       `INSERT INTO meetings (team_id, title, description, sprint_name, meeting_type, host_id, scheduled_start, scheduled_end, timezone, duration_minutes, agenda)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
-      [team_id, title, description ?? null, sprint_name ?? null, meeting_type ?? 'daily_scrum', host_id, scheduled_start ?? null, scheduled_end ?? null, timezone ?? 'UTC', duration_minutes ?? 30, agenda ? JSON.stringify(agenda) : '[]']
+      [team_id, title, description ?? null, sprint_name ?? null, meeting_type ?? 'daily_scrum', host_id, scheduled_start ?? null, scheduled_end ?? null, timezone ?? 'UTC', duration_minutes, agenda ? JSON.stringify(agenda) : '[]']
     );
     return rows[0];
   },
@@ -214,13 +214,84 @@ export const meetingRepository = {
     return rows;
   },
 
-  async saveTranscript({ meeting_id, content, transcript_path, transcript_name, transcript_size = 0, duration = null }) {
+  async saveTranscript({
+    meeting_id,
+    content = null,
+    transcript_path = null,
+    transcript_name = null,
+    transcript_size = 0,
+    duration = null,
+    status = 'not_started',
+    storage_provider = null,
+    storage_bucket = null,
+    storage_path = null,
+    raw_transcript_path = null,
+    cleaned_transcript_path = null,
+    error = null,
+    completed_at = null,
+  }) {
     const { rows } = await pool.query(
-      `INSERT INTO meeting_transcripts (meeting_id, content, transcript_path, transcript_name, transcript_size, duration)
-       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [meeting_id, content ?? null, transcript_path ?? null, transcript_name ?? null, transcript_size, duration]
+      `INSERT INTO meeting_transcripts (
+        meeting_id, content, transcript_path, transcript_name, transcript_size, duration,
+        status, storage_provider, storage_bucket, storage_path, raw_transcript_path,
+        cleaned_transcript_path, error, completed_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      ON CONFLICT (meeting_id) DO UPDATE SET
+        content = COALESCE(EXCLUDED.content, meeting_transcripts.content),
+        transcript_path = COALESCE(EXCLUDED.transcript_path, meeting_transcripts.transcript_path),
+        transcript_name = COALESCE(EXCLUDED.transcript_name, meeting_transcripts.transcript_name),
+        transcript_size = COALESCE(EXCLUDED.transcript_size, meeting_transcripts.transcript_size),
+        duration = COALESCE(EXCLUDED.duration, meeting_transcripts.duration),
+        status = EXCLUDED.status,
+        storage_provider = COALESCE(EXCLUDED.storage_provider, meeting_transcripts.storage_provider),
+        storage_bucket = COALESCE(EXCLUDED.storage_bucket, meeting_transcripts.storage_bucket),
+        storage_path = COALESCE(EXCLUDED.storage_path, meeting_transcripts.storage_path),
+        raw_transcript_path = COALESCE(EXCLUDED.raw_transcript_path, meeting_transcripts.raw_transcript_path),
+        cleaned_transcript_path = COALESCE(EXCLUDED.cleaned_transcript_path, meeting_transcripts.cleaned_transcript_path),
+        error = EXCLUDED.error,
+        completed_at = COALESCE(EXCLUDED.completed_at, meeting_transcripts.completed_at),
+        updated_at = NOW()
+      RETURNING *`,
+      [
+        meeting_id,
+        content,
+        transcript_path,
+        transcript_name,
+        transcript_size,
+        duration,
+        status,
+        storage_provider,
+        storage_bucket,
+        storage_path,
+        raw_transcript_path,
+        cleaned_transcript_path,
+        error,
+        completed_at,
+      ]
     );
     return rows[0];
+  },
+
+  async updateTranscriptStatus({
+    meeting_id,
+    status,
+    cleaned_transcript_path = null,
+    error = null,
+    completed_at = null,
+  }) {
+    const { rows } = await pool.query(
+      `UPDATE meeting_transcripts
+       SET
+         status = $2,
+         cleaned_transcript_path = COALESCE($3, cleaned_transcript_path),
+         error = $4,
+         completed_at = COALESCE($5, completed_at),
+         updated_at = NOW()
+       WHERE meeting_id = $1
+       RETURNING *`,
+      [meeting_id, status, cleaned_transcript_path, error, completed_at]
+    );
+    return rows[0] ?? null;
   },
 
   async getTranscript(meeting_id) {

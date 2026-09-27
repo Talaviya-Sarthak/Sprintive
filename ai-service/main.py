@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.speech import router as speech_router
+from app.api.meetings import router as meetings_router
 from app.config.settings import settings
 from app.utils.logger import get_logger
 
@@ -12,7 +13,7 @@ logger = get_logger(__name__)
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
-    description="Speech recognition service (Groq Whisper) for Sprintive.",
+    description="Speech recognition & meeting intelligence service for Sprintive.",
 )
 
 app.add_middleware(
@@ -24,6 +25,7 @@ app.add_middleware(
 )
 
 app.include_router(speech_router)
+app.include_router(meetings_router)
 
 
 @app.get("/health", tags=["health"])

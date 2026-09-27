@@ -18,12 +18,17 @@ const meetingTypes: { value: MeetingType; label: string }[] = [
   { value: 'custom', label: 'Custom' },
 ];
 
-const timezones = [
-  'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
-  'Europe/London', 'Europe/Berlin', 'Europe/Paris', 'Asia/Tokyo', 'Asia/Shanghai', 'Asia/Kolkata',
+const baseTimezones = [
+  'UTC', 'Asia/Kolkata', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
+  'Europe/London', 'Europe/Berlin', 'Europe/Paris', 'Asia/Tokyo', 'Asia/Shanghai',
 ];
 
 export default function EditMeetingModal({ open, onClose, onUpdate, meeting, teamMembers: _teamMembers }: EditMeetingModalProps) {
+  const currentMeetingTz = meeting?.timezone;
+  const timezones = currentMeetingTz && !baseTimezones.includes(currentMeetingTz)
+    ? [currentMeetingTz, ...baseTimezones]
+    : baseTimezones;
+
   const [title, setTitle] = useState(meeting?.title ?? '');
   const [description, setDescription] = useState(meeting?.description ?? '');
   const [meetingType, setMeetingType] = useState<MeetingType>(meeting?.meeting_type ?? 'daily_scrum');

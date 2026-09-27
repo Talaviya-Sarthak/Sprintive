@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     # Optional: constrain Whisper language (e.g. "en"). Empty = auto-detect.
     groq_language: str = ""
 
+    # Internal service-to-service authentication
+    internal_service_key: str = "sprintive_internal_service_secret_key_2026"
+
     # Backend callback URL (used by future async flows)
     backend_url: str = "http://localhost:5000"
 

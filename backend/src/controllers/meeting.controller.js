@@ -25,7 +25,7 @@ export const meetingController = {
 
   async getMeeting(req, res, next) {
     try {
-      const meeting = await meetingService.getMeeting(req.params.id);
+      const meeting = await meetingService.getMeeting(req.params.id, req.user.id);
       res.json({ success: true, data: meeting });
     } catch (err) { next(err); }
   },
@@ -84,14 +84,14 @@ export const meetingController = {
 
   async getTranscript(req, res, next) {
     try {
-      const transcript = await meetingService.getTranscript(req.params.id);
+      const transcript = await meetingService.getTranscript(req.params.id, req.user.id);
       res.json({ success: true, data: transcript });
     } catch (err) { next(err); }
   },
 
   async getChats(req, res, next) {
     try {
-      const chats = await meetingService.getChats(req.params.id);
+      const chats = await meetingService.getChats(req.params.id, req.user.id);
       res.json({ success: true, data: chats });
     } catch (err) { next(err); }
   },
@@ -106,22 +106,36 @@ export const meetingController = {
 
   async getSummary(req, res, next) {
     try {
-      const summary = await meetingService.getSummary(req.params.id);
+      const summary = await meetingService.getSummary(req.params.id, req.user.id);
       res.json({ success: true, data: summary });
     } catch (err) { next(err); }
   },
 
   async getParticipants(req, res, next) {
     try {
-      const participants = await meetingService.getParticipants(req.params.id);
+      const participants = await meetingService.getParticipants(req.params.id, req.user.id);
       res.json({ success: true, data: participants });
     } catch (err) { next(err); }
   },
 
   async getTeamMembers(req, res, next) {
     try {
-      const members = await meetingService.getTeamMembers(req.params.teamId);
+      const members = await meetingService.getTeamMembers(req.params.teamId, req.user.id);
       res.json({ success: true, data: members });
+    } catch (err) { next(err); }
+  },
+
+  async retryTranscript(req, res, next) {
+    try {
+      const result = await meetingService.retryTranscript(req.params.id, req.user.id);
+      res.json({ success: true, data: result });
+    } catch (err) { next(err); }
+  },
+
+  async triggerAiHandoff(req, res, next) {
+    try {
+      const result = await meetingService.triggerAiHandoff(req.params.id, req.user.id);
+      res.json({ success: true, data: result });
     } catch (err) { next(err); }
   },
 };

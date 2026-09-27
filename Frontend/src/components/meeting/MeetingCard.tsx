@@ -63,6 +63,17 @@ function getInitials(name: string) {
   return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 }
 
+function isMeetingJoinable(meeting: Meeting): boolean {
+  if (meeting.status === 'active') return true;
+  if (meeting.status !== 'scheduled') return false;
+  if (!meeting.date || !meeting.start_time) return false;
+  const [y, m, d] = meeting.date.split('-').map(Number);
+  const [h, min] = meeting.start_time.split(':').map(Number);
+  if ([y, m, d, h, min].some(Number.isNaN)) return false;
+  const scheduledStart = new Date(y, m - 1, d, h, min);
+  return Date.now() >= scheduledStart.getTime();
+}
+
 const isOwner = (meeting: Meeting, userId: string) => meeting.host_id === userId;
 
 export default function MeetingCard({ meeting, currentUserId, onEdit, onDelete }: MeetingCardProps) {
@@ -102,6 +113,20 @@ export default function MeetingCard({ meeting, currentUserId, onEdit, onDelete }
               >
                 Join Live
               </AppButton>
+            )}
+            {meeting.status === 'scheduled' && isMeetingJoinable(meeting) && (
+              <AppButton
+                variant="mono"
+                size="xs"
+                onClick={() => navigate(`/meetings/${meeting.id}/lobby`)}
+              >
+                Join
+              </AppButton>
+            )}
+            {meeting.status === 'scheduled' && !isMeetingJoinable(meeting) && (
+              <span className="text-[10px] font-mono px-2 py-1 rounded-md" style={{ color: 'var(--app-text-muted)' }}>
+                Starts at {formatTime(meeting.start_time)}
+              </span>
             )}
             <AppButton
               variant="mono-outline"

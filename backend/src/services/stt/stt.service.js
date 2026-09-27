@@ -65,22 +65,26 @@ class STTService extends EventEmitter {
       this.meetings.set(meetingId, participantMap);
     }
 
-    if (!participantMap.has(participantId)) {
+    let entry = participantMap.get(participantId);
+    if (!entry) {
       this._createParticipantSession(meetingId, participantMap, participantId, participantName);
+      entry = participantMap.get(participantId);
+    } else if (!entry.session || entry.session._closed) {
+      entry.name = participantName || entry.name;
+      entry.session = this.provider.createSession({
+        meetingId,
+        participantId,
+        participantName: entry.name,
+      });
+      this._bindSessionEvents(meetingId, participantId, entry);
+      logger.info(`[stt] Re-created Deepgram session for returning participant ${entry.name} in meeting ${meetingId}`);
     }
 
-    return participantMap.get(participantId);
+    return entry;
   }
 
-  _createParticipantSession(meetingId, participantMap, participantId, participantName) {
-    const session = this.provider.createSession({
-      meetingId,
-      participantId,
-      participantName,
-    });
-
-    const entry = { name: participantName, session, segments: [] };
-    participantMap.set(participantId, entry);
+  _bindSessionEvents(meetingId, participantId, entry) {
+    const session = entry.session;
 
     session.onPartial((result) => {
       this.emit('partial', {
@@ -124,14 +128,50 @@ class STTService extends EventEmitter {
     });
 
     session.onError((err) => {
-      logger.error(`[stt] Deepgram error for ${participantName} in ${meetingId}: ${err.message}`);
+      logger.error(`[stt] Deepgram error for ${entry.name} in ${meetingId}: ${err.message}`);
     });
 
     session.onClose(() => {
-      logger.debug(`[stt] Deepgram session closed for ${participantName} in ${meetingId}`);
+      logger.debug(`[stt] Deepgram session closed for ${entry.name} in ${meetingId}`);
+    });
+  }
+
+  _createParticipantSession(meetingId, participantMap, participantId, participantName) {
+    const session = this.provider.createSession({
+      meetingId,
+      participantId,
+      participantName,
     });
 
+    const entry = { name: participantName, session, segments: [] };
+    participantMap.set(participantId, entry);
+
+    this._bindSessionEvents(meetingId, participantId, entry);
+
     logger.info(`[stt] Created Deepgram session for ${participantName} in meeting ${meetingId}`);
+  }
+
+  /**
+   * Close a single participant's Deepgram WebSocket session when they leave the meeting.
+   * Flushes remaining audio and closes connection, while keeping their accumulated
+   * segments intact for the final meeting transcript.
+   *
+   * @param {string} meetingId
+   * @param {string} participantId
+   */
+  async closeParticipantSession(meetingId, participantId) {
+    const participantMap = this.meetings.get(meetingId);
+    if (!participantMap) return;
+
+    const entry = participantMap.get(participantId);
+    if (!entry || !entry.session) return;
+
+    logger.info(`[stt] Closing participant Deepgram session for ${entry.name || participantId} in meeting ${meetingId}`);
+    try {
+      await entry.session.close();
+    } catch (err) {
+      logger.error(`[stt] Error closing Deepgram session for participant ${participantId}: ${err.message}`);
+    }
   }
 
   /**
@@ -174,10 +214,12 @@ class STTService extends EventEmitter {
       return [];
     }
 
-    // Close all Deepgram sessions (sends Finalize to flush remaining audio)
+    // Close all open Deepgram sessions (sends Finalize to flush remaining audio)
     const closePromises = [];
     for (const [, entry] of participantMap) {
-      closePromises.push(entry.session.close());
+      if (entry.session && !entry.session._closed) {
+        closePromises.push(entry.session.close().catch(() => {}));
+      }
     }
     await Promise.all(closePromises);
 

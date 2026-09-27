@@ -1,12 +1,32 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mic, MicOff, Video as VideoIcon, VideoOff, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Mic, MicOff, Video as VideoIcon, VideoOff, ArrowLeft, ShieldCheck, Clock } from 'lucide-react';
 import { meetingService } from '../../services/meeting.service';
 import { useMediaDevices } from '../../hooks/useMediaDevices';
 import { AppButton, AppCard } from '../../components/app-ui';
 import { MeetingStatusBadge } from '../../components/ui/Badge';
 import type { Meeting } from '../../types';
+
+function isMeetingJoinable(meeting: { status: string; date?: string; start_time?: string }): boolean {
+  if (meeting.status === 'active') return true;
+  if (meeting.status !== 'scheduled') return false;
+  if (!meeting.date || !meeting.start_time) return false;
+  const [y, m, d] = meeting.date.split('-').map(Number);
+  const [h, min] = meeting.start_time.split(':').map(Number);
+  if ([y, m, d, h, min].some(Number.isNaN)) return false;
+  const scheduledStart = new Date(y, m - 1, d, h, min);
+  return Date.now() >= scheduledStart.getTime();
+}
+
+function formatTime12h(time?: string) {
+  if (!time) return 'TBD';
+  const [h, m = 0] = time.split(':').map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return 'TBD';
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hour = h % 12 || 12;
+  return `${hour}:${m.toString().padStart(2, '0')} ${ampm}`;
+}
 
 export default function MeetingLobby() {
   const { id }   = useParams<{ id: string }>();
@@ -169,11 +189,22 @@ export default function MeetingLobby() {
               size="md"
               className="w-full justify-center py-3.5 text-sm font-semibold"
               loading={joining}
-              disabled={meeting?.status === 'ended' || meeting?.status === 'completed'}
+              disabled={meeting?.status === 'ended' || meeting?.status === 'completed' || (meeting?.status === 'scheduled' && !isMeetingJoinable(meeting))}
               onClick={handleJoin}
             >
-              {meeting?.status === 'ended' || meeting?.status === 'completed' ? 'Meeting Ended' : 'Join Meeting'}
+              {meeting?.status === 'ended' || meeting?.status === 'completed'
+                ? 'Meeting Ended'
+                : meeting?.status === 'scheduled' && !isMeetingJoinable(meeting)
+                  ? `Starts at ${formatTime12h(meeting?.start_time)}`
+                  : 'Join Meeting'}
             </AppButton>
+
+            {meeting?.status === 'scheduled' && !isMeetingJoinable(meeting) && (
+              <div className="flex items-center justify-center gap-2 text-xs text-[#a1a1aa] font-mono">
+                <Clock size={12} />
+                <span>Meeting starts at {formatTime12h(meeting?.start_time)}</span>
+              </div>
+            )}
 
             <button
               onClick={() => navigate(-1)}

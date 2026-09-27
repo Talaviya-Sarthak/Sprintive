@@ -4,9 +4,12 @@ import { sendError } from '../utils/response.js';
 import { HTTP_STATUS } from '../utils/constants.js';
 
 export class AppError extends Error {
-  constructor(message, statusCode = 500) {
+  constructor(message, statusCode = 500, code = null) {
     super(message);
     this.statusCode = statusCode;
+    if (code) {
+      this.code = code;
+    }
   }
 }
 

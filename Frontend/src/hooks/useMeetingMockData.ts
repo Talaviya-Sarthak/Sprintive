@@ -59,6 +59,10 @@ export function useMeetingMockData(teamId?: string) {
   const getTeamMembers = () => mockTeamMembers;
 
   const createMeeting = (data: Partial<Meeting>) => {
+    const now = new Date();
+    const defaultStart = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const endDate = new Date(now.getTime() + 30 * 60000);
+    const defaultEnd = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
     const newMeeting: Meeting = {
       id: `m${Date.now()}`,
       team_id: teamId ?? 'team-1',
@@ -70,8 +74,8 @@ export function useMeetingMockData(teamId?: string) {
       host_avatar: '',
       status: 'scheduled',
       date: data.date ?? today,
-      start_time: data.start_time ?? '09:00',
-      end_time: data.end_time ?? '09:30',
+      start_time: data.start_time ?? defaultStart,
+      end_time: data.end_time ?? defaultEnd,
       timezone: data.timezone ?? 'America/New_York',
       duration_minutes: data.duration_minutes ?? 30,
       agenda: data.agenda ?? [],

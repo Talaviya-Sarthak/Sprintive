@@ -183,7 +183,7 @@ export default function TeamOverview() {
                   <span className="text-[10px] font-mono uppercase font-medium tracking-wider">Daily Scrum</span>
                   <Clock size={14} style={{ color: 'var(--app-text-secondary)' }} />
                 </div>
-                <div className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>{team.daily_scrum_time || '09:00'}</div>
+                <div className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>{team.daily_scrum_time || new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</div>
                 <span className="text-[11px] block mt-1" style={{ color: 'var(--app-text-muted)' }}>{team.timezone || 'UTC'}</span>
               </div>
 

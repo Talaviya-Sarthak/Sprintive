@@ -42,8 +42,3 @@ export const AttendanceStatus = {
   EXCUSED: 'excused',
 };
 
-export const RecordingStatus = {
-  PROCESSING: 'processing',
-  READY: 'ready',
-  FAILED: 'failed',
-};

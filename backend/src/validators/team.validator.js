@@ -11,7 +11,10 @@ export const createTeamSchema = z.object({
   color:            z.string().regex(/^#[0-9A-Fa-f]{6}$/).default('#3B82F6'),
   timezone:         z.string().default('UTC'),
   working_days:     jsonArray.pipe(z.array(z.coerce.number().int().min(0).max(6))).default([1,2,3,4,5]),
-  daily_scrum_time: z.string().regex(/^\d{2}:\d{2}$/).default('09:00'),
+  daily_scrum_time: z.string().regex(/^\d{2}:\d{2}$/).default(() => {
+    const now = new Date();
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  }),
   invite_emails:    jsonArray.pipe(z.array(z.string().email())).default([]),
 });
 

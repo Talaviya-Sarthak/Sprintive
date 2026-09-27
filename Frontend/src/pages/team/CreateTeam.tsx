@@ -40,13 +40,18 @@ export default function CreateTeam() {
   const [generatedLink, setGeneratedLink] = useState('');
   const [copied, setCopied] = useState(false);
 
+  const getDefaultScrumTime = () => {
+    const now = new Date();
+    return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  };
+
   const [form, setForm] = useState({
     name: '',
     description: '',
     color: '#F97316',
     timezone: 'UTC',
     working_days: [1, 2, 3, 4, 5] as number[],
-    daily_scrum_time: '09:00',
+    daily_scrum_time: getDefaultScrumTime(),
     invite_emails: [] as string[],
     avatar: undefined as File | undefined,
   });
