@@ -1,7 +1,7 @@
 """Data models and enums for Part 12 — Semantic Preservation Validation."""
 
 from enum import Enum
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Union
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -58,12 +58,15 @@ class ExtractedSemanticEntities(BaseModel):
 class SemanticValidationResult(BaseModel):
     """Structured output expected from LLM or deterministic rule engine during semantic validation."""
 
-    status: Literal[
-        "SEMANTICALLY_PRESERVED",
-        "POSSIBLE_SEMANTIC_CHANGE",
-        "SEMANTICALLY_CHANGED",
-        "AMBIGUOUS",
-        "INSUFFICIENT_CONTEXT",
+    status: Union[
+        SemanticValidationStatus,
+        Literal[
+            "SEMANTICALLY_PRESERVED",
+            "POSSIBLE_SEMANTIC_CHANGE",
+            "SEMANTICALLY_CHANGED",
+            "AMBIGUOUS",
+            "INSUFFICIENT_CONTEXT",
+        ],
     ] = Field(
         ...,
         description="Preservation status category.",

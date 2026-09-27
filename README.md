@@ -12,9 +12,9 @@
 ## ✨ Features
 
 - 🎙️ **Real-Time Video & Audio Meetings**: Built-in meeting rooms powered by Socket.io and WebRTC, featuring dynamic audio spectrum visualizers, screen sharing, and participant controls.
-- ⚡ **AI Transcription Engine**: Automatic speech-to-text powered by `faster-whisper` for fast, accurate meeting transcripts with speaker identification.
-- 🤖 **Automated Task Extraction**: AI scans meeting conversations to automatically identify tasks, assigned owners, deadlines, and critical blockers (`🚫 Blocker`, `📅 Deadline`, `✅ Action`).
-- 📋 **Integrated Kanban Board**: Live sprint board with drag-and-drop workflow (`Backlog`, `To Do`, `In Progress`, `Review`, `Done`) automatically populated from meeting outcomes.
+- ⚡ **Live Deepgram STT Engine**: Real-time streaming speech-to-text powered by Deepgram WebSocket API (`nova-3`) with per-participant connection lifecycle.
+- 🧹 **14-Stage Transcript Preprocessing**: Specialized FastAPI processing service for filler word removal, timestamp alignment, and speaker normalization.
+- 📋 **Integrated Kanban Board**: Live sprint board with drag-and-drop workflow (`Backlog`, `To Do`, `In Progress`, `Review`, `Done`).
 - 👥 **Workspace & Team Management**: Multi-tenant workspace setup, team invitation links, role-based permissions, and team member management.
 - 🔐 **Authentication & Security**: Secure authentication supporting JWT, Google OAuth 2.0, and GitHub OAuth 2.0.
 - 🎨 **Modern Design System**: Built with Tailwind CSS v4, smooth Framer Motion micro-animations, and full dark/light mode support.
@@ -27,21 +27,27 @@
 flowchart TD
     subgraph Client ["Frontend (React 19 + TypeScript + Tailwind v4)"]
         UI[Landing Page & Dashboard]
-        Lobby[Meeting Lobby & WebRTC Room]
-        Kanban[Kanban Board Component]
+        Lobby[Meeting Room & Audio Capture]
+        Board[Kanban Board Component]
     end
 
     subgraph CoreBackend ["Backend API (Node.js + Express)"]
         API[REST API Server]
         Socket[Socket.io Real-Time Engine]
         Auth[Passport.js OAuth & JWT]
-        S3[AWS S3 Audio/Video Storage]
+        STT[STT Service - Deepgram Provider]
     end
 
-    subgraph AIService ["AI Service (Python + FastAPI)"]
-        FastAPI[FastAPI Gateway]
-        Whisper[Faster-Whisper STT Model]
-        Extractor[Task & Blocker AI Extractor]
+    subgraph ExternalSTT ["Deepgram"]
+        DG[Live Streaming STT WebSockets]
+    end
+
+    subgraph ProcessingService ["Transcript Processing Service (FastAPI)"]
+        Pipeline[14-Stage Normalization Pipeline]
+    end
+
+    subgraph CloudStorage ["Supabase Storage"]
+        Bucket[(meetings bucket)]
     end
 
     subgraph Data ["Database"]
@@ -50,12 +56,14 @@ flowchart TD
 
     UI -->|HTTPS / REST| API
     Lobby <-->|WebSockets| Socket
-    API --> Auth
+    Socket <-->|Live Audio Streams| STT
+    STT <-->|Live PCM Streams| DG
+    Socket -->|Raw Transcripts| Bucket
+    Socket -->|Trigger Preprocessing| Pipeline
+    Pipeline <-->|Read Raw / Write Cleaned| Bucket
+    Pipeline -->|Update Status| DB
     API <--> DB
-    Socket <--> AIService
-    FastAPI --> Whisper
-    FastAPI --> Extractor
-    API --> S3
+    API --> Auth
 ```
 
 ---

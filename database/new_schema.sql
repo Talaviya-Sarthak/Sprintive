@@ -2,7 +2,7 @@
 -- Sprintive — NEW SCHEMA (combined, final state)
 --
 -- This file is the consolidated database schema generated from every migration
--- in database/migrations/ (001 → 011), applied in order.
+-- in database/migrations/ (001 → 015), applied in order.
 --
 -- DO NOT hand-edit this file. Regenerate it from the migrations when they change:
 --
@@ -521,5 +521,88 @@ CREATE INDEX IF NOT EXISTS idx_participant_audio_retriable
 ALTER TABLE meeting_transcripts
   ALTER COLUMN transcript_path  DROP NOT NULL,
   ALTER COLUMN transcript_name  DROP NOT NULL;
+
+-- ─── 012_meeting_summaries_unique.sql ─────────────────────────────────────────
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'meeting_summaries_meeting_id_key'
+  ) THEN
+    ALTER TABLE meeting_summaries
+      ADD CONSTRAINT meeting_summaries_meeting_id_key UNIQUE (meeting_id);
+  END IF;
+END $$;
+
+-- ─── 013_remove_participant_recording.sql ────────────────────────────────────
+DROP TABLE IF EXISTS speech_segments;
+DROP TABLE IF EXISTS participant_audio;
+DROP TYPE IF EXISTS participant_audio_status;
+
+-- ─── 014_transcript_status.sql ──────────────────────────────────────────────
+DO $$ BEGIN
+  CREATE TYPE transcript_status AS ENUM (
+    'not_started',
+    'recording',
+    'finalizing',
+    'uploading',
+    'completed',
+    'failed'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+ALTER TABLE meeting_transcripts
+  ADD COLUMN IF NOT EXISTS status           transcript_status NOT NULL DEFAULT 'not_started',
+  ADD COLUMN IF NOT EXISTS storage_provider VARCHAR(50),
+  ADD COLUMN IF NOT EXISTS storage_bucket   VARCHAR(100),
+  ADD COLUMN IF NOT EXISTS storage_path     TEXT,
+  ADD COLUMN IF NOT EXISTS completed_at     TIMESTAMPTZ;
+
+CREATE INDEX IF NOT EXISTS idx_transcripts_status ON meeting_transcripts (status);
+
+-- ─── 015_transcript_pipeline.sql ─────────────────────────────────────────────
+DO $$ BEGIN
+  ALTER TYPE transcript_status ADD VALUE IF NOT EXISTS 'raw_stored';
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TYPE transcript_status ADD VALUE IF NOT EXISTS 'processing';
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TYPE transcript_status ADD VALUE IF NOT EXISTS 'ready_for_ai';
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+ALTER TABLE meeting_transcripts
+  ADD COLUMN IF NOT EXISTS raw_transcript_path     TEXT,
+  ADD COLUMN IF NOT EXISTS cleaned_transcript_path TEXT,
+  ADD COLUMN IF NOT EXISTS error                   TEXT,
+  ADD COLUMN IF NOT EXISTS updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+DELETE FROM meeting_transcripts a USING meeting_transcripts b
+WHERE a.meeting_id = b.meeting_id
+  AND a.created_at < b.created_at;
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'meeting_transcripts_meeting_id_key'
+  ) THEN
+    ALTER TABLE meeting_transcripts
+      ADD CONSTRAINT meeting_transcripts_meeting_id_key UNIQUE (meeting_id);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger WHERE tgname = 'trg_meeting_transcripts_updated_at'
+  ) THEN
+    CREATE TRIGGER trg_meeting_transcripts_updated_at
+      BEFORE UPDATE ON meeting_transcripts
+      FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+  END IF;
+END $$;
 
 COMMIT;

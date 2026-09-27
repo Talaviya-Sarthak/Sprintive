@@ -1,5 +1,7 @@
 import { meetingRepository } from '../repositories/meeting.repository.js';
 import { teamRepository }    from '../repositories/team.repository.js';
+import { transcriptService } from './transcript/transcript.service.js';
+import { aiHandoffService }   from './ai/ai-handoff.service.js';
 import { AppError }          from '../middleware/error.middleware.js';
 import fs                    from 'fs';
 import path                  from 'path';
@@ -7,6 +9,18 @@ import path                  from 'path';
 const TRANSCRIPTS_DIR = path.resolve('storage/transcripts');
 
 export const meetingService = {
+  /**
+   * Helper to verify meeting existence and user membership in the meeting's team.
+   * Throws 404 if meeting doesn't exist, 403 if user is not on the team.
+   */
+  async assertMeetingAccess(meetingId, userId) {
+    const meeting = await meetingRepository.findById(meetingId);
+    if (!meeting) throw new AppError('Meeting not found', 404);
+    const isMember = await teamRepository.isMember(meeting.team_id, userId);
+    if (!isMember) throw new AppError('You are not authorized to access this meeting', 403);
+    return meeting;
+  },
+
   async createMeeting({ team_id, title, description, sprint_name, meeting_type, date, start_time, end_time, timezone, duration_minutes, agenda, userId }) {
     const isMember = await teamRepository.isMember(team_id, userId);
     if (!isMember) throw new AppError('You are not a member of this team', 403);
@@ -45,9 +59,8 @@ export const meetingService = {
     return this.transformMeeting(meeting);
   },
 
-  async getMeeting(id) {
-    const meeting = await meetingRepository.findById(id);
-    if (!meeting) throw new AppError('Meeting not found', 404);
+  async getMeeting(id, userId) {
+    const meeting = await this.assertMeetingAccess(id, userId);
     return this.transformMeeting(meeting);
   },
 
@@ -63,8 +76,7 @@ export const meetingService = {
   },
 
   async updateMeeting(meeting_id, userId, data) {
-    const meeting = await meetingRepository.findById(meeting_id);
-    if (!meeting) throw new AppError('Meeting not found', 404);
+    const meeting = await this.assertMeetingAccess(meeting_id, userId);
     if (meeting.host_id !== userId) throw new AppError('Only the host can update the meeting', 403);
 
     const fields = {};
@@ -98,16 +110,14 @@ export const meetingService = {
   },
 
   async deleteMeeting(meeting_id, userId) {
-    const meeting = await meetingRepository.findById(meeting_id);
-    if (!meeting) throw new AppError('Meeting not found', 404);
+    const meeting = await this.assertMeetingAccess(meeting_id, userId);
     if (meeting.host_id !== userId) throw new AppError('Only the host can delete the meeting', 403);
 
     await meetingRepository.remove(meeting_id);
   },
 
   async joinMeeting(meeting_id, userId) {
-    const meeting = await meetingRepository.findById(meeting_id);
-    if (!meeting) throw new AppError('Meeting not found', 404);
+    const meeting = await this.assertMeetingAccess(meeting_id, userId);
     if (meeting.status === 'ended' || meeting.status === 'completed') throw new AppError('Meeting has ended', 400);
 
     if (meeting.status === 'scheduled' && meeting.scheduled_start) {
@@ -123,8 +133,7 @@ export const meetingService = {
   },
 
   async startMeeting(meeting_id, userId) {
-    const meeting = await meetingRepository.findById(meeting_id);
-    if (!meeting) throw new AppError('Meeting not found', 404);
+    const meeting = await this.assertMeetingAccess(meeting_id, userId);
     if (meeting.host_id !== userId) throw new AppError('Only the host can start the meeting', 403);
     if (meeting.status === 'active') throw new AppError('Meeting already started', 400);
     if (['ended', 'completed', 'cancelled'].includes(meeting.status)) {
@@ -136,21 +145,16 @@ export const meetingService = {
   },
 
   async endMeeting(meeting_id, userId) {
-    const meeting = await meetingRepository.findById(meeting_id);
-    if (!meeting) throw new AppError('Meeting not found', 404);
+    const meeting = await this.assertMeetingAccess(meeting_id, userId);
     if (meeting.host_id !== userId) throw new AppError('Only the host can end the meeting', 403);
 
-    // ACTIVE/SCHEDULED → COMPLETED. Atomic: only one caller can win the race —
-    // the loser gets zero rows and is told the meeting already ended. This
-    // prevents the transcript/summary inserts and the STT finalize pipeline
-    // from running twice, and it blocks ending meetings that are already
-    // 'ended', 'completed', or 'cancelled'.
+    // ACTIVE/SCHEDULED → COMPLETED. Atomic: only one caller can win the race
     const updated = await meetingRepository.markCompleted(meeting_id);
     if (!updated) {
       throw new AppError('Meeting has already ended', 400);
     }
 
-    // Generate a mock summary
+    // Generate summary record
     const participants = await meetingRepository.getParticipants(meeting_id);
     const summary = await meetingRepository.upsertSummary({
       meeting_id,
@@ -169,26 +173,26 @@ export const meetingService = {
   },
 
   async leaveMeeting(meeting_id, userId) {
+    await this.assertMeetingAccess(meeting_id, userId);
     await meetingRepository.removeParticipant(meeting_id, userId);
   },
 
-  async getParticipants(meeting_id) {
+  async getParticipants(meeting_id, userId) {
+    await this.assertMeetingAccess(meeting_id, userId);
     return meetingRepository.getParticipants(meeting_id);
   },
 
-  async getTranscript(meeting_id) {
-    const t = await meetingRepository.getTranscript(meeting_id);
+  async getTranscript(meeting_id, userId) {
+    await this.assertMeetingAccess(meeting_id, userId);
+    const t = await transcriptService.getTranscript(meeting_id);
     if (!t) throw new AppError('Transcript not found', 404);
     return t;
   },
 
-  async getSummary(meeting_id) {
+  async getSummary(meeting_id, userId) {
+    const meeting = await this.assertMeetingAccess(meeting_id, userId);
     const summary = await meetingRepository.getSummary(meeting_id);
     if (!summary) {
-      // Return a mock summary if none exists yet
-      const meeting = await meetingRepository.findById(meeting_id);
-      if (!meeting) throw new AppError('Meeting not found', 404);
-
       return {
         id: null,
         meeting_id,
@@ -205,15 +209,29 @@ export const meetingService = {
   },
 
   async saveChat({ meeting_id, user_id, message }) {
+    await this.assertMeetingAccess(meeting_id, user_id);
     return meetingRepository.saveChat({ meeting_id, user_id, message });
   },
 
-  async getChats(meeting_id) {
+  async getChats(meeting_id, userId) {
+    await this.assertMeetingAccess(meeting_id, userId);
     return meetingRepository.getChats(meeting_id);
   },
 
-  async getTeamMembers(team_id) {
+  async getTeamMembers(team_id, userId) {
+    const isMember = await teamRepository.isMember(team_id, userId);
+    if (!isMember) throw new AppError('You are not a member of this team', 403);
     return meetingRepository.getTeamMembers(team_id);
+  },
+
+  async retryTranscript(meeting_id, userId) {
+    await this.assertMeetingAccess(meeting_id, userId);
+    return transcriptService.retryPreprocessing(meeting_id);
+  },
+
+  async triggerAiHandoff(meeting_id, userId) {
+    await this.assertMeetingAccess(meeting_id, userId);
+    return aiHandoffService.handoffWithRetry(meeting_id);
   },
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -224,16 +242,44 @@ export const meetingService = {
     let date = '';
     let start_time = '';
     let end_time = '';
+    const tz = m.timezone || 'UTC';
 
     if (m.scheduled_start) {
       const s = new Date(m.scheduled_start);
-      date = s.toISOString().split('T')[0];
-      start_time = `${String(s.getHours()).padStart(2, '0')}:${String(s.getMinutes()).padStart(2, '0')}`;
+      try {
+        const dateFormatter = new Intl.DateTimeFormat('en-CA', {
+          timeZone: tz,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        });
+        const timeFormatter = new Intl.DateTimeFormat('en-GB', {
+          timeZone: tz,
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        });
+        date = dateFormatter.format(s);
+        start_time = timeFormatter.format(s);
+      } catch {
+        date = s.toISOString().split('T')[0];
+        start_time = `${String(s.getUTCHours()).padStart(2, '0')}:${String(s.getUTCMinutes()).padStart(2, '0')}`;
+      }
     }
 
     if (m.scheduled_end) {
       const e = new Date(m.scheduled_end);
-      end_time = `${String(e.getHours()).padStart(2, '0')}:${String(e.getMinutes()).padStart(2, '0')}`;
+      try {
+        const timeFormatter = new Intl.DateTimeFormat('en-GB', {
+          timeZone: tz,
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        });
+        end_time = timeFormatter.format(e);
+      } catch {
+        end_time = `${String(e.getUTCHours()).padStart(2, '0')}:${String(e.getUTCMinutes()).padStart(2, '0')}`;
+      }
     }
 
     return {

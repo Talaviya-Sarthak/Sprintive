@@ -87,11 +87,13 @@ class OpenAICompatibleLLMClient(BaseLLMClient):
         user_prompt: str,
         response_model: Type[T],
     ) -> T:
+        if not self.api_key:
+            raise LLMClientError("LLM API key not configured; falling back to rule-based engine.")
+
         headers = {
             "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
         }
-        if self.api_key:
-            headers["Authorization"] = f"Bearer {self.api_key}"
 
         payload = {
             "model": self.model,

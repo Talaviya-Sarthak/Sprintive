@@ -1,7 +1,7 @@
 """Data models and enums for Part 11 — Language Preservation Check."""
 
 from enum import Enum
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Union
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -86,12 +86,15 @@ class TranscriptLanguageProfile(BaseModel):
 class LanguageValidationResult(BaseModel):
     """Structured output expected from LLM or rule engine during language validation."""
 
-    status: Literal[
-        "PRESERVED",
-        "POSSIBLE_LANGUAGE_CHANGE",
-        "LANGUAGE_CHANGED",
-        "AMBIGUOUS",
-        "INSUFFICIENT_CONTEXT",
+    status: Union[
+        LanguagePreservationStatus,
+        Literal[
+            "PRESERVED",
+            "POSSIBLE_LANGUAGE_CHANGE",
+            "LANGUAGE_CHANGED",
+            "AMBIGUOUS",
+            "INSUFFICIENT_CONTEXT",
+        ],
     ] = Field(
         ...,
         description="Validation status category.",

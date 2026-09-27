@@ -1,3 +1,4 @@
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -61,7 +62,10 @@ class Settings(BaseSettings):
     # Storage and Processing Persistence settings (Part 14)
     SUPABASE_URL: str = ""
     SUPABASE_SERVICE_ROLE_KEY: str = ""
-    SUPABASE_STORAGE_BUCKET: str = "meetings"
+    SUPABASE_STORAGE_BUCKET: str = Field(
+        default="meetings",
+        validation_alias=AliasChoices("SUPABASE_STORAGE_BUCKET", "SUPABASE_BUCKET"),
+    )
     CLEANER_VERSION: str = "1.0.0"
     OVERWRITE_PROCESSED_TRANSCRIPT: bool = True
 

@@ -17,10 +17,22 @@ const meetingTypes: { value: MeetingType; label: string }[] = [
   { value: 'custom', label: 'Custom' },
 ];
 
-const timezones = [
-  'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
-  'Europe/London', 'Europe/Berlin', 'Europe/Paris', 'Asia/Tokyo', 'Asia/Shanghai', 'Asia/Kolkata',
+const defaultUserTimezone = (() => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  } catch {
+    return 'UTC';
+  }
+})();
+
+const baseTimezones = [
+  'UTC', 'Asia/Kolkata', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
+  'Europe/London', 'Europe/Berlin', 'Europe/Paris', 'Asia/Tokyo', 'Asia/Shanghai',
 ];
+
+const timezones = baseTimezones.includes(defaultUserTimezone)
+  ? baseTimezones
+  : [defaultUserTimezone, ...baseTimezones];
 
 export default function CreateMeetingModal({ open, onClose, onCreate, teamMembers }: CreateMeetingModalProps) {
   const [title, setTitle] = useState('');
@@ -29,7 +41,7 @@ export default function CreateMeetingModal({ open, onClose, onCreate, teamMember
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [timezone, setTimezone] = useState('UTC');
+  const [timezone, setTimezone] = useState(defaultUserTimezone);
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [agendaItems, setAgendaItems] = useState<string[]>(['']);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -72,7 +84,7 @@ export default function CreateMeetingModal({ open, onClose, onCreate, teamMember
     setDate('');
     setStartTime('');
     setEndTime('');
-    setTimezone('UTC');
+    setTimezone(defaultUserTimezone);
     setSelectedParticipants([]);
     setAgendaItems(['']);
     setErrors({});

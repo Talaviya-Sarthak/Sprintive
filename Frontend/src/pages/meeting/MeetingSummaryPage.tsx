@@ -1,15 +1,18 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Clock, Users, CheckCircle, Download, LayoutDashboard, Sparkles } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import {
+  ArrowLeft, Clock, Users, CheckCircle, Download, LayoutDashboard,
+  Sparkles, AlertCircle, RefreshCw, Loader2, FileText,
+} from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { meetingService } from '../../services/meeting.service';
 import { useMeeting } from '../../hooks/useMeeting';
-import { useMeetingSummary } from '../../hooks/useMeetingSummary';
 import { useMeetingParticipants } from '../../hooks/useMeetingParticipants';
 import AppLayout from '../../layouts/AppLayout';
 import { MeetingStatusBadge, MeetingTypeBadge, RoleBadge } from '../../components/ui/Badge';
 import { AppButton, AppCard } from '../../components/app-ui';
-import type { MeetingSummary, MeetingParticipant } from '../../types';
+import type { MeetingParticipant } from '../../types';
 
 function formatDateLong(dateStr: string) {
   if (!dateStr) return 'Date TBD';
@@ -39,17 +42,51 @@ function getInitials(name: string) {
 export default function MeetingSummaryPage() {
   const { meetingId } = useParams<{ meetingId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [retryError, setRetryError] = useState<string | null>(null);
 
   const { data: meeting, isLoading: meetingLoading } = useMeeting(meetingId);
-  const { data: summary, isLoading: summaryLoading } = useMeetingSummary(meetingId);
   const { data: participants = [] } = useMeetingParticipants(meetingId);
-  const { data: transcriptData } = useQuery({
+  const { data: transcriptData, isLoading: transcriptLoading } = useQuery({
     queryKey: ['transcript', meetingId],
     queryFn: () => meetingService.getTranscript(meetingId!),
     enabled: !!meetingId,
+    refetchInterval: (query) => {
+      // Poll every 3 seconds if processing
+      const status = query.state.data?.status;
+      return status === 'processing' ? 3000 : false;
+    },
   });
 
-  const loading = meetingLoading || summaryLoading;
+  const loading = meetingLoading;
+
+  const handleRetry = async () => {
+    if (!meetingId) return;
+    setIsRetrying(true);
+    setRetryError(null);
+    try {
+      await meetingService.retryTranscript(meetingId);
+      await queryClient.invalidateQueries({ queryKey: ['transcript', meetingId] });
+    } catch (err: any) {
+      setRetryError(err.response?.data?.message || err.message || 'Retry failed');
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
+  const handleDownloadTranscript = () => {
+    const text = transcriptData?.content;
+    if (!text || !meeting) return;
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `meeting-${meeting.id}-transcript.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   if (loading) {
     return (
@@ -74,20 +111,8 @@ export default function MeetingSummaryPage() {
     );
   }
 
-  const summaryData: MeetingSummary = summary || {
-    id: '',
-    meeting_id: meetingId || '',
-    duration_minutes: meeting.duration_minutes || 0,
-    attendance_count: participants.length,
-    total_participants: participants.length,
-    transcript: '',
-    ai_summary: 'No summary available yet.',
-    action_items: [],
-    tickets_generated: [],
-    created_at: '',
-  };
-
-  const transcriptContent = transcriptData?.content || summaryData.transcript;
+  const transcriptStatus: 'raw_stored' | 'processing' | 'ready_for_ai' | 'failed' | undefined = transcriptData?.status;
+  const transcriptContent = transcriptData?.content || '';
 
   return (
     <AppLayout teamId={meeting.team_id}>
@@ -110,33 +135,104 @@ export default function MeetingSummaryPage() {
             </div>
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>{meeting.title}</h1>
             <p className="text-xs font-mono" style={{ color: 'var(--app-text-muted)' }}>
-              {formatDateLong(meeting.date)} · {formatTime12h(meeting.start_time)} - {formatTime12h(meeting.end_time)}
+              {formatDateLong(meeting.date)} · {formatTime12h(meeting.start_time)} - {formatTime12h(meeting.end_time)} ({meeting.timezone || 'UTC'})
             </p>
           </div>
 
+          {/* Quick Metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <AppCard variant="dashboard" className="text-center p-4">
               <Clock size={16} className="mx-auto mb-2" style={{ color: 'var(--app-text-secondary)' }} />
-              <p className="text-xl font-bold" style={{ color: 'var(--app-text-primary)' }}>{summaryData.duration_minutes}</p>
+              <p className="text-xl font-bold" style={{ color: 'var(--app-text-primary)' }}>{meeting.duration_minutes || 0}</p>
               <p className="text-[10px] font-mono uppercase mt-0.5" style={{ color: 'var(--app-text-muted)' }}>Minutes</p>
             </AppCard>
             <AppCard variant="dashboard" className="text-center p-4">
               <Users size={16} className="mx-auto mb-2" style={{ color: 'var(--app-text-secondary)' }} />
-              <p className="text-xl font-bold" style={{ color: 'var(--app-text-primary)' }}>{summaryData.attendance_count}/{summaryData.total_participants}</p>
-              <p className="text-[10px] font-mono uppercase mt-0.5" style={{ color: 'var(--app-text-muted)' }}>Attendance</p>
+              <p className="text-xl font-bold" style={{ color: 'var(--app-text-primary)' }}>{participants.length}</p>
+              <p className="text-[10px] font-mono uppercase mt-0.5" style={{ color: 'var(--app-text-muted)' }}>Participants</p>
             </AppCard>
             <AppCard variant="dashboard" className="text-center p-4">
-              <CheckCircle size={16} className="text-emerald-400 mx-auto mb-2" />
-              <p className="text-xl font-bold" style={{ color: 'var(--app-text-primary)' }}>{summaryData.action_items.filter(a => a.status === 'done').length}/{summaryData.action_items.length}</p>
-              <p className="text-[10px] font-mono uppercase mt-0.5" style={{ color: 'var(--app-text-muted)' }}>Action Items</p>
+              <FileText size={16} className="mx-auto mb-2" style={{ color: 'var(--app-text-secondary)' }} />
+              <p className="text-xl font-bold" style={{ color: 'var(--app-text-primary)' }}>
+                {transcriptContent ? `${transcriptContent.split('\n').filter(Boolean).length}` : '0'}
+              </p>
+              <p className="text-[10px] font-mono uppercase mt-0.5" style={{ color: 'var(--app-text-muted)' }}>Segments</p>
             </AppCard>
             <AppCard variant="dashboard" className="text-center p-4">
-              <LayoutDashboard size={16} className="mx-auto mb-2" style={{ color: 'var(--app-text-secondary)' }} />
-              <p className="text-xl font-bold" style={{ color: 'var(--app-text-primary)' }}>{summaryData.tickets_generated.length}</p>
-              <p className="text-[10px] font-mono uppercase mt-0.5" style={{ color: 'var(--app-text-muted)' }}>Tickets</p>
+              <Sparkles size={16} className="mx-auto mb-2 text-blue-400" />
+              <p className="text-xs font-semibold mt-1" style={{ color: 'var(--app-text-primary)' }}>Phase 2</p>
+              <p className="text-[10px] font-mono uppercase mt-0.5" style={{ color: 'var(--app-text-muted)' }}>AI Processing</p>
             </AppCard>
           </div>
 
+          {/* Real Transcript Pipeline Status Banner */}
+          <AppCard variant="dashboard" className="p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono uppercase tracking-wider font-semibold" style={{ color: 'var(--app-text-secondary)' }}>Transcript Status:</span>
+                  {transcriptStatus === 'raw_stored' && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                      <FileText size={11} /> RAW STORED
+                    </span>
+                  )}
+                  {transcriptStatus === 'processing' && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                      <Loader2 size={11} className="animate-spin" /> PROCESSING
+                    </span>
+                  )}
+                  {transcriptStatus === 'ready_for_ai' && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      <CheckCircle size={11} /> READY FOR AI
+                    </span>
+                  )}
+                  {transcriptStatus === 'failed' && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                      <AlertCircle size={11} /> FAILED
+                    </span>
+                  )}
+                  {!transcriptStatus && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium bg-zinc-500/10 text-zinc-400 border border-zinc-500/20">
+                      {transcriptLoading ? 'CHECKING...' : 'NO TRANSCRIPT'}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs" style={{ color: 'var(--app-text-secondary)' }}>
+                  {transcriptStatus === 'raw_stored' && 'Transcript has been saved successfully to Supabase Storage. Awaiting preprocessing.'}
+                  {transcriptStatus === 'processing' && 'Cleaning and preparing transcript through the 14-stage preprocessing pipeline...'}
+                  {transcriptStatus === 'ready_for_ai' && 'Transcript preprocessing completed. Cleaned and normalized for AI models.'}
+                  {transcriptStatus === 'failed' && (transcriptData?.error_message ? `Transcript processing failed: ${transcriptData.error_message}` : 'Transcript processing failed.')}
+                  {!transcriptStatus && (transcriptLoading ? 'Retrieving transcript details...' : 'No transcript recorded for this meeting.')}
+                </p>
+              </div>
+
+              {transcriptStatus === 'failed' && (
+                <div className="flex items-center gap-2 shrink-0">
+                  <AppButton
+                    variant="mono"
+                    size="sm"
+                    disabled={isRetrying}
+                    onClick={handleRetry}
+                  >
+                    {isRetrying ? (
+                      <>
+                        <Loader2 size={13} className="animate-spin mr-1.5" /> Retrying...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw size={13} className="mr-1.5" /> Retry Processing
+                      </>
+                    )}
+                  </AppButton>
+                </div>
+              )}
+            </div>
+            {retryError && (
+              <p className="text-xs text-rose-400 mt-2">Error during retry: {retryError}</p>
+            )}
+          </AppCard>
+
+          {/* Participants */}
           <AppCard
             variant="dashboard"
             title={
@@ -159,77 +255,45 @@ export default function MeetingSummaryPage() {
             </div>
           </AppCard>
 
-          <AppCard
-            variant="dashboard"
-            title={
-              <div className="flex items-center gap-2">
-                <Sparkles size={15} style={{ color: 'var(--app-text-primary)' }} />
-                <span className="text-xs font-semibold" style={{ color: 'var(--app-text-primary)' }}>AI Executive Summary</span>
-              </div>
-            }
-          >
-            <p className="text-xs leading-relaxed" style={{ color: 'var(--app-text-secondary)' }}>{summaryData.ai_summary}</p>
-          </AppCard>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <AppCard
-              variant="dashboard"
-              title={<span className="text-xs font-semibold" style={{ color: 'var(--app-text-primary)' }}>Action Items</span>}
-            >
-              {summaryData.action_items.length === 0 ? (
-                <p className="text-xs" style={{ color: 'var(--app-text-muted)' }}>No action items recorded</p>
-              ) : (
-                <div className="space-y-2">
-                  {summaryData.action_items.map(item => (
-                    <div key={item.id} className="flex items-start gap-2.5 p-3 rounded-xl border" style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)' }}>
-                      <CheckCircle size={15} className={`mt-0.5 shrink-0 ${item.status === 'done' ? 'text-emerald-400' : ''}`} style={item.status !== 'done' ? { color: 'var(--app-text-muted)' } : undefined} />
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-xs ${item.status === 'done' ? 'line-through' : ''}`} style={{ color: item.status === 'done' ? 'var(--app-text-muted)' : 'var(--app-text-primary)' }}>
-                          {item.text}
-                        </p>
-                        {item.assignee && (
-                          <p className="text-[10px] mt-0.5" style={{ color: 'var(--app-text-muted)' }}>— {item.assignee}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </AppCard>
-
-            <AppCard
-              variant="dashboard"
-              title={<span className="text-xs font-semibold" style={{ color: 'var(--app-text-primary)' }}>Tickets Generated</span>}
-            >
-              {summaryData.tickets_generated.length === 0 ? (
-                <p className="text-xs" style={{ color: 'var(--app-text-muted)' }}>No tickets generated</p>
-              ) : (
-                <div className="space-y-2">
-                  {summaryData.tickets_generated.map(ticket => (
-                    <div key={ticket.id} className="flex items-center gap-2.5 p-3 rounded-xl border" style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)' }}>
-                      <div className={`w-2 h-2 rounded-full ${
-                        ticket.status === 'open' ? '' :
-                        ticket.status === 'in_progress' ? 'bg-amber-400' : 'bg-emerald-400'
-                      }`} style={ticket.status === 'open' ? { backgroundColor: 'var(--app-text-primary)' } : undefined} />
-                      <span className="text-xs font-medium" style={{ color: 'var(--app-text-primary)' }}>{ticket.title}</span>
-                      <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full font-mono capitalize border" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)', color: 'var(--app-text-secondary)' }}>
-                        {ticket.status.replace('_', ' ')}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </AppCard>
+          {/* AI Notice Card - Clear Phase 2 Distinction */}
+          <div className="rounded-xl border p-4 space-y-1.5" style={{ backgroundColor: 'rgba(59, 130, 246, 0.04)', borderColor: 'rgba(59, 130, 246, 0.2)' }}>
+            <div className="flex items-center gap-2">
+              <Sparkles size={15} className="text-blue-400" />
+              <span className="text-xs font-semibold text-blue-400">AI Intelligence — Pending Phase 2</span>
+            </div>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--app-text-secondary)' }}>
+              AI Executive Summary, Action Item extraction, and automated Jira/Kanban ticket generation will be generated in the upcoming AI phase.
+              {transcriptStatus === 'ready_for_ai'
+                ? ' The 14-stage cleaned transcript is verified and ready for AI models.'
+                : ' Transcript preprocessing must be completed before AI generation can run.'}
+            </p>
           </div>
 
-          {transcriptContent && (
+          {/* Transcript Viewer */}
+          {transcriptContent ? (
             <AppCard
               variant="dashboard"
-              title={<span className="text-xs font-semibold" style={{ color: 'var(--app-text-primary)' }}>Full Transcript</span>}
+              title={
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-2">
+                    <FileText size={15} style={{ color: 'var(--app-text-secondary)' }} />
+                    <span className="text-xs font-semibold" style={{ color: 'var(--app-text-primary)' }}>Meeting Transcript</span>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)', color: 'var(--app-text-muted)' }}>
+                    {transcriptData?.cleaned_transcript_path ? '14-Stage Preprocessed' : 'Raw Transcript'}
+                  </span>
+                </div>
+              }
             >
-              <div className="border rounded-xl p-4 max-h-64 overflow-y-auto" style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)' }}>
+              <div className="border rounded-xl p-4 max-h-80 overflow-y-auto" style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)' }}>
                 <pre className="text-xs whitespace-pre-wrap font-sans leading-relaxed" style={{ color: 'var(--app-text-secondary)' }}>{transcriptContent}</pre>
               </div>
+            </AppCard>
+          ) : (
+            <AppCard variant="dashboard">
+              <p className="text-xs text-center py-6" style={{ color: 'var(--app-text-muted)' }}>
+                {transcriptLoading ? 'Loading transcript...' : 'No transcript recorded for this meeting yet.'}
+              </p>
             </AppCard>
           )}
 
@@ -238,10 +302,12 @@ export default function MeetingSummaryPage() {
               Back to Meetings
             </AppButton>
             <div className="flex gap-3 ml-auto">
-              <AppButton variant="mono-outline" size="sm" onClick={() => {}}>
-                <Download size={14} className="mr-1" /> Download Transcript
-              </AppButton>
-              <AppButton variant="mono" size="sm" onClick={() => {}}>
+              {transcriptContent && (
+                <AppButton variant="mono-outline" size="sm" onClick={handleDownloadTranscript}>
+                  <Download size={14} className="mr-1" /> Download Transcript
+                </AppButton>
+              )}
+              <AppButton variant="mono" size="sm" onClick={() => navigate(`/teams/${meeting.team_id}/board`)}>
                 <LayoutDashboard size={14} className="mr-1" /> View Board
               </AppButton>
             </div>

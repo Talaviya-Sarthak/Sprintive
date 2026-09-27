@@ -65,6 +65,11 @@ export const meetingService = {
     return data.data;
   },
 
+  async retryTranscript(id: string): Promise<any> {
+    const { data } = await api.post(`/meetings/${id}/transcript/retry`);
+    return data.data;
+  },
+
   async getChats(id: string): Promise<ChatMessage[]> {
     const { data } = await api.get(`/meetings/${id}/chats`);
     return data.data;

@@ -58,10 +58,15 @@ export const env = {
   storageProvider:    process.env.STORAGE_PROVIDER ?? 'supabase',
   supabaseUrl:        storage.url,
   supabaseServiceRoleKey: storage.key,
-  supabaseBucket:     process.env.SUPABASE_BUCKET ?? 'sprintive-storage',
+  supabaseBucket:     process.env.SUPABASE_BUCKET ?? 'meetings',
+
+  // ── Transcript Processing Service ──────────────────────────────────────────
+  transcriptProcessingServiceUrl: process.env.TRANSCRIPT_PROCESSING_SERVICE_URL ?? 'http://localhost:8001',
 
   // ── AI Service ─────────────────────────────────────────────────────────────
   aiServiceUrl:       process.env.AI_SERVICE_URL ?? 'http://localhost:8000',
+  internalServiceKey: process.env.INTERNAL_SERVICE_KEY ?? 'sprintive_internal_service_secret_key_2026',
+  aiServiceTimeoutMs: parseInt(process.env.AI_SERVICE_TIMEOUT_MS ?? '10000', 10),
 
   // ── Deepgram STT ──────────────────────────────────────────────────────────
   deepgramApiKey:     process.env.DEEPGRAM_API_KEY ?? '',

@@ -52,15 +52,16 @@ export function initSocket(io) {
 
     socket.on('meeting:join', async ({ meetingId }) => {
       try {
+        // Enforce authorization first: check meeting existence and team membership
+        const result = await meetingService.joinMeeting(meetingId, user.id);
+        const meetingData = result?.meeting || null;
+        const dbParticipants = result?.participants || [];
+
         const room = getRoomKey(meetingId);
         socket.join(room);
 
         if (!rooms.has(room)) rooms.set(room, new Set());
         rooms.get(room).add(socket.id);
-
-        const result = await meetingService.joinMeeting(meetingId, user.id);
-        const meetingData = result?.meeting || null;
-        const dbParticipants = result?.participants || [];
 
         // Build the roster + full participant list for everyone already in the room
         const roster = [];
@@ -111,8 +112,7 @@ export function initSocket(io) {
           socketId:     socket.id,
         });
 
-        // Send the current roster (including socketIds) to the joiner so they
-        // can map existing participants for WebRTC signaling.
+        // Send the current roster (including socketIds) to the joiner
         socket.emit('meeting:participants', { meetingId, participants: roster });
 
         socket.emit('meeting:joined', {
@@ -122,14 +122,19 @@ export function initSocket(io) {
           meeting: meetingData,
         });
       } catch (err) {
+        logger.warn(`[socket] Unauthorized meeting:join by user ${user.id} for meeting ${meetingId}: ${err.message}`);
         socket.emit('error', { message: err.message });
       }
     });
 
     socket.on('meeting:start', async ({ meetingId }) => {
       try {
+        const room = getRoomKey(meetingId);
+        if (!socket.rooms.has(room)) {
+          return socket.emit('error', { message: 'You have not joined this meeting room' });
+        }
+
         const result = await meetingService.startMeeting(meetingId, user.id);
-        const room   = getRoomKey(meetingId);
 
         // Gather all current participants in the room for STT session init
         const participants = [];
@@ -155,6 +160,9 @@ export function initSocket(io) {
 
     socket.on('meeting:end', async ({ meetingId }) => {
       const room = getRoomKey(meetingId);
+      if (!socket.rooms.has(room)) {
+        return socket.emit('error', { message: 'You have not joined this meeting room' });
+      }
 
       // ── Idempotency guard: if this meeting is already ending, skip ──
       if (endingMeetings.has(meetingId)) {
@@ -166,7 +174,7 @@ export function initSocket(io) {
       try {
         logger.info(`[meeting] End requested by ${user.full_name} for meeting ${meetingId}`);
 
-        // 1. End the meeting in DB (fast — no STT wait)
+        // 1. End the meeting in DB (verifies host and membership, marks completed)
         const result = await meetingService.endMeeting(meetingId, user.id);
 
         // 2. Emit STT finalizing status
@@ -175,15 +183,13 @@ export function initSocket(io) {
         // 3. Broadcast meeting ended to all participants
         io.to(room).emit('meeting:ended', {
           meeting:    result.meeting,
-          transcript: result.transcript,
           summary:    result.summary,
         });
 
         logger.info(`[meeting] Meeting ${meetingId} ended, now finalizing transcript...`);
 
-        // 4. Finalize STT sessions (flushes remaining audio via Deepgram Finalize)
-        //    with a timeout so finalization cannot hang forever
-        const FINALIZATION_TIMEOUT_MS = 15000; // 15 seconds max for finalization
+        // 4. Finalize STT sessions & upload raw transcript (with timeout)
+        const FINALIZATION_TIMEOUT_MS = 15000;
         try {
           const transcriptResult = await Promise.race([
             transcriptService.finalizeTranscript(meetingId),
@@ -197,7 +203,6 @@ export function initSocket(io) {
         } catch (finalizationErr) {
           logger.error(`[meeting] Transcript finalization failed/timed out for ${meetingId}: ${finalizationErr.message}`);
           io.to(room).emit('stt:status', { meetingId, status: 'failed' });
-          // Abort any remaining STT sessions
           sttService.abortSession(meetingId);
         }
 
@@ -235,6 +240,10 @@ export function initSocket(io) {
 
     socket.on('meeting:leave', async ({ meetingId }) => {
       const room = getRoomKey(meetingId);
+      // Clean up participant's Deepgram session without closing entire meeting
+      sttService.closeParticipantSession(meetingId, user.id).catch((err) => {
+        logger.warn(`[socket] Failed to close STT session on leave for user ${user.id} in ${meetingId}: ${err.message}`);
+      });
       await meetingService.leaveMeeting(meetingId, user.id).catch(() => {});
       socket.leave(room);
       rooms.get(room)?.delete(socket.id);
@@ -243,8 +252,12 @@ export function initSocket(io) {
 
     socket.on('chat:send', async ({ meetingId, message }) => {
       try {
-        const chat = await meetingService.saveChat({ meeting_id: meetingId, user_id: user.id, message });
         const room = getRoomKey(meetingId);
+        if (!socket.rooms.has(room)) {
+          return socket.emit('error', { message: 'You have not joined this meeting room' });
+        }
+
+        const chat = await meetingService.saveChat({ meeting_id: meetingId, user_id: user.id, message });
         io.to(room).emit('chat:receive', {
           ...chat,
           full_name:  user.full_name,
@@ -258,6 +271,8 @@ export function initSocket(io) {
     // ── STT: Receive audio chunk from participant ──────────────────────────────
     socket.on('audio:chunk', async ({ meetingId, audio }) => {
       try {
+        const room = getRoomKey(meetingId);
+        if (!socket.rooms.has(room)) return;
         if (!sttService.hasSession(meetingId)) return;
 
         const audioBuffer = Buffer.from(audio, 'base64');
@@ -270,38 +285,49 @@ export function initSocket(io) {
 
     socket.on('toggle-camera', ({ meetingId, cameraOff }) => {
       const room = getRoomKey(meetingId);
+      if (!socket.rooms.has(room)) return;
       socket.to(room).emit('camera-state-changed', { userId: user.id, socketId: socket.id, cameraOff });
     });
 
     socket.on('toggle-mic', ({ meetingId, muted }) => {
       const room = getRoomKey(meetingId);
+      if (!socket.rooms.has(room)) return;
       socket.to(room).emit('microphone-state-changed', { userId: user.id, socketId: socket.id, muted });
     });
 
     socket.on('raise-hand', ({ meetingId }) => {
       const room = getRoomKey(meetingId);
+      if (!socket.rooms.has(room)) return;
       socket.to(room).emit('hand-raised', { userId: user.id, fullName: user.full_name });
     });
 
     socket.on('screen-share-start', ({ meetingId }) => {
       const room = getRoomKey(meetingId);
+      if (!socket.rooms.has(room)) return;
       socket.to(room).emit('screen-share-state', { userId: user.id, socketId: socket.id, sharing: true });
     });
 
     socket.on('screen-share-stop', ({ meetingId }) => {
       const room = getRoomKey(meetingId);
+      if (!socket.rooms.has(room)) return;
       socket.to(room).emit('screen-share-state', { userId: user.id, socketId: socket.id, sharing: false });
     });
 
     socket.on('webrtc:offer', ({ meetingId, targetSocketId, offer }) => {
+      const room = getRoomKey(meetingId);
+      if (!socket.rooms.has(room)) return;
       io.to(targetSocketId).emit('webrtc:offer', { fromSocketId: socket.id, offer });
     });
 
-    socket.on('webrtc:answer', ({ targetSocketId, answer }) => {
+    socket.on('webrtc:answer', ({ meetingId, targetSocketId, answer }) => {
+      const room = getRoomKey(meetingId);
+      if (!socket.rooms.has(room)) return;
       io.to(targetSocketId).emit('webrtc:answer', { fromSocketId: socket.id, answer });
     });
 
-    socket.on('webrtc:candidate', ({ targetSocketId, candidate }) => {
+    socket.on('webrtc:candidate', ({ meetingId, targetSocketId, candidate }) => {
+      const room = getRoomKey(meetingId);
+      if (!socket.rooms.has(room)) return;
       io.to(targetSocketId).emit('webrtc:candidate', { fromSocketId: socket.id, candidate });
     });
 
@@ -310,6 +336,10 @@ export function initSocket(io) {
         if (sockets.has(socket.id)) {
           sockets.delete(socket.id);
           const meetingId = room.replace('meeting:', '');
+          // Clean up participant's Deepgram session without closing entire meeting
+          sttService.closeParticipantSession(meetingId, user.id).catch((err) => {
+            logger.warn(`[socket] Failed to close STT session on disconnect for user ${user.id} in ${meetingId}: ${err.message}`);
+          });
           meetingService.leaveMeeting(meetingId, user.id).catch(() => {});
           socket.to(room).emit('participant:left', { userId: user.id, socketId: socket.id });
         }

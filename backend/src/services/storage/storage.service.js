@@ -29,13 +29,24 @@ class StorageService {
   }
 
   /**
-   * Upload the conversation transcript to object storage.
+   * Canonical storage paths.
+   */
+  getRawPath(meetingId) {
+    return `meetings/${meetingId}/raw/conversation.txt`;
+  }
+
+  getCleanedPath(meetingId) {
+    return `meetings/${meetingId}/processed/cleaned_conversation.txt`;
+  }
+
+  /**
+   * Upload the raw conversation transcript to object storage.
    * @param {string} meetingId - Meeting UUID
-   * @param {string} content - The full conversation.txt content
+   * @param {string} content - The full raw conversation.txt content
    * @returns {Promise<{path: string, size: number, bucket: string, provider: string}>}
    */
   async uploadTranscript(meetingId, content) {
-    const path = `meeting-transcripts/${meetingId}/${meetingId}.txt`;
+    const path = this.getRawPath(meetingId);
     const result = await this.provider.upload(path, content, 'text/plain; charset=utf-8');
 
     return {
