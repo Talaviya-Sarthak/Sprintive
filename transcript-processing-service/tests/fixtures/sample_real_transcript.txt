@@ -1,0 +1,25 @@
+Sarthak Talaviya: Good morning, everyone. Let's get started with today's meeting.
+
+Harshit Pambhar: I have one issue with the database connection that is affecting the API testing.
+
+Sarthak Talaviya: ¿Aló? Can you hear me clearly?
+
+Harshit Pambhar: Yes, आवाज आ रही है. हाँ बोल.
+
+Sarthak Talaviya: Great. What exactly is the error code in the logs?
+
+Harshit Pambhar: Error is: connection timeout at 10:30:15 on port 5432.
+
+Sarthak Talaviya: ready ready. Advoid? Wait, did you check the SSL certificate config?
+
+Harshit Pambhar: हाँ backend ready है, but the pool size was maxed out.
+
+Sarthak Talaviya: okay so so we need to restart the container and test again.
+
+Harshit Pambhar: Let's do that right away.
+
+Harshit Pambhar: Starting the service now...
+
+[Background typing noise and low hum]
+
+Sarthak Talaviya: Let's wait for the health check.

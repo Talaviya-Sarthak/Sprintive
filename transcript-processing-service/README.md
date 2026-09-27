@@ -1,0 +1,1134 @@
+# Sprintive Transcript Processing Service
+
+> **Modules Implemented:**
+> - **Module 1: Transcript Parsing (Foundation)**
+> - **Module 2: Noise & Filler Detection (Classification)**
+> - **Module 3: Repetition Removal (Deduplication)**
+> - **Module 4: Pre-Meeting & Irrelevant Content Filtering**
+> - **Module 5: Sentence Segmentation & Fragment Merging**
+> - **Module 6: STT Error Correction (Acoustic Correction with Traceability)**
+> - **Module 7: Grammar & Punctuation Normalization (Readability & Punctuation)**
+> - **Module 8: Technical Terminology Normalization (Canonical Technical Vocabulary)**
+> - **Module 9: Contextual Consistency Check (Logical & Domain Validation)**
+> - **Module 10: Speaker Attribution Validation (Conversational & Turn-Taking Plausibility)**
+> - **Module 11: Language Preservation Check (Multilingual & Code-Switching Integrity)**
+> - **Module 12: Semantic Preservation Validation (Meaning & Intent Verification)**
+> - **Module 13: Final Transcript Formatting (AI-Ready Presentation & Serialization)**
+> - **Module 14: Storage & Processing Metadata Persistence (Supabase Storage & Lifecycle Tracking)**
+> - **Module 15: Transcript Processing Orchestrator (Central Multi-Stage Pipeline & Concurrency Control)**
+
+
+The **Sprintive Transcript Processing Service** is a modular Python/FastAPI service responsible for transforming raw meeting transcripts stored in Supabase into structured, validated data suitable for downstream AI analysis.
+
+---
+
+## 1. What the Service Does
+
+### Module 1: Transcript Parsing
+- **Receives** a meeting ID and raw transcript path (or raw text).
+- **Retrieves** raw transcript content via an abstracted storage interface (`BaseTranscriptStorage`).
+- **Parses** dialogue lines into structured `TranscriptSegment` items using the first colon (`:`) as separator.
+- **Preserves** 100% verbatim content:
+  - Exact speaker names
+  - Exact dialogue text (spelling, casing, grammar, repetitions, filler words, noise, and STT errors)
+  - Multilingual Unicode text (Hindi, Spanish, Gujarati, Hinglish)
+  - Sequential chronological ordering
+  - Consecutive utterances from the same speaker (not merged)
+  - Non-standard/unparsed lines (preserved with `speaker="UNKNOWN"` and structured warning)
+- **Leaves raw transcripts immutable**: The original files are never altered.
+
+### Module 2: Noise & Filler Detection
+- **Receives** structured transcript segments from Part 1.
+- **Analyzes** segments using deterministic, multi-layered rules and configurable multilingual filler dictionaries.
+- **Decorates** each segment with:
+  - `classification`: `CLEAN`, `FILLER`, `NOISE`, `POSSIBLE_REPETITION`, `UNCERTAIN`
+  - `confidence`: Deterministic score between `0.0` and `1.0`
+- **Follows DETECT FIRST principle**:
+  - No text is deleted, translated, merged, or rewritten.
+  - Original `sequence`, `speaker`, `text`, and ordering remain 100% untouched.
+- **Conservative on meaningful words**: Standalone words such as `yes`, `no`, `okay`, `fine`, `done`, and `ready` are recognized as meaningful affirmations (`CLEAN`) unless repeated.
+- **Context-aware**: Considers adjacent utterances to identify repetitive acknowledgements (e.g. repeated `Okay.` from the same speaker).
+
+---
+
+## 2. Detection Categories & Rules
+
+| Category | Description | Examples | Confidence |
+| :--- | :--- | :--- | :--- |
+| **`CLEAN`** | Grammatical sentences, informative dialogue, or standalone affirmations | `"Good morning everyone."`, `"हाँ बोल"`, `"Yes."`, `"Done."` | `0.90 - 0.99` |
+| **`FILLER`** | Pure non-lexical sounds / filler words across languages | `"um"`, `"uh"`, `"हम्म"`, `"eh"`, `"yeah"` | `0.95 - 0.97` |
+| **`NOISE`** | Non-verbal bracketed audio tags, empty segments, punctuation noise | `"[Background typing noise and low hum]"`, `"[cough]"`, `"--"` | `0.98 - 1.00` |
+| **`POSSIBLE_REPETITION`** | Full-segment token repetitions or consecutive identical acknowledgements | `"ready ready."`, `"Aló, aló, aló, aló."`, `"um um um"`, repeated `"Okay."` | `0.90 - 0.95` |
+| **`UNCERTAIN`** | Ambiguous, unclassified, or isolated fragments | `"xk"`, short non-lexical fragments | `0.50 - 0.65` |
+
+---
+
+## 3. What is Intentionally NOT Implemented Yet
+
+Per system specifications, Part 2 is strictly a **classifier/detector**, not a cleaner. The following operations are deliberately excluded from this phase and will be handled by subsequent pipeline modules:
+
+- ❌ Repetition removal (reserved for Part 3)
+- ❌ Permanent deletion of noise/filler segments
+- ❌ Pre-meeting chatter filtering
+- ❌ Sentence, grammar, or punctuation correction
+- ❌ Consecutive same-speaker segment merging
+- ❌ Translation or language normalization
+- ❌ LLM calls, embeddings, or semantic extraction
+- ❌ Action items, summary, or blocker extraction
+
+---
+
+## 4. Folder Structure
+
+```
+transcript-processing-service/
+│
+├── app/
+│   ├── __init__.py
+│   │
+│   ├── main.py                        # FastAPI entrypoint, middleware, lifespan
+│   │
+│   ├── api/
+│   │   ├── __init__.py
+│   │   └── routes/
+│   │       ├── __init__.py
+│   │       └── transcript.py          # /transcript/parse & /transcript/analyze-noise routes
+│   │
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── transcript.py              # TranscriptSegment, ParsedTranscript, AnalyzeNoise models
+│   │
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── transcript_parser.py       # Pure, decoupled transcript parsing logic (Part 1)
+│   │   ├── transcript_storage.py      # Abstract storage interface & Local implementation
+│   │   ├── transcript_service.py      # Orchestrator connecting storage, parser, and detector
+│   │   └── noise_detector.py          # Multi-layered noise & filler detection service (Part 2)
+│   │
+│   └── core/
+│       ├── __init__.py
+│       ├── config.py                  # Environment and application settings
+│       └── fillers.py                 # Multilingual filler dictionaries (en, hi, es) & noise regexes
+│
+├── tests/
+│   ├── __init__.py
+│   ├── test_transcript_parser.py      # 10 unit tests covering core parsing rules
+│   ├── test_real_transcript.py        # Integration test with realistic Sprintive transcript
+│   ├── test_noise_detector.py         # 16 unit & context tests for noise/filler detection
+│   ├── test_api.py                    # End-to-end FastAPI tests for /transcript/parse
+│   ├── test_api_noise.py              # End-to-end FastAPI tests for /transcript/analyze-noise
+│   └── fixtures/
+│       └── sample_real_transcript.txt # Realistic multi-speaker multilingual transcript
+│
+├── requirements.txt
+├── .env.example
+├── .gitignore
+└── README.md
+```
+
+---
+
+## 5. Installation & Setup
+
+### Prerequisites
+- Python 3.11+
+- `pip`
+
+### 1. Set Up Virtual Environment (Recommended)
+
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+```
+
+### 2. Install Dependencies
+
+```powershell
+pip install -r requirements.txt
+```
+
+### 3. Environment Configuration
+
+Copy `.env.example` to `.env`:
+
+```powershell
+cp .env.example .env
+```
+
+---
+
+## 6. Running the Service
+
+Start the FastAPI server using `uvicorn`:
+
+```powershell
+uvicorn app.main:app --reload --port 8001
+```
+
+Once running:
+- **Interactive OpenAPI Documentation**: [http://localhost:8001/docs](http://localhost:8001/docs)
+- **ReDoc Documentation**: [http://localhost:8001/redoc](http://localhost:8001/redoc)
+- **Health Check**: [http://localhost:8001/health](http://localhost:8001/health)
+
+---
+
+## 7. Running Tests
+
+Run the complete test suite using `pytest`:
+
+```powershell
+pytest -v
+```
+
+All 39 unit and integration tests will execute, covering:
+1. Normal English sentences (`CLEAN`)
+2. Hindi sentences and Unicode safety (`हाँ बोल`) (`CLEAN`)
+3. Spanish punctuation and characters (`¿Aló?`) (`CLEAN`)
+4. Mixed-language Hinglish dialogue (`हाँ backend ready है.`) (`CLEAN`)
+5. Filler words in English, Hindi, Spanish (`um`, `uh`, `हम्म`, `eh`, `yeah`) (`FILLER`)
+6. Repeated words intra-segment (`ready ready.`) (`POSSIBLE_REPETITION`)
+7. Repeated short utterances (`Aló, aló, aló, aló.`) (`POSSIBLE_REPETITION`)
+8. Non-verbal bracketed noise (`[Background typing noise and low hum]`) (`NOISE`)
+9. Meaningful standalone "yes" (`CLEAN`)
+10. Meaningful standalone "no" (`CLEAN`)
+11. Meaningful standalone and contextual "okay" (`CLEAN`)
+12. Meaningful standalone "done" (`CLEAN`)
+13. Meaningful standalone "ready" (`CLEAN`)
+14. Empty/whitespace/punctuation segment (`NOISE`)
+15. Punctuation variations preserved without text mutation
+16. Critical multilingual preservation (`अरे एक minute बोल बाद ले.` unmodified)
+17. Contextual consecutive repetitions (`Okay.` followed by `Okay.`) (`POSSIBLE_REPETITION`)
+18. End-to-end API endpoints for `/transcript/parse` and `/transcript/analyze-noise`
+
+---
+
+## 8. API Specification
+
+### Endpoint: `POST /transcript/analyze-noise`
+
+#### Request Payload
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 1,
+      "speaker": "Sarthak Talaviya",
+      "text": "Good morning everyone."
+    },
+    {
+      "sequence": 2,
+      "speaker": "Harshit Pambhar",
+      "text": "Aló, aló, aló, aló."
+    },
+    {
+      "sequence": 3,
+      "speaker": "Harshit Pambhar",
+      "text": "I have one issue with the database connection."
+    },
+    {
+      "sequence": 4,
+      "speaker": "Sarthak Talaviya",
+      "text": "ready ready."
+    },
+    {
+      "sequence": 5,
+      "speaker": "Harshit Pambhar",
+      "text": "um"
+    },
+    {
+      "sequence": 6,
+      "speaker": "UNKNOWN",
+      "text": "[Background typing noise and low hum]"
+    }
+  ]
+}
+```
+
+#### Successful Response (`200 OK`)
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 1,
+      "speaker": "Sarthak Talaviya",
+      "text": "Good morning everyone.",
+      "classification": "CLEAN",
+      "confidence": 0.99
+    },
+    {
+      "sequence": 2,
+      "speaker": "Harshit Pambhar",
+      "text": "Aló, aló, aló, aló.",
+      "classification": "POSSIBLE_REPETITION",
+      "confidence": 0.95
+    },
+    {
+      "sequence": 3,
+      "speaker": "Harshit Pambhar",
+      "text": "I have one issue with the database connection.",
+      "classification": "CLEAN",
+      "confidence": 0.99
+    },
+    {
+      "sequence": 4,
+      "speaker": "Sarthak Talaviya",
+      "text": "ready ready.",
+      "classification": "POSSIBLE_REPETITION",
+      "confidence": 0.95
+    },
+    {
+      "sequence": 5,
+      "speaker": "Harshit Pambhar",
+      "text": "um",
+      "classification": "FILLER",
+      "confidence": 0.97
+    },
+    {
+      "sequence": 6,
+      "speaker": "UNKNOWN",
+      "text": "[Background typing noise and low hum]",
+      "classification": "NOISE",
+      "confidence": 0.98
+    }
+  ]
+}
+```
+
+---
+
+### Endpoint: `POST /transcript/correct-stt` (Part 6)
+
+Corrects speech-to-text recognition errors using structured LLM analysis while strictly preserving raw text, processed text, speaker, and language.
+
+#### Request Payload
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 15,
+      "source_sequences": [15, 16],
+      "speaker": "Harshit Pambhar",
+      "text": "I have one issue with the date abase connection.",
+      "processed_text": "I have one issue with the date abase connection.",
+      "merged": true,
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+#### Successful Response (`200 OK`)
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 15,
+      "source_sequences": [15, 16],
+      "speaker": "Harshit Pambhar",
+      "text": "I have one issue with the date abase connection.",
+      "processed_text": "I have one issue with the date abase connection.",
+      "stt_corrected_text": "I have one issue with the database connection.",
+      "stt_modified": true,
+      "stt_confidence": 0.96,
+      "stt_error_type": "TECHNICAL_TERM_MISRECOGNITION",
+      "stt_reason": "Likely STT recognition error for technical term",
+      "merged": true,
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+---
+
+### Endpoint: `POST /transcript/normalize-grammar` (Part 7)
+
+Improves grammatical readability and normalizes punctuation across transcript segments while strictly preserving speaker intent, conversational tone, meaning, language, and conversation structure.
+
+#### Request Payload
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 15,
+      "source_sequences": [15, 16],
+      "speaker": "Harshit Pambhar",
+      "text": "I have one issue with the date abase connection.",
+      "processed_text": "I have one issue with the date abase connection.",
+      "stt_corrected_text": "I have one issue with the database connection.",
+      "stt_modified": true,
+      "merged": true,
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+#### Successful Response (`200 OK`)
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 15,
+      "source_sequences": [15, 16],
+      "speaker": "Harshit Pambhar",
+      "text": "I have one issue with the date abase connection.",
+      "processed_text": "I have one issue with the date abase connection.",
+      "stt_corrected_text": "I have one issue with the database connection.",
+      "stt_modified": true,
+      "grammar_corrected_text": "I have an issue with the database connection.",
+      "grammar_modified": true,
+      "grammar_confidence": 0.95,
+      "grammar_changes": [
+        {
+          "type": "GRAMMAR",
+          "description": "Adjusted article for grammatical readability"
+        }
+      ],
+      "merged": true,
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+---
+
+### Endpoint: `POST /transcript/normalize-terminology` (Part 8)
+
+Normalizes software engineering and technical vocabulary into official canonical casing and spelling (e.g. `post gre SQL` &rarr; `PostgreSQL`, `fast api` &rarr; `FastAPI`, `web rtc` &rarr; `WebRTC`, `node js` &rarr; `Node.js`) while preserving ordinary words, multilingual dialogue, code identifiers (`getUserAPI`), and API paths (`/api/users`).
+
+#### Request Payload
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 15,
+      "source_sequences": [15, 16],
+      "speaker": "Harshit Pambhar",
+      "text": "We are connecting to post gre SQL using fast api.",
+      "processed_text": "We are connecting to post gre SQL using fast api.",
+      "stt_corrected_text": "We are connecting to post gre SQL using fast api.",
+      "grammar_corrected_text": "We are connecting to post gre SQL using fast api.",
+      "merged": true,
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+#### Successful Response (`200 OK`)
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 15,
+      "source_sequences": [15, 16],
+      "speaker": "Harshit Pambhar",
+      "text": "We are connecting to post gre SQL using fast api.",
+      "processed_text": "We are connecting to post gre SQL using fast api.",
+      "stt_corrected_text": "We are connecting to post gre SQL using fast api.",
+      "grammar_corrected_text": "We are connecting to post gre SQL using fast api.",
+      "terminology_normalized_text": "We are connecting to PostgreSQL using FastAPI.",
+      "terminology_modified": true,
+      "terminology_changes": [
+        {
+          "original_term": "post gre SQL",
+          "canonical_term": "PostgreSQL",
+          "change_type": "DETERMINISTIC_DICTIONARY",
+          "confidence": 1.0,
+          "reason": "Canonical dictionary normalization"
+        },
+        {
+          "original_term": "fast api",
+          "canonical_term": "FastAPI",
+          "change_type": "DETERMINISTIC_DICTIONARY",
+          "confidence": 1.0,
+          "reason": "Canonical dictionary normalization"
+        }
+      ],
+      "merged": true,
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+---
+
+### Endpoint: `POST /transcript/validate-context` (Part 9)
+
+Validates whether the processed transcript remains logically, factually, and contextually consistent with surrounding conversation. Adheres strictly to the principle **CHECK &rarr; FLAG &rarr; PRESERVE**. Under no circumstances is transcript text modified or rewritten.
+
+#### Request Payload
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 15,
+      "source_sequences": [15, 16],
+      "speaker": "Harshit Pambhar",
+      "text": "The API is failing.",
+      "processed_text": "The API is failing.",
+      "stt_corrected_text": "The API is failing.",
+      "grammar_corrected_text": "The API is failing.",
+      "terminology_normalized_text": "The API is failing.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 16,
+      "source_sequences": [17],
+      "speaker": "Sarthak Talaviya",
+      "text": "Let's check the React database.",
+      "processed_text": "Let's check the React database.",
+      "stt_corrected_text": "Let's check the React database.",
+      "grammar_corrected_text": "Let's check the React database.",
+      "terminology_normalized_text": "Let's check the React database.",
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+#### Successful Response (`200 OK`)
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 15,
+      "source_sequences": [15, 16],
+      "speaker": "Harshit Pambhar",
+      "text": "The API is failing.",
+      "processed_text": "The API is failing.",
+      "stt_corrected_text": "The API is failing.",
+      "grammar_corrected_text": "The API is failing.",
+      "terminology_normalized_text": "The API is failing.",
+      "context_status": "CONSISTENT",
+      "context_confidence": 0.96,
+      "context_flags": [],
+      "context_reason": "Statement is clear and consistent with conversation.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 16,
+      "source_sequences": [17],
+      "speaker": "Sarthak Talaviya",
+      "text": "Let's check the React database.",
+      "processed_text": "Let's check the React database.",
+      "stt_corrected_text": "Let's check the React database.",
+      "grammar_corrected_text": "Let's check the React database.",
+      "terminology_normalized_text": "Let's check the React database.",
+      "context_status": "POSSIBLE_INCONSISTENCY",
+      "context_confidence": 0.88,
+      "context_flags": [
+        {
+          "type": "TECHNICAL_CONTEXT_MISMATCH",
+          "description": "The phrase 'React database' combines a frontend UI library with a database concept, which is unusual and may represent an error."
+        }
+      ],
+      "context_reason": "The phrase 'React database' combines a frontend UI library with a database concept, which is unusual and may represent an error.",
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+---
+
+### Endpoint: `POST /transcript/validate-speakers` (Part 10)
+
+Validates whether spoken dialogue is plausibly attributed to the labeled speaker based on surrounding conversational context, syntactic continuity, and question-response turn-taking patterns.
+
+Adheres strictly to the principle:
+$$\text{VALIDATE} \longrightarrow \text{FLAG} \longrightarrow \text{SUGGEST (if justified)} \longrightarrow \text{PRESERVE ORIGINAL SPEAKER}$$
+
+Under no circumstances is the original `speaker` field overwritten, nor is any transcript text rewritten.
+
+#### Request Payload
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 15,
+      "speaker": "Sarthak Talaviya",
+      "text": "Harshit, can you explain the database issue?",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 16,
+      "speaker": "Harshit Pambhar",
+      "text": "Yes. The database connection is failing during API testing.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 17,
+      "speaker": "Sarthak Talaviya",
+      "text": "We need to investigate the database",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 18,
+      "speaker": "Harshit Pambhar",
+      "text": "connection issue first.",
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+#### Successful Response (`200 OK`)
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 15,
+      "speaker": "Sarthak Talaviya",
+      "text": "Harshit, can you explain the database issue?",
+      "speaker_validation_status": "VALID",
+      "speaker_confidence": 0.96,
+      "speaker_flags": [],
+      "suggested_speaker": null,
+      "speaker_correction": null,
+      "speaker_validation_reason": "Direct question addressed to team member.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 16,
+      "speaker": "Harshit Pambhar",
+      "text": "Yes. The database connection is failing during API testing.",
+      "speaker_validation_status": "VALID",
+      "speaker_confidence": 0.98,
+      "speaker_flags": [],
+      "suggested_speaker": null,
+      "speaker_correction": null,
+      "speaker_validation_reason": "Expected direct answer from addressed speaker.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 17,
+      "speaker": "Sarthak Talaviya",
+      "text": "We need to investigate the database",
+      "speaker_validation_status": "VALID",
+      "speaker_confidence": 0.92,
+      "speaker_flags": [],
+      "suggested_speaker": null,
+      "speaker_correction": null,
+      "speaker_validation_reason": "Valid statement.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 18,
+      "speaker": "Harshit Pambhar",
+      "text": "connection issue first.",
+      "speaker_validation_status": "POSSIBLE_MISATTRIBUTION",
+      "speaker_confidence": 0.86,
+      "speaker_flags": [
+        "POSSIBLE_FRAGMENT_MISATTRIBUTION"
+      ],
+      "suggested_speaker": "Sarthak Talaviya",
+      "speaker_correction": null,
+      "speaker_validation_reason": "The segment appears syntactically connected to Sarthak Talaviya's unfinished sentence ('We need to investigate the database'), suggesting a possible fragment continuation mismatch.",
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+---
+
+## 15. Part 11 — Language Preservation Check
+
+### Endpoint
+`POST /transcript/validate-language`
+
+### Description
+Verifies that the transcript-cleaning pipeline has preserved the original language characteristics, multilingual expressions, code-switching, and technical terminology of the speaker's dialogue.
+
+**Core Principles**:
+- **VALIDATION, NOT TRANSLATION**: Validates language usage without translating or rewriting dialogue.
+- **ZERO REWRITING GUARANTEE**: Never modifies transcript text (`text`, `processed_text`, `stt_corrected_text`, `grammar_corrected_text`, `terminology_normalized_text`) or speaker labels (`assert output["text"] == input["text"]` and `assert output["speaker"] == input["speaker"]`).
+- **TECHNICAL VOCABULARY EXEMPTION**: Legitimate technical terminology (e.g. `database`, `connection`, `PostgreSQL`, `Supabase`, `API`) inside Hindi, Spanish, or mixed-language speech is protected and not flagged as language change.
+- **FORMATTING NORMALIZATION EXEMPTION**: Punctuation and capitalization adjustments from upstream stages evaluate as `PRESERVED`.
+- **TRANSCRIPT-LEVEL PROFILE**: Aggregates a transcript-wide profile (`primary_language`, `languages_detected`, `mixed_language_segments`, `language_change_flags`).
+
+### Example Request
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 1,
+      "speaker": "Harshit Pambhar",
+      "text": "हाँ बोल, database connection check कर.",
+      "terminology_normalized_text": "हाँ, बोल। Database connection check कर.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 2,
+      "speaker": "Harshit Pambhar",
+      "text": "हाँ बोल, बाद में discuss करते हैं.",
+      "terminology_normalized_text": "Yes, speak. We will discuss it later.",
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+### Example Response
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 1,
+      "speaker": "Harshit Pambhar",
+      "text": "हाँ बोल, database connection check कर.",
+      "language_preservation_status": "PRESERVED",
+      "language_confidence": 0.98,
+      "language_flags": [],
+      "original_languages": ["en", "hi"],
+      "processed_languages": ["en", "hi"],
+      "original_primary_language": "hi",
+      "processed_primary_language": "hi",
+      "original_mixed_language": true,
+      "processed_mixed_language": true,
+      "language_validation_reason": "Differences are solely punctuation, spacing, or capitalization normalization; language preserved.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 2,
+      "speaker": "Harshit Pambhar",
+      "text": "हाँ बोल, बाद में discuss करते हैं.",
+      "language_preservation_status": "LANGUAGE_CHANGED",
+      "language_confidence": 0.96,
+      "language_flags": [
+        "UNEXPECTED_TRANSLATION",
+        "NON_ENGLISH_CONTENT_MODIFIED",
+        "MIXED_LANGUAGE_LOST"
+      ],
+      "original_languages": ["en", "hi"],
+      "processed_languages": ["en"],
+      "original_primary_language": "hi",
+      "processed_primary_language": "en",
+      "original_mixed_language": true,
+      "processed_mixed_language": false,
+      "language_validation_reason": "Devanagari script in original text was removed or translated into Latin script.",
+      "include_in_meeting": true
+    }
+  ],
+  "transcript_language_profile": {
+    "primary_language": "hi",
+    "languages_detected": ["en", "hi"],
+    "mixed_language_segments": 1,
+    "language_change_flags": 1
+  }
+}
+```
+
+---
+
+## 16. Part 12 — Semantic Preservation Validation
+
+### Endpoint
+`POST /transcript/validate-semantics`
+
+### Description
+Verifies that transcript cleaning across upstream stages has preserved the **meaning, facts, intent, and commitments** of the original conversation. It operates strictly as a validation stage ($\text{VALIDATE} \longrightarrow \text{FLAG} \longrightarrow \text{PRESERVE}$) and never rewrites transcript text or reassigns speakers.
+
+**Core Principles**:
+- **MEANING & INTENT PRESERVATION**: Verifies factual statements, negations, quantities, numbers, dates, times, deadlines, technical entities, people references, actions, decisions, commitments, blockers, causality, and certainty/modality.
+- **ZERO REWRITING GUARANTEE**: Strictly never modifies transcript text (`text`, `processed_text`, etc.) or speaker labels (`assert output["text"] == input["text"]` and `assert output["speaker"] == input["speaker"]`).
+- **CONSERVATIVE VALIDATION**: Prefers `POSSIBLE_SEMANTIC_CHANGE` or `AMBIGUOUS` over assuming a change is correct. Never invents corrections.
+- **HIERARCHICAL INPUT RETRIEVAL**: Uses original `text` as baseline and selects the latest trustworthy processed text (`terminology_normalized_text` $\rightarrow$ `grammar_corrected_text` $\rightarrow$ `stt_corrected_text` $\rightarrow$ `processed_text` $\rightarrow$ `text`).
+- **TWO-TIER HYBRID ARCHITECTURE**:
+  1. *Deterministic Rule Engine* (`semantic_rules.py` + `entity_extractor.py`): High-precision regex & rule extraction for negations, quantities, numbers, dates, times, technical entities, questions, uncertainty, and stylistic equivalence.
+  2. *LLM Semantic Engine* (`semantic_validator.py` + `prompts/semantic_validation.py`): Pydantic-structured LLM validation for nuanced meaning, causal relationships, and intent changes with surrounding context ($\pm 3$ segments).
+- **RESILIENT FALLBACK**: If the LLM is unavailable or fails, returns deterministic findings or marks `INSUFFICIENT_CONTEXT` without crashing the pipeline.
+
+### Status Enum
+- `SEMANTICALLY_PRESERVED`: The cleaned text retains the exact meaning and intent of the original.
+- `POSSIBLE_SEMANTIC_CHANGE`: Evidence of possible meaning shift, but insufficient certainty.
+- `SEMANTICALLY_CHANGED`: Cleaned text clearly changes a meaningful fact, negation, entity, or intent.
+- `AMBIGUOUS`: Divergence cannot be reliably categorized without further evidence.
+- `INSUFFICIENT_CONTEXT`: Necessary surrounding context unavailable or service evaluation failed safely.
+
+### Example Request
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 1,
+      "speaker": "Sarthak Talaviya",
+      "text": "Good morning, everyone. Let's start the meeting.",
+      "terminology_normalized_text": "Good morning everyone, let's start the meeting.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 2,
+      "speaker": "Harshit Pambhar",
+      "text": "The API is not working.",
+      "terminology_normalized_text": "The API is working.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 3,
+      "speaker": "Harshit Pambhar",
+      "text": "We have 3 blockers.",
+      "terminology_normalized_text": "We have 5 blockers.",
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+### Example Response
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 1,
+      "speaker": "Sarthak Talaviya",
+      "text": "Good morning, everyone. Let's start the meeting.",
+      "terminology_normalized_text": "Good morning everyone, let's start the meeting.",
+      "semantic_status": "SEMANTICALLY_PRESERVED",
+      "semantic_confidence": 0.98,
+      "semantic_flags": [],
+      "semantic_changed_elements": [],
+      "semantic_validation_reason": "Punctuation or capitalization normalization only; semantic meaning is fully preserved.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 2,
+      "speaker": "Harshit Pambhar",
+      "text": "The API is not working.",
+      "terminology_normalized_text": "The API is working.",
+      "semantic_status": "SEMANTICALLY_CHANGED",
+      "semantic_confidence": 0.98,
+      "semantic_flags": [
+        "NEGATION_CHANGED"
+      ],
+      "semantic_changed_elements": [
+        "negation"
+      ],
+      "semantic_validation_reason": "Negation polarities differ: original has {'not'}, processed has set().",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 3,
+      "speaker": "Harshit Pambhar",
+      "text": "We have 3 blockers.",
+      "terminology_normalized_text": "We have 5 blockers.",
+      "semantic_status": "SEMANTICALLY_CHANGED",
+      "semantic_confidence": 0.98,
+      "semantic_flags": [
+        "QUANTITY_CHANGED",
+        "NUMBER_CHANGED"
+      ],
+      "semantic_changed_elements": [
+        "number_or_quantity"
+      ],
+      "semantic_validation_reason": "Numeric values differ: original has {'3': 1}, processed has {'5': 1}.",
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+---
+
+## 17. Part 13 — Final Transcript Formatting
+
+### Endpoint
+`POST /transcript/format-final`
+
+### Description
+Converts the validated internal transcript segments from earlier pipeline stages (Parts 1–12) into a clean, deterministic, AI-ready transcript representation suitable for consumption by downstream AI Scrum Agents and human inspection.
+
+**Core Principles**:
+- **PRESENTATION & SERIALIZATION ONLY**: Strictly deterministic. Does **not** use an LLM and does **not** introduce new corrections, translations, summarizations, or speaker reassignment.
+- **ZERO REWRITING OF VALIDATED DIALOGUE**: Formats and serializes already-validated content without modifying validated spoken words.
+- **CENTRALIZED HIERARCHICAL TEXT SELECTION**: Selects the safest text based on validation metadata:
+  $$\text{terminology\_normalized\_text} \longrightarrow \text{grammar\_corrected\_text} \longrightarrow \text{stt\_corrected\_text} \longrightarrow \text{processed\_text} \longrightarrow \text{text}$$
+- **SAFE FALLBACK POLICY**:
+  - If `semantic_status == SEMANTICALLY_CHANGED`, rejects the risky processed candidate, falls back to safe original text, and logs a warning.
+  - If `language_preservation_status == LANGUAGE_CHANGED`, rejects accidental translations and falls back to original multilingual text with a warning.
+- **AUTHORITATIVE SPEAKER SELECTION**:
+  - Uses `validated_speaker` only when an authoritative correction exists.
+  - `suggested_speaker` from Part 10 is **never** applied automatically.
+- **EXCLUSION OF FILTERED CONTENT**:
+  - Segments flagged as pre-meeting, audio checks, or irrelevant (`include_in_meeting == False`) are excluded from final output while remaining preserved internally for auditability.
+- **METADATA STRIPPING**:
+  - Strips dozens of internal pipeline flags from the final AI representation, producing clean `sequence`, `speaker`, and `text` segments.
+- **CHRONOLOGICAL ORDER PRESERVATION**:
+  - Strictly preserves chronological sequence order (using `source_sequences` for merged sentence fragments).
+- **UTF-8 COMPLIANCE**:
+  - Generates `cleaned_conversation.txt` in UTF-8 format to preserve multilingual dialogue (Hindi, Spanish, code-switching).
+
+### Finalization Status
+- `READY`: All segments formatted cleanly without critical or non-blocking warnings.
+- `READY_WITH_WARNINGS`: Formatted successfully with non-blocking warnings (e.g. semantic/language fallbacks, possible semantic changes).
+- `BLOCKED`: Critical contradiction or structural failure encountered when blocking policy is active.
+
+### Example Request
+```json
+{
+  "meeting_id": "meeting_123",
+  "segments": [
+    {
+      "sequence": 1,
+      "speaker": "Sarthak Talaviya",
+      "text": "Can everyone hear me? Audio check.",
+      "include_in_meeting": false
+    },
+    {
+      "sequence": 2,
+      "speaker": "Sarthak Talaviya",
+      "text": "Good morning, everyone. Let's start the meeting.",
+      "terminology_normalized_text": "Good morning everyone, let's start the meeting.",
+      "include_in_meeting": true
+    },
+    {
+      "sequence": 3,
+      "speaker": "Harshit Pambhar",
+      "text": "I don't have access to the database.",
+      "terminology_normalized_text": "I have access to the database.",
+      "semantic_status": "SEMANTICALLY_CHANGED",
+      "semantic_flags": ["NEGATION_CHANGED"],
+      "include_in_meeting": true
+    }
+  ]
+}
+```
+
+### Example Response
+```json
+{
+  "meeting_id": "meeting_123",
+  "status": "READY_WITH_WARNINGS",
+  "transcript_text": "Sarthak Talaviya: Good morning everyone, let's start the meeting.\n\nHarshit Pambhar: I don't have access to the database.",
+  "segments": [
+    {
+      "sequence": 2,
+      "speaker": "Sarthak Talaviya",
+      "text": "Good morning everyone, let's start the meeting."
+    },
+    {
+      "sequence": 3,
+      "speaker": "Harshit Pambhar",
+      "text": "I don't have access to the database."
+    }
+  ],
+  "warnings": [
+    {
+      "sequence": 3,
+      "type": "SEMANTIC_CHANGE_FALLBACK",
+      "message": "Processed text changed meaning (NEGATION_CHANGED); falling back to safe original text."
+    }
+  ],
+  "included_segments": 2,
+  "excluded_segments": 1
+}
+```
+
+---
+
+## 18. Part 14 — Storage & Processing Metadata Persistence
+
+### Endpoint
+`POST /transcript/store-final`
+
+### Description
+Safely persists the finalized clean transcript produced by Part 13 to Supabase Storage (or configured storage backend), enforces strict UTF-8 multi-language encoding, guarantees that the raw immutable transcript is **never overwritten**, records database metadata, and marks the meeting transcript as `READY_FOR_AI`.
+
+**Core Principles**:
+- **STRICT RAW TRANSCRIPT PROTECTION**:
+  - Raw transcript: `meetings/{meeting_id}/raw/conversation.txt` remains 100% untouched.
+  - Processed transcript: Saved deterministically to `meetings/{meeting_id}/processed/cleaned_conversation.txt`.
+- **CORRECT ORDER OF OPERATIONS**:
+  $$\text{Upload Cleaned File} \longrightarrow \text{Verify In Storage} \longrightarrow \text{Update Database Metadata} \longrightarrow \text{Mark READY\_FOR\_AI}$$
+- **SAFE MEETING ID VALIDATION**:
+  - Rejects path traversal sequences (`../`, `./`, `/`, `\`, null bytes).
+  - Enforces safe alphanumeric, hyphen, and underscore meeting identifiers (e.g. UUIDs or `meeting-123`).
+- **UTF-8 ENCODING & CONTENT-TYPE**:
+  - Encoded strictly in UTF-8 to preserve Hindi (Devanagari), Spanish, English, and code-switching dialogue.
+  - MIME Content-Type: `text/plain; charset=utf-8`.
+- **RETRY IDEMPOTENCY & PARTIAL FAILURE RECOVERY**:
+  - Uses a deterministic storage path (`meetings/{meeting_id}/processed/cleaned_conversation.txt`).
+  - If upload succeeds but database update encounters a transient failure, subsequent retries reconcile metadata without generating duplicate filenames (`cleaned_conversation_2.txt`).
+- **METADATA LIFECYCLE TRACKING**:
+  - Tracks `meeting_id`, `raw_transcript_path`, `cleaned_transcript_path`, `processing_status` (`READY_FOR_AI`), `attempt`, `cleaner_version`, `created_at`, `started_at`, `completed_at`, and `error`.
+- **SECURITY & CREDENTIAL PROTECTION**:
+  - `SUPABASE_SERVICE_ROLE_KEY` is kept strictly backend-internal. It is **never** returned by the API or exposed in error messages.
+
+### Processing Status Transition
+$$\text{PENDING} \longrightarrow \text{PROCESSING} \longrightarrow \text{CLEANING} \longrightarrow \text{VALIDATING} \longrightarrow \text{COMPLETED} \longrightarrow \text{READY\_FOR\_AI}$$
+
+### Example Request
+```json
+{
+  "meeting_id": "meeting-123",
+  "transcript_text": "Sarthak Talaviya: Good morning, everyone. Let's start the meeting.\n\nHarshit Pambhar: Good morning. I am ready.",
+  "raw_transcript_path": "meetings/meeting-123/raw/conversation.txt"
+}
+```
+
+### Example Response
+```json
+{
+  "success": true,
+  "meeting_id": "meeting-123",
+  "cleaned_transcript_path": "meetings/meeting-123/processed/cleaned_conversation.txt",
+  "processing_status": "READY_FOR_AI",
+  "error": null
+}
+```
+
+---
+
+## 19. Part 15 — Transcript Processing Orchestrator
+
+The **Transcript Processing Orchestrator** is the central workflow coordinator connecting all 14 stages of the Sprintive transcript-cleaning pipeline into one unified, resilient, and production-ready system.
+
+### Architecture
+
+```text
+Node / Express Backend
+        │ (Meeting ended)
+        ▼
+POST /transcript/process (FastAPI)
+        │
+        ▼
+Transcript Orchestrator
+        ├── 1. Parser (app/services/transcript_parser.py)
+        ├── 2. Noise Analyzer (app/services/noise_detector.py)
+        ├── 3. Repetition Remover (app/services/repetition_remover.py)
+        ├── 4. Relevance Filter (app/services/relevance_filter.py)
+        ├── 5. Fragment Merger (app/services/fragment_merger.py)
+        │       └── (Status -> CLEANING complete)
+        ├── 6. STT Corrector (app/services/stt_corrector.py)
+        ├── 7. Grammar Normalizer (app/services/grammar_normalizer.py)
+        ├── 8. Terminology Normalizer (app/services/terminology_normalizer.py)
+        │       └── (Status -> VALIDATING started)
+        ├── 9. Context Validator (app/services/contextual_validator.py)
+        ├── 10. Speaker Validator (app/services/speaker_validator.py)
+        ├── 11. Language Validator (app/services/language_validator.py)
+        ├── 12. Semantic Validator (app/services/semantic_validator.py)
+        ├── 13. Final Formatter (app/services/transcript_formatter.py)
+        └── 14. Storage Service (app/services/storage_service.py)
+        │
+        ▼
+Supabase Storage (processed/cleaned_conversation.txt)
+        │
+        ▼
+PostgreSQL / Neon Metadata (READY_FOR_AI)
+        │
+        ▼
+AI Agent Pipeline (Scrum Analysis, Action Items, Blockers)
+```
+
+### Core Design Principles
+
+1. **Separation of Concerns**: The orchestrator contains zero text cleaning or validation logic directly. All transformations, linguistic rules, dictionary lookups, and LLM queries remain isolated in modular stage services.
+2. **Immutable Raw Transcript**: `meetings/{meeting_id}/raw/conversation.txt` is strictly read-only and is never modified or overwritten under any circumstances.
+3. **Strict Stage Ordering**:
+   $$\text{parse} \rightarrow \text{noise} \rightarrow \text{repetition} \rightarrow \text{relevance} \rightarrow \text{merge} \rightarrow \text{stt} \rightarrow \text{grammar} \rightarrow \text{terminology} \rightarrow \text{context} \rightarrow \text{speaker} \rightarrow \text{language} \rightarrow \text{semantic} \rightarrow \text{format} \rightarrow \text{store}$$
+4. **Resilient LLM Fallback**: If an LLM call fails or times out in any enhancement or validation stage, the stage defaults gracefully to its deterministic safe fallback, allowing pipeline processing to complete without crashing.
+5. **Concurrency & Idempotency Guard**: Atomic database status checking prevents duplicate processing jobs from processing the same meeting simultaneously (HTTP 409 Conflict). Subsequent attempts cleanly increment the attempt counter without duplicate storage files.
+6. **Strict READY_FOR_AI Boundary**: Status is set to `READY_FOR_AI` if and only if the cleaned transcript is verified in storage, is non-empty, and all validation checks pass. AI agents never consume uncleaned raw transcripts.
+
+### Complete Lifecycle State Machine
+
+$$\text{PENDING} \longrightarrow \text{PROCESSING} \longrightarrow \text{CLEANING} \longrightarrow \text{VALIDATING} \longrightarrow \text{COMPLETED} \longrightarrow \text{READY\_FOR\_AI}$$
+$$\text{Any Fatal Failure} \longrightarrow \text{FAILED} \quad (\text{retry} \rightarrow \text{PROCESSING})$$
+
+### API Endpoints
+
+#### 1. Initiate Transcript Processing
+`POST /transcript/process`
+
+**Request Body**:
+```json
+{
+  "meeting_id": "meeting-123",
+  "raw_transcript_path": "meetings/meeting-123/raw/conversation.txt",
+  "async_processing": false
+}
+```
+
+**Response (Synchronous: HTTP 200 OK)**:
+```json
+{
+  "accepted": true,
+  "meeting_id": "meeting-123",
+  "processing_status": "READY_FOR_AI",
+  "current_stage": "store",
+  "attempt": 1,
+  "cleaner_version": "1.0.0",
+  "cleaned_transcript_path": "meetings/meeting-123/processed/cleaned_conversation.txt",
+  "duration_ms": 320,
+  "metrics": {
+    "total_segments": 10,
+    "included_segments": 9,
+    "excluded_segments": 1,
+    "noise_segments": 0,
+    "repetition_segments": 0,
+    "stt_modified_segments": 1
+  },
+  "warnings": []
+}
+```
+
+**Response (Asynchronous: HTTP 202 Accepted)**:
+```json
+{
+  "accepted": true,
+  "meeting_id": "meeting-123",
+  "processing_status": "PENDING",
+  "attempt": 1,
+  "cleaner_version": "1.0.0",
+  "message": "Transcript processing scheduled in background."
+}
+```
+
+#### 2. Get Processing Status & Metrics
+`GET /transcript/status/{meeting_id}`
+
+**Response (HTTP 200 OK)**:
+```json
+{
+  "meeting_id": "meeting-123",
+  "raw_transcript_path": "meetings/meeting-123/raw/conversation.txt",
+  "cleaned_transcript_path": "meetings/meeting-123/processed/cleaned_conversation.txt",
+  "processing_status": "READY_FOR_AI",
+  "current_stage": "store",
+  "attempt": 1,
+  "cleaner_version": "1.0.0",
+  "duration_ms": 320,
+  "metrics": {
+    "total_segments": 10,
+    "included_segments": 9,
+    "excluded_segments": 1,
+    "noise_segments": 0,
+    "stt_modified_segments": 1
+  },
+  "warnings": [],
+  "created_at": "2026-09-25T10:00:00Z",
+  "started_at": "2026-09-25T10:00:01Z",
+  "completed_at": "2026-09-25T10:00:02Z"
+}
+```
+
