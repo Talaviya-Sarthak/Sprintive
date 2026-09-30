@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Brain,
@@ -17,6 +17,9 @@ import {
   Check,
   X,
   Folder,
+  Kanban,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -28,10 +31,32 @@ interface AppLayoutProps {
 export default function AppLayout({ children, teamId }: AppLayoutProps) {
   const { user, teams, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [teamMenuOpen, setTeamMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+  // Persisted collapsible sidebar state
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('sprintive-sidebar-collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleSidebar = () => {
+    setCollapsed(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('sprintive-sidebar-collapsed', String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
 
   const currentTeam = teamId ? teams.find(t => t.id === teamId) : null;
   const initials =
@@ -50,9 +75,10 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
   const navItems = teamId
     ? [
         { to: `/teams/${teamId}`, icon: LayoutDashboard, label: 'Overview' },
+        { to: `/teams/${teamId}/kanban`, icon: Kanban, label: 'Kanban' },
+        { to: `/teams/${teamId}/meetings`, icon: Calendar, label: 'Meetings' },
         { to: `/teams/${teamId}/members`, icon: Users, label: 'Members' },
         { to: `/teams/${teamId}/settings`, icon: Settings, label: 'Settings' },
-        { to: `/teams/${teamId}/meetings`, icon: Calendar, label: 'Meetings' },
       ]
     : [];
 
@@ -62,323 +88,562 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
     { id: 3, title: 'Meeting Summary Ready for Scrum #14', time: '3h ago', unread: false },
   ];
 
-  const sidebar = (
-    <div className="flex flex-col h-full border-r w-[265px] select-none" style={{ backgroundColor: 'var(--app-surface-subtle)', borderColor: 'var(--app-border-subtle)' }}>
-      {/* Brand Header */}
-      <div className="flex items-center justify-between px-4 py-3.5 border-b" style={{ borderColor: 'var(--app-border-subtle)' }}>
-        <div
-          onClick={() => navigate('/dashboard')}
-          className="flex items-center gap-2.5 cursor-pointer group"
-        >
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center shadow-xs" style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)' }}>
-            <Brain size={15} style={{ color: 'var(--app-text-primary)' }} strokeWidth={2.2} />
-          </div>
-          <span className="text-sm font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>
-            Sprintive
-          </span>
-        </div>
+  const renderSidebar = (isMobile: boolean = false) => {
+    const isCollapsed = !isMobile && collapsed;
 
-        <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-md border" style={{ color: 'var(--app-text-secondary)', backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)' }}>
-          PRO
-        </span>
-      </div>
-
-      {/* Team Switcher Dropdown */}
-      <div className="px-3 py-3 border-b relative" style={{ borderColor: 'var(--app-border-subtle)' }}>
-        <button
-          onClick={() => setTeamMenuOpen(v => !v)}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-all text-left cursor-pointer"
-          style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
-          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)'}
-          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'var(--app-surface-card)'}
-        >
+    return (
+      <div
+        className={`flex flex-col h-full border-r select-none transition-all duration-200 ease-in-out ${
+          isCollapsed ? 'w-[64px]' : 'w-[260px]'
+        }`}
+        style={{
+          backgroundColor: 'var(--app-surface-subtle)',
+          borderColor: 'var(--app-border-subtle)',
+        }}
+      >
+        {/* Brand Header */}
+        {isCollapsed ? (
           <div
-            className="w-5.5 h-5.5 rounded-md flex items-center justify-center text-[11px] font-bold shrink-0"
-            style={{ backgroundColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}
+            className="flex flex-col items-center justify-center py-3 border-b gap-1.5"
+            style={{ borderColor: 'var(--app-border-subtle)' }}
           >
-            {currentTeam?.name?.[0]?.toUpperCase() ?? 'S'}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium truncate" style={{ color: 'var(--app-text-primary)' }}>
-              {currentTeam?.name ?? 'Personal Workspace'}
-            </p>
-          </div>
-          <ChevronDown
-            size={13}
-            className={`transition-transform duration-200 ${teamMenuOpen ? 'rotate-180' : ''}`}
-            style={{ color: 'var(--app-text-muted)' }}
-          />
-        </button>
-
-        <AnimatePresence>
-          {teamMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              className="absolute left-3 right-3 top-full mt-1.5 p-1.5 border rounded-xl shadow-xl z-50 space-y-1"
-              style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
+            <div
+              onClick={() => navigate('/dashboard')}
+              className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer shadow-xs hover:opacity-90 transition-opacity"
+              style={{
+                backgroundColor: 'var(--app-surface-hover)',
+                borderColor: 'var(--app-border)',
+              }}
+              title="Sprintive Dashboard"
             >
-              <div className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider font-semibold" style={{ color: 'var(--app-text-muted)' }}>
-                Workspaces
-              </div>
-              <button
-                onClick={() => {
-                  navigate('/dashboard');
-                  setTeamMenuOpen(false);
-                }}
-                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs transition-colors cursor-pointer"
+              <Brain size={16} style={{ color: 'var(--app-text-primary)' }} strokeWidth={2.2} />
+            </div>
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              title="Expand sidebar"
+              className="p-1 rounded-md text-[#71717a] hover:text-[#f4f4f5] hover:bg-[#181920] transition-colors cursor-pointer"
+            >
+              <PanelLeftOpen size={14} />
+            </button>
+          </div>
+        ) : (
+          <div
+            className="flex items-center justify-between px-4 py-3.5 border-b"
+            style={{ borderColor: 'var(--app-border-subtle)' }}
+          >
+            <div
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-2.5 cursor-pointer group min-w-0"
+            >
+              <div
+                className="w-7 h-7 rounded-lg flex items-center justify-center shadow-xs shrink-0"
                 style={{
-                  backgroundColor: !teamId ? 'var(--app-surface-hover)' : 'transparent',
-                  color: !teamId ? 'var(--app-text-primary)' : 'var(--app-text-secondary)',
-                  fontWeight: !teamId ? 500 : 400
+                  backgroundColor: 'var(--app-surface-hover)',
+                  borderColor: 'var(--app-border)',
                 }}
               >
-                <div className="w-5 h-5 rounded-md text-[10px] font-bold flex items-center justify-center" style={{ backgroundColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}>
-                  D
-                </div>
-                <span className="truncate">Main Dashboard</span>
-                {!teamId && <Check size={13} className="ml-auto" style={{ color: 'var(--app-text-primary)' }} />}
-              </button>
+                <Brain size={15} style={{ color: 'var(--app-text-primary)' }} strokeWidth={2.2} />
+              </div>
+              <span
+                className="text-sm font-semibold tracking-tight truncate"
+                style={{ color: 'var(--app-text-primary)' }}
+              >
+                Sprintive
+              </span>
+              <span
+                className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-md border shrink-0"
+                style={{
+                  color: 'var(--app-text-secondary)',
+                  backgroundColor: 'var(--app-surface-hover)',
+                  borderColor: 'var(--app-border)',
+                }}
+              >
+                PRO
+              </span>
+            </div>
 
-              {teams.map(t => (
+            {!isMobile && (
+              <button
+                type="button"
+                onClick={toggleSidebar}
+                title="Collapse sidebar"
+                className="p-1 rounded-md text-[#71717a] hover:text-[#f4f4f5] hover:bg-[#181920] transition-colors cursor-pointer shrink-0"
+              >
+                <PanelLeftClose size={15} />
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Team Switcher Dropdown */}
+        <div
+          className={`border-b relative ${
+            isCollapsed ? 'px-2 py-2.5 flex justify-center' : 'px-3 py-3'
+          }`}
+          style={{ borderColor: 'var(--app-border-subtle)' }}
+        >
+          {isCollapsed ? (
+            <button
+              onClick={() => setTeamMenuOpen(v => !v)}
+              title={currentTeam?.name ?? 'Personal Workspace'}
+              className="w-8 h-8 rounded-lg border flex items-center justify-center text-[11px] font-bold transition-all cursor-pointer hover:opacity-90"
+              style={{
+                backgroundColor: 'var(--app-border)',
+                color: 'var(--app-text-primary)',
+                borderColor: 'var(--app-border)',
+              }}
+            >
+              {currentTeam?.name?.[0]?.toUpperCase() ?? 'S'}
+            </button>
+          ) : (
+            <button
+              onClick={() => setTeamMenuOpen(v => !v)}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-all text-left cursor-pointer"
+              style={{
+                backgroundColor: 'var(--app-surface-card)',
+                borderColor: 'var(--app-border)',
+              }}
+              onMouseEnter={e =>
+                (e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)')
+              }
+              onMouseLeave={e =>
+                (e.currentTarget.style.backgroundColor = 'var(--app-surface-card)')
+              }
+            >
+              <div
+                className="w-5.5 h-5.5 rounded-md flex items-center justify-center text-[11px] font-bold shrink-0"
+                style={{
+                  backgroundColor: 'var(--app-border)',
+                  color: 'var(--app-text-primary)',
+                }}
+              >
+                {currentTeam?.name?.[0]?.toUpperCase() ?? 'S'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p
+                  className="text-xs font-medium truncate"
+                  style={{ color: 'var(--app-text-primary)' }}
+                >
+                  {currentTeam?.name ?? 'Personal Workspace'}
+                </p>
+              </div>
+              <ChevronDown
+                size={13}
+                className={`transition-transform duration-200 ${
+                  teamMenuOpen ? 'rotate-180' : ''
+                }`}
+                style={{ color: 'var(--app-text-muted)' }}
+              />
+            </button>
+          )}
+
+          <AnimatePresence>
+            {teamMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className={`absolute p-1.5 border rounded-xl shadow-xl z-50 space-y-1 ${
+                  isCollapsed ? 'left-full top-1 ml-2 w-52' : 'left-3 right-3 top-full mt-1.5'
+                }`}
+                style={{
+                  backgroundColor: 'var(--app-surface-card)',
+                  borderColor: 'var(--app-border)',
+                }}
+              >
+                <div
+                  className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider font-semibold"
+                  style={{ color: 'var(--app-text-muted)' }}
+                >
+                  Workspaces
+                </div>
                 <button
-                  key={t.id}
                   onClick={() => {
-                    navigate(`/teams/${t.id}`);
+                    navigate('/dashboard');
                     setTeamMenuOpen(false);
-                    setSidebarOpen(false);
+                    if (isMobile) setSidebarOpen(false);
                   }}
                   className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs transition-colors cursor-pointer"
                   style={{
-                    backgroundColor: t.id === teamId ? 'var(--app-surface-hover)' : 'transparent',
-                    color: t.id === teamId ? 'var(--app-text-primary)' : 'var(--app-text-secondary)',
-                    fontWeight: t.id === teamId ? 500 : 400
+                    backgroundColor: !teamId ? 'var(--app-surface-hover)' : 'transparent',
+                    color: !teamId ? 'var(--app-text-primary)' : 'var(--app-text-secondary)',
+                    fontWeight: !teamId ? 500 : 400,
                   }}
                 >
                   <div
-                    className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0"
-                    style={{ backgroundColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}
+                    className="w-5 h-5 rounded-md text-[10px] font-bold flex items-center justify-center shrink-0"
+                    style={{
+                      backgroundColor: 'var(--app-border)',
+                      color: 'var(--app-text-primary)',
+                    }}
                   >
-                    {t.name[0].toUpperCase()}
+                    D
                   </div>
-                  <span className="truncate">{t.name}</span>
-                  {t.id === teamId && <Check size={13} className="ml-auto" style={{ color: 'var(--app-text-primary)' }} />}
+                  <span className="truncate">Main Dashboard</span>
+                  {!teamId && (
+                    <Check
+                      size={13}
+                      className="ml-auto shrink-0"
+                      style={{ color: 'var(--app-text-primary)' }}
+                    />
+                  )}
                 </button>
-              ))}
 
-              <div className="my-1 border-t" style={{ borderColor: 'var(--app-border-subtle)' }} />
-              <button
-                onClick={() => {
-                  navigate('/teams/create');
-                  setTeamMenuOpen(false);
-                  setSidebarOpen(false);
-                }}
-                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs transition-colors cursor-pointer"
-                style={{ color: 'var(--app-text-secondary)' }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
-                  e.currentTarget.style.color = 'var(--app-text-primary)';
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = 'var(--app-text-secondary)';
-                }}
-              >
-                <Plus size={13} />
-                <span>Create New Team</span>
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+                {teams.map(t => (
+                  <button
+                    key={t.id}
+                    onClick={() => {
+                      navigate(`/teams/${t.id}`);
+                      setTeamMenuOpen(false);
+                      if (isMobile) setSidebarOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs transition-colors cursor-pointer"
+                    style={{
+                      backgroundColor: t.id === teamId ? 'var(--app-surface-hover)' : 'transparent',
+                      color:
+                        t.id === teamId
+                          ? 'var(--app-text-primary)'
+                          : 'var(--app-text-secondary)',
+                      fontWeight: t.id === teamId ? 500 : 400,
+                    }}
+                  >
+                    <div
+                      className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0"
+                      style={{
+                        backgroundColor: 'var(--app-border)',
+                        color: 'var(--app-text-primary)',
+                      }}
+                    >
+                      {t.name[0].toUpperCase()}
+                    </div>
+                    <span className="truncate">{t.name}</span>
+                    {t.id === teamId && (
+                      <Check
+                        size={13}
+                        className="ml-auto shrink-0"
+                        style={{ color: 'var(--app-text-primary)' }}
+                      />
+                    )}
+                  </button>
+                ))}
 
-      {/* Main Navigation Links */}
-      <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto app-scrollbar">
-        <div className="px-3 pb-1.5 text-[10px] font-mono uppercase tracking-wider font-semibold" style={{ color: 'var(--app-text-muted)' }}>
-          Menu
-        </div>
-
-        <NavLink
-          to="/dashboard"
-          onClick={() => setSidebarOpen(false)}
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all"
-          style={({ isActive }: { isActive: boolean }) => ({
-            backgroundColor: isActive ? 'var(--app-surface-hover)' : 'transparent',
-            color: isActive ? 'var(--app-text-primary)' : 'var(--app-text-secondary)'
-          })}
-          onMouseEnter={e => {
-            if (!e.currentTarget.classList.contains('active')) {
-              e.currentTarget.style.backgroundColor = 'var(--app-surface-card)';
-              e.currentTarget.style.color = 'var(--app-text-primary)';
-            }
-          }}
-          onMouseLeave={e => {
-            if (!e.currentTarget.classList.contains('active')) {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = 'var(--app-text-secondary)';
-            }
-          }}
-        >
-          <LayoutDashboard size={16} />
-          <span>Dashboard</span>
-        </NavLink>
-
-        {navItems.length > 0 && (
-          <div className="pt-3 space-y-1">
-            <div className="px-3 pb-1.5 text-[10px] font-mono uppercase tracking-wider font-semibold" style={{ color: 'var(--app-text-muted)' }}>
-              Team Workspace
-            </div>
-            {navItems.map(({ to, icon: Icon, label }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={label === 'Overview'}
-                onClick={() => setSidebarOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all"
-                style={({ isActive }: { isActive: boolean }) => ({
-                  backgroundColor: isActive ? 'var(--app-surface-hover)' : 'transparent',
-                  color: isActive ? 'var(--app-text-primary)' : 'var(--app-text-secondary)'
-                })}
-                onMouseEnter={e => {
-                  if (!e.currentTarget.classList.contains('active')) {
-                    e.currentTarget.style.backgroundColor = 'var(--app-surface-card)';
+                <div
+                  className="my-1 border-t"
+                  style={{ borderColor: 'var(--app-border-subtle)' }}
+                />
+                <button
+                  onClick={() => {
+                    navigate('/teams/create');
+                    setTeamMenuOpen(false);
+                    if (isMobile) setSidebarOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-xs transition-colors cursor-pointer"
+                  style={{ color: 'var(--app-text-secondary)' }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
                     e.currentTarget.style.color = 'var(--app-text-primary)';
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (!e.currentTarget.classList.contains('active')) {
+                  }}
+                  onMouseLeave={e => {
                     e.currentTarget.style.backgroundColor = 'transparent';
                     e.currentTarget.style.color = 'var(--app-text-secondary)';
-                  }
-                }}
-              >
-                <Icon size={16} />
-                <span>{label}</span>
-              </NavLink>
-            ))}
-          </div>
-        )}
-      </nav>
-
-      {/* Quick Links */}
-      <div className="px-3 pb-2">
-        <div className="px-3 pb-2 pt-1 text-[10px] font-mono uppercase tracking-wider font-semibold" style={{ color: 'var(--app-text-muted)' }}>
-          Quick Access
+                  }}
+                >
+                  <Plus size={13} />
+                  <span>Create New Team</span>
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-        <button
-          onClick={() => {
-            navigate(teamId ? `/teams/${teamId}/meetings` : '/dashboard');
-            setSidebarOpen(false);
-          }}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 cursor-pointer"
-          style={{ color: 'var(--app-text-secondary)' }}
-          onMouseEnter={e => {
-            e.currentTarget.style.backgroundColor = 'var(--app-surface-card)';
-            e.currentTarget.style.color = 'var(--app-text-primary)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = 'var(--app-text-secondary)';
-          }}
-        >
-          <Folder size={16} />
-          <span>All Meetings</span>
-        </button>
-      </div>
 
-      {/* User Footer Profile */}
-      <div className="px-3 py-3 border-t relative" style={{ borderColor: 'var(--app-border-subtle)' }}>
-        <div className="flex items-center justify-between">
-          <div
-            onClick={() => navigate('/profile')}
-            className="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0 hover:opacity-90 transition-opacity"
+        {/* Main Navigation Links */}
+        <nav
+          className={`flex-1 space-y-1 overflow-y-auto app-scrollbar ${
+            isCollapsed ? 'px-1.5 py-2.5' : 'px-3 py-3'
+          }`}
+        >
+          {!isCollapsed && (
+            <div
+              className="px-3 pb-1.5 text-[10px] font-mono uppercase tracking-wider font-semibold"
+              style={{ color: 'var(--app-text-muted)' }}
+            >
+              Menu
+            </div>
+          )}
+
+          <NavLink
+            to="/dashboard"
+            end
+            title="Dashboard"
+            onClick={() => isMobile && setSidebarOpen(false)}
+            className={`flex items-center rounded-lg transition-all ${
+              isCollapsed
+                ? 'w-9 h-9 mx-auto justify-center'
+                : 'gap-3 px-3 py-2 text-[13px] font-medium'
+            }`}
+            style={({ isActive }: { isActive: boolean }) => ({
+              backgroundColor: isActive ? 'var(--app-surface-hover)' : 'transparent',
+              color: isActive ? 'var(--app-text-primary)' : 'var(--app-text-secondary)',
+            })}
           >
-            <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 overflow-hidden" style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}>
+            <LayoutDashboard size={16} />
+            {!isCollapsed && <span>Dashboard</span>}
+          </NavLink>
+
+          {!teamId && (
+            <NavLink
+              to="/kanban"
+              title="Kanban"
+              onClick={() => isMobile && setSidebarOpen(false)}
+              className={`flex items-center rounded-lg transition-all ${
+                isCollapsed
+                  ? 'w-9 h-9 mx-auto justify-center'
+                  : 'gap-3 px-3 py-2 text-[13px] font-medium'
+              }`}
+              style={({ isActive }: { isActive: boolean }) => ({
+                backgroundColor:
+                  isActive || location.pathname === '/kanban'
+                    ? 'var(--app-surface-hover)'
+                    : 'transparent',
+                color:
+                  isActive || location.pathname === '/kanban'
+                    ? 'var(--app-text-primary)'
+                    : 'var(--app-text-secondary)',
+              })}
+            >
+              <Kanban size={16} />
+              {!isCollapsed && <span>Kanban</span>}
+            </NavLink>
+          )}
+
+          {navItems.length > 0 && (
+            <div className={isCollapsed ? 'pt-2 space-y-1' : 'pt-3 space-y-1'}>
+              {isCollapsed ? (
+                <div
+                  className="my-1.5 border-t w-5 mx-auto"
+                  style={{ borderColor: 'var(--app-border-subtle)' }}
+                />
+              ) : (
+                <div
+                  className="px-3 pb-1.5 text-[10px] font-mono uppercase tracking-wider font-semibold"
+                  style={{ color: 'var(--app-text-muted)' }}
+                >
+                  Team Workspace
+                </div>
+              )}
+
+              {navItems.map(({ to, icon: Icon, label }) => {
+                const isKanban = label === 'Kanban';
+                return (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    end={label === 'Overview' || isKanban}
+                    title={label}
+                    onClick={() => isMobile && setSidebarOpen(false)}
+                    className={`flex items-center rounded-lg transition-all ${
+                      isCollapsed
+                        ? 'w-9 h-9 mx-auto justify-center'
+                        : 'gap-3 px-3 py-2 text-[13px] font-medium'
+                    }`}
+                    style={({ isActive }: { isActive: boolean }) => {
+                      const active =
+                        isActive || (isKanban && location.pathname.includes('/kanban'));
+                      return {
+                        backgroundColor: active ? 'var(--app-surface-hover)' : 'transparent',
+                        color: active ? 'var(--app-text-primary)' : 'var(--app-text-secondary)',
+                      };
+                    }}
+                  >
+                    <Icon size={16} />
+                    {!isCollapsed && <span>{label}</span>}
+                  </NavLink>
+                );
+              })}
+            </div>
+          )}
+        </nav>
+
+        {/* Quick Links */}
+        <div className={isCollapsed ? 'px-1.5 pb-2 flex justify-center' : 'px-3 pb-2'}>
+          {!isCollapsed && (
+            <div
+              className="px-3 pb-2 pt-1 text-[10px] font-mono uppercase tracking-wider font-semibold"
+              style={{ color: 'var(--app-text-muted)' }}
+            >
+              Quick Access
+            </div>
+          )}
+          <button
+            title="All Meetings"
+            onClick={() => {
+              navigate(teamId ? `/teams/${teamId}/meetings` : '/dashboard');
+              if (isMobile) setSidebarOpen(false);
+            }}
+            className={`flex items-center rounded-lg transition-all cursor-pointer ${
+              isCollapsed
+                ? 'w-9 h-9 justify-center'
+                : 'w-full gap-2.5 px-3 py-2 text-[13px] font-medium'
+            }`}
+            style={{ color: 'var(--app-text-secondary)' }}
+            onMouseEnter={e => {
+              e.currentTarget.style.backgroundColor = 'var(--app-surface-card)';
+              e.currentTarget.style.color = 'var(--app-text-primary)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'var(--app-text-secondary)';
+            }}
+          >
+            <Folder size={16} />
+            {!isCollapsed && <span>All Meetings</span>}
+          </button>
+        </div>
+
+        {/* User Footer Profile */}
+        <div
+          className={`border-t relative ${
+            isCollapsed ? 'px-2 py-3 flex justify-center' : 'px-3 py-3'
+          }`}
+          style={{ borderColor: 'var(--app-border-subtle)' }}
+        >
+          {isCollapsed ? (
+            <div
+              onClick={() => setUserMenuOpen(v => !v)}
+              title={`${user?.full_name ?? 'User'} (${user?.email ?? ''})`}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+              style={{
+                backgroundColor: 'var(--app-surface-hover)',
+                borderColor: 'var(--app-border)',
+                color: 'var(--app-text-primary)',
+              }}
+            >
               {user?.avatar_url ? (
                 <img src={user.avatar_url} className="w-full h-full object-cover" alt="" />
               ) : (
                 initials
               )}
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium truncate" style={{ color: 'var(--app-text-primary)' }}>{user?.full_name}</p>
-              <p className="text-[10px] truncate" style={{ color: 'var(--app-text-muted)' }}>{user?.email}</p>
-            </div>
-          </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <div
+                onClick={() => navigate('/profile')}
+                className="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0 hover:opacity-90 transition-opacity"
+              >
+                <div
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 overflow-hidden"
+                  style={{
+                    backgroundColor: 'var(--app-surface-hover)',
+                    borderColor: 'var(--app-border)',
+                    color: 'var(--app-text-primary)',
+                  }}
+                >
+                  {user?.avatar_url ? (
+                    <img src={user.avatar_url} className="w-full h-full object-cover" alt="" />
+                  ) : (
+                    initials
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p
+                    className="text-xs font-medium truncate"
+                    style={{ color: 'var(--app-text-primary)' }}
+                  >
+                    {user?.full_name}
+                  </p>
+                  <p
+                    className="text-[10px] truncate"
+                    style={{ color: 'var(--app-text-muted)' }}
+                  >
+                    {user?.email}
+                  </p>
+                </div>
+              </div>
 
-          <button
-            onClick={() => setUserMenuOpen(v => !v)}
-            className="p-1 rounded-md transition-colors cursor-pointer"
-            style={{ color: 'var(--app-text-muted)' }}
-            onMouseEnter={e => {
-              e.currentTarget.style.color = 'var(--app-text-primary)';
-              e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.color = 'var(--app-text-muted)';
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-          >
-            <ChevronDown size={14} />
-          </button>
-        </div>
-
-        <AnimatePresence>
-          {userMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 4 }}
-              className="absolute left-3 right-3 bottom-full mb-2 p-1.5 border rounded-xl shadow-xl z-50 space-y-1"
-              style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
-            >
               <button
-                onClick={() => {
-                  navigate('/profile');
-                  setUserMenuOpen(false);
-                }}
-                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs transition-colors cursor-pointer"
-                style={{ color: 'var(--app-text-secondary)' }}
+                onClick={() => setUserMenuOpen(v => !v)}
+                className="p-1 rounded-md transition-colors cursor-pointer"
+                style={{ color: 'var(--app-text-muted)' }}
                 onMouseEnter={e => {
-                  e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
                   e.currentTarget.style.color = 'var(--app-text-primary)';
+                  e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = 'var(--app-text-secondary)';
-                }}
-              >
-                <User size={14} />
-                <span>View Profile</span>
-              </button>
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs transition-colors cursor-pointer"
-                style={{ color: '#EF4444' }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
-                }}
-                onMouseLeave={e => {
+                  e.currentTarget.style.color = 'var(--app-text-muted)';
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               >
-                <LogOut size={14} />
-                <span>Sign Out</span>
+                <ChevronDown size={14} />
               </button>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+
+          <AnimatePresence>
+            {userMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className={`absolute p-1.5 border rounded-xl shadow-xl z-50 space-y-1 ${
+                  isCollapsed ? 'left-full bottom-1 ml-2 w-44' : 'left-3 right-3 bottom-full mb-2'
+                }`}
+                style={{
+                  backgroundColor: 'var(--app-surface-card)',
+                  borderColor: 'var(--app-border)',
+                }}
+              >
+                <button
+                  onClick={() => {
+                    navigate('/profile');
+                    setUserMenuOpen(false);
+                    if (isMobile) setSidebarOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs transition-colors cursor-pointer"
+                  style={{ color: 'var(--app-text-secondary)' }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+                    e.currentTarget.style.color = 'var(--app-text-primary)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'var(--app-text-secondary)';
+                  }}
+                >
+                  <User size={14} />
+                  <span>View Profile</span>
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs transition-colors cursor-pointer"
+                  style={{ color: '#EF4444' }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <LogOut size={14} />
+                  <span>Sign Out</span>
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: 'var(--app-bg)', color: 'var(--app-text-secondary)' }}>
-      {/* Desktop Sidebar */}
-      <div className="hidden md:flex flex-shrink-0">{sidebar}</div>
+    <div
+      className="flex h-screen overflow-hidden"
+      style={{ backgroundColor: 'var(--app-bg)', color: 'var(--app-text-secondary)' }}
+    >
+      {/* Desktop Sidebar (Collapsible) */}
+      <div className="hidden md:flex flex-shrink-0">{renderSidebar(false)}</div>
 
-      {/* Mobile Sidebar Overlay */}
+      {/* Mobile Sidebar Overlay (Always full view) */}
       <AnimatePresence>
         {sidebarOpen && (
           <>
@@ -398,11 +663,15 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
               className="fixed left-0 top-0 bottom-0 z-50 md:hidden"
             >
               <div className="relative h-full">
-                {sidebar}
+                {renderSidebar(true)}
                 <button
                   onClick={() => setSidebarOpen(false)}
                   className="absolute top-4 right-4 p-1.5 rounded-lg transition-colors"
-                  style={{ backgroundColor: 'var(--app-surface-hover)', color: 'var(--app-text-secondary)', borderColor: 'var(--app-border)' }}
+                  style={{
+                    backgroundColor: 'var(--app-surface-hover)',
+                    color: 'var(--app-text-secondary)',
+                    borderColor: 'var(--app-border)',
+                  }}
                   onMouseEnter={e => {
                     e.currentTarget.style.color = 'var(--app-text-primary)';
                     e.currentTarget.style.backgroundColor = 'var(--app-surface-active)';
@@ -423,11 +692,18 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
       {/* Main Content & Top Header Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* SaaS Top Header Bar */}
-        <header className="h-12 backdrop-blur-md border-b px-4 flex items-center justify-between shrink-0 select-none z-30" style={{ backgroundColor: 'var(--app-surface-subtle)', borderColor: 'var(--app-border-subtle)' }}>
-          <div className="flex items-center gap-3">
+        <header
+          className="h-12 backdrop-blur-md border-b px-4 flex items-center justify-between shrink-0 select-none z-30"
+          style={{
+            backgroundColor: 'var(--app-surface-subtle)',
+            borderColor: 'var(--app-border-subtle)',
+          }}
+        >
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Mobile Hamburger Toggle */}
             <button
               onClick={() => setSidebarOpen(true)}
-              className="md:hidden p-1 rounded-md"
+              className="md:hidden p-1.5 rounded-md"
               style={{ color: 'var(--app-text-muted)' }}
               onMouseEnter={e => {
                 e.currentTarget.style.color = 'var(--app-text-primary)';
@@ -440,6 +716,17 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
             >
               <Menu size={18} />
             </button>
+
+            {/* Desktop Sidebar Collapse Toggle */}
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              className="hidden md:flex p-1.5 rounded-lg text-[#71717a] hover:text-[#f4f4f5] hover:bg-[#181920] border border-transparent hover:border-[#27272a] transition-colors cursor-pointer"
+            >
+              {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+            </button>
+
 
             {/* Quick Search */}
             <div className="relative hidden sm:flex items-center w-64 md:w-80">
