@@ -32,6 +32,7 @@ import MeetingsPage      from './pages/meeting/MeetingsPage';
 import MeetingDetailsPage from './pages/meeting/MeetingDetailsPage';
 import MeetingRoomPage   from './pages/meeting/MeetingRoomPage';
 import MeetingSummaryPage from './pages/meeting/MeetingSummaryPage';
+import KanbanPage         from './pages/kanban/KanbanPage';
 
 function LandingPage() {
   const { theme, toggleTheme } = useTheme();
@@ -70,10 +71,12 @@ export default function App() {
 
       {/* Workspace pages (protected) */}
       <Route path="/dashboard"             element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/kanban"                element={<ProtectedRoute><KanbanPage /></ProtectedRoute>} />
       <Route path="/profile"               element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
       {/* Team workspace pages (protected) */}
       <Route path="/teams/:id"             element={<ProtectedRoute><TeamDetails /></ProtectedRoute>} />
+      <Route path="/teams/:teamId/kanban"  element={<ProtectedRoute><KanbanPage /></ProtectedRoute>} />
       <Route path="/teams/:id/members"     element={<ProtectedRoute><TeamMembers /></ProtectedRoute>} />
       <Route path="/teams/:id/settings"    element={<ProtectedRoute><TeamSettings /></ProtectedRoute>} />
 
