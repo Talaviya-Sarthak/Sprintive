@@ -307,8 +307,12 @@ export default function MeetingSummaryPage() {
                   <Download size={14} className="mr-1" /> Download Transcript
                 </AppButton>
               )}
-              <AppButton variant="mono" size="sm" onClick={() => navigate(`/teams/${meeting.team_id}/board`)}>
-                <LayoutDashboard size={14} className="mr-1" /> View Board
+              <AppButton
+                variant="mono"
+                size="sm"
+                onClick={() => navigate(`/teams/${meeting.team_id}/kanban?meeting_id=${meeting.id}`)}
+              >
+                <LayoutDashboard size={14} className="mr-1" /> View Meeting Tasks
               </AppButton>
             </div>
           </div>

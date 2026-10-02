@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.scrum_agent import ScrumResult
+from app.models.resolved_task import ResolvedTask
 
 
 class MeetingAnalysisResult(BaseModel):
@@ -67,6 +68,10 @@ class MeetingAIPipelineResponse(BaseModel):
     scrum_analysis: Optional[ScrumResult] = Field(
         default=None,
         description="Structured Scrum/Kanban tasks produced by the Scrum Intelligence Agent.",
+    )
+    resolved_tasks: Optional[List[ResolvedTask]] = Field(
+        default=None,
+        description="Deterministically resolved tasks ready for persistence (Stage 3).",
     )
     status: str = Field(
         default="COMPLETED",

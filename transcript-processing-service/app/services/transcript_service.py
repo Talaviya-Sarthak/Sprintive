@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from app.models.transcript import (
     AnalyzeNoiseResponse,
     CorrectSTTResponse,
@@ -543,10 +543,16 @@ class TranscriptService:
         custom_transcript_path: Optional[str] = None,
         llm_client: Optional[BaseLLMClient] = None,
         run_scrum_agent: bool = True,
+        run_task_resolution: bool = False,
+        team_id: Optional[str] = None,
+        meeting_timestamp: Optional[Any] = None,
+        timezone_str: str = "UTC",
+        participants: Optional[List[Dict[str, Any]]] = None,
+        team_members: Optional[List[Dict[str, Any]]] = None,
     ) -> MeetingAIPipelineResponse:
         """
-        Execute AI Pipeline (Stage 1 Meeting Analysis + Stage 2 Scrum Intelligence):
-        Supabase Storage .txt -> UTF-8 String -> Main Meeting Agent -> Scrum Intelligence Agent -> Structured Output.
+        Execute AI Pipeline (Stage 1 Meeting Analysis + Stage 2 Scrum Intelligence + Stage 3 Task Resolution):
+        Supabase Storage .txt -> UTF-8 String -> Main Meeting Agent -> Scrum Intelligence Agent -> Task Resolution -> Structured Output.
         """
         from app.services.meeting_ai_pipeline import run_meeting_ai_pipeline
         return await run_meeting_ai_pipeline(
@@ -555,6 +561,12 @@ class TranscriptService:
             storage_service=self.orchestrator.storage_service,
             llm_client=llm_client or self.orchestrator.llm_client,
             run_scrum_agent=run_scrum_agent,
+            run_task_resolution=run_task_resolution,
+            team_id=team_id,
+            meeting_timestamp=meeting_timestamp,
+            timezone_str=timezone_str,
+            participants=participants,
+            team_members=team_members,
         )
 
     def run_scrum_analysis(
@@ -568,6 +580,31 @@ class TranscriptService:
         from app.services.scrum_agent import get_scrum_intelligence_agent
         agent = get_scrum_intelligence_agent(llm_client=llm_client or self.orchestrator.llm_client)
         return agent.analyze(meeting_analysis)
+
+    def resolve_scrum_tasks(
+        self,
+        scrum_result: ScrumResult,
+        meeting_id: str,
+        team_id: str,
+        meeting_timestamp: Optional[Any] = None,
+        timezone_str: str = "UTC",
+        participants: Optional[List[Dict[str, Any]]] = None,
+        team_members: Optional[List[Dict[str, Any]]] = None,
+    ):
+        """
+        Execute Stage 3: Deterministic task resolution on ScrumResult tasks.
+        """
+        from app.services.task_resolution_service import get_task_resolution_service
+        service = get_task_resolution_service()
+        return service.resolve_tasks(
+            scrum_result=scrum_result,
+            meeting_id=meeting_id,
+            team_id=team_id,
+            meeting_timestamp=meeting_timestamp,
+            timezone_str=timezone_str,
+            participants=participants,
+            team_members=team_members,
+        )
 
     def get_processing_status(
         self,

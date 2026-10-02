@@ -12,6 +12,9 @@ import {
   Shield,
   Layers,
   Sparkles,
+  Video,
+  CheckCircle2,
+  CheckSquare,
 } from 'lucide-react';
 import { MOCK_TEAM_MEMBERS } from '../data/mockKanbanData';
 import type { KanbanTask, KanbanStatus, TaskPriority } from '../types';
@@ -315,6 +318,28 @@ export default function TaskDetailDrawer({
                       </span>
                     </div>
 
+                    {/* Originating Meeting */}
+                    {task.meeting_title && (
+                      <div className="flex items-center justify-between p-3">
+                        <div className="flex items-center gap-2 text-[#71717a]">
+                          <Video size={13} />
+                          <span>Originating Meeting</span>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium text-xs text-[#f4f4f5]">{task.meeting_title}</p>
+                          {task.meeting_date && (
+                            <p className="text-[10px] text-[#71717a] font-mono">
+                              {new Date(task.meeting_date).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Source */}
                     <div className="flex items-center justify-between p-3">
                       <div className="flex items-center gap-2 text-[#71717a]">
@@ -334,6 +359,37 @@ export default function TaskDetailDrawer({
                     </div>
                   </div>
                 </div>
+
+                {/* Source Action Item */}
+                {task.source_action_item && (
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-mono font-semibold uppercase tracking-wider text-[#71717a] flex items-center gap-1.5">
+                      <Sparkles size={13} className="text-indigo-400" />
+                      <span>Source Action Item</span>
+                    </h3>
+                    <div className="p-3.5 rounded-xl border border-indigo-500/20 bg-indigo-500/5 text-indigo-200 text-xs leading-relaxed font-sans">
+                      "{task.source_action_item}"
+                    </div>
+                  </div>
+                )}
+
+                {/* Acceptance Criteria Checklist */}
+                {task.acceptance_criteria && task.acceptance_criteria.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-mono font-semibold uppercase tracking-wider text-[#71717a] flex items-center gap-1.5">
+                      <CheckCircle2 size={13} className="text-emerald-400" />
+                      <span>Acceptance Criteria ({task.acceptance_criteria.length})</span>
+                    </h3>
+                    <div className="border border-[#222432] rounded-xl divide-y divide-[#202230] bg-[#161722] overflow-hidden">
+                      {task.acceptance_criteria.map((criterion, idx) => (
+                        <div key={idx} className="flex items-start gap-2.5 p-3 text-xs text-[#d4d4d8]">
+                          <CheckSquare size={14} className="text-emerald-400 shrink-0 mt-0.5" />
+                          <span className="leading-snug">{criterion}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Labels Section */}
                 {task.labels && task.labels.length > 0 && (

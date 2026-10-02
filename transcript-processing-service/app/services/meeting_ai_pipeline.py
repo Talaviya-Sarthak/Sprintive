@@ -11,7 +11,7 @@ Implements the first stage of the AI pipeline:
 
 import logging
 import time
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 from app.config.storage import (
     InvalidMeetingIdError,
@@ -22,6 +22,7 @@ from app.models.meeting_agent import (
     MeetingAIPipelineResponse,
     MeetingAnalysisResult,
 )
+from app.models.resolved_task import ResolvedTask
 from app.models.scrum_agent import ScrumResult
 from app.services.llm_client import BaseLLMClient
 from app.services.meeting_agent import (
@@ -34,6 +35,10 @@ from app.services.scrum_agent import (
     ScrumIntelligenceAgent,
     ScrumAnalysisError,
     get_scrum_intelligence_agent,
+)
+from app.services.task_resolution_service import (
+    TaskResolutionService,
+    get_task_resolution_service,
 )
 from app.services.storage_service import (
     TranscriptStorageError,
@@ -62,6 +67,13 @@ async def run_meeting_ai_pipeline(
     llm_client: Optional[BaseLLMClient] = None,
     run_scrum_agent: bool = True,
     scrum_agent: Optional[ScrumIntelligenceAgent] = None,
+    run_task_resolution: bool = False,
+    task_resolution_service: Optional[TaskResolutionService] = None,
+    team_id: Optional[str] = None,
+    meeting_timestamp: Optional[Any] = None,
+    timezone_str: str = "UTC",
+    participants: Optional[List[Dict[str, Any]]] = None,
+    team_members: Optional[List[Dict[str, Any]]] = None,
 ) -> MeetingAIPipelineResponse:
     """
     Execute AI pipeline stages for a completed meeting:
@@ -151,18 +163,35 @@ async def run_meeting_ai_pipeline(
             logger.error("Scrum Intelligence Agent failed for meeting %s: %s", valid_id, exc)
             raise
 
+    # 8. Deterministic Task Resolution (Stage 3)
+    resolved_tasks = None
+    if run_task_resolution and scrum_result:
+        resolver = task_resolution_service or get_task_resolution_service()
+        effective_team_id = team_id or f"team-{valid_id}"
+        resolution_result = resolver.resolve_tasks(
+            scrum_result=scrum_result,
+            meeting_id=valid_id,
+            team_id=effective_team_id,
+            meeting_timestamp=meeting_timestamp,
+            timezone_str=timezone_str,
+            participants=participants,
+            team_members=team_members,
+        )
+        resolved_tasks = resolution_result.tasks
+
     duration_ms = int((time.perf_counter() - start_ts) * 1000)
 
-    # 8. Standardized Completion Logging
+    # 9. Standardized Completion Logging
     logger.info("LLM response received")
     logger.info(
-        "AI pipeline completed (duration: %dms, topics: %d, decisions: %d, actions: %d, blockers: %d, tasks: %d)",
+        "AI pipeline completed (duration: %dms, topics: %d, decisions: %d, actions: %d, blockers: %d, tasks: %d, resolved: %d)",
         duration_ms,
         len(analysis.topics),
         len(analysis.decisions),
         len(analysis.action_items),
         len(analysis.blockers),
         len(scrum_result.tasks) if scrum_result else 0,
+        len(resolved_tasks) if resolved_tasks else 0,
     )
 
     # Log summary without leaking sensitive credentials
@@ -174,6 +203,7 @@ async def run_meeting_ai_pipeline(
         transcript_length=len(transcript_str),
         analysis=analysis,
         scrum_analysis=scrum_result,
+        resolved_tasks=resolved_tasks,
         status="COMPLETED",
         error=None,
         duration_ms=duration_ms,

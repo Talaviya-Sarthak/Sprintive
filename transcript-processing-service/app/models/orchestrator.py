@@ -9,6 +9,7 @@ from app.models.final_transcript import FinalizationResult
 from app.models.meeting_agent import MeetingAnalysisResult
 from app.models.processing import ProcessingStatus
 from app.models.scrum_agent import ScrumResult
+from app.models.resolved_task import ResolvedTask
 from app.models.transcript import TranscriptSegment
 
 
@@ -219,6 +220,10 @@ class ProcessTranscriptResponse(BaseModel):
     scrum_analysis: Optional[ScrumResult] = Field(
         default=None,
         description="Structured Scrum tasks from Scrum Intelligence Agent if AI pipeline was executed.",
+    )
+    resolved_tasks: Optional[List[ResolvedTask]] = Field(
+        default=None,
+        description="Deterministically resolved tasks ready for persistence (Stage 3).",
     )
 
     model_config = ConfigDict(

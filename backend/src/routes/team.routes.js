@@ -2,6 +2,7 @@ import { Router }         from 'express';
 import multer             from 'multer';
 import { teamController } from '../controllers/team.controller.js';
 import { meetingController } from '../controllers/meeting.controller.js';
+import { kanbanController } from '../controllers/kanban.controller.js';
 import { requireAuth }    from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -41,5 +42,9 @@ router.get('/:id/invitations',           teamController.getInvitations);
 
 // Team meetings
 router.get('/:teamId/meetings',          meetingController.getTeamMeetings);
+
+// Team Kanban board & task status updates
+router.get('/:teamId/kanban',            kanbanController.getKanban);
+router.patch('/:teamId/kanban/tickets/:ticketId/status', kanbanController.updateTicketStatus);
 
 export default router;

@@ -1,5 +1,6 @@
 import logging
-from typing import Optional
+from typing import Any, Dict, List, Optional
+from pydantic import BaseModel
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response, status
 from app.models.transcript import (
     AnalyzeNoiseRequest,
@@ -41,6 +42,8 @@ from app.models.meeting_agent import (
     MeetingAnalysisResult,
 )
 from app.models.scrum_agent import ScrumResult
+from app.models.resolved_task import ResolvedTask, TaskResolutionResult
+from app.services.task_resolution_service import TaskValidationError
 from app.models.orchestrator import (
     ProcessTranscriptRequest,
     ProcessTranscriptResponse,
@@ -759,6 +762,57 @@ async def scrum_analyze_endpoint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Scrum analysis failed: {str(exc)}",
+        )
+
+
+class ResolveTasksRequest(BaseModel):
+    """Request schema for deterministic task resolution."""
+    meeting_id: str
+    team_id: str
+    scrum_result: ScrumResult
+    meeting_timestamp: Optional[str] = None
+    timezone: str = "UTC"
+    participants: Optional[List[Dict[str, Any]]] = None
+    team_members: Optional[List[Dict[str, Any]]] = None
+
+
+@router.post(
+    "/resolve-tasks",
+    response_model=TaskResolutionResult,
+    status_code=status.HTTP_200_OK,
+    summary="Deterministically resolve assignees, dates, and validate Scrum tasks (Stage 3)",
+    description=(
+        "Executes Stage 3 deterministic task resolution. Resolves assignee names against "
+        "meeting participants and team members with ambiguity protection, resolves relative dates "
+        "using meeting start timestamp and timezone, validates task constraints, and produces "
+        "tasks ready for persistence in meeting_summaries.tickets_generated."
+    ),
+)
+async def resolve_tasks_endpoint(
+    request: ResolveTasksRequest,
+    service: TranscriptService = Depends(get_transcript_service),
+) -> TaskResolutionResult:
+    """
+    Handle POST /transcript/resolve-tasks.
+    Stage 3: ScrumResult -> Deterministic Task Resolution -> Resolved Tasks.
+    """
+    try:
+        return service.resolve_scrum_tasks(
+            scrum_result=request.scrum_result,
+            meeting_id=request.meeting_id,
+            team_id=request.team_id,
+            meeting_timestamp=request.meeting_timestamp,
+            timezone_str=request.timezone,
+            participants=request.participants,
+            team_members=request.team_members,
+        )
+    except TaskValidationError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+    except Exception as exc:
+        logger.exception("Unexpected error in resolve-tasks endpoint: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Task resolution failed: {str(exc)}",
         )
 
 

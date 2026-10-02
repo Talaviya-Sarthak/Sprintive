@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Clock, Users, Play, Edit3, Trash2, Tag } from 'lucide-react';
+import { ArrowLeft, Clock, Users, Play, Edit3, Trash2, Tag, Kanban } from 'lucide-react';
 import { meetingService } from '../../services/meeting.service';
 import { useAuth } from '../../context/AuthContext';
 import { useMeetingMockData } from '../../hooks/useMeetingMockData';
@@ -213,13 +213,22 @@ export default function MeetingDetailsPage() {
               )}
 
               {meeting.status === 'ended' && (
-                <AppButton
-                  variant="mono"
-                  size="sm"
-                  onClick={() => navigate(`/meetings/${meeting.id}/summary`)}
-                >
-                  View AI Summary
-                </AppButton>
+                <>
+                  <AppButton
+                    variant="mono"
+                    size="sm"
+                    onClick={() => navigate(`/meetings/${meeting.id}/summary`)}
+                  >
+                    View AI Summary
+                  </AppButton>
+                  <AppButton
+                    variant="mono-outline"
+                    size="sm"
+                    onClick={() => navigate(`/teams/${meeting.team_id}/kanban?meeting_id=${meeting.id}`)}
+                  >
+                    <Kanban size={13} className="mr-1.5" /> View in Kanban
+                  </AppButton>
+                </>
               )}
 
               {isOwner && (

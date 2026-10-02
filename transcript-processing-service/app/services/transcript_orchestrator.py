@@ -585,9 +585,10 @@ class TranscriptOrchestrator:
                 warnings=context.warnings,
             )
 
-            # Optional: AI Pipeline Execution (Stage 1 + Stage 2)
+            # Optional: AI Pipeline Execution (Stage 1 + Stage 2 + Stage 3)
             meeting_analysis = None
             scrum_analysis = None
+            resolved_tasks = None
             if run_ai_pipeline:
                 try:
                     from app.services.meeting_ai_pipeline import run_meeting_ai_pipeline
@@ -599,10 +600,13 @@ class TranscriptOrchestrator:
                     )
                     meeting_analysis = ai_pipeline_resp.analysis
                     scrum_analysis = ai_pipeline_resp.scrum_analysis
+                    resolved_tasks = ai_pipeline_resp.resolved_tasks
                     if meeting_analysis:
                         context.metrics["meeting_analysis"] = meeting_analysis.model_dump()
                     if scrum_analysis:
                         context.metrics["scrum_analysis"] = scrum_analysis.model_dump()
+                    if resolved_tasks:
+                        context.metrics["resolved_tasks"] = [t.model_dump() for t in resolved_tasks]
                 except Exception as ai_err:
                     logger.error("Optional AI pipeline execution failed for meeting %s: %s", valid_id, ai_err)
                     context.warnings.append(f"AI pipeline execution failed: {ai_err}")
@@ -622,6 +626,7 @@ class TranscriptOrchestrator:
                 warnings=context.warnings,
                 meeting_analysis=meeting_analysis,
                 scrum_analysis=scrum_analysis,
+                resolved_tasks=resolved_tasks,
                 error=None,
             )
 

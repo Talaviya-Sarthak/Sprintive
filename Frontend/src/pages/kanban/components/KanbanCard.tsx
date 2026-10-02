@@ -4,6 +4,7 @@ import {
   GripVertical,
   ChevronRight,
   ChevronLeft,
+  Video,
 } from 'lucide-react';
 import type { KanbanTask, KanbanStatus, TaskPriority } from '../types';
 
@@ -224,6 +225,14 @@ export default function KanbanCard({
               +{remainingLabelsCount}
             </span>
           )}
+        </div>
+      )}
+
+      {/* Originating Meeting Badge */}
+      {task.meeting_title && (
+        <div className="flex items-center gap-1.5 text-[10px] text-[#818498] font-mono truncate mb-2">
+          <Video size={10} className="text-[#9da1b8] shrink-0" />
+          <span className="truncate">{task.meeting_title}</span>
         </div>
       )}
 
