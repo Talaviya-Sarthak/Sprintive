@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response, status
 from app.models.transcript import (
     AnalyzeNoiseRequest,
@@ -35,11 +36,27 @@ from app.models.processing import (
     StoreFinalTranscriptRequest,
     StoreFinalTranscriptResponse,
 )
+from app.models.meeting_agent import (
+    MeetingAIPipelineResponse,
+    MeetingAnalysisResult,
+)
+from app.models.scrum_agent import ScrumResult
 from app.models.orchestrator import (
     ProcessTranscriptRequest,
     ProcessTranscriptResponse,
 )
 from app.config.storage import InvalidMeetingIdError
+from app.services.meeting_agent import (
+    EmptyTranscriptException,
+    MeetingAnalysisError,
+)
+from app.services.scrum_agent import (
+    ScrumAnalysisError,
+)
+from app.services.meeting_ai_pipeline import (
+    MeetingAIPipelineError,
+    TranscriptRetrievalError,
+)
 from app.services.storage_service import (
     TranscriptStorageError,
     TranscriptUploadError,
@@ -590,6 +607,8 @@ async def process_transcript_endpoint(
                 meeting_id=request.meeting_id,
                 raw_text=request.raw_text,
                 raw_transcript_path=request.raw_transcript_path,
+                formatting_config=request.formatting_config,
+                run_ai_pipeline=request.run_ai_pipeline,
             )
             response.status_code = status.HTTP_202_ACCEPTED
             return ProcessTranscriptResponse(
@@ -604,6 +623,8 @@ async def process_transcript_endpoint(
                 meeting_id=request.meeting_id,
                 raw_text=request.raw_text,
                 raw_transcript_path=request.raw_transcript_path,
+                formatting_config=request.formatting_config,
+                run_ai_pipeline=request.run_ai_pipeline,
             )
             return result
     except HTTPException:
@@ -665,6 +686,79 @@ async def get_processing_status_endpoint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve processing status: {str(exc)}",
+        )
+
+
+@router.post(
+    "/ai-analyze/{meeting_id}",
+    response_model=MeetingAIPipelineResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Execute First Stage AI Pipeline on stored clean transcript",
+    description=(
+        "Downloads the cleaned transcript .txt file from Supabase Storage, "
+        "decodes as UTF-8 string, passes to the Main Meeting Agent (first LLM call), "
+        "and returns the validated structured analysis (summary, topics, decisions, "
+        "action items, blockers)."
+    ),
+)
+async def ai_analyze_meeting_endpoint(
+    meeting_id: str,
+    custom_transcript_path: Optional[str] = None,
+    service: TranscriptService = Depends(get_transcript_service),
+) -> MeetingAIPipelineResponse:
+    """
+    Handle POST /transcript/ai-analyze/{meeting_id}.
+    Stage 1: Supabase Storage .txt -> UTF-8 String -> Main Meeting Agent -> First LLM Call -> Log/Store.
+    """
+    try:
+        return await service.run_meeting_ai_pipeline(
+            meeting_id=meeting_id,
+            custom_transcript_path=custom_transcript_path,
+        )
+    except InvalidMeetingIdError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    except (TranscriptRetrievalError, FileNotFoundError) as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    except EmptyTranscriptException as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+    except MeetingAnalysisError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc))
+    except Exception as exc:
+        logger.exception("Unexpected error in AI pipeline endpoint: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"AI pipeline failed: {str(exc)}",
+        )
+
+
+@router.post(
+    "/scrum-analyze",
+    response_model=ScrumResult,
+    status_code=status.HTTP_200_OK,
+    summary="Transform structured meeting analysis into Scrum/Kanban work items (Stage 2)",
+    description=(
+        "Transforms a structured MeetingAnalysisResult produced by the Main Meeting Agent (Stage 1) "
+        "into actionable Scrum tasks. Grounded strictly in the provided meeting analysis without "
+        "inventing assignees, deadlines, or priorities."
+    ),
+)
+async def scrum_analyze_endpoint(
+    request: MeetingAnalysisResult,
+    service: TranscriptService = Depends(get_transcript_service),
+) -> ScrumResult:
+    """
+    Handle POST /transcript/scrum-analyze.
+    Stage 2: MeetingAnalysisResult -> Scrum Intelligence Agent -> Structured ScrumResult.
+    """
+    try:
+        return service.run_scrum_analysis(request)
+    except ScrumAnalysisError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc))
+    except Exception as exc:
+        logger.exception("Unexpected error in Scrum analyze endpoint: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Scrum analysis failed: {str(exc)}",
         )
 
 

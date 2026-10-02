@@ -19,6 +19,11 @@ from app.models.final_transcript import (
     FinalizationResult,
     FormatFinalTranscriptResponse,
 )
+from app.models.meeting_agent import (
+    MeetingAIPipelineResponse,
+    MeetingAnalysisResult,
+)
+from app.models.scrum_agent import ScrumResult
 from app.models.processing import (
     ProcessingRecord,
     StoreFinalTranscriptResponse,
@@ -516,6 +521,7 @@ class TranscriptService:
         raw_transcript_path: Optional[str] = None,
         formatting_config: Optional[FormattingConfig] = None,
         enforce_concurrency: bool = True,
+        run_ai_pipeline: bool = False,
         orchestrator: Optional[TranscriptOrchestrator] = None,
     ) -> ProcessTranscriptResponse:
         """
@@ -528,7 +534,40 @@ class TranscriptService:
             raw_transcript_path=raw_transcript_path,
             formatting_config=formatting_config,
             enforce_concurrency=enforce_concurrency,
+            run_ai_pipeline=run_ai_pipeline,
         )
+
+    async def run_meeting_ai_pipeline(
+        self,
+        meeting_id: str,
+        custom_transcript_path: Optional[str] = None,
+        llm_client: Optional[BaseLLMClient] = None,
+        run_scrum_agent: bool = True,
+    ) -> MeetingAIPipelineResponse:
+        """
+        Execute AI Pipeline (Stage 1 Meeting Analysis + Stage 2 Scrum Intelligence):
+        Supabase Storage .txt -> UTF-8 String -> Main Meeting Agent -> Scrum Intelligence Agent -> Structured Output.
+        """
+        from app.services.meeting_ai_pipeline import run_meeting_ai_pipeline
+        return await run_meeting_ai_pipeline(
+            meeting_id=meeting_id,
+            custom_transcript_path=custom_transcript_path,
+            storage_service=self.orchestrator.storage_service,
+            llm_client=llm_client or self.orchestrator.llm_client,
+            run_scrum_agent=run_scrum_agent,
+        )
+
+    def run_scrum_analysis(
+        self,
+        meeting_analysis: MeetingAnalysisResult,
+        llm_client: Optional[BaseLLMClient] = None,
+    ) -> "ScrumResult":
+        """
+        Execute Stage 2: Transform structured MeetingAnalysisResult directly into Scrum/Kanban tasks.
+        """
+        from app.services.scrum_agent import get_scrum_intelligence_agent
+        agent = get_scrum_intelligence_agent(llm_client=llm_client or self.orchestrator.llm_client)
+        return agent.analyze(meeting_analysis)
 
     def get_processing_status(
         self,
