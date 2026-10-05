@@ -113,6 +113,18 @@ class OpenAICompatibleLLMClient(BaseLLMClient):
                 with httpx.Client(timeout=self.timeout_seconds) as client:
                     response = client.post(endpoint, json=payload, headers=headers)
 
+                if response.status_code == 429:
+                    retry_header = response.headers.get("retry-after")
+                    try:
+                        retry_after = float(retry_header) if retry_header else 2.5
+                    except ValueError:
+                        retry_after = 2.5
+                    wait_time = max(retry_after, 2.0 * (attempt + 1))
+                    logger.warning("LLM attempt %d hit rate limit 429; backing off for %.2fs", attempt + 1, wait_time)
+                    time.sleep(wait_time)
+                    last_exception = LLMClientError(f"LLM API returned HTTP 429: {response.text}")
+                    continue
+
                 if response.status_code != 200:
                     raise LLMClientError(
                         f"LLM API returned HTTP {response.status_code}: {response.text}"
@@ -222,6 +234,71 @@ class MockLLMClient(BaseLLMClient):
             if isinstance(result, response_model):
                 return result
 
+        model_name = getattr(response_model, "__name__", "")
+        if model_name == "MeetingAnalysisResult":
+            lines = [l.strip() for l in user_prompt.splitlines() if ":" in l and l.strip()]
+            action_items = []
+            for l in lines:
+                parts = l.split(":", 1)
+                speaker = parts[0].strip()
+                text = parts[1].strip()
+                action_items.append(f"{speaker} will {text}")
+            if not action_items:
+                action_items = ["Deploy the authentication system and database migration by Friday"]
+            return response_model.model_validate({
+                "summary": "The team reviewed sprint progress, authentication delivery, and database migrations.",
+                "topics": ["Authentication", "Database Migration", "Sprint Delivery"],
+                "decisions": ["Deploy authentication system by Friday", "Complete database migration"],
+                "action_items": action_items,
+                "blockers": [],
+            })
+
+        if model_name == "ScrumResult":
+            tasks = []
+            for line in user_prompt.splitlines():
+                clean_l = line.strip().lstrip("-").strip()
+                if not clean_l or clean_l.startswith("#") or "Stage 1" in clean_l or "Action Items" in clean_l:
+                    continue
+                assignee = None
+                desc = clean_l
+                if " will " in clean_l:
+                    parts = clean_l.split(" will ", 1)
+                    assignee = parts[0].strip()
+                    desc = parts[1].strip()
+                elif ":" in clean_l:
+                    parts = clean_l.split(":", 1)
+                    assignee = parts[0].strip()
+                    desc = parts[1].strip()
+
+                title = desc.split(".")[0].strip()
+                if len(title) > 60:
+                    title = title[:57] + "..."
+                if not title:
+                    title = "Complete sprint task"
+
+                tasks.append({
+                    "title": title,
+                    "description": desc or title,
+                    "assignee": assignee,
+                    "priority": "high" if "deploy" in desc.lower() else "medium",
+                    "due_date": "by Friday" if "friday" in desc.lower() else None,
+                    "type": "task",
+                    "acceptance_criteria": [f"Successfully complete {title}"],
+                    "source_action_item": clean_l,
+                })
+            if not tasks:
+                tasks.append({
+                    "title": "Deploy authentication system",
+                    "description": "Deploy authentication system and database migration",
+                    "assignee": None,
+                    "priority": "high",
+                    "due_date": "by Friday",
+                    "type": "task",
+                    "acceptance_criteria": ["Authentication verified in staging"],
+                    "source_action_item": "Deploy the authentication system and database migration by Friday",
+                })
+            return response_model.model_validate({"tasks": tasks})
+
         # Default fallback: return original text unchanged with modified=False
         return response_model.model_validate(
             {
@@ -245,6 +322,9 @@ def get_llm_client() -> BaseLLMClient:
 
     if settings.LLM_PROVIDER.lower() == "mock":
         return MockLLMClient()
+
+    if not settings.LLM_API_KEY:
+        raise LLMClientError("LLM API key not configured; please set GROQ_API_KEY or LLM_API_KEY in .env.")
 
     return OpenAICompatibleLLMClient()
 

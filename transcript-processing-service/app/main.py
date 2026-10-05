@@ -17,6 +17,14 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Application lifespan context for startup and shutdown events."""
     logger.info("Starting up %s (env=%s)...", settings.PROJECT_NAME, settings.APP_ENV)
+    has_key = bool(settings.LLM_API_KEY and settings.LLM_API_KEY.strip())
+    logger.info("LLM API key configured: %s", has_key)
+    logger.info(
+        "LLM configuration: provider=%s, model=%s, base_url=%s",
+        settings.LLM_PROVIDER,
+        settings.LLM_MODEL,
+        settings.LLM_BASE_URL,
+    )
     yield
     logger.info("Shutting down %s...", settings.PROJECT_NAME)
 

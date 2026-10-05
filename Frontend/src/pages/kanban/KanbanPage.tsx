@@ -23,6 +23,7 @@ import TaskDialog from './components/TaskDialog';
 import TaskDetailDrawer from './components/TaskDetailDrawer';
 import { kanbanService } from '../../services/kanban.service';
 import { teamService } from '../../services/team.service';
+import { meetingService } from '../../services/meeting.service';
 import type {
   KanbanTask,
   KanbanStatus,
@@ -68,6 +69,17 @@ export default function KanbanPage() {
   // Drawer State (Right-side detail inspection sheet)
   const [selectedTaskForDrawer, setSelectedTaskForDrawer] = useState<KanbanTask | null>(null);
 
+  // Processing status for filtered meeting
+  const [meetingProcStatus, setMeetingProcStatus] = useState<{
+    meeting_id: string;
+    is_processing: boolean;
+    current_stage: string;
+    transcript_status: string;
+    ai_status: string;
+    error: string | null;
+  } | null>(null);
+  const [isRetryingProc, setIsRetryingProc] = useState(false);
+
   // Load team members
   useEffect(() => {
     if (!activeTeamId) return;
@@ -100,12 +112,18 @@ export default function KanbanPage() {
     setActionError(null);
 
     try {
-      const data = await kanbanService.getKanbanTasks(
-        activeTeamId,
-        meetingIdParam === 'all' ? null : meetingIdParam
-      );
+      const [data, proc] = await Promise.all([
+        kanbanService.getKanbanTasks(
+          activeTeamId,
+          meetingIdParam === 'all' ? null : meetingIdParam
+        ),
+        meetingIdParam !== 'all'
+          ? meetingService.getProcessingStatus(meetingIdParam).catch(() => null)
+          : Promise.resolve(null),
+      ]);
       setTasks(data.tasks);
       setMeetings(data.meetings);
+      setMeetingProcStatus(proc);
     } catch (err: any) {
       setError(
         err.response?.data?.message || err.message || 'Failed to load Kanban tasks'
@@ -118,6 +136,35 @@ export default function KanbanPage() {
   useEffect(() => {
     fetchBoardData();
   }, [fetchBoardData]);
+
+  // Poll processing status if meeting is in progress
+  useEffect(() => {
+    if (!meetingProcStatus?.is_processing || meetingIdParam === 'all') return;
+    const interval = setInterval(async () => {
+      try {
+        const proc = await meetingService.getProcessingStatus(meetingIdParam);
+        setMeetingProcStatus(proc);
+        if (!proc.is_processing) {
+          fetchBoardData();
+        }
+      } catch (_) {}
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [meetingProcStatus?.is_processing, meetingIdParam, fetchBoardData]);
+
+  const handleRetryProcessing = async () => {
+    if (!meetingIdParam || meetingIdParam === 'all') return;
+    setIsRetryingProc(true);
+    setActionError(null);
+    try {
+      await meetingService.retryProcessing(meetingIdParam);
+      await fetchBoardData();
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || err.message || 'Retry failed');
+    } finally {
+      setIsRetryingProc(false);
+    }
+  };
 
   // Handle meeting filter dropdown change
   const handleMeetingChange = (newMeetingId: string) => {
@@ -587,39 +634,98 @@ export default function KanbanPage() {
             </AppButton>
           </div>
         ) : tasks.length === 0 ? (
-          /* Empty State */
-          <div className="flex flex-col items-center justify-center h-80 gap-3 border border-[#242636] rounded-xl bg-[#14151e] p-8 text-center">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#1d1f2b] border border-[#2c2f42] text-indigo-400">
-              <Sparkles size={20} />
+          meetingProcStatus?.is_processing ? (
+            /* Processing State */
+            <div className="flex flex-col items-center justify-center h-80 gap-3 border border-blue-500/30 rounded-xl bg-blue-500/[0.03] p-8 text-center">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-500/15 border border-blue-500/30 text-blue-400">
+                <Sparkles size={20} className="animate-pulse" />
+              </div>
+              <h3 className="text-sm font-semibold text-[#f4f4f5]">AI is analyzing your latest meeting</h3>
+              <p className="text-xs text-[#9ca3af] max-w-md leading-relaxed">
+                Tasks will appear here automatically when processing is complete.
+                {meetingProcStatus.current_stage && (
+                  <span className="block mt-1 font-mono text-[11px] text-blue-300">
+                    Stage: {meetingProcStatus.current_stage.replace(/_/g, ' ')}
+                  </span>
+                )}
+              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-300 text-xs font-mono">
+                  <Loader2 size={12} className="animate-spin" />
+                  <span>Processing in progress...</span>
+                </div>
+              </div>
             </div>
-            <h3 className="text-sm font-semibold text-[#f4f4f5]">
-              {meetingIdParam !== 'all' ? 'No tasks from this meeting yet' : 'No tasks on this board yet'}
-            </h3>
-            <p className="text-xs text-[#a1a1aa] max-w-md leading-relaxed">
-              {meetingIdParam !== 'all'
-                ? 'This meeting does not have any AI-extracted action items or tasks yet.'
-                : 'Tasks generated by the Scrum Intelligence Agent after completed meetings will appear here automatically.'}
-            </p>
-            <div className="flex items-center gap-2 mt-2">
-              {meetingIdParam !== 'all' && (
+          ) : (meetingProcStatus?.transcript_status === 'failed' || meetingProcStatus?.ai_status === 'failed') ? (
+            /* Failed State */
+            <div className="flex flex-col items-center justify-center h-80 gap-3 border border-rose-500/30 rounded-xl bg-rose-500/[0.03] p-8 text-center">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-rose-500/15 border border-rose-500/30 text-rose-400">
+                <AlertCircle size={20} />
+              </div>
+              <h3 className="text-sm font-semibold text-[#f4f4f5]">AI processing failed</h3>
+              <p className="text-xs text-[#9ca3af] max-w-md leading-relaxed">
+                {meetingProcStatus.error || 'We encountered an error processing the transcript for this meeting.'}
+              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <AppButton
+                  variant="mono"
+                  size="sm"
+                  disabled={isRetryingProc}
+                  onClick={handleRetryProcessing}
+                  className="gap-1.5"
+                >
+                  {isRetryingProc ? (
+                    <>
+                      <Loader2 size={12} className="animate-spin" />
+                      <span>Retrying...</span>
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw size={12} />
+                      <span>Retry Processing</span>
+                    </>
+                  )}
+                </AppButton>
                 <AppButton variant="mono-outline" size="sm" onClick={() => handleMeetingChange('all')}>
                   Show All Meetings
                 </AppButton>
-              )}
-              {activeTeamId && (
-                <AppButton
-                  variant="mono-outline"
-                  size="sm"
-                  onClick={() => navigate(`/teams/${activeTeamId}/meetings`)}
-                >
-                  <Video size={13} className="mr-1.5" /> Go to Meetings
-                </AppButton>
-              )}
-              <AppButton variant="mono" size="sm" onClick={() => handleOpenCreate('todo')}>
-                <Plus size={13} className="mr-1.5" /> Create Task Manually
-              </AppButton>
+              </div>
             </div>
-          </div>
+          ) : (
+            /* Standard Empty State */
+            <div className="flex flex-col items-center justify-center h-80 gap-3 border border-[#242636] rounded-xl bg-[#14151e] p-8 text-center">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#1d1f2b] border border-[#2c2f42] text-indigo-400">
+                <Sparkles size={20} />
+              </div>
+              <h3 className="text-sm font-semibold text-[#f4f4f5]">
+                {meetingIdParam !== 'all' ? 'No tasks from this meeting' : 'No tasks on this board yet'}
+              </h3>
+              <p className="text-xs text-[#a1a1aa] max-w-md leading-relaxed">
+                {meetingIdParam !== 'all'
+                  ? 'This meeting was processed, but did not produce any actionable tasks.'
+                  : 'Tasks generated by the Scrum Intelligence Agent after completed meetings will appear here automatically.'}
+              </p>
+              <div className="flex items-center gap-2 mt-2">
+                {meetingIdParam !== 'all' && (
+                  <AppButton variant="mono-outline" size="sm" onClick={() => handleMeetingChange('all')}>
+                    Show All Meetings
+                  </AppButton>
+                )}
+                {activeTeamId && (
+                  <AppButton
+                    variant="mono-outline"
+                    size="sm"
+                    onClick={() => navigate(`/teams/${activeTeamId}/meetings`)}
+                  >
+                    <Video size={13} className="mr-1.5" /> Go to Meetings
+                  </AppButton>
+                )}
+                <AppButton variant="mono" size="sm" onClick={() => handleOpenCreate('todo')}>
+                  <Plus size={13} className="mr-1.5" /> Create Task Manually
+                </AppButton>
+              </div>
+            </div>
+          )
         ) : (
           /* Kanban Board Component */
           <KanbanBoard

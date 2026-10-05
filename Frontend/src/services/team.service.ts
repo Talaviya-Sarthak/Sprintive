@@ -89,6 +89,10 @@ export const teamService = {
     return data.data;
   },
 
+  async rejectInvitation(token: string): Promise<void> {
+    await api.post('/teams/reject', { token });
+  },
+
   async generateInviteLink(teamId: string): Promise<{ link: string }> {
     const { data } = await api.post(`/teams/${teamId}/invite-link`);
     return data.data;

@@ -461,66 +461,75 @@ export class TaskResolutionService {
    * @param {string|null} params.teamId - Optional team ID override
    * @returns {Promise<{ resolved_tasks: Array<object>, summary: object }>}
    */
-  async resolveAndPersist({ meetingId, scrumResult, teamId = null }) {
+  async resolveAndPersist({ meetingId, scrumResult, teamId = null, aiSummary = null, actionItems = null }) {
+    logger.info(`[AI PIPELINE] stage=task-resolution status=started meetingId=${meetingId}`);
     if (!meetingId) {
       throw new AppError('Meeting ID is required for task persistence', 400, 'INVALID_MEETING_ID');
     }
 
-    const meeting = await meetingRepository.findById(meetingId);
-    if (!meeting) {
-      throw new AppError(`Meeting ${meetingId} not found`, 404, 'MEETING_NOT_FOUND');
+    try {
+      const meeting = await meetingRepository.findById(meetingId);
+      if (!meeting) {
+        throw new AppError(`Meeting ${meetingId} not found`, 404, 'MEETING_NOT_FOUND');
+      }
+
+      const effectiveTeamId = teamId || meeting.team_id;
+      const meetingTimestamp = meeting.started_at || meeting.scheduled_start;
+      const meetingTimezone = meeting.timezone || 'UTC';
+
+      // Query participants and team members scoped strictly to this meeting/team
+      const participants = await meetingRepository.getParticipants(meetingId);
+      const teamMembers = effectiveTeamId ? await teamRepository.getMembers(effectiveTeamId) : [];
+
+      // Retrieve existing summary to preserve ai_summary, action_items, and existing tasks for reconciliation
+      const existingSummary = await meetingRepository.getSummary(meetingId);
+      const existingTasks = Array.isArray(existingSummary?.tickets_generated) ? existingSummary.tickets_generated : [];
+
+      const rawTasks = scrumResult?.tasks || [];
+      logger.info(`[AI PIPELINE] stage=task-resolution input_task_count=${rawTasks.length}`);
+
+      const resolution = this.resolveTasks({
+        tasks: rawTasks,
+        meetingId,
+        teamId: effectiveTeamId,
+        meetingStartedAt: meetingTimestamp,
+        meetingTimezone,
+        participants,
+        teamMembers,
+        existingTasks,
+      });
+
+      logger.info(`[AI PIPELINE] stage=task-resolution status=returned resolved_task_count=${resolution.tasks.length}`);
+
+      logger.info(`[AI PIPELINE] stage=persistence status=started`);
+      const summaryRecord = await meetingRepository.upsertSummary({
+        meeting_id: meetingId,
+        duration_minutes: existingSummary?.duration_minutes ?? meeting.duration_minutes ?? 0,
+        attendance_count: existingSummary?.attendance_count ?? participants.length,
+        total_participants: existingSummary?.total_participants ?? participants.length,
+        ai_summary: aiSummary ?? existingSummary?.ai_summary ?? null,
+        action_items: actionItems ?? existingSummary?.action_items ?? [],
+        tickets_generated: resolution.tasks, // Idempotent overwrite / snapshot
+      });
+
+      logger.info(`[AI PIPELINE] stage=persistence status=completed`);
+      logger.info(`[AI PIPELINE] status=completed`);
+
+      return {
+        resolved_tasks: resolution.tasks,
+        summary: summaryRecord,
+        metrics: {
+          total_tasks: resolution.total_tasks,
+          resolved_assignees: resolution.resolved_assignees,
+          unresolved_assignees: resolution.unresolved_assignees,
+          resolved_due_dates: resolution.resolved_due_dates,
+          unresolved_due_dates: resolution.unresolved_due_dates,
+        },
+      };
+    } catch (err) {
+      logger.error(`[AI PIPELINE] stage=task-resolution status=failed error=${err.message}`);
+      throw err;
     }
-
-    const effectiveTeamId = teamId || meeting.team_id;
-    const meetingTimestamp = meeting.started_at || meeting.scheduled_start;
-    const meetingTimezone = meeting.timezone || 'UTC';
-
-    // Query participants and team members scoped strictly to this meeting/team
-    const participants = await meetingRepository.getParticipants(meetingId);
-    const teamMembers = effectiveTeamId ? await teamRepository.getMembers(effectiveTeamId) : [];
-
-    // Retrieve existing summary to preserve ai_summary, action_items, and existing tasks for reconciliation
-    const existingSummary = await meetingRepository.getSummary(meetingId);
-    const existingTasks = Array.isArray(existingSummary?.tickets_generated) ? existingSummary.tickets_generated : [];
-
-    const rawTasks = scrumResult?.tasks || [];
-    const resolution = this.resolveTasks({
-      tasks: rawTasks,
-      meetingId,
-      teamId: effectiveTeamId,
-      meetingStartedAt: meetingTimestamp,
-      meetingTimezone,
-      participants,
-      teamMembers,
-      existingTasks,
-    });
-
-    logger.info('Persisting generated tasks');
-    logger.info(`Tasks persisted: ${resolution.tasks.length}`);
-
-    const summaryRecord = await meetingRepository.upsertSummary({
-      meeting_id: meetingId,
-      duration_minutes: existingSummary?.duration_minutes ?? meeting.duration_minutes ?? 0,
-      attendance_count: existingSummary?.attendance_count ?? participants.length,
-      total_participants: existingSummary?.total_participants ?? participants.length,
-      ai_summary: existingSummary?.ai_summary ?? null,
-      action_items: existingSummary?.action_items ?? [],
-      tickets_generated: resolution.tasks, // Idempotent overwrite / snapshot
-    });
-
-    logger.info('Stage 3 task resolution completed');
-
-    return {
-      resolved_tasks: resolution.tasks,
-      summary: summaryRecord,
-      metrics: {
-        total_tasks: resolution.total_tasks,
-        resolved_assignees: resolution.resolved_assignees,
-        unresolved_assignees: resolution.unresolved_assignees,
-        resolved_due_dates: resolution.resolved_due_dates,
-        unresolved_due_dates: resolution.unresolved_due_dates,
-      },
-    };
   }
 }
 

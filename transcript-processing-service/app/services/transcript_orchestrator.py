@@ -608,8 +608,9 @@ class TranscriptOrchestrator:
                     if resolved_tasks:
                         context.metrics["resolved_tasks"] = [t.model_dump() for t in resolved_tasks]
                 except Exception as ai_err:
-                    logger.error("Optional AI pipeline execution failed for meeting %s: %s", valid_id, ai_err)
-                    context.warnings.append(f"AI pipeline execution failed: {ai_err}")
+                    logger.error("AI pipeline execution failed for meeting %s: %s", valid_id, ai_err)
+                    setattr(ai_err, "stage", "ai_pipeline")
+                    raise
 
             logger.info("Pipeline completed successfully for meeting %s in %dms", valid_id, total_duration_ms)
 

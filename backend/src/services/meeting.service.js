@@ -229,6 +229,16 @@ export const meetingService = {
     return transcriptService.retryPreprocessing(meeting_id);
   },
 
+  async getProcessingStatus(meeting_id, userId) {
+    await this.assertMeetingAccess(meeting_id, userId);
+    return transcriptService.getProcessingStatus(meeting_id);
+  },
+
+  async retryProcessing(meeting_id, userId) {
+    await this.assertMeetingAccess(meeting_id, userId);
+    return transcriptService.retryPreprocessing(meeting_id);
+  },
+
   async triggerAiHandoff(meeting_id, userId) {
     await this.assertMeetingAccess(meeting_id, userId);
     return aiHandoffService.handoffWithRetry(meeting_id);

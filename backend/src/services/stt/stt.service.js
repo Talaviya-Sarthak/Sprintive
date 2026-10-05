@@ -184,8 +184,8 @@ class STTService extends EventEmitter {
    */
   processAudio(meetingId, participantId, audioBuffer, participantName = 'Unknown') {
     if (!this.meetings.has(meetingId)) {
-      logger.warn(`[stt] No session for meeting ${meetingId}, ignoring audio`);
-      return;
+      this.meetings.set(meetingId, new Map());
+      logger.info(`[stt] Lazily initialized session map for meeting ${meetingId}`);
     }
 
     const entry = this._ensureParticipantSession(meetingId, participantId, participantName);

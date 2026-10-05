@@ -1,7 +1,7 @@
 """Domain models and schemas for the Main Meeting Analysis Agent."""
 
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.scrum_agent import ScrumResult
 from app.models.resolved_task import ResolvedTask
@@ -30,6 +30,31 @@ class MeetingAnalysisResult(BaseModel):
         default_factory=list,
         description="Blockers, technical impediments, or open questions raised.",
     )
+
+    @field_validator("topics", "decisions", "action_items", "blockers", mode="before")
+    @classmethod
+    def normalize_string_list(cls, v: Any) -> List[str]:
+        if not isinstance(v, list):
+            return [str(v)] if v else []
+        normalized = []
+        for item in v:
+            if isinstance(item, str):
+                normalized.append(item)
+            elif isinstance(item, dict):
+                assignee = item.get("assignee") or item.get("owner")
+                task = item.get("task") or item.get("description") or item.get("title") or item.get("action") or item.get("item")
+                due = item.get("due") or item.get("due_date") or item.get("deadline")
+                parts = []
+                if assignee:
+                    parts.append(f"{assignee} will")
+                if task:
+                    parts.append(str(task))
+                if due:
+                    parts.append(f"(due: {due})")
+                normalized.append(" ".join(parts) if parts else str(item))
+            else:
+                normalized.append(str(item))
+        return normalized
 
     model_config = ConfigDict(
         populate_by_name=True,
