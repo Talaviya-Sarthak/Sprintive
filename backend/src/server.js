@@ -6,6 +6,8 @@ import { logger }        from './utils/logger.js';
 import { verifySmtpConnection } from './utils/email.js';
 import app               from './app.js';
 import { initSocket }    from './socket/meeting.socket.js';
+import { closeTranscriptQueue } from './queues/transcript.queue.js';
+import { closeRedisConnection } from './config/redis.js';
 
 async function bootstrap() {
   try {
@@ -45,8 +47,14 @@ async function bootstrap() {
       logger.info(`Health check → http://localhost:${env.port}/health`);
     });
 
-    const shutdown = (signal) => {
+    const shutdown = async (signal) => {
       logger.info(`${signal} received — shutting down gracefully`);
+      try {
+        await closeTranscriptQueue();
+        await closeRedisConnection();
+      } catch (cleanupErr) {
+        logger.warn(`[server:shutdown] Error closing queue/redis: ${cleanupErr.message}`);
+      }
       httpServer.close(() => { logger.info('HTTP server closed'); process.exit(0); });
     };
 

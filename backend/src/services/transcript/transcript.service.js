@@ -6,6 +6,7 @@ import { env } from '../../config/env.js';
 import { AppError } from '../../middleware/error.middleware.js';
 import { logger } from '../../utils/logger.js';
 import { aiHandoffService } from '../ai/ai-handoff.service.js';
+import { enqueueTranscriptProcessing } from '../../queues/transcript.queue.js';
 
 /**
  * Transcript Service — coordinates STT finalization, dialogue formatting,
@@ -74,11 +75,20 @@ class TranscriptService {
 
     logger.info(`[transcript] Raw transcript saved for meeting ${meetingId} (id=${transcript.id}, status=raw_stored)`);
 
-    // 4. Trigger preprocessing asynchronously (non-blocking for meeting-end flow)
-    this.triggerPreprocessing(meetingId, content, storageResult?.path || rawPath)
-      .catch((err) => {
-        logger.error(`[transcript] Background preprocessing failed for ${meetingId}: ${err.message}`);
+    // 4. Enqueue transcript processing job to BullMQ queue
+    try {
+      await enqueueTranscriptProcessing({
+        meetingId,
+        rawTranscriptPath: storageResult?.path || rawPath,
+        isRetry: false,
       });
+      logger.info(`[transcript] Enqueued transcript processing job for meeting ${meetingId}`);
+    } catch (queueErr) {
+      logger.warn(`[transcript] Queue enqueue failed (${queueErr.message}), falling back to direct trigger for ${meetingId}`);
+      this.triggerPreprocessing(meetingId, content, storageResult?.path || rawPath).catch((err) => {
+        logger.error(`[transcript] Fallback direct preprocessing failed for ${meetingId}: ${err.message}`);
+      });
+    }
 
     return {
       id: transcript.id,
@@ -189,7 +199,31 @@ class TranscriptService {
       }
     }
 
-    return this.triggerPreprocessing(meetingId, rawText, rawPath);
+    // Reset DB status to raw_stored and clear past error for the retry
+    await meetingRepository.updateTranscriptStatus({
+      meeting_id: meetingId,
+      status: 'raw_stored',
+      error: null,
+    });
+
+    try {
+      const queueResult = await enqueueTranscriptProcessing({
+        meetingId,
+        rawTranscriptPath: rawPath,
+        isRetry: true,
+      });
+
+      return {
+        success: true,
+        message: 'Transcript preprocessing job re-enqueued successfully',
+        meetingId,
+        jobId: queueResult.jobId,
+        status: 'raw_stored',
+      };
+    } catch (queueErr) {
+      logger.warn(`[transcript] Queue unavailable during retry (${queueErr.message}), falling back to direct trigger`);
+      return this.triggerPreprocessing(meetingId, rawText, rawPath);
+    }
   }
 
   /**

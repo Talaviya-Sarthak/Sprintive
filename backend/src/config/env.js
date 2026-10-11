@@ -72,6 +72,9 @@ export const env = {
   deepgramApiKey:     process.env.DEEPGRAM_API_KEY ?? '',
   deepgramModel:      process.env.DEEPGRAM_MODEL  ?? 'nova-3',
 
+  // ── Redis / BullMQ ─────────────────────────────────────────────────────────
+  redisUrl:           process.env.REDIS_URL ?? '',
+
   // ── Brevo Email ────────────────────────────────────────────────────────────
   brevoApiKey:        process.env.BREVO_API_KEY            ?? '',
   brevoSenderEmail:   process.env.BREVO_SENDER_EMAIL       ?? 'noreply@sprintive.app',
