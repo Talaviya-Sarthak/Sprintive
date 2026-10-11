@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.speaker_validation import (
     SpeakerFlagType,
@@ -833,6 +833,32 @@ class STTCorrectionLLMOutput(BaseModel):
         default=None,
         description="Brief justification of why the correction was made or why original text was preserved.",
     )
+
+    @field_validator("error_type", mode="before")
+    @classmethod
+    def normalize_error_type(cls, v):
+        if not v:
+            return None
+        if isinstance(v, STTErrorType):
+            return v
+        v_str = str(v).strip().upper()
+        try:
+            return STTErrorType(v_str)
+        except ValueError:
+            pass
+        if "CONTEXT" in v_str:
+            return STTErrorType.CONTEXTUAL_RECOGNITION_ERROR
+        if "PHONETIC" in v_str:
+            return STTErrorType.PHONETIC_MISRECOGNITION
+        if "TERM" in v_str or "TECHNICAL" in v_str:
+            return STTErrorType.TECHNICAL_TERM_MISRECOGNITION
+        if "SOUND" in v_str or "HOMOPHONE" in v_str:
+            return STTErrorType.HOMOPHONE_OR_SIMILAR_SOUND
+        if "BOUNDARY" in v_str:
+            return STTErrorType.WORD_BOUNDARY_ERROR
+        if "PARTIAL" in v_str:
+            return STTErrorType.PARTIAL_WORD_ERROR
+        return STTErrorType.UNKNOWN
 
 
 class CorrectSTTRequest(BaseModel):

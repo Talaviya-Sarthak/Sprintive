@@ -163,7 +163,9 @@ class OpenAICompatibleLLMClient(BaseLLMClient):
                     cleaned_content = json_match.group(1)
 
                 parsed_json = json.loads(cleaned_content)
-                return response_model.model_validate(parsed_json)
+                validated_result = response_model.model_validate(parsed_json)
+                time.sleep(0.5)  # Pace requests to respect Groq Tokens Per Minute (TPM)
+                return validated_result
 
             except httpx.TimeoutException as te:
                 last_exception = LLMTimeoutError(f"LLM request timed out after {self.timeout_seconds}s: {te}")
