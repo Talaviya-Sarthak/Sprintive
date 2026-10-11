@@ -57,10 +57,25 @@ class BaseLLMClient(ABC):
         pass
 
 
+GROQ_FALLBACK_MODELS = [
+    "llama-3.1-8b-instant",
+    "llama-3.3-70b-versatile",
+    "mixtral-8x7b-32768",
+]
+
+def parse_groq_retry_seconds(error_text: str) -> Optional[float]:
+    match = re.search(r"try again in (?:(\d+)m)?([0-9.]+)s", error_text, re.IGNORECASE)
+    if match:
+        minutes = float(match.group(1)) if match.group(1) else 0.0
+        seconds = float(match.group(2))
+        return (minutes * 60.0) + seconds
+    return None
+
+
 class OpenAICompatibleLLMClient(BaseLLMClient):
     """
     LLM client for any OpenAI-compatible API (OpenAI, Groq, Ollama, OpenRouter, etc.).
-    Uses httpx with configurable timeouts and retries.
+    Uses httpx with configurable timeouts, retries, and rate-limit fallbacks.
     """
 
     def __init__(
@@ -107,6 +122,7 @@ class OpenAICompatibleLLMClient(BaseLLMClient):
 
         endpoint = f"{self.base_url}/chat/completions"
         last_exception: Optional[Exception] = None
+        tried_models: set = {self.model}
 
         for attempt in range(self.max_retries + 1):
             try:
@@ -156,12 +172,39 @@ class OpenAICompatibleLLMClient(BaseLLMClient):
                 logger.warning("LLM attempt %d error: %s", attempt + 1, exc)
 
             if attempt < self.max_retries:
-                wait_time = 0.5 * (attempt + 1)
                 exc_str = str(last_exception) if last_exception else ""
+                
+                # Check if Daily Token Quota (TPD) was exceeded
+                if "tokens per day" in exc_str.lower() or "tpd" in exc_str.lower():
+                    next_model = next((m for m in GROQ_FALLBACK_MODELS if m not in tried_models), None)
+                    if next_model:
+                        logger.warning("Daily token limit (TPD) reached for model %s. Auto-switching to fallback model: %s", payload["model"], next_model)
+                        tried_models.add(next_model)
+                        payload["model"] = next_model
+                        self.model = next_model
+                        time.sleep(1.0)
+                        continue
+                    else:
+                        logger.warning("All LLM fallback models exhausted for daily quota. Falling back immediately to rule-based engine.")
+                        raise last_exception
+
+                # Standard rate limit backoff
+                wait_time = 0.5 * (attempt + 1)
                 if "429" in exc_str:
-                    match = re.search(r"try again in ([0-9.]+)s", exc_str, re.IGNORECASE)
-                    if match:
-                        wait_time = min(float(match.group(1)) + 1.0, 20.0)
+                    groq_secs = parse_groq_retry_seconds(exc_str)
+                    if groq_secs is not None and groq_secs <= 20.0:
+                        wait_time = groq_secs + 1.0
+                    elif groq_secs is not None and groq_secs > 20.0:
+                        # Wait time too long for inline wait (minutes); try alternate model
+                        next_model = next((m for m in GROQ_FALLBACK_MODELS if m not in tried_models), None)
+                        if next_model:
+                            logger.warning("Rate limit wait (%.1fs) too long. Switching to fallback model: %s", groq_secs, next_model)
+                            tried_models.add(next_model)
+                            payload["model"] = next_model
+                            self.model = next_model
+                            time.sleep(1.0)
+                            continue
+                        wait_time = 15.0
                     else:
                         wait_time = min(5.0 * (attempt + 1), 15.0)
                     logger.info("Rate limit (429) detected: sleeping %.2fs before attempt %d...", wait_time, attempt + 2)
