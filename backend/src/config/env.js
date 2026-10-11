@@ -50,7 +50,7 @@ export const env = {
   githubClientId:     process.env.GITHUB_CLIENT_ID     ?? '',
   githubClientSecret: process.env.GITHUB_CLIENT_SECRET ?? '',
 
-  frontendUrl:        process.env.FRONTEND_URL ?? 'http://localhost:5173',
+  frontendUrl:        (process.env.FRONTEND_URL ?? 'http://localhost:5173').replace(/\/+$/, ''),
 
   // ── Object Storage ─────────────────────────────────────────────────────────
   // Change SUPABASE_STORAGE_URL to switch Supabase projects.

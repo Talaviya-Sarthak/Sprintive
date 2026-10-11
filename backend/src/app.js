@@ -20,7 +20,15 @@ app.set('trust proxy', 1);
 
 app.use(helmet());
 app.use(cors({
-  origin:         env.frontendUrl,
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    const normalized = origin.replace(/\/+$/, '');
+    const expected = env.frontendUrl.replace(/\/+$/, '');
+    if (normalized === expected || normalized === 'http://localhost:5173' || normalized.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   credentials:    true,
   methods:        ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],

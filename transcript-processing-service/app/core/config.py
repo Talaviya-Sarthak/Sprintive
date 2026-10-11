@@ -18,7 +18,10 @@ class Settings(BaseSettings):
 
     # LLM and STT Error Correction settings
     LLM_PROVIDER: str = "openai"
-    LLM_API_KEY: str = ""
+    LLM_API_KEY: str = Field(
+        default="",
+        validation_alias=AliasChoices("LLM_API_KEY", "GROQ_API_KEY", "OPENAI_API_KEY"),
+    )
     LLM_BASE_URL: str = "https://api.openai.com/v1"
     LLM_MODEL: str = "gpt-4o-mini"
     LLM_TEMPERATURE: float = 0.0

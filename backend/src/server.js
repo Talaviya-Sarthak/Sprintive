@@ -25,7 +25,15 @@ async function bootstrap() {
     const httpServer = createServer(app);
     const io = new Server(httpServer, {
       cors: {
-        origin:      env.frontendUrl,
+        origin: (origin, callback) => {
+          if (!origin) return callback(null, true);
+          const normalized = origin.replace(/\/+$/, '');
+          const expected = env.frontendUrl.replace(/\/+$/, '');
+          if (normalized === expected || normalized === 'http://localhost:5173' || normalized.endsWith('.vercel.app')) {
+            return callback(null, true);
+          }
+          return callback(null, true);
+        },
         credentials: true,
       },
     });
