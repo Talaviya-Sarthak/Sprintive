@@ -4,6 +4,7 @@ import logging
 from typing import List, Optional
 from app.core.config import settings
 from app.models.transcript import (
+    SegmentClassification,
     STTCorrectionLLMOutput,
     STTErrorType,
     TranscriptSegment,
@@ -12,7 +13,11 @@ from app.prompts.stt_correction import (
     SYSTEM_PROMPT,
     build_stt_correction_user_prompt,
 )
-from app.services.llm_client import BaseLLMClient, get_llm_client
+from app.services.llm_client import (
+    AllModelsExhaustedError,
+    BaseLLMClient,
+    get_llm_client,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +67,7 @@ def correct_stt_segments(
     )
 
     corrected_segments: List[TranscriptSegment] = []
+    circuit_open_for_run: bool = False
 
     for idx, segment in enumerate(segments):
         active_text = (
@@ -70,7 +76,7 @@ def correct_stt_segments(
             else segment.text
         )
 
-        # Optimization & Guard: Skip excluded segments or purely empty/whitespace utterances
+        # Optimization & Guard 1: Skip excluded segments or purely empty/whitespace utterances
         if not segment.include_in_meeting or not active_text.strip():
             segment_copy = segment.model_copy(
                 update={
@@ -79,6 +85,37 @@ def correct_stt_segments(
                     "stt_confidence": 1.0,
                     "stt_error_type": None,
                     "stt_reason": "Excluded from meeting or empty segment",
+                }
+            )
+            corrected_segments.append(segment_copy)
+            continue
+
+        # Fast-Fail Guard: If circuit breaker tripped for all models in this run, bypass LLM immediately
+        if circuit_open_for_run:
+            segment_copy = segment.model_copy(
+                update={
+                    "stt_corrected_text": active_text,
+                    "stt_modified": False,
+                    "stt_confidence": segment.confidence or 1.0,
+                    "stt_error_type": None,
+                    "stt_reason": "LLM models quota-exhausted; preserved original text",
+                }
+            )
+            corrected_segments.append(segment_copy)
+            continue
+
+        # Token Reduction Optimization 2: Clean segments with very high confidence don't need expensive LLM correction
+        if (
+            segment.classification == SegmentClassification.CLEAN
+            and (segment.confidence or 0.0) >= 0.98
+        ):
+            segment_copy = segment.model_copy(
+                update={
+                    "stt_corrected_text": active_text,
+                    "stt_modified": False,
+                    "stt_confidence": segment.confidence or 1.0,
+                    "stt_error_type": None,
+                    "stt_reason": "High-confidence clean segment; preserved original text",
                 }
             )
             corrected_segments.append(segment_copy)
@@ -132,6 +169,24 @@ def correct_stt_segments(
                         "stt_reason": reason,
                     }
                 )
+
+        except AllModelsExhaustedError as exc:
+            # Fast fail: All candidate models are rate-limited or unavailable
+            logger.warning(
+                "All LLM models exhausted during STT correction for segment %d: %s. Preserving original text and fast-failing remaining segments.",
+                segment.sequence,
+                exc,
+            )
+            circuit_open_for_run = True
+            segment_copy = segment.model_copy(
+                update={
+                    "stt_corrected_text": active_text,
+                    "stt_modified": False,
+                    "stt_confidence": 1.0,
+                    "stt_error_type": None,
+                    "stt_reason": "LLM models quota-exhausted; preserved original text",
+                }
+            )
 
         except Exception as exc:
             # Graceful degradation: log error and preserve original text

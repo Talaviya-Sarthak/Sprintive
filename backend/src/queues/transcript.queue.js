@@ -3,7 +3,9 @@ import { createRedisConnection } from '../config/redis.js';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 
-export const TRANSCRIPT_QUEUE_NAME = 'transcript-processing';
+export const TRANSCRIPT_QUEUE_NAME =
+  process.env.TRANSCRIPT_QUEUE_NAME ||
+  (env.isDev ? 'transcript-processing-dev' : 'transcript-processing');
 
 let _transcriptQueue = null;
 let _queueRedisConnection = null;
