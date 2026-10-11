@@ -44,6 +44,19 @@ app.add_middleware(
 app.include_router(transcript_router)
 
 
+@app.get("/", tags=["system"], summary="Root endpoint")
+@app.head("/", tags=["system"], summary="Root HEAD endpoint")
+async def root():
+    """Root endpoint to verify service is running."""
+    return {
+        "status": "online",
+        "service": settings.PROJECT_NAME,
+        "version": "0.1.0",
+        "health": "/health",
+        "docs": "/docs",
+    }
+
+
 @app.get("/health", tags=["system"], summary="Health check")
 async def health_check():
     """Health check endpoint to verify service is alive."""
