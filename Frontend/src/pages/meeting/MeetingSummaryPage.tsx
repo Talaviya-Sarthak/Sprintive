@@ -54,9 +54,9 @@ export default function MeetingSummaryPage() {
     queryFn: () => meetingService.getTranscript(meetingId!),
     enabled: !!meetingId,
     refetchInterval: (query) => {
-      // Poll every 3 seconds if processing
+      // Poll every 3 seconds while raw_stored or processing
       const status = query.state.data?.status;
-      return status === 'processing' ? 3000 : false;
+      return (status === 'processing' || status === 'raw_stored') ? 3000 : false;
     },
   });
 
@@ -198,8 +198,8 @@ export default function MeetingSummaryPage() {
                   )}
                 </div>
                 <p className="text-xs" style={{ color: 'var(--app-text-secondary)' }}>
-                  {transcriptStatus === 'raw_stored' && 'Transcript has been saved successfully to Supabase Storage. Awaiting preprocessing.'}
-                  {transcriptStatus === 'processing' && 'Cleaning and preparing transcript through the 14-stage preprocessing pipeline...'}
+                  {transcriptStatus === 'raw_stored' && 'Transcript saved. Your processed transcript will be ready in a few minutes...'}
+                  {transcriptStatus === 'processing' && 'Cleaning and preparing transcript through the 14-stage preprocessing pipeline... Your processed transcript will be ready in a few minutes.'}
                   {transcriptStatus === 'ready_for_ai' && 'Transcript preprocessing completed. Cleaned and normalized for AI models.'}
                   {transcriptStatus === 'failed' && (transcriptData?.error_message ? `Transcript processing failed: ${transcriptData.error_message}` : 'Transcript processing failed.')}
                   {!transcriptStatus && (transcriptLoading ? 'Retrieving transcript details...' : 'No transcript recorded for this meeting.')}

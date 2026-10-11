@@ -36,7 +36,7 @@ export default function MeetingRoom() {
   } = useMeetingStore();
 
   const { stream, stopMedia, toggleMic, toggleCamera: toggleCam, startScreenShare, stopScreenShare } = useMediaDevices();
-  const { sendChat, startMeeting, endMeeting, onMeetingEnded, onForceLeave, leaveMeeting: leaveSocket, setLocalStream, sttStatus, sendAudioChunk, screenShareStart, screenShareStop, addScreenShareTrack, removeScreenShareTrack } = useMeetingSocket(id);
+  const { sendChat, startMeeting, endMeeting, onMeetingEnded, onRedirect, onForceLeave, leaveMeeting: leaveSocket, setLocalStream, sttStatus, sendAudioChunk, screenShareStart, screenShareStop, addScreenShareTrack, removeScreenShareTrack } = useMeetingSocket(id);
 
   // Audio capture: send chunks to server for STT when meeting is active
   const isMeetingActive = meeting?.status === 'active';
@@ -60,14 +60,27 @@ export default function MeetingRoom() {
     return cleanup;
   }, [onMeetingEnded]);
 
-  // Force leave when host ends meeting — disconnect immediately
+  // Handle redirect emitted by server after meeting ends
+  useEffect(() => {
+    const cleanup = onRedirect((url) => {
+      stopMedia();
+      navigate(url);
+    });
+    return cleanup;
+  }, [onRedirect, navigate, stopMedia]);
+
+  // Force leave fallback when host ends meeting
   useEffect(() => {
     const cleanup = onForceLeave(() => {
       stopMedia();
-      navigate('/dashboard');
+      if (id) {
+        navigate(`/meetings/${id}/summary`);
+      } else {
+        navigate('/dashboard');
+      }
     });
     return cleanup;
-  }, [onForceLeave, navigate, stopMedia]);
+  }, [onForceLeave, navigate, stopMedia, id]);
 
   useEffect(() => {
     if (!id) return;
@@ -187,7 +200,9 @@ export default function MeetingRoom() {
             </div>
             <div>
               <h2 className="text-xl font-semibold text-[#f4f4f5]">Meeting Ended</h2>
-              <p className="text-[#a1a1aa] text-xs mt-1">Transcript saved to Supabase</p>
+              <p className="text-[#a1a1aa] text-xs mt-1">
+                Transcript saved. Your processed transcript will be ready in a few minutes.
+              </p>
             </div>
 
             {/* Transcript preview */}
@@ -195,17 +210,25 @@ export default function MeetingRoom() {
               <p className="text-xs font-mono font-semibold text-[#71717a] mb-2 uppercase tracking-wider">Meeting Transcript</p>
               <div className="bg-[#1c1c21] border border-[#27272a] rounded-xl p-4 max-h-48 overflow-y-auto">
                 <pre className="text-xs text-[#a1a1aa] whitespace-pre-wrap font-sans leading-relaxed">
-                  {endedData.transcript?.content}
+                  {endedData.transcript?.content || 'Raw dialogue captured and sent to preprocessing pipeline.'}
                 </pre>
               </div>
             </div>
 
-            <button
-              onClick={() => navigate(-1)}
-              className="w-full py-3 rounded-xl bg-[#f4f4f5] hover:bg-[#e4e4e7] text-[#09090b] font-semibold text-xs transition-colors cursor-pointer"
-            >
-              Back to Dashboard
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => navigate(`/meetings/${id}/summary`)}
+                className="flex-1 py-3 rounded-xl bg-[#f4f4f5] hover:bg-[#e4e4e7] text-[#09090b] font-semibold text-xs transition-colors cursor-pointer"
+              >
+                View Meeting Summary & Transcript
+              </button>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="py-3 px-4 rounded-xl bg-[#1c1c21] hover:bg-[#27272a] text-[#a1a1aa] hover:text-[#f4f4f5] font-semibold text-xs transition-colors cursor-pointer"
+              >
+                Dashboard
+              </button>
+            </div>
           </div>
         </motion.div>
       </div>
