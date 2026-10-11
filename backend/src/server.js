@@ -47,6 +47,15 @@ async function bootstrap() {
       logger.info(`Health check → http://localhost:${env.port}/health`);
     });
 
+    // If RUN_WORKER=true (for single-container Render deployments),
+    // launch the BullMQ transcript worker in the background.
+    if (process.env.RUN_WORKER === 'true') {
+      logger.info('[server] RUN_WORKER=true detected: starting BullMQ transcript worker...');
+      import('./workers/transcript.worker.js').catch((err) => {
+        logger.error(`[server] Failed to start in-process transcript worker: ${err.message}`);
+      });
+    }
+
     const shutdown = async (signal) => {
       logger.info(`${signal} received — shutting down gracefully`);
       try {
