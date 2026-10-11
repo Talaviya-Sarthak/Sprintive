@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     LLM_BASE_URL: str = "https://api.openai.com/v1"
     LLM_MODEL: str = "gpt-4o-mini"
     LLM_TEMPERATURE: float = 0.0
+    LLM_MAX_TOKENS: int = Field(
+        default=1024,
+        validation_alias=AliasChoices("LLM_MAX_TOKENS", "MAX_TOKENS"),
+    )
     LLM_TIMEOUT_SECONDS: float = 10.0
     LLM_MAX_RETRIES: int = 3
     STT_CONFIDENCE_THRESHOLD: float = 0.90

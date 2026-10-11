@@ -87,11 +87,15 @@ class OpenAICompatibleLLMClient(BaseLLMClient):
         temperature: Optional[float] = None,
         timeout_seconds: Optional[float] = None,
         max_retries: Optional[int] = None,
+        max_tokens: Optional[int] = None,
     ):
         self.api_key = api_key if api_key is not None else settings.LLM_API_KEY
         self.base_url = (base_url if base_url is not None else settings.LLM_BASE_URL).rstrip("/")
         self.model = model if model is not None else settings.LLM_MODEL
         self.temperature = temperature if temperature is not None else settings.LLM_TEMPERATURE
+        self.max_tokens = (
+            max_tokens if max_tokens is not None else getattr(settings, "LLM_MAX_TOKENS", 1024)
+        )
         self.timeout_seconds = (
             timeout_seconds if timeout_seconds is not None else settings.LLM_TIMEOUT_SECONDS
         )
@@ -120,6 +124,8 @@ class OpenAICompatibleLLMClient(BaseLLMClient):
             "temperature": self.temperature,
             "response_format": {"type": "json_object"},
         }
+        if self.max_tokens:
+            payload["max_tokens"] = self.max_tokens
 
         endpoint = f"{self.base_url}/chat/completions"
         last_exception: Optional[Exception] = None
