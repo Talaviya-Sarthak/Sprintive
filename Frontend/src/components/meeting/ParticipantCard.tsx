@@ -17,11 +17,17 @@ export default function ParticipantCard({ participant, isActive, videoRef }: Pro
     internalRef.current = el;
     if (videoRef) (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = el;
     if (el && participant.stream) {
-      el.srcObject = participant.stream;
-      // Guarantee playback: unmuted autoplay may be blocked, so retry muted.
-      el.play().catch(() => { el.muted = true; el.play().catch(() => {}); });
+      if (el.srcObject !== participant.stream) {
+        el.srcObject = participant.stream;
+      }
+      el.play().catch(() => {
+        if (participant.id === 'local' || !!videoRef) {
+          el.muted = true;
+          el.play().catch(() => {});
+        }
+      });
     }
-  }, [videoRef, participant.stream]);
+  }, [videoRef, participant.stream, participant.id]);
 
   useEffect(() => {
     const el = videoRef?.current || internalRef.current;
@@ -29,13 +35,14 @@ export default function ParticipantCard({ participant, isActive, videoRef }: Pro
       if (el.srcObject !== participant.stream) {
         el.srcObject = participant.stream;
       }
-      const sid = participant.stream.id;
-      if (!playedStreams.current.has(sid)) {
-        playedStreams.current.add(sid);
-        el.play().catch(() => { el.muted = true; el.play().catch(() => {}); });
-      }
+      el.play().catch(() => {
+        if (participant.id === 'local' || !!videoRef) {
+          el.muted = true;
+          el.play().catch(() => {});
+        }
+      });
     }
-  }, [participant.stream, participant.isCameraOff, videoRef]);
+  }, [participant.stream, participant.isCameraOff, participant.id, videoRef]);
 
   return (
     <motion.div
@@ -53,7 +60,7 @@ export default function ParticipantCard({ participant, isActive, videoRef }: Pro
           ref={handleVideoRef}
           autoPlay
           playsInline
-          muted={participant.id === 'local' || participant.role === 'host' || !!videoRef}
+          muted={participant.id === 'local' || !!videoRef}
           className="w-full h-full object-cover"
         />
       ) : (

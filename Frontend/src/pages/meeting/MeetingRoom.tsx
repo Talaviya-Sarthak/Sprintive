@@ -90,19 +90,31 @@ export default function MeetingRoom() {
 
   // Determine the active screen share stream (local or remote) - must be before the effect below
   const remoteScreenSharer = participants.find(p => p.isScreenSharing && p.user_id !== userId);
-  const activeScreenShareStream = isScreenSharing ? screenShareStream : remoteScreenSharer?.screenStream ?? null;
+  const activeScreenShareStream = isScreenSharing
+    ? screenShareStream
+    : (remoteScreenSharer?.screenStream ?? (remoteScreenSharer?.isScreenSharing ? remoteScreenSharer.stream : null));
   const activeScreenShareUserId = isScreenSharing ? userId : remoteScreenSharer?.user_id ?? null;
+
+  const handleScreenShareVideoRef = useCallback((el: HTMLVideoElement | null) => {
+    screenShareVideoRef.current = el;
+    if (el && activeScreenShareStream) {
+      if (el.srcObject !== activeScreenShareStream) {
+        el.srcObject = activeScreenShareStream;
+      }
+      el.play().catch(() => {});
+    }
+  }, [activeScreenShareStream]);
 
   // Bind screen share stream to video element (local or remote)
   useEffect(() => {
     const el = screenShareVideoRef.current;
-    console.log('[screen-share] video bind effect: el=', !!el, 'activeScreenShareStream=', !!activeScreenShareStream, 'screenShareStream=', !!screenShareStream);
     if (el && activeScreenShareStream) {
-      console.log('[screen-share] setting srcObject on video element, stream id=', activeScreenShareStream.id?.slice(0, 8));
-      el.srcObject = activeScreenShareStream;
+      if (el.srcObject !== activeScreenShareStream) {
+        el.srcObject = activeScreenShareStream;
+      }
       el.play().catch(() => {});
     }
-  }, [activeScreenShareStream, screenShareStream]);
+  }, [activeScreenShareStream]);
 
   const handleToggleMic = () => { toggleMic(); toggleMute(); };
   const handleToggleCam = () => { toggleCam(); toggleCamera(); };
@@ -310,7 +322,7 @@ export default function MeetingRoom() {
                 </span>
               </div>
               <video
-                ref={screenShareVideoRef}
+                ref={handleScreenShareVideoRef}
                 autoPlay
                 playsInline
                 muted={activeScreenShareUserId === userId}

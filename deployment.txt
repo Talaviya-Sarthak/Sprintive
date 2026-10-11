@@ -1,38 +1,56 @@
-Vercel (Frontend Dashboard → Environment Variables):env
+===================================================
+Vercel (Frontend Dashboard → Environment Variables):
 
+Root Directory: Frontend
+Build Command: npm run build
+Output Directory: dist
 
-VITE_API_URL=https://<your-backend-app>.onrender.com/api
-VITE_SOCKET_URL=https://<your-backend-app>.onrender.com
+VITE_API_URL=https://sprintive-1.onrender.com/api
+VITE_SOCKET_URL=https://sprintive-1.onrender.com
 
 ===================================================
-In Render (Backend Service → Environment):env
+In Render (Backend Service → Environment):
 
-FRONTEND_URL=https://<your-frontend>.vercel.app
-AI_SERVICE_URL=https://<your-ai-service>.onrender.com
-TRANSCRIPT_PROCESSING_SERVICE_URL=https://<your-transcript-service>.onrender.com
+Root Directory: backend
+Build Command: npm install
+Start Command: npm start
+
+FRONTEND_URL=https://sprintiveproduction.vercel.app
+AI_SERVICE_URL=https://sprintive-ai-productions.onrender.com
+TRANSCRIPT_PROCESSING_SERVICE_URL=https://sprintive-transcript-productions.onrender.com
 INTERNAL_SERVICE_KEY=sprintive_internal_service_secret_key_2026
 AI_SERVICE_TIMEOUT_MS=60000
-====================================================
 
+# Core backend variables (Required):
+STORAGE_PROVIDER=supabase
+SUPABASE_STORAGE_URL=dpwcjscsluiiodyjoyya:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwd2Nqc2NzbHVpaW9keWpveXlhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Njk2MDI1NiwiZXhwIjoyMTAyNTM2MjU2fQ.74eqeLYlst7UIQr3qbIiCnWunOdR4AkLEqZwbCHm7d0
+SUPABASE_BUCKET=sprintive-storage
+DEEPGRAM_API_KEY=086ffb2ac4f6ed7260f96ebfdb6b579d984d1668
+DEEPGRAM_MODEL=nova-3
+
+====================================================
 In Render (AI Service → Environment):
 
+Root Directory: ai-service
+Build Command: pip install -r requirements.txt
 Start Command: uvicorn main:app --host 0.0.0.0 --port $PORT
 
-BACKEND_URL=https://<your-backend-app>.onrender.com
+BACKEND_URL=https://sprintive-1.onrender.com
 INTERNAL_SERVICE_KEY=sprintive_internal_service_secret_key_2026
-GROQ_API_KEY=gsk_...
+GROQ_API_KEY=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
 
 ===================================================
-
 In Render (Transcript Processing Service → Environment):
 
+Root Directory: transcript-processing-service
+Build Command: pip install -r requirements.txt
 Start Command: uvicorn app.main:app --host 0.0.0.0 --port $PORT
 
 STORAGE_TYPE=supabase
 SUPABASE_URL=https://dpwcjscsluiiodyjoyya.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGci...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwd2Nqc2NzbHVpaW9keWpveXlhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Njk2MDI1NiwiZXhwIjoyMTAyNTM2MjU2fQ.74eqeLYlst7UIQr3qbIiCnWunOdR4AkLEqZwbCHm7d0
 SUPABASE_STORAGE_BUCKET=sprintive-storage
 LLM_PROVIDER=groq
-GROQ_API_KEY=gsk_...
+GROQ_API_KEY=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
 LLM_BASE_URL=https://api.groq.com/openai/v1
 LLM_MODEL=openai/gpt-oss-20b
