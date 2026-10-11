@@ -16,6 +16,40 @@ import TranscriptPanel from '../../components/meeting/TranscriptPanel';
 import { MeetingStatusBadge } from '../../components/ui/Badge';
 import type { EndMeetingData } from '../../types';
 
+function RemoteAudioPlayer({ stream }: { stream?: MediaStream }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    if (stream && stream.getAudioTracks().length > 0) {
+      if (el.srcObject !== stream) {
+        el.srcObject = stream;
+      }
+      el.muted = false;
+      el.volume = 1.0;
+      const p = el.play();
+      if (p !== undefined) {
+        p.catch(() => {
+          const resume = () => {
+            el.play().catch(() => {});
+            window.removeEventListener('click', resume);
+            window.removeEventListener('keydown', resume);
+            window.removeEventListener('touchstart', resume);
+          };
+          window.addEventListener('click', resume, { once: true });
+          window.addEventListener('keydown', resume, { once: true });
+          window.addEventListener('touchstart', resume, { once: true });
+        });
+      }
+    } else {
+      el.srcObject = null;
+    }
+  }, [stream]);
+
+  return <audio ref={audioRef} autoPlay playsInline />;
+}
+
 export default function MeetingRoomPage() {
   const { meetingId } = useParams<{ meetingId: string }>();
   const navigate = useNavigate();
@@ -230,7 +264,15 @@ export default function MeetingRoomPage() {
     if (tab === 'chat') resetUnread();
   };
 
-  // Combine local + remote participants for display
+  // Combine local + remote participants for display (deduplicate remote by user_id)
+  const remoteParticipants = Array.from(
+    new Map(
+      participants
+        .filter((p) => p.user_id && p.user_id !== userId)
+        .map((p) => [p.user_id, p])
+    ).values()
+  );
+
   const allParticipants = [
     {
       id: 'local',
@@ -246,7 +288,7 @@ export default function MeetingRoomPage() {
       isSpeaking: activeSpeakerId === userId,
       stream: stream ?? undefined,
     },
-    ...participants.filter((p) => p.user_id !== userId),
+    ...remoteParticipants,
   ];
 
   const gridCols = allParticipants.length === 1 ? 'grid-cols-1' :
@@ -396,6 +438,11 @@ export default function MeetingRoomPage() {
               />
             </div>
           )}
+
+          {/* Remote audio playback for all remote participants */}
+          {remoteParticipants.map((p) => (
+            <RemoteAudioPlayer key={`remote-audio-${p.user_id}`} stream={p.stream} />
+          ))}
 
           <div className={`grid ${gridCols} gap-3 h-full`}>
             <AnimatePresence>

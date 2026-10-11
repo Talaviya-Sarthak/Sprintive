@@ -254,7 +254,10 @@ export function initSocket(io) {
       try {
         const room = getRoomKey(meetingId);
         if (!socket.rooms.has(room)) {
-          return socket.emit('error', { message: 'You have not joined this meeting room' });
+          await meetingService.assertMeetingAccess(meetingId, user.id);
+          socket.join(room);
+          if (!rooms.has(room)) rooms.set(room, new Set());
+          rooms.get(room).add(socket.id);
         }
 
         const chat = await meetingService.saveChat({ meeting_id: meetingId, user_id: user.id, message });
@@ -327,19 +330,19 @@ export function initSocket(io) {
     socket.on('webrtc:offer', ({ meetingId, targetSocketId, offer }) => {
       const room = resolveRoom(meetingId);
       if (!room) return;
-      io.to(targetSocketId).emit('webrtc:offer', { fromSocketId: socket.id, offer });
+      io.to(targetSocketId).emit('webrtc:offer', { fromSocketId: socket.id, userId: user.id, offer });
     });
 
     socket.on('webrtc:answer', ({ meetingId, targetSocketId, answer }) => {
       const room = resolveRoom(meetingId);
       if (!room) return;
-      io.to(targetSocketId).emit('webrtc:answer', { fromSocketId: socket.id, answer });
+      io.to(targetSocketId).emit('webrtc:answer', { fromSocketId: socket.id, userId: user.id, answer });
     });
 
     socket.on('webrtc:candidate', ({ meetingId, targetSocketId, candidate }) => {
       const room = resolveRoom(meetingId);
       if (!room) return;
-      io.to(targetSocketId).emit('webrtc:candidate', { fromSocketId: socket.id, candidate });
+      io.to(targetSocketId).emit('webrtc:candidate', { fromSocketId: socket.id, userId: user.id, candidate });
     });
 
     socket.on('disconnect', () => {

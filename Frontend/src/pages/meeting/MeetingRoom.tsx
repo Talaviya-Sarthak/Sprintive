@@ -19,6 +19,40 @@ function parseJwt(token: string) {
   try { return JSON.parse(atob(token.split('.')[1])); } catch { return {}; }
 }
 
+function RemoteAudioPlayer({ stream }: { stream?: MediaStream }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    if (stream && stream.getAudioTracks().length > 0) {
+      if (el.srcObject !== stream) {
+        el.srcObject = stream;
+      }
+      el.muted = false;
+      el.volume = 1.0;
+      const p = el.play();
+      if (p !== undefined) {
+        p.catch(() => {
+          const resume = () => {
+            el.play().catch(() => {});
+            window.removeEventListener('click', resume);
+            window.removeEventListener('keydown', resume);
+            window.removeEventListener('touchstart', resume);
+          };
+          window.addEventListener('click', resume, { once: true });
+          window.addEventListener('keydown', resume, { once: true });
+          window.addEventListener('touchstart', resume, { once: true });
+        });
+      }
+    } else {
+      el.srcObject = null;
+    }
+  }, [stream]);
+
+  return <audio ref={audioRef} autoPlay playsInline />;
+}
+
 export default function MeetingRoom() {
   const { id }   = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -36,7 +70,12 @@ export default function MeetingRoom() {
   } = useMeetingStore();
 
   const { stream, stopMedia, toggleMic, toggleCamera: toggleCam, startScreenShare, stopScreenShare } = useMediaDevices();
-  const { sendChat, startMeeting, endMeeting, onMeetingEnded, onRedirect, onForceLeave, leaveMeeting: leaveSocket, setLocalStream, sttStatus, sendAudioChunk, screenShareStart, screenShareStop, addScreenShareTrack, removeScreenShareTrack } = useMeetingSocket(id);
+  const {
+    sendChat, startMeeting, endMeeting, onMeetingEnded, onRedirect, onForceLeave,
+    leaveMeeting: leaveSocket, setLocalStream, toggleMic: socketToggleMic,
+    toggleCamera: socketToggleCamera, isConnected, sttStatus, sendAudioChunk,
+    screenShareStart, screenShareStop, addScreenShareTrack, removeScreenShareTrack,
+  } = useMeetingSocket(id);
 
   // Audio capture: send chunks to server for STT when meeting is active
   const isMeetingActive = meeting?.status === 'active';
@@ -101,11 +140,19 @@ export default function MeetingRoom() {
     }
   }, [stream]);
 
+  // Sync initial camera/mic state to all participants on connect + stream ready
+  useEffect(() => {
+    if (isConnected && stream) {
+      socketToggleCamera(isCameraOff);
+      socketToggleMic(isMuted);
+    }
+  }, [isConnected, stream]);
+
   // Determine the active screen share stream (local or remote) - must be before the effect below
   const remoteScreenSharer = participants.find(p => p.isScreenSharing && p.user_id !== userId);
   const activeScreenShareStream = isScreenSharing
     ? screenShareStream
-    : (remoteScreenSharer?.screenStream ?? (remoteScreenSharer?.isScreenSharing ? remoteScreenSharer.stream : null));
+    : (remoteScreenSharer?.screenStream ?? null);
   const activeScreenShareUserId = isScreenSharing ? userId : remoteScreenSharer?.user_id ?? null;
 
   const handleScreenShareVideoRef = useCallback((el: HTMLVideoElement | null) => {
@@ -129,8 +176,18 @@ export default function MeetingRoom() {
     }
   }, [activeScreenShareStream]);
 
-  const handleToggleMic = () => { toggleMic(); toggleMute(); };
-  const handleToggleCam = () => { toggleCam(); toggleCamera(); };
+  const handleToggleMic = () => {
+    const nextMuted = !isMuted;
+    toggleMic();
+    toggleMute();
+    socketToggleMic(nextMuted);
+  };
+  const handleToggleCam = () => {
+    const nextCamOff = !isCameraOff;
+    toggleCam();
+    toggleCamera();
+    socketToggleCamera(nextCamOff);
+  };
 
   const handleScreenShare = async () => {
     console.log('[screen-share] handleScreenShare called, isScreenSharing=', isScreenSharing);
@@ -236,6 +293,15 @@ export default function MeetingRoom() {
   }
 
   // ── Main Room ──────────────────────────────────────────────────────────────
+  // Deduplicate remote participants by user_id to ensure each peer is only rendered once
+  const remoteParticipants = Array.from(
+    new Map(
+      participants
+        .filter((p) => p.user_id && p.user_id !== userId)
+        .map((p) => [p.user_id, p])
+    ).values()
+  );
+
   const allParticipants = [
     // Local user as first participant
     {
@@ -252,7 +318,7 @@ export default function MeetingRoom() {
       isSpeaking: activeSpeakerId === userId,
       stream: stream ?? undefined,
     },
-    ...participants.filter((p) => p.user_id !== userId),
+    ...remoteParticipants,
   ];
 
   const gridCols = allParticipants.length === 1 ? 'grid-cols-1' :
@@ -260,6 +326,10 @@ export default function MeetingRoom() {
 
   return (
     <div className="h-screen bg-[#09090b] flex flex-col overflow-hidden text-[#a1a1aa]">
+      {/* Remote audio elements: continuous playback regardless of video element mounting */}
+      {remoteParticipants.map((p) => (
+        <RemoteAudioPlayer key={`remote-audio-${p.user_id}`} stream={p.stream} />
+      ))}
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-6 py-3.5 border-b border-[#27272a] bg-[#0c0c0e]/95 backdrop-blur-md flex-shrink-0">
         <div className="flex items-center gap-3">
@@ -358,7 +428,7 @@ export default function MeetingRoom() {
             <AnimatePresence>
               {allParticipants.map((p) => (
                 <ParticipantCard
-                  key={p.id}
+                  key={p.user_id || p.id}
                   participant={p}
                   isActive={activeSpeakerId === p.user_id}
                   videoRef={p.user_id === userId ? localVideoRef : undefined}

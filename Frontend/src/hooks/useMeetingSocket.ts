@@ -4,7 +4,7 @@ import { useMeetingStore, type TranscriptSegment, type LiveCaption } from '../st
 import { ensureFreshAccessToken } from '../services/api';
 import type { Participant, ChatMessage, Meeting } from '../types';
 
-const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') ?? 'http://localhost:5000';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const log = (...args: any[]) => console.log('[wss]', ...args);
@@ -99,6 +99,15 @@ export function useMeetingSocket(meetingId: string | undefined) {
     const flags = { isInitiator, makingOffer: false, settingAnswer: false, negotiated: isInitiator };
     negotiationFlags.current.set(socketId, flags);
 
+    if (pc.getTransceivers().length === 0) {
+      try {
+        pc.addTransceiver('audio', { direction: 'sendrecv' });
+        pc.addTransceiver('video', { direction: 'sendrecv' });
+      } catch (err) {
+        log(`transceiver creation error: ${err}`);
+      }
+    }
+
     addTracksToPeer(pc);
 
     const makeOffer = async () => {
@@ -139,21 +148,38 @@ export function useMeetingSocket(meetingId: string | undefined) {
       let uid = socketToUser.current.get(socketId);
       if (!uid) {
         const p = useMeetingStore.getState().participants.find(x => x.socketId === socketId);
-        if (p) uid = p.user_id;
-        if (p) log(`ontrack: resolved uid from participants store: ${uid?.slice(0, 8)}`);
+        if (p) {
+          uid = p.user_id;
+          socketToUser.current.set(socketId, uid);
+          log(`ontrack: resolved uid from participants store: ${uid?.slice(0, 8)}`);
+        }
       } else {
         log(`ontrack: resolved uid from socketToUser: ${uid?.slice(0, 8)}`);
       }
 
+      if (!uid) {
+        // Fallback: If there is only one remote participant, map them
+        const remotes = useMeetingStore.getState().participants.filter(x => x.socketId && x.socketId !== socketRef.current?.id);
+        if (remotes.length === 1) {
+          uid = remotes[0].user_id;
+          socketToUser.current.set(socketId, uid);
+          log(`ontrack: resolved uid as single remote participant: ${uid?.slice(0, 8)}`);
+        }
+      }
+
       const participant = uid ? useMeetingStore.getState().participants.find(x => x.user_id === uid) : undefined;
       const isSharer = participant?.isScreenSharing === true;
-      const alreadyHasVideo = (participant?.stream?.getVideoTracks().length ?? 0) > 0;
 
-      const isScreenShareTrack = isVideo && (
-        newCount > 1 ||
-        alreadyHasVideo ||
-        (isSharer && (incomingTrack.label.toLowerCase().includes('screen') || incomingTrack.label.toLowerCase().includes('window') || incomingTrack.label.toLowerCase().includes('display'))) ||
-        (isSharer && participant?.stream && participant.stream.id !== e.streams[0]?.id)
+      const trackLabel = (incomingTrack?.label || '').toLowerCase();
+      const hasScreenKeyword = trackLabel.includes('screen') || trackLabel.includes('window');
+
+      // A track is ONLY a screen share track if the remote participant is actively confirmed
+      // to be sharing screen via the socket event ('screen-share-state', isSharer === true).
+      // NEVER classify any track as screen sharing if the participant is not confirmed sharing.
+      const isScreenShareTrack = isVideo && isSharer && (
+        hasScreenKeyword ||
+        (participant?.stream && participant.stream.id !== e.streams[0]?.id) ||
+        (participant?.stream?.getVideoTracks().length ?? 0) > 0
       );
 
       log(`ontrack from ${socketId.slice(-5)}: kind=${incomingTrack.kind}, label="${incomingTrack.label}", videoCount=${newCount}, isScreen=${isScreenShareTrack}, readyState=${incomingTrack.readyState}`);
@@ -168,18 +194,35 @@ export function useMeetingSocket(meetingId: string | undefined) {
             updateParticipant(uid!, { screenStream: undefined, isScreenSharing: false });
           };
         } else {
+          incomingTrack.enabled = true;
           let regularStream = participant?.stream ?? e.streams[0] ?? new MediaStream();
+          const existingOfKind = regularStream.getTracks().find(t => t.kind === incomingTrack.kind && t.id !== incomingTrack.id);
+          if (existingOfKind) {
+            regularStream.removeTrack(existingOfKind);
+          }
           if (!regularStream.getTracks().some(t => t.id === incomingTrack.id)) {
             regularStream.addTrack(incomingTrack);
           }
-          const combinedStream = new MediaStream(regularStream.getTracks());
-          log(`ontrack: updating participant ${uid?.slice(0, 8)} with regular stream (tracks=${combinedStream.getTracks().length})`);
-          updateParticipant(uid, { stream: combinedStream });
+          log(`ontrack: updating participant ${uid?.slice(0, 8)} with regular stream (tracks=${regularStream.getTracks().length}, audio=${regularStream.getAudioTracks().length}, video=${regularStream.getVideoTracks().length})`);
+          updateParticipant(uid, { stream: regularStream });
+          incomingTrack.onunmute = () => {
+            log(`ontrack: incoming ${incomingTrack.kind} track UNMUTED for ${uid?.slice(0, 8)}`);
+            updateParticipant(uid, { stream: regularStream });
+          };
         }
       } else {
-        const fallbackStream = e.streams[0] ?? new MediaStream([incomingTrack]);
-        log(`ontrack: NO uid found for ${socketId.slice(-5)} — queuing in pendingStreams`);
-        pendingStreams.current.set(socketId, fallbackStream);
+        const existing = pendingStreams.current.get(socketId);
+        let pending = existing ?? (e.streams[0] ? new MediaStream(e.streams[0].getTracks()) : new MediaStream());
+        const existingOfKind = pending.getTracks().find(t => t.kind === incomingTrack.kind && t.id !== incomingTrack.id);
+        if (existingOfKind) {
+          pending.removeTrack(existingOfKind);
+        }
+        if (!pending.getTracks().some(t => t.id === incomingTrack.id)) {
+          pending.addTrack(incomingTrack);
+        }
+        const accumulated = new MediaStream(pending.getTracks());
+        log(`ontrack: NO uid found for ${socketId.slice(-5)} — queuing in pendingStreams (tracks=${accumulated.getTracks().length}, audio=${accumulated.getAudioTracks().length}, video=${accumulated.getVideoTracks().length})`);
+        pendingStreams.current.set(socketId, accumulated);
       }
     };
 
@@ -283,6 +326,11 @@ export function useMeetingSocket(meetingId: string | undefined) {
           log(`  roster: ${p.name} socket=${p.socketId.slice(-5)} -> create peer (non-initiator)`);
           socketToUser.current.set(p.socketId, p.userId);
           addParticipant(toParticipant(p, meetingId, p.socketId));
+          const ps = pendingStreams.current.get(p.socketId);
+          if (ps) {
+            updateParticipant(p.userId, { stream: ps });
+            pendingStreams.current.delete(p.socketId);
+          }
           getOrCreatePeer(p.socketId, false);
         });
       });
@@ -596,10 +644,14 @@ export function useMeetingSocket(meetingId: string | undefined) {
     localStreamRef.current = stream;
     const tracks = stream.getTracks();
 
-    peerConnections.current.forEach((pc) => {
+    peerConnections.current.forEach((pc, sid) => {
+      let added = 0;
       // Add any missing tracks (e.g. peer was created before the stream was ready)
       tracks.forEach((t) => {
-        if (!pc.getSenders().some((s) => s.track === t)) pc.addTrack(t, stream);
+        if (!pc.getSenders().some((s) => s.track === t)) {
+          pc.addTrack(t, stream);
+          added++;
+        }
       });
       // replaceTrack on existing senders (no renegotiation needed)
       const trackMap = new Map(tracks.map((t) => [t.kind, t]));
@@ -611,11 +663,18 @@ export function useMeetingSocket(meetingId: string | undefined) {
       });
 
       pc.getTransceivers().forEach(t => {
-        const kind = t.receiver?.track?.kind;
+        const kind = t.receiver?.track?.kind || t.sender?.track?.kind;
         if (kind && trackMap.has(kind) && t.sender.track !== screenShareTrackRef.current) {
+          t.direction = 'sendrecv';
           t.sender.replaceTrack(trackMap.get(kind)!);
         }
       });
+
+      // Always trigger renegotiation so the newly assigned tracks are sent over SDP
+      const requestOffer = peerOfferFns.current.get(sid);
+      if (requestOffer) {
+        setTimeout(() => { requestOffer(); }, 50);
+      }
     });
   }, []);
 
