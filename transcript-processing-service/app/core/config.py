@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     LLM_MODEL: str = "gpt-4o-mini"
     LLM_TEMPERATURE: float = 0.0
     LLM_TIMEOUT_SECONDS: float = 10.0
-    LLM_MAX_RETRIES: int = 2
+    LLM_MAX_RETRIES: int = 3
     STT_CONFIDENCE_THRESHOLD: float = 0.90
     STT_CONTEXT_BEFORE: int = 2
     STT_CONTEXT_AFTER: int = 2

@@ -114,8 +114,12 @@ class OpenAICompatibleLLMClient(BaseLLMClient):
                     response = client.post(endpoint, json=payload, headers=headers)
 
                 if response.status_code != 200:
+                    err_text = response.text
+                    if "json_validate_failed" in err_text:
+                        logger.warning("Groq json_validate_failed detected. Removing response_format constraint for subsequent attempts.")
+                        payload.pop("response_format", None)
                     raise LLMClientError(
-                        f"LLM API returned HTTP {response.status_code}: {response.text}"
+                        f"LLM API returned HTTP {response.status_code}: {err_text}"
                     )
 
                 data = response.json()
@@ -129,6 +133,11 @@ class OpenAICompatibleLLMClient(BaseLLMClient):
 
                 # Clean markdown codeblocks if LLM wraps in ```json ... ```
                 cleaned_content = re.sub(r"^```json\s*|\s*```$", "", content.strip(), flags=re.MULTILINE)
+
+                # Extract JSON substring if wrapped with text or reasoning tokens
+                json_match = re.search(r"(\{[\s\S]*\})", cleaned_content)
+                if json_match:
+                    cleaned_content = json_match.group(1)
 
                 parsed_json = json.loads(cleaned_content)
                 return response_model.model_validate(parsed_json)
