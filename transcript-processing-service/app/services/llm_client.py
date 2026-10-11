@@ -147,7 +147,16 @@ class OpenAICompatibleLLMClient(BaseLLMClient):
                 logger.warning("LLM attempt %d error: %s", attempt + 1, exc)
 
             if attempt < self.max_retries:
-                time.sleep(0.5 * (attempt + 1))
+                wait_time = 0.5 * (attempt + 1)
+                exc_str = str(last_exception) if last_exception else ""
+                if "429" in exc_str:
+                    match = re.search(r"try again in ([0-9.]+)s", exc_str, re.IGNORECASE)
+                    if match:
+                        wait_time = min(float(match.group(1)) + 1.0, 20.0)
+                    else:
+                        wait_time = min(5.0 * (attempt + 1), 15.0)
+                    logger.info("Rate limit (429) detected: sleeping %.2fs before attempt %d...", wait_time, attempt + 2)
+                time.sleep(wait_time)
 
         if last_exception:
             raise last_exception
