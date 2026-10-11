@@ -58,9 +58,10 @@ class BaseLLMClient(ABC):
 
 
 GROQ_FALLBACK_MODELS = [
-    "llama-3.1-8b-instant",
-    "llama-3.3-70b-versatile",
-    "mixtral-8x7b-32768",
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-120b",
+    "allam-2-7b",
+    "openai/gpt-oss-20b",
 ]
 
 def parse_groq_retry_seconds(error_text: str) -> Optional[float]:
@@ -174,6 +175,20 @@ class OpenAICompatibleLLMClient(BaseLLMClient):
             if attempt < self.max_retries:
                 exc_str = str(last_exception) if last_exception else ""
                 
+                # Check if Model was not found / not accessible on provider (404)
+                if "model_not_found" in exc_str.lower() or "does not exist" in exc_str.lower() or "404" in exc_str:
+                    next_model = next((m for m in GROQ_FALLBACK_MODELS if m not in tried_models), None)
+                    if next_model:
+                        logger.warning("Model %s not found (404). Auto-switching to fallback model: %s", payload["model"], next_model)
+                        tried_models.add(next_model)
+                        payload["model"] = next_model
+                        self.model = next_model
+                        time.sleep(0.5)
+                        continue
+                    else:
+                        logger.warning("All LLM fallback models exhausted for model_not_found. Falling back immediately to rule-based engine.")
+                        raise last_exception
+
                 # Check if Daily Token Quota (TPD) was exceeded
                 if "tokens per day" in exc_str.lower() or "tpd" in exc_str.lower():
                     next_model = next((m for m in GROQ_FALLBACK_MODELS if m not in tried_models), None)
