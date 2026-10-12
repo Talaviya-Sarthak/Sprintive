@@ -328,7 +328,6 @@ class OpenAICompatibleLLMClient(BaseLLMClient):
                 logger.debug("Skipping model %s: circuit breaker open (%.1fs remaining)", current_model, rem)
                 continue
 
-<<<<<<< HEAD
             payload: Dict[str, Any] = {
                 "model": current_model,
                 "messages": [

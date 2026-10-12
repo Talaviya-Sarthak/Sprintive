@@ -107,14 +107,11 @@ export default function MeetingSummaryPage() {
     queryKey: ['transcript', meetingId],
     queryFn: () => meetingService.getTranscript(meetingId!),
     enabled: !!meetingId,
-<<<<<<< HEAD
     refetchInterval: (query) => {
       // Poll every 3 seconds while raw_stored or processing
       const status = query.state.data?.status;
       return (status === 'processing' || status === 'raw_stored') ? 3000 : false;
     },
-=======
->>>>>>> origin/Krish
   });
 
   const handleRetry = async () => {

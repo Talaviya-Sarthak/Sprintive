@@ -118,6 +118,7 @@ export default function MeetingRoom() {
   useEffect(() => {
     const cleanup = onForceLeave(() => {
       stopMedia();
+      if (id) {
         navigate(`/meetings/${id}/summary`, { replace: true });
       } else {
         navigate('/dashboard', { replace: true });
