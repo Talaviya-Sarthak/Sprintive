@@ -175,6 +175,7 @@ export default function MeetingSummaryPage() {
   const isProcessing = Boolean(procStatus?.is_processing);
   const isFailed = procStatus?.transcript_status === 'failed' || procStatus?.ai_status === 'failed';
   const errorMessage = procStatus?.error || transcriptData?.error;
+  const transcriptStatus = transcriptData?.status || procStatus?.transcript_status || null;
 
   const tickets: GeneratedTicket[] = Array.isArray(summary?.tickets_generated)
     ? summary.tickets_generated
