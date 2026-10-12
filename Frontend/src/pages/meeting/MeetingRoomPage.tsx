@@ -22,10 +22,10 @@ function RemoteAudioPlayer({ stream }: { stream?: MediaStream }) {
   useEffect(() => {
     const el = audioRef.current;
     if (!el) return;
-    if (stream && stream.getAudioTracks().length > 0) {
-      if (el.srcObject !== stream) {
-        el.srcObject = stream;
-      }
+    const audioTracks = stream ? stream.getAudioTracks().filter(t => t.readyState === 'live') : [];
+    if (audioTracks.length > 0) {
+      const audioStream = new MediaStream(audioTracks);
+      el.srcObject = audioStream;
       el.muted = false;
       el.volume = 1.0;
       const p = el.play();
@@ -370,6 +370,10 @@ export default function MeetingRoomPage() {
   // ── Main Room ──
   return (
     <div className="h-screen bg-[#080c14] flex flex-col overflow-hidden">
+      {/* Remote audio elements: continuous playback regardless of video element mounting */}
+      {remoteParticipants.map((p) => (
+        <RemoteAudioPlayer key={`remote-audio-${p.user_id}`} stream={p.stream} />
+      ))}
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-white/6 bg-[#0d1117]/80 backdrop-blur-sm flex-shrink-0">
         <div className="flex items-center gap-3">

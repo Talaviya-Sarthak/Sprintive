@@ -11,6 +11,18 @@ const log = (...args: any[]) => console.log('[wss]', ...args);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const errLog = (...args: any[]) => console.error('[wss]', ...args);
 
+// Decode JWT userId without full verification (for fallback participant matching)
+function parseJwtUserId(): string {
+  try {
+    const token = localStorage.getItem('access_token') ?? '';
+    if (!token) return '';
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.id ?? payload.sub ?? payload.userId ?? '';
+  } catch {
+    return '';
+  }
+}
+
 // Normalize a participant payload coming from either signaling shape:
 //   HEAD:  { id, meeting_id, user_id, full_name, avatar_url, email, role, joined_at, socketId, isMuted, isCameraOff, isSpeaking }
 //   UI/UX: { userId, name, avatar, socketId }
@@ -38,6 +50,7 @@ export function useMeetingSocket(meetingId: string | undefined) {
   const [isConnected, setIsConnected] = useState(false);
   const [sttStatus, setSttStatus] = useState<'not_started' | 'active' | 'finalizing' | 'completed' | 'failed'>('not_started');
 
+  const currentUserIdRef = useRef<string>(parseJwtUserId());
   const socketRef = useRef<Socket | null>(null);
   const peerConnections = useRef<Map<string, RTCPeerConnection>>(new Map());
   const localStreamRef  = useRef<MediaStream | null>(null);
@@ -50,6 +63,7 @@ export function useMeetingSocket(meetingId: string | undefined) {
   const forceLeaveCallbacks = useRef<Map<string, () => void>>(new Map());
   const socketToUser = useRef<Map<string, string>>(new Map());
   const pendingStreams = useRef<Map<string, MediaStream>>(new Map());
+  const peerStreams = useRef<Map<string, MediaStream>>(new Map());
 
   const {
     addParticipant, removeParticipant, updateParticipant,
@@ -86,6 +100,18 @@ export function useMeetingSocket(meetingId: string | undefined) {
     log(`addTracksToPeer: stream has ${tracks.length} tracks, added ${added} (senders=${pc.getSenders().length})`);
   }, []);
 
+  const registerSocketUser = useCallback((socketId: string, userId: string) => {
+    if (!socketId || !userId) return;
+    socketToUser.current.set(socketId, userId);
+    // Flush peerStream or pendingStream for this socket if available
+    const pStream = peerStreams.current.get(socketId) || pendingStreams.current.get(socketId);
+    if (pStream) {
+      log(`registerSocketUser: flushing stream (${pStream.getTracks().length} tracks) for socket ${socketId.slice(-5)} to user ${userId.slice(0, 8)}`);
+      updateParticipant(userId, { stream: new MediaStream(pStream.getTracks()) });
+      pendingStreams.current.delete(socketId);
+    }
+  }, [updateParticipant]);
+
   const getOrCreatePeer = useCallback((socketId: string, isInitiator: boolean) => {
     if (peerConnections.current.has(socketId)) {
       log(`getOrCreatePeer: reuse existing peer for ${socketId.slice(-5)}`);
@@ -94,7 +120,11 @@ export function useMeetingSocket(meetingId: string | undefined) {
 
     log(`getOrCreatePeer: NEW peer for ${socketId.slice(-5)} initiator=${isInitiator}`);
     const pc = new RTCPeerConnection({
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+      ],
     });
     const flags = { isInitiator, makingOffer: false, settingAnswer: false, negotiated: isInitiator };
     negotiationFlags.current.set(socketId, flags);
@@ -150,7 +180,7 @@ export function useMeetingSocket(meetingId: string | undefined) {
         const p = useMeetingStore.getState().participants.find(x => x.socketId === socketId);
         if (p) {
           uid = p.user_id;
-          socketToUser.current.set(socketId, uid);
+          registerSocketUser(socketId, uid);
           log(`ontrack: resolved uid from participants store: ${uid?.slice(0, 8)}`);
         }
       } else {
@@ -158,12 +188,18 @@ export function useMeetingSocket(meetingId: string | undefined) {
       }
 
       if (!uid) {
-        // Fallback: If there is only one remote participant, map them
-        const remotes = useMeetingStore.getState().participants.filter(x => x.socketId && x.socketId !== socketRef.current?.id);
+        // Fallback: Check participants store for any remote participant
+        const remotes = useMeetingStore.getState().participants.filter(x => x.user_id && x.user_id !== currentUserIdRef.current);
         if (remotes.length === 1) {
           uid = remotes[0].user_id;
-          socketToUser.current.set(socketId, uid);
+          registerSocketUser(socketId, uid);
           log(`ontrack: resolved uid as single remote participant: ${uid?.slice(0, 8)}`);
+        } else if (remotes.length > 1) {
+          const match = remotes.find(x => x.socketId === socketId);
+          if (match) {
+            uid = match.user_id;
+            registerSocketUser(socketId, uid);
+          }
         }
       }
 
@@ -184,45 +220,50 @@ export function useMeetingSocket(meetingId: string | undefined) {
 
       log(`ontrack from ${socketId.slice(-5)}: kind=${incomingTrack.kind}, label="${incomingTrack.label}", videoCount=${newCount}, isScreen=${isScreenShareTrack}, readyState=${incomingTrack.readyState}`);
 
-      if (uid) {
-        if (isScreenShareTrack) {
-          const screenStream = e.streams[0] ?? new MediaStream([incomingTrack]);
-          log(`ontrack: updating participant ${uid?.slice(0, 8)} with screenStream (stream id=${screenStream.id?.slice(0, 8)}, tracks=${screenStream.getTracks().length})`);
-          updateParticipant(uid, { screenStream, isScreenSharing: true });
-          incomingTrack.onended = () => {
-            log(`remote screen share track ended from ${socketId.slice(-5)}`);
-            updateParticipant(uid!, { screenStream: undefined, isScreenSharing: false });
-          };
-        } else {
-          incomingTrack.enabled = true;
-          let regularStream = participant?.stream ?? e.streams[0] ?? new MediaStream();
-          const existingOfKind = regularStream.getTracks().find(t => t.kind === incomingTrack.kind && t.id !== incomingTrack.id);
-          if (existingOfKind) {
-            regularStream.removeTrack(existingOfKind);
-          }
-          if (!regularStream.getTracks().some(t => t.id === incomingTrack.id)) {
-            regularStream.addTrack(incomingTrack);
-          }
-          log(`ontrack: updating participant ${uid?.slice(0, 8)} with regular stream (tracks=${regularStream.getTracks().length}, audio=${regularStream.getAudioTracks().length}, video=${regularStream.getVideoTracks().length})`);
-          updateParticipant(uid, { stream: regularStream });
-          incomingTrack.onunmute = () => {
-            log(`ontrack: incoming ${incomingTrack.kind} track UNMUTED for ${uid?.slice(0, 8)}`);
-            updateParticipant(uid, { stream: regularStream });
-          };
-        }
+      if (isScreenShareTrack && uid) {
+        const screenStream = e.streams[0] ?? new MediaStream([incomingTrack]);
+        log(`ontrack: updating participant ${uid?.slice(0, 8)} with screenStream (stream id=${screenStream.id?.slice(0, 8)}, tracks=${screenStream.getTracks().length})`);
+        updateParticipant(uid, { screenStream, isScreenSharing: true });
+        incomingTrack.onended = () => {
+          log(`remote screen share track ended from ${socketId.slice(-5)}`);
+          updateParticipant(uid!, { screenStream: undefined, isScreenSharing: false });
+        };
       } else {
-        const existing = pendingStreams.current.get(socketId);
-        let pending = existing ?? (e.streams[0] ? new MediaStream(e.streams[0].getTracks()) : new MediaStream());
-        const existingOfKind = pending.getTracks().find(t => t.kind === incomingTrack.kind && t.id !== incomingTrack.id);
+        incomingTrack.enabled = true;
+
+        let pStream = peerStreams.current.get(socketId);
+        if (!pStream) {
+          pStream = new MediaStream();
+          peerStreams.current.set(socketId, pStream);
+        }
+
+        const existingOfKind = pStream.getTracks().find(t => t.kind === incomingTrack.kind && t.id !== incomingTrack.id);
         if (existingOfKind) {
-          pending.removeTrack(existingOfKind);
+          pStream.removeTrack(existingOfKind);
         }
-        if (!pending.getTracks().some(t => t.id === incomingTrack.id)) {
-          pending.addTrack(incomingTrack);
+        if (!pStream.getTracks().some(t => t.id === incomingTrack.id)) {
+          pStream.addTrack(incomingTrack);
         }
-        const accumulated = new MediaStream(pending.getTracks());
-        log(`ontrack: NO uid found for ${socketId.slice(-5)} — queuing in pendingStreams (tracks=${accumulated.getTracks().length}, audio=${accumulated.getAudioTracks().length}, video=${accumulated.getVideoTracks().length})`);
-        pendingStreams.current.set(socketId, accumulated);
+
+        const notifyStream = () => {
+          const cur = peerStreams.current.get(socketId);
+          if (!cur) return;
+          const fresh = new MediaStream(cur.getTracks());
+          if (uid) {
+            log(`ontrack: updating participant ${uid?.slice(0, 8)} with stream (tracks=${fresh.getTracks().length}, audio=${fresh.getAudioTracks().length}, video=${fresh.getVideoTracks().length})`);
+            updateParticipant(uid, { stream: fresh });
+          } else {
+            log(`ontrack: NO uid found for ${socketId.slice(-5)} — queuing in pendingStreams`);
+            pendingStreams.current.set(socketId, fresh);
+          }
+        };
+
+        notifyStream();
+
+        incomingTrack.onunmute = () => {
+          log(`ontrack: incoming ${incomingTrack.kind} track UNMUTED for socket ${socketId.slice(-5)} (uid=${uid?.slice(0, 8)})`);
+          notifyStream();
+        };
       }
     };
 
@@ -240,7 +281,7 @@ export function useMeetingSocket(meetingId: string | undefined) {
     peerOfferFns.current.set(socketId, makeOffer);
 
     return pc;
-  }, [meetingId, updateParticipant, addTracksToPeer]);
+  }, [meetingId, updateParticipant, addTracksToPeer, registerSocketUser]);
 
   useEffect(() => {
     if (!meetingId) return;
@@ -303,13 +344,8 @@ export function useMeetingSocket(meetingId: string | undefined) {
         if (data.meeting) setMeeting(data.meeting);
         for (const raw of data.participants) {
           const p = toParticipant(raw, meetingId, raw.socketId);
-          if (p.socketId) {
-            socketToUser.current.set(p.socketId, p.user_id);
-            const ps = pendingStreams.current.get(p.socketId);
-            if (ps) {
-              updateParticipant(p.user_id, { stream: ps });
-              pendingStreams.current.delete(p.socketId);
-            }
+          if (p.socketId && p.user_id) {
+            registerSocketUser(p.socketId, p.user_id);
           }
           addParticipant(p);
           if (p.socketId && p.socketId !== socket.id && !peerConnections.current.has(p.socketId)) {
@@ -324,13 +360,8 @@ export function useMeetingSocket(meetingId: string | undefined) {
         participants.forEach((p) => {
           if (p.socketId === socket.id) return;
           log(`  roster: ${p.name} socket=${p.socketId.slice(-5)} -> create peer (non-initiator)`);
-          socketToUser.current.set(p.socketId, p.userId);
+          registerSocketUser(p.socketId, p.userId);
           addParticipant(toParticipant(p, meetingId, p.socketId));
-          const ps = pendingStreams.current.get(p.socketId);
-          if (ps) {
-            updateParticipant(p.userId, { stream: ps });
-            pendingStreams.current.delete(p.socketId);
-          }
           getOrCreatePeer(p.socketId, false);
         });
       });
@@ -339,13 +370,8 @@ export function useMeetingSocket(meetingId: string | undefined) {
       socket.on('participant:joined', (p: any) => {
         const participant = toParticipant(p, meetingId, p?.socketId);
         log(`participant:joined ${participant.full_name} socket=${participant.socketId?.slice(-5)} -> create peer (initiator)`);
-        if (participant.socketId) {
-          socketToUser.current.set(participant.socketId, participant.user_id);
-          const ps = pendingStreams.current.get(participant.socketId);
-          if (ps) {
-            updateParticipant(participant.user_id, { stream: ps });
-            pendingStreams.current.delete(participant.socketId);
-          }
+        if (participant.socketId && participant.user_id) {
+          registerSocketUser(participant.socketId, participant.user_id);
         }
 
         addParticipant(participant);
@@ -366,6 +392,7 @@ export function useMeetingSocket(meetingId: string | undefined) {
         toRemove.forEach((sid) => {
           peerConnections.current.get(sid)?.close();
           peerConnections.current.delete(sid);
+          peerStreams.current.delete(sid);
           socketToUser.current.delete(sid);
           pendingStreams.current.delete(sid);
           negotiationFlags.current.delete(sid);
@@ -467,7 +494,8 @@ export function useMeetingSocket(meetingId: string | undefined) {
       });
 
       // ── WebRTC signaling (perfect negotiation) ──
-      socket.on('webrtc:offer', async ({ fromSocketId, offer }: { fromSocketId: string; offer: RTCSessionDescriptionInit }) => {
+      socket.on('webrtc:offer', async ({ fromSocketId, userId, offer }: { fromSocketId: string; userId?: string; offer: RTCSessionDescriptionInit }) => {
+        if (userId) registerSocketUser(fromSocketId, userId);
         const pc = getOrCreatePeer(fromSocketId, false);
         const flags = negotiationFlags.current.get(fromSocketId);
         const polite = !flags?.isInitiator; // non-initiator rolls back on collision
@@ -478,7 +506,7 @@ export function useMeetingSocket(meetingId: string | undefined) {
           return;
         }
 
-        log(`webrtc:offer from ${fromSocketId.slice(-5)} collision=${offerCollision} polite=${polite} state=${pc.signalingState}`);
+        log(`webrtc:offer from ${fromSocketId.slice(-5)} (user=${userId?.slice(0, 8)}) collision=${offerCollision} polite=${polite} state=${pc.signalingState}`);
         try {
           if (offerCollision) {
             log(`  rolling back own offer (state=${pc.signalingState})`);
@@ -501,7 +529,8 @@ export function useMeetingSocket(meetingId: string | undefined) {
         }
       });
 
-      socket.on('webrtc:answer', async ({ fromSocketId, answer }: { fromSocketId: string; answer: RTCSessionDescriptionInit }) => {
+      socket.on('webrtc:answer', async ({ fromSocketId, userId, answer }: { fromSocketId: string; userId?: string; answer: RTCSessionDescriptionInit }) => {
+        if (userId) registerSocketUser(fromSocketId, userId);
         const pc = peerConnections.current.get(fromSocketId);
         if (!pc) return;
         const flags = negotiationFlags.current.get(fromSocketId);
@@ -522,7 +551,8 @@ export function useMeetingSocket(meetingId: string | undefined) {
         }
       });
 
-      socket.on('webrtc:candidate', async ({ fromSocketId, candidate }: { fromSocketId: string; candidate: RTCIceCandidateInit }) => {
+      socket.on('webrtc:candidate', async ({ fromSocketId, userId, candidate }: { fromSocketId: string; userId?: string; candidate: RTCIceCandidateInit }) => {
+        if (userId) registerSocketUser(fromSocketId, userId);
         const pc = peerConnections.current.get(fromSocketId);
         if (!pc) return;
         if (!pc.remoteDescription) {
@@ -734,6 +764,7 @@ export function useMeetingSocket(meetingId: string | undefined) {
       socketRef.current = null;
     }
     socketToUser.current.clear();
+    peerStreams.current.clear();
     peerConnections.current.forEach((pc) => pc.close());
     peerConnections.current.clear();
     peerOfferFns.current.clear();
