@@ -6,7 +6,10 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.config.formatting import FormattingConfig
 from app.models.final_transcript import FinalizationResult
+from app.models.meeting_agent import MeetingAnalysisResult
 from app.models.processing import ProcessingStatus
+from app.models.scrum_agent import ScrumResult
+from app.models.resolved_task import ResolvedTask
 from app.models.transcript import TranscriptSegment
 
 
@@ -142,6 +145,10 @@ class ProcessTranscriptRequest(BaseModel):
         default=None,
         description="Optional formatting settings for Part 13.",
     )
+    run_ai_pipeline: bool = Field(
+        default=False,
+        description="Whether to execute the First Stage AI Meeting Agent pipeline after cleaned transcript is stored.",
+    )
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -149,6 +156,7 @@ class ProcessTranscriptRequest(BaseModel):
             "example": {
                 "meeting_id": "meeting-123",
                 "async_processing": False,
+                "run_ai_pipeline": False,
             }
         },
     )
@@ -204,6 +212,18 @@ class ProcessTranscriptResponse(BaseModel):
     warnings: List[str] = Field(
         default_factory=list,
         description="Accumulated warnings across all stages.",
+    )
+    meeting_analysis: Optional[MeetingAnalysisResult] = Field(
+        default=None,
+        description="Structured analysis result from the Main Meeting Agent if AI pipeline was executed.",
+    )
+    scrum_analysis: Optional[ScrumResult] = Field(
+        default=None,
+        description="Structured Scrum tasks from Scrum Intelligence Agent if AI pipeline was executed.",
+    )
+    resolved_tasks: Optional[List[ResolvedTask]] = Field(
+        default=None,
+        description="Deterministically resolved tasks ready for persistence (Stage 3).",
     )
 
     model_config = ConfigDict(

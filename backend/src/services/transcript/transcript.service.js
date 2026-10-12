@@ -7,6 +7,7 @@ import { AppError } from '../../middleware/error.middleware.js';
 import { logger } from '../../utils/logger.js';
 import { aiHandoffService } from '../ai/ai-handoff.service.js';
 import { enqueueTranscriptProcessing } from '../../queues/transcript.queue.js';
+import { taskResolutionService } from '../task-resolution/task-resolution.service.js';
 
 /**
  * Transcript Service — coordinates STT finalization, dialogue formatting,
@@ -35,16 +36,49 @@ class TranscriptService {
 
     // 1. Finalize STT session (flushes remaining audio buffers)
     const segments = await sttService.finalizeSession(meetingId);
+    const rawPath = storageService.getRawPath(meetingId);
 
-    let content;
+    // If no dialogue was captured, mark as empty/failed explicitly — NEVER fake a transcript
     if (segments.length === 0) {
-      content = 'No dialogue was captured for this meeting.';
-      logger.info(`[transcript] No STT segments for meeting ${meetingId}, using fallback`);
-    } else {
-      content = generateConversationFile(segments);
+      logger.warn(`[transcript] No STT segments captured for meeting ${meetingId}. Marking transcript as empty/failed explicitly.`);
+      const transcript = await meetingRepository.saveTranscript({
+        meeting_id: meetingId,
+        content: '',
+        transcript_path: rawPath,
+        transcript_name: 'conversation.txt',
+        transcript_size: 0,
+        duration: null,
+        status: 'failed',
+        storage_provider: env.storageProvider,
+        storage_bucket: env.supabaseBucket,
+        storage_path: rawPath,
+        raw_transcript_path: rawPath,
+        cleaned_transcript_path: null,
+        error: 'No speech detected or recorded for this meeting',
+      });
+
+      await meetingRepository.upsertSummary({
+        meeting_id: meetingId,
+        duration_minutes: 0,
+        attendance_count: 0,
+        total_participants: 0,
+        ai_summary: 'No speech was detected during this meeting, so no summary or tasks could be generated.',
+        action_items: [],
+        tickets_generated: [],
+      });
+
+      return {
+        id: transcript.id,
+        meeting_id: meetingId,
+        content: '',
+        status: 'failed',
+        error: 'No speech detected or recorded for this meeting',
+        storagePath: rawPath,
+        raw_transcript_path: rawPath,
+      };
     }
 
-    const rawPath = storageService.getRawPath(meetingId);
+    const content = generateConversationFile(segments);
 
     // 2. Upload raw transcript to object storage
     let storageResult = null;
@@ -121,7 +155,8 @@ class TranscriptService {
       error: null,
     });
 
-    const serviceBaseUrl = (env.transcriptProcessingServiceUrl || 'http://localhost:8001').replace(/\/+$/, '');
+    const rawServiceUrl = env.transcriptProcessingServiceUrl || 'http://127.0.0.1:8001';
+    const serviceBaseUrl = rawServiceUrl.replace('localhost', '127.0.0.1').replace(/\/+$/, '');
     const url = `${serviceBaseUrl}/transcript/process`;
 
     try {
@@ -130,13 +165,23 @@ class TranscriptService {
         raw_text: rawText || undefined,
         raw_transcript_path: rawTranscriptPath || storageService.getRawPath(meetingId),
         async_processing: false,
+        run_ai_pipeline: true,
       };
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+      let response;
+      try {
+        response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -155,23 +200,44 @@ class TranscriptService {
         error: null,
       });
 
-      // Automatically trigger clean transcript handoff to AI service (non-blocking)
-      aiHandoffService.handoffWithRetry(meetingId).catch((aiErr) => {
-        logger.warn(`[transcript] Background AI handoff could not complete for meeting ${meetingId}: ${aiErr.message}`);
-      });
+      // If AI pipeline produced analysis or scrum tasks, persist them via Stage 3
+      if (result.scrum_analysis?.tasks || result.meeting_analysis) {
+        try {
+          await taskResolutionService.resolveAndPersist({
+            meetingId,
+            scrumResult: result.scrum_analysis || { tasks: [] },
+            aiSummary: result.meeting_analysis?.summary || null,
+            actionItems: result.meeting_analysis?.action_items || [],
+          });
+          logger.info(`[transcript] Successfully resolved and persisted Stage 3 tasks for meeting ${meetingId}`);
+        } catch (stage3Err) {
+          logger.error(`[AI PIPELINE] stage=task-resolution status=failed error=${stage3Err.message}`);
+          await meetingRepository.updateTranscriptStatus({
+            meeting_id: meetingId,
+            status: 'failed',
+            error: `Task resolution failed: ${stage3Err.message}`,
+          });
+          throw stage3Err;
+        }
+      }
 
       return result;
     } catch (err) {
-      logger.error(`[transcript] Preprocessing failed for meeting ${meetingId}: ${err.message}`);
+      let friendlyError = err.message;
+      if (err.cause?.code === 'ECONNREFUSED' || err.message?.includes('fetch failed')) {
+        friendlyError = `Preprocessing service unreachable at ${url}. Ensure transcript-processing-service is running.`;
+      }
+
+      logger.error(`[transcript] Preprocessing failed for meeting ${meetingId}: ${friendlyError}`);
 
       // Record failure without deleting or corrupting the raw transcript
       await meetingRepository.updateTranscriptStatus({
         meeting_id: meetingId,
         status: 'failed',
-        error: err.message,
+        error: friendlyError,
       });
 
-      throw err;
+      throw new Error(friendlyError);
     }
   }
 
@@ -199,6 +265,10 @@ class TranscriptService {
       }
     }
 
+    if (!rawText || !rawText.trim()) {
+      throw new AppError('No transcript audio/text was captured for this meeting; cannot retry AI processing.', 400);
+    }
+
     // Reset DB status to raw_stored and clear past error for the retry
     await meetingRepository.updateTranscriptStatus({
       meeting_id: meetingId,
@@ -224,6 +294,91 @@ class TranscriptService {
       logger.warn(`[transcript] Queue unavailable during retry (${queueErr.message}), falling back to direct trigger`);
       return this.triggerPreprocessing(meetingId, rawText, rawPath);
     }
+  }
+
+  /**
+   * Compute unified end-to-end processing status for a meeting.
+   *
+   * @param {string} meetingId
+   * @returns {Promise<object>}
+   */
+  async getProcessingStatus(meetingId) {
+    const meeting = await meetingRepository.findById(meetingId);
+    if (!meeting) {
+      throw new AppError('Meeting not found', 404);
+    }
+
+    const transcript = await meetingRepository.getTranscript(meetingId);
+    const summary = await meetingRepository.getSummary(meetingId);
+    const isFinalizingStt = sttService.isFinalizing(meetingId);
+
+    // Compute meeting status
+    const isMeetingEnded = ['ended', 'completed', 'cancelled'].includes(meeting.status);
+    let meetingStatus = isMeetingEnded ? 'ended' : (isFinalizingStt ? 'ending' : (meeting.status === 'active' ? 'live' : 'scheduled'));
+
+    // Compute transcript status
+    let transcriptStatus = 'recording';
+    if (isFinalizingStt) {
+      transcriptStatus = 'finalizing';
+    } else if (transcript) {
+      if (transcript.status === 'failed') transcriptStatus = 'failed';
+      else if (transcript.status === 'ready_for_ai') transcriptStatus = 'ready';
+      else if (transcript.status === 'processing') transcriptStatus = 'preprocessing';
+      else if (transcript.status === 'raw_stored') transcriptStatus = 'raw_stored';
+      else transcriptStatus = transcript.status;
+    } else if (isMeetingEnded) {
+      transcriptStatus = 'finalizing';
+    }
+
+    // Compute AI status
+    const hasTickets = Array.isArray(summary?.tickets_generated) && summary.tickets_generated.length > 0;
+    const hasCompletedAiSummary = summary?.ai_summary &&
+      !summary.ai_summary.includes('once AI processing is complete') &&
+      !summary.ai_summary.includes('No summary available yet') &&
+      !summary.ai_summary.includes('No speech was detected');
+
+    let aiStatus = 'pending';
+    if (transcriptStatus === 'failed') {
+      aiStatus = 'failed';
+    } else if (hasTickets || (hasCompletedAiSummary && transcriptStatus === 'ready')) {
+      aiStatus = 'completed';
+    } else if (transcriptStatus === 'ready') {
+      aiStatus = 'resolving_tasks';
+    } else if (transcriptStatus === 'preprocessing') {
+      aiStatus = 'analyzing';
+    }
+
+    // Current stage for UI stepper
+    let currentStage = 'pending';
+    if (transcriptStatus === 'failed') {
+      currentStage = 'failed';
+    } else if (aiStatus === 'completed') {
+      currentStage = 'completed';
+    } else if (transcriptStatus === 'finalizing') {
+      currentStage = 'finalizing_transcript';
+    } else if (transcriptStatus === 'raw_stored') {
+      currentStage = 'saving_transcript';
+    } else if (transcriptStatus === 'preprocessing') {
+      currentStage = 'cleaning_transcript';
+    } else if (aiStatus === 'analyzing') {
+      currentStage = 'analyzing_meeting';
+    } else if (aiStatus === 'resolving_tasks') {
+      currentStage = 'resolving_tasks';
+    }
+
+    const isProcessing = isMeetingEnded && transcriptStatus !== 'failed' && aiStatus !== 'completed';
+
+    return {
+      meeting_id: meetingId,
+      meeting_status: meetingStatus,
+      transcript_status: transcriptStatus,
+      ai_status: aiStatus,
+      current_stage: currentStage,
+      is_processing: isProcessing,
+      error: transcript?.error || null,
+      tickets_count: summary?.tickets_generated?.length || 0,
+      has_summary: Boolean(hasCompletedAiSummary),
+    };
   }
 
   /**

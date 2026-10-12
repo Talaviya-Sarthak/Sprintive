@@ -48,6 +48,7 @@ interface Props {
   unreadCount: number;
   sidebarTab: string | null;
   isConnected: boolean;
+  isEnding?: boolean;
   onToggleMic: () => void;
   onToggleCamera: () => void;
   onToggleScreen: () => void;
@@ -61,7 +62,7 @@ interface Props {
 
 export default function MeetingToolbar({
   isMuted, isCameraOff, isScreenSharing, isHost, meetingStatus,
-  unreadCount, sidebarTab, isConnected,
+  unreadCount, sidebarTab, isConnected, isEnding = false,
   onToggleMic, onToggleCamera, onToggleScreen,
   onToggleParticipants, onToggleChat, onToggleTranscript,
   onStartMeeting, onEndMeeting, onLeave,
@@ -175,17 +176,24 @@ export default function MeetingToolbar({
         />
       )}
 
-      {isHost && meetingStatus === 'active' && (
+      {isHost && (meetingStatus === 'active' || isEnding) && (
         <ToolbarButton
           icon={
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-            </svg>
+            isEnding ? (
+              <svg className="animate-spin w-4.5 h-4.5" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+              </svg>
+            ) : (
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+              </svg>
+            )
           }
-          label="End"
-          onClick={onEndMeeting}
+          label={isEnding ? 'Ending...' : 'End'}
+          onClick={isEnding ? () => {} : onEndMeeting}
           danger
-          disabled={!isConnected}
+          disabled={!isConnected || isEnding}
         />
       )}
 

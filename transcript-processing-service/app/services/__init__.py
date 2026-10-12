@@ -65,6 +65,24 @@ from app.services.transcript_orchestrator import (
     EmptyTranscriptError,
     FinalizationBlockedError,
 )
+from app.services.meeting_agent import (
+    MainMeetingAgent,
+    get_main_meeting_agent,
+    MeetingAgentException,
+    EmptyTranscriptException,
+    MeetingAnalysisError,
+)
+from app.services.meeting_ai_pipeline import (
+    run_meeting_ai_pipeline,
+    MeetingAIPipelineError,
+    TranscriptRetrievalError,
+)
+from app.services.scrum_agent import (
+    ScrumIntelligenceAgent,
+    get_scrum_intelligence_agent,
+    ScrumAgentException,
+    ScrumAnalysisError,
+)
 
 __all__ = [
     "parse_transcript",
@@ -116,6 +134,18 @@ __all__ = [
     "MissingRawTranscriptError",
     "EmptyTranscriptError",
     "FinalizationBlockedError",
+    "MainMeetingAgent",
+    "get_main_meeting_agent",
+    "MeetingAgentException",
+    "EmptyTranscriptException",
+    "MeetingAnalysisError",
+    "run_meeting_ai_pipeline",
+    "MeetingAIPipelineError",
+    "TranscriptRetrievalError",
+    "ScrumIntelligenceAgent",
+    "get_scrum_intelligence_agent",
+    "ScrumAgentException",
+    "ScrumAnalysisError",
 ]
 
 

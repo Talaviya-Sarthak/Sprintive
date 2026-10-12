@@ -54,6 +54,7 @@ export interface Invitation {
   invited_by?: string;
   inviter_name?: string;
   email?: string;
+  role?: string;
   token: string;
   status: 'pending' | 'accepted' | 'rejected' | 'expired';
   member_count?: number | string;
@@ -203,16 +204,35 @@ export interface MeetingParticipant {
   is_speaking?: boolean;
 }
 
+export interface GeneratedTicket {
+  id: string;
+  ticket_id?: string;
+  title: string;
+  description?: string;
+  assignee?: string | null;
+  assignee_id?: string | null;
+  raw_assignee?: string | null;
+  priority?: 'low' | 'medium' | 'high' | 'urgent' | string;
+  due_date?: string | null;
+  resolved_due_date?: string | null;
+  type?: 'task' | 'bug' | 'feature' | 'improvement' | string;
+  status: string;
+  acceptance_criteria?: string[];
+  source_action_item?: string | null;
+  meeting_id?: string;
+  team_id?: string;
+}
+
 export interface MeetingSummary {
   id: string;
   meeting_id: string;
   duration_minutes: number;
   attendance_count: number;
   total_participants: number;
-  transcript: string;
+  transcript?: string;
   ai_summary: string;
-  action_items: { id: string; text: string; assignee?: string; status: 'pending' | 'done' }[];
-  tickets_generated: { id: string; title: string; status: string }[];
+  action_items: any[];
+  tickets_generated: GeneratedTicket[];
   created_at: string;
 }
 

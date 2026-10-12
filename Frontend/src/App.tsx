@@ -80,8 +80,9 @@ export default function App() {
       <Route path="/login"                 element={<Login />} />
       <Route path="/auth/callback"         element={<AuthCallback />} />
       
-      {/* Team creation and joining (protected) */}
+      {/* Team creation and joining */}
       <Route path="/teams/create"          element={<ProtectedRoute><CreateTeam /></ProtectedRoute>} />
+      <Route path="/invitations/:token"    element={<JoinTeam />} />
       <Route path="/join/:token"           element={<JoinTeam />} />
 
       {/* Workspace pages (protected) */}

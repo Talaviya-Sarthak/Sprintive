@@ -132,6 +132,20 @@ export const meetingController = {
     } catch (err) { next(err); }
   },
 
+  async getProcessingStatus(req, res, next) {
+    try {
+      const status = await meetingService.getProcessingStatus(req.params.id, req.user.id);
+      res.json({ success: true, data: status });
+    } catch (err) { next(err); }
+  },
+
+  async retryProcessing(req, res, next) {
+    try {
+      const result = await meetingService.retryProcessing(req.params.id, req.user.id);
+      res.json({ success: true, data: result, message: 'Processing restarted successfully' });
+    } catch (err) { next(err); }
+  },
+
   async triggerAiHandoff(req, res, next) {
     try {
       const result = await meetingService.triggerAiHandoff(req.params.id, req.user.id);

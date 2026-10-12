@@ -20,3 +20,15 @@ export function requireAuth(req, res, next) {
     next();
   })(req, res, next);
 }
+
+/**
+ * Optional authentication middleware.
+ * Attaches user to req.user if a valid token is provided, but does not block unauthenticated requests.
+ */
+export function optionalAuth(req, res, next) {
+  passport.authenticate('jwt', { session: false }, (err, user) => {
+    if (user) req.user = user;
+    next();
+  })(req, res, next);
+}
+

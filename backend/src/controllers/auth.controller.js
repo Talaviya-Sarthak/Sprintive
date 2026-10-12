@@ -100,6 +100,13 @@ export async function oauthCallback(req, res, next) {
       access_token:  result.accessToken,
       refresh_token: result.refreshToken,
     });
+
+    // Safely preserve redirect state if internal
+    const state = req.query.state;
+    if (typeof state === 'string' && state.startsWith('/') && !state.startsWith('//')) {
+      params.set('redirect', state);
+    }
+
     return res.redirect(`${env.frontendUrl}/auth/callback?${params.toString()}`);
   } catch (err) {
     next(err);

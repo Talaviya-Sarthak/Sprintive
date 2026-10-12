@@ -62,11 +62,19 @@ router.get('/me',
 
 /**
  * GET /api/auth/google
- * Redirects to Google's consent screen
+ * Redirects to Google's consent screen, preserving redirect path in state
  */
-router.get('/google',
-  passport.authenticate('google', { session: false, scope: ['profile', 'email'] })
-);
+router.get('/google', (req, res, next) => {
+  const { redirect } = req.query;
+  const safeRedirect = (typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//'))
+    ? redirect
+    : null;
+  passport.authenticate('google', {
+    session: false,
+    scope: ['profile', 'email'],
+    state: safeRedirect || undefined,
+  })(req, res, next);
+});
 
 /**
  * GET /api/auth/google/callback
@@ -81,11 +89,19 @@ router.get('/google/callback',
 
 /**
  * GET /api/auth/github
- * Redirects to GitHub's authorization page
+ * Redirects to GitHub's authorization page, preserving redirect path in state
  */
-router.get('/github',
-  passport.authenticate('github', { session: false, scope: ['user:email'] })
-);
+router.get('/github', (req, res, next) => {
+  const { redirect } = req.query;
+  const safeRedirect = (typeof redirect === 'string' && redirect.startsWith('/') && !redirect.startsWith('//'))
+    ? redirect
+    : null;
+  passport.authenticate('github', {
+    session: false,
+    scope: ['user:email'],
+    state: safeRedirect || undefined,
+  })(req, res, next);
+});
 
 /**
  * GET /api/auth/github/callback

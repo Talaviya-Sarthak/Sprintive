@@ -86,6 +86,7 @@ export default function MeetingRoom() {
     chunkIntervalMs: 250,
   });
 
+  const [isEnding, setIsEnding] = useState(false);
   const [endedData, setEndedData] = useState<EndMeetingData | null>(null);
 
   const token = localStorage.getItem('access_token') ?? '';
@@ -95,9 +96,14 @@ export default function MeetingRoom() {
 
   // Any participant shows the ended screen when the host ends the meeting.
   useEffect(() => {
-    const cleanup = onMeetingEnded((data) => setEndedData(data));
+    const cleanup = onMeetingEnded((data) => {
+      setEndedData(data);
+      if (id) {
+        navigate(`/meetings/${id}/summary`, { replace: true });
+      }
+    });
     return cleanup;
-  }, [onMeetingEnded]);
+  }, [onMeetingEnded, id, navigate]);
 
   // Handle redirect emitted by server after meeting ends
   useEffect(() => {
@@ -112,10 +118,9 @@ export default function MeetingRoom() {
   useEffect(() => {
     const cleanup = onForceLeave(() => {
       stopMedia();
-      if (id) {
-        navigate(`/meetings/${id}/summary`);
+        navigate(`/meetings/${id}/summary`, { replace: true });
       } else {
-        navigate('/dashboard');
+        navigate('/dashboard', { replace: true });
       }
     });
     return cleanup;
@@ -226,7 +231,14 @@ export default function MeetingRoom() {
   const handleStartMeeting = () => startMeeting();
 
   const handleEndMeeting = () => {
-    endMeeting((data) => setEndedData(data));
+    if (isEnding) return;
+    setIsEnding(true);
+    endMeeting((data) => {
+      setEndedData(data);
+      if (id) {
+        navigate(`/meetings/${id}/summary`, { replace: true });
+      }
+    });
   };
 
   const handleLeave = () => {
@@ -528,6 +540,7 @@ export default function MeetingRoom() {
           isCameraOff={isCameraOff}
           isScreenSharing={isScreenSharing}
           isHost={isHost}
+          isEnding={isEnding}
           meetingStatus={meeting?.status ?? 'scheduled'}
           unreadCount={unreadCount}
           sidebarTab={sidebarTab}

@@ -13,10 +13,36 @@ export default function AuthCallback() {
     if (!access || !refresh) { navigate('/login'); return; }
 
     login(access, refresh).then(() => {
-      const pending = sessionStorage.getItem('pending_invite');
-      if (pending) { sessionStorage.removeItem('pending_invite'); navigate(`/join/${pending}`); return; }
-      if (teams.length === 1) { navigate(`/teams/${teams[0].id}`); return; }
-      navigate('/dashboard');
+      // Priority 1: Check query redirect param passed from OAuth state
+      const urlRedirect = params.get('redirect');
+      // Priority 2: Check stored redirects in localStorage / sessionStorage
+      const storedRedirect = localStorage.getItem('auth_redirect') || sessionStorage.getItem('auth_redirect');
+      const pendingInvite = sessionStorage.getItem('pending_invite');
+
+      // Clean up storage
+      localStorage.removeItem('auth_redirect');
+      sessionStorage.removeItem('auth_redirect');
+      sessionStorage.removeItem('pending_invite');
+
+      let targetDestination: string | null = null;
+      if (urlRedirect && urlRedirect.startsWith('/') && !urlRedirect.startsWith('//')) {
+        targetDestination = urlRedirect;
+      } else if (storedRedirect && storedRedirect.startsWith('/') && !storedRedirect.startsWith('//')) {
+        targetDestination = storedRedirect;
+      } else if (pendingInvite) {
+        targetDestination = `/invitations/${pendingInvite}`;
+      }
+
+      if (targetDestination) {
+        navigate(targetDestination, { replace: true });
+        return;
+      }
+
+      if (teams.length === 1) {
+        navigate(`/teams/${teams[0].id}`, { replace: true });
+        return;
+      }
+      navigate('/dashboard', { replace: true });
     });
   }, []);
 

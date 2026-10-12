@@ -476,6 +476,7 @@ class TranscriptOrchestrator:
         raw_transcript_path: Optional[str] = None,
         formatting_config: Optional[FormattingConfig] = None,
         enforce_concurrency: bool = True,
+        run_ai_pipeline: bool = False,
     ) -> ProcessTranscriptResponse:
         """
         Execute the complete 14-stage transcript processing pipeline.
@@ -490,9 +491,10 @@ class TranscriptOrchestrator:
             raw_transcript_path: Optional custom path in storage for raw transcript.
             formatting_config: Optional formatting options for Part 13.
             enforce_concurrency: Whether to block simultaneous runs for same meeting.
+            run_ai_pipeline: Whether to automatically trigger the First Stage Main Meeting Agent.
 
         Returns:
-            ProcessTranscriptResponse with final status, path, and metrics.
+            ProcessTranscriptResponse with final status, path, metrics, and optional meeting_analysis.
         """
         # 1. Validate meeting_id against path traversal
         valid_id = validate_meeting_id(meeting_id)
@@ -583,6 +585,33 @@ class TranscriptOrchestrator:
                 warnings=context.warnings,
             )
 
+            # Optional: AI Pipeline Execution (Stage 1 + Stage 2 + Stage 3)
+            meeting_analysis = None
+            scrum_analysis = None
+            resolved_tasks = None
+            if run_ai_pipeline:
+                try:
+                    from app.services.meeting_ai_pipeline import run_meeting_ai_pipeline
+                    ai_pipeline_resp = await run_meeting_ai_pipeline(
+                        meeting_id=valid_id,
+                        custom_transcript_path=final_record.cleaned_transcript_path,
+                        storage_service=self.storage_service,
+                        llm_client=self.llm_client,
+                    )
+                    meeting_analysis = ai_pipeline_resp.analysis
+                    scrum_analysis = ai_pipeline_resp.scrum_analysis
+                    resolved_tasks = ai_pipeline_resp.resolved_tasks
+                    if meeting_analysis:
+                        context.metrics["meeting_analysis"] = meeting_analysis.model_dump()
+                    if scrum_analysis:
+                        context.metrics["scrum_analysis"] = scrum_analysis.model_dump()
+                    if resolved_tasks:
+                        context.metrics["resolved_tasks"] = [t.model_dump() for t in resolved_tasks]
+                except Exception as ai_err:
+                    logger.error("AI pipeline execution failed for meeting %s: %s", valid_id, ai_err)
+                    setattr(ai_err, "stage", "ai_pipeline")
+                    raise
+
             logger.info("Pipeline completed successfully for meeting %s in %dms", valid_id, total_duration_ms)
 
             return ProcessTranscriptResponse(
@@ -596,6 +625,9 @@ class TranscriptOrchestrator:
                 duration_ms=total_duration_ms,
                 metrics=context.metrics,
                 warnings=context.warnings,
+                meeting_analysis=meeting_analysis,
+                scrum_analysis=scrum_analysis,
+                resolved_tasks=resolved_tasks,
                 error=None,
             )
 
