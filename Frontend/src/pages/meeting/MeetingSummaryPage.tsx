@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Clock, Users, CheckCircle2, Download, LayoutDashboard,
   Sparkles, AlertCircle, RefreshCw, Loader2, FileText, Check,
   ChevronDown, ChevronUp, Tag, UserCheck, Calendar, ListChecks,
-  ExternalLink, ArrowRight,
+  ArrowRight,
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { meetingService } from '../../services/meeting.service';
@@ -291,7 +291,6 @@ export default function MeetingSummaryPage() {
                     </p>
                   </div>
                 </div>
-<<<<<<< HEAD
 
                 {/* Timeline Stepper */}
                 <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 pt-2">
