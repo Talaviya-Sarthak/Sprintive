@@ -178,6 +178,7 @@ export const teamRepository = {
     const { rows } = await pool.query(
       `SELECT i.*, t.name AS team_name, t.avatar_url AS team_avatar, t.color AS team_color,
               u.full_name AS inviter_name,
+              'developer' AS role,
               (SELECT COUNT(*) FROM team_members WHERE team_id = t.id) AS member_count
        FROM invitations i
        JOIN teams t ON t.id = i.team_id

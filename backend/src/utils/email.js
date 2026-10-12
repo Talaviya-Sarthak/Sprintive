@@ -46,7 +46,7 @@ export async function verifySmtpConnection() {
   }
 }
 
-export async function sendInvitationEmail({ to, inviterName, teamName, teamColor, acceptUrl, expiresAt }) {
+export async function sendInvitationEmail({ to, inviterName, teamName, teamColor, acceptUrl, expiresAt, role = 'developer' }) {
   if (!env.brevoApiKey) {
     logger.warn('[email] Brevo API key not configured — cannot send invitation email');
     throw new Error('Email sending is not configured. Contact the system administrator.');
@@ -56,36 +56,109 @@ export async function sendInvitationEmail({ to, inviterName, teamName, teamColor
     year: 'numeric', month: 'long', day: 'numeric',
   });
 
-  const html = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#0B1220;font-family:Inter,system-ui,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0B1220;padding:40px 20px;">
-    <tr><td align="center">
-      <table width="520" cellpadding="0" cellspacing="0" style="background:#111827;border-radius:16px;border:1px solid rgba(255,255,255,0.08);overflow:hidden;">
-        <tr><td style="height:4px;background:linear-gradient(90deg,${teamColor ?? '#3B82F6'},#06B6D4);"></td></tr>
-        <tr><td style="padding:40px 40px 32px;">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:32px;">
-            <div style="width:36px;height:36px;background:#3B82F6;border-radius:10px;display:flex;align-items:center;justify-content:center;">
-              <span style="color:#fff;font-size:18px;font-weight:800;">S</span>
-            </div>
-            <span style="color:#F8FAFC;font-size:18px;font-weight:700;">Sprintive</span>
-          </div>
-          <h1 style="color:#F8FAFC;font-size:22px;font-weight:700;margin:0 0 8px;">You're invited to join <span style="color:${teamColor ?? '#3B82F6'};">${teamName}</span></h1>
-          <p style="color:#94A3B8;font-size:14px;margin:0 0 32px;line-height:1.6;">
-            <strong style="color:#CBD5E1;">${inviterName}</strong> has invited you to collaborate on <strong style="color:#CBD5E1;">${teamName}</strong> on Sprintive.
-          </p>
-          <a href="${acceptUrl}" style="display:inline-block;background:linear-gradient(135deg,${teamColor ?? '#3B82F6'},#06B6D4);color:#fff;text-decoration:none;padding:14px 32px;border-radius:12px;font-size:15px;font-weight:600;">
-            Accept Invitation
-          </a>
-          <p style="color:#475569;font-size:12px;margin:24px 0 0;">This invitation expires on ${expiry}. If you didn't expect this, you can safely ignore it.</p>
-        </td></tr>
-      </table>
-    </td></tr>
+  const displayRole = role ? role.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : 'Developer';
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>You're invited to join ${teamName}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#FAFAFA;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color:#FAFAFA;padding:48px 16px;">
+    <tr>
+      <td align="center">
+        <!-- Main Card -->
+        <table width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width:540px;background-color:#FFFFFF;border:1px solid #EAEAEA;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+          <!-- Header / Wordmark -->
+          <tr>
+            <td style="padding:28px 36px 20px;">
+              <table border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="width:24px;height:24px;background-color:#000000;border-radius:5px;text-align:center;vertical-align:middle;">
+                    <span style="color:#FFFFFF;font-size:13px;font-weight:700;line-height:24px;display:block;">S</span>
+                  </td>
+                  <td style="padding-left:10px;">
+                    <span style="color:#000000;font-size:15px;font-weight:700;letter-spacing:-0.2px;">Sprintive</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Subtle Divider -->
+          <tr>
+            <td style="padding:0 36px;">
+              <div style="border-top:1px solid #EAEAEA;height:1px;line-height:1px;"></div>
+            </td>
+          </tr>
+
+          <!-- Content Body -->
+          <tr>
+            <td style="padding:32px 36px 28px;">
+              <p style="margin:0 0 8px;font-size:13px;color:#666666;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">You're invited to join</p>
+              <h1 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#000000;letter-spacing:-0.4px;line-height:1.25;">
+                ${teamName}
+              </h1>
+
+              <p style="margin:0 0 28px;font-size:14px;color:#444444;line-height:1.6;">
+                <strong>${inviterName}</strong> invited you to join the team as <strong>${displayRole}</strong>.
+              </p>
+
+              <!-- Primary Action Button -->
+              <table border="0" cellpadding="0" cellspacing="0" style="margin:0 0 28px;">
+                <tr>
+                  <td align="center" style="background-color:#000000;border-radius:6px;">
+                    <a href="${acceptUrl}" target="_blank" style="display:inline-block;padding:12px 28px;font-size:14px;font-weight:600;color:#FFFFFF;text-decoration:none;letter-spacing:-0.1px;">
+                      Accept invitation
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0;font-size:12px;color:#888888;line-height:1.5;">
+                You can review the invitation before joining the team.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer Divider -->
+          <tr>
+            <td style="padding:0 36px;">
+              <div style="border-top:1px solid #EAEAEA;height:1px;line-height:1px;"></div>
+            </td>
+          </tr>
+
+          <!-- Footer Information -->
+          <tr>
+            <td style="padding:20px 36px 24px;">
+              <p style="margin:0 0 8px;font-size:12px;color:#888888;line-height:1.5;">
+                This invitation expires on ${expiry}. If you weren't expecting this invitation, you can safely ignore this email.
+              </p>
+              <p style="margin:0;font-size:11px;color:#AAAAAA;">
+                &copy; Sprintive &bull; Workspace Intelligence Platform
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
   </table>
 </body>
 </html>`;
+
+  const textContent = `You're invited to join ${teamName} on Sprintive.
+
+${inviterName} invited you to join the team as ${displayRole}.
+
+Accept invitation by opening this link:
+${acceptUrl}
+
+You can review the invitation before joining the team.
+This invitation expires on ${expiry}. If you weren't expecting this invitation, you can safely ignore this email.
+
+© Sprintive`;
 
   logger.info(`[email] Sending invitation to ${to} for team "${teamName}"`);
 
@@ -101,6 +174,7 @@ export async function sendInvitationEmail({ to, inviterName, teamName, teamColor
         to: [{ email: to }],
         subject: `${inviterName} invited you to join ${teamName} on Sprintive`,
         htmlContent: html,
+        textContent,
       }),
       signal: AbortSignal.timeout(15000),
     });

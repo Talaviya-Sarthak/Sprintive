@@ -166,7 +166,7 @@ export const teamService = {
     );
     const inviterName = rows?.[0]?.full_name ?? 'A team member';
 
-    const acceptUrl = `${env.frontendUrl}/join/${inv.token}`;
+    const acceptUrl = `${env.frontendUrl}/invitations/${inv.token}`;
     logger.info(`[teamService] Sending invitation email to ${email} for team "${team.name}"`);
 
     await sendInvitationEmail({
@@ -176,6 +176,7 @@ export const teamService = {
       teamColor:   team.color,
       acceptUrl,
       expiresAt:   inv.expires_at,
+      role:        'developer',
     });
 
     logger.info(`[teamService] Invitation email sent successfully to ${email}`);
@@ -193,30 +194,64 @@ export const teamService = {
   async validateInviteToken(token) {
     await teamRepository.expireOldInvitations();
     const invitation = await teamRepository.findInvitationByToken(token);
-    if (!invitation) throw new AppError('Invalid invitation link', 404);
-    if (invitation.status !== 'pending') throw new AppError(`Invitation is ${invitation.status}`, 400);
+    if (!invitation) throw new AppError('Invalid invitation link', 404, 'INVITATION_NOT_FOUND');
     return invitation;
   },
 
-  async acceptInvitation({ token, userId }) {
+  async getInvitePreview(token) {
     const invitation = await this.validateInviteToken(token);
+    if (invitation.status === 'expired' || new Date(invitation.expires_at) < new Date()) {
+      throw new AppError('This invitation has expired. Ask the team administrator to send a new invitation.', 410, 'INVITATION_EXPIRED');
+    }
+    if (invitation.status === 'accepted') {
+      const err = new AppError("You've already accepted this invitation.", 409, 'INVITATION_ALREADY_ACCEPTED');
+      err.invitation = invitation;
+      throw err;
+    }
+    if (invitation.status === 'rejected') {
+      const err = new AppError('Invitation declined.', 400, 'INVITATION_DECLINED');
+      err.invitation = invitation;
+      throw err;
+    }
+    return invitation;
+  },
+
+  async acceptInvitation(arg1, arg2) {
+    const { token, userId } = typeof arg1 === 'object' && arg1 !== null
+      ? arg1
+      : { token: arg1, userId: arg2 };
+
+    const invitation = await this.validateInviteToken(token);
+
+    if (invitation.status === 'expired' || new Date(invitation.expires_at) < new Date()) {
+      throw new AppError('This invitation has expired. Ask the team administrator to send a new invitation.', 410, 'INVITATION_EXPIRED');
+    }
+    if (invitation.status === 'accepted') {
+      throw new AppError("You've already accepted this invitation.", 409, 'INVITATION_ALREADY_ACCEPTED');
+    }
+    if (invitation.status === 'rejected') {
+      throw new AppError('This invitation was declined.', 400, 'INVITATION_DECLINED');
+    }
 
     // Security: if the invitation has a target email, verify it matches the authenticated user
     if (invitation.email) {
       const user = await findUserById(userId);
-      if (!user) throw new AppError('User not found', 404);
+      if (!user) throw new AppError('User not found', 404, 'USER_NOT_FOUND');
       if (user.email.toLowerCase() !== invitation.email.toLowerCase()) {
-        throw new AppError('This invitation was sent to a different email address.', 403);
+        throw new AppError(`This invitation was intended for ${invitation.email}.`, 403, 'EMAIL_MISMATCH');
       }
     }
 
-    // Free plan: max 1 joined team
+    // Prevent duplicate membership / already a member
     const alreadyMember = await teamRepository.isMember(invitation.team_id, userId);
-    if (!alreadyMember) {
-      const joinedCount = await teamRepository.countJoinedTeams(userId);
-      if (joinedCount >= PLAN_LIMITS.free.maxJoinedTeams) {
-        throw new AppError('You have reached your free plan limit of 1 joined team. Upgrade to Pro to join more teams.', 403);
-      }
+    if (alreadyMember) {
+      throw new AppError("You're already a member of this team.", 409, 'ALREADY_MEMBER');
+    }
+
+    // Free plan: max 1 joined team
+    const joinedCount = await teamRepository.countJoinedTeams(userId);
+    if (joinedCount >= PLAN_LIMITS.free.maxJoinedTeams) {
+      throw new AppError('You have reached your free plan limit of 1 joined team. Upgrade to Pro to join more teams.', 403, 'PLAN_LIMIT_REACHED');
     }
 
     // Atomically add member + update invitation status
@@ -226,11 +261,29 @@ export const teamService = {
     return team;
   },
 
-  async rejectInvitation(token) {
-    await teamRepository.expireOldInvitations();
-    const invitation = await teamRepository.findInvitationByToken(token);
-    if (!invitation) throw new AppError('Invalid invitation link', 404);
+  async rejectInvitation(arg1, arg2) {
+    const { token, userId = null } = typeof arg1 === 'object' && arg1 !== null
+      ? arg1
+      : { token: arg1, userId: arg2 || null };
+
+    const invitation = await this.validateInviteToken(token);
+
+    if (invitation.status === 'expired' || new Date(invitation.expires_at) < new Date()) {
+      throw new AppError('This invitation has expired.', 410, 'INVITATION_EXPIRED');
+    }
+    if (invitation.status === 'accepted') {
+      throw new AppError("You've already accepted this invitation.", 409, 'INVITATION_ALREADY_ACCEPTED');
+    }
+
+    if (userId && invitation.email) {
+      const user = await findUserById(userId);
+      if (user && user.email.toLowerCase() !== invitation.email.toLowerCase()) {
+        throw new AppError(`This invitation was intended for ${invitation.email}.`, 403, 'EMAIL_MISMATCH');
+      }
+    }
+
     await teamRepository.updateInvitationStatus(token, 'rejected');
+    return { rejected: true };
   },
 
   async getDashboard(userId) {

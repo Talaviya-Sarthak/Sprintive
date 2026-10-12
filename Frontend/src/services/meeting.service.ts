@@ -70,6 +70,26 @@ export const meetingService = {
     return data.data;
   },
 
+  async getProcessingStatus(id: string): Promise<{
+    meeting_id: string;
+    meeting_status: string;
+    transcript_status: string;
+    ai_status: string;
+    current_stage: string;
+    is_processing: boolean;
+    error: string | null;
+    tickets_count: number;
+    has_summary: boolean;
+  }> {
+    const { data } = await api.get(`/meetings/${id}/processing-status`);
+    return data.data;
+  },
+
+  async retryProcessing(id: string): Promise<any> {
+    const { data } = await api.post(`/meetings/${id}/process/retry`);
+    return data.data;
+  },
+
   async getChats(id: string): Promise<ChatMessage[]> {
     const { data } = await api.get(`/meetings/${id}/chats`);
     return data.data;

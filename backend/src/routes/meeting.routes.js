@@ -22,6 +22,8 @@ router.post('/:id/end',             meetingController.endMeeting);
 router.get('/:id/participants',     meetingController.getParticipants);
 router.get('/:id/transcript',       meetingController.getTranscript);
 router.post('/:id/transcript/retry', meetingController.retryTranscript);
+router.get('/:id/processing-status', meetingController.getProcessingStatus);
+router.post('/:id/process/retry',    meetingController.retryProcessing);
 router.post('/:id/ai/handoff',        meetingController.triggerAiHandoff);
 router.get('/:id/summary',          meetingController.getSummary);
 router.get('/:id/chats',            meetingController.getChats);

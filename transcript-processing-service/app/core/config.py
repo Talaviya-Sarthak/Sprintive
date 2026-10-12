@@ -1,5 +1,21 @@
-from pydantic import AliasChoices, Field
+from pathlib import Path
+from dotenv import load_dotenv
+from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_SERVICE_DIR = Path(__file__).resolve().parent.parent.parent
+_REPO_ROOT = _SERVICE_DIR.parent
+
+# Load environment files in priority order without overriding existing process variables
+_ENV_CANDIDATES = [
+    _SERVICE_DIR / ".env",
+    _REPO_ROOT / "backend" / ".env",
+    _REPO_ROOT / "ai-service" / ".env",
+    _REPO_ROOT / ".env",
+]
+for _env_file in _ENV_CANDIDATES:
+    if _env_file.is_file():
+        load_dotenv(dotenv_path=_env_file, override=False)
 
 
 class Settings(BaseSettings):
@@ -17,19 +33,28 @@ class Settings(BaseSettings):
     STORAGE_BASE_DIR: str = "./storage"
 
     # LLM and STT Error Correction settings
-    LLM_PROVIDER: str = "openai"
+    LLM_PROVIDER: str = Field(
+        default="openai",
+        validation_alias=AliasChoices("LLM_PROVIDER"),
+    )
     LLM_API_KEY: str = Field(
         default="",
         validation_alias=AliasChoices("LLM_API_KEY", "GROQ_API_KEY", "OPENAI_API_KEY"),
     )
-    LLM_BASE_URL: str = "https://api.openai.com/v1"
-    LLM_MODEL: str = "gpt-4o-mini"
+    LLM_BASE_URL: str = Field(
+        default="https://api.openai.com/v1",
+        validation_alias=AliasChoices("LLM_BASE_URL", "OPENAI_BASE_URL"),
+    )
+    LLM_MODEL: str = Field(
+        default="gpt-4o-mini",
+        validation_alias=AliasChoices("LLM_MODEL", "OPENAI_MODEL"),
+    )
     LLM_TEMPERATURE: float = 0.0
     LLM_MAX_TOKENS: int = Field(
         default=1024,
         validation_alias=AliasChoices("LLM_MAX_TOKENS", "MAX_TOKENS"),
     )
-    LLM_TIMEOUT_SECONDS: float = 10.0
+    LLM_TIMEOUT_SECONDS: float = 30.0
     LLM_MAX_RETRIES: int = 3
     STT_CONFIDENCE_THRESHOLD: float = 0.90
     STT_CONTEXT_BEFORE: int = 2
@@ -98,8 +123,21 @@ class Settings(BaseSettings):
     CLEANER_VERSION: str = "1.0.0"
     OVERWRITE_PROCESSED_TRANSCRIPT: bool = True
 
+    @model_validator(mode="after")
+    def configure_llm_defaults(self) -> "Settings":
+        key = (self.LLM_API_KEY or "").strip()
+        # If Groq API key is detected and defaults were not explicitly altered:
+        if key.startswith("gsk_") or self.LLM_PROVIDER.lower() == "groq":
+            if self.LLM_BASE_URL == "https://api.openai.com/v1":
+                self.LLM_BASE_URL = "https://api.groq.com/openai/v1"
+            if self.LLM_MODEL == "gpt-4o-mini":
+                self.LLM_MODEL = "openai/gpt-oss-20b"
+            if self.LLM_PROVIDER.lower() in ("openai", "mock"):
+                self.LLM_PROVIDER = "groq"
+        return self
+
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=[str(p) for p in _ENV_CANDIDATES if p.is_file()],
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",

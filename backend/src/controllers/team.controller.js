@@ -143,7 +143,7 @@ export const teamController = {
   async rejectInvitation(req, res, next) {
     try {
       const { token } = joinTeamSchema.parse(req.body);
-      await teamService.rejectInvitation(token);
+      await teamService.rejectInvitation({ token, userId: req.user?.id || null });
       return sendSuccess(res, { message: 'Invitation declined.' });
     } catch (err) { next(err); }
   },

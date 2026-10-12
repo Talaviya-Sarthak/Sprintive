@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Search,
   Plus,
@@ -10,26 +10,50 @@ import {
   Clock,
   AlertCircle,
   Kanban,
+  Video,
+  Loader2,
+  RefreshCw,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import AppLayout from '../../layouts/AppLayout';
 import { AppButton } from '../../components/app-ui/AppButton';
+import AIProcessingStepper from '../../components/meeting/AIProcessingStepper';
 import KanbanBoard from './components/KanbanBoard';
 import TaskDialog from './components/TaskDialog';
 import TaskDetailDrawer from './components/TaskDetailDrawer';
-import { INITIAL_MOCK_TASKS, MOCK_TEAM_MEMBERS } from './data/mockKanbanData';
-import type { KanbanTask, KanbanStatus, TaskPriority, SortOption } from './types';
+import { kanbanService } from '../../services/kanban.service';
+import { teamService } from '../../services/team.service';
+import { meetingService } from '../../services/meeting.service';
+import type {
+  KanbanTask,
+  KanbanStatus,
+  TaskPriority,
+  SortOption,
+  KanbanMeeting,
+  TaskAssignee,
+} from './types';
 
 export default function KanbanPage() {
   const { teamId } = useParams<{ teamId: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { teams } = useAuth();
 
   // Active workspace team context
   const activeTeamId = teamId ?? (teams.length > 0 ? teams[0].id : undefined);
   const activeTeam = teams.find(t => t.id === activeTeamId);
 
-  // Local Task State (initialized from mock data)
-  const [tasks, setTasks] = useState<KanbanTask[]>(INITIAL_MOCK_TASKS);
+  // Meeting filter param from URL
+  const meetingIdParam = searchParams.get('meeting_id') || 'all';
+
+  // API State
+  const [tasks, setTasks] = useState<KanbanTask[]>([]);
+  const [meetings, setMeetings] = useState<KanbanMeeting[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TaskAssignee[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Search & Filters State
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,13 +65,127 @@ export default function KanbanPage() {
   // Dialog State (Create / Edit modal)
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<KanbanTask | null>(null);
-  const [defaultColumnStatus, setDefaultColumnStatus] = useState<KanbanStatus>('backlog');
+  const [defaultColumnStatus, setDefaultColumnStatus] = useState<KanbanStatus>('todo');
 
   // Drawer State (Right-side detail inspection sheet)
   const [selectedTaskForDrawer, setSelectedTaskForDrawer] = useState<KanbanTask | null>(null);
 
+  // Processing status for filtered meeting
+  const [meetingProcStatus, setMeetingProcStatus] = useState<{
+    meeting_id: string;
+    is_processing: boolean;
+    current_stage: string;
+    transcript_status: string;
+    ai_status: string;
+    error: string | null;
+  } | null>(null);
+  const [isRetryingProc, setIsRetryingProc] = useState(false);
+
+  // Active meeting title for processing stepper
+  const activeProcessingMeetingTitle = useMemo(() => {
+    const targetId = meetingProcStatus?.meeting_id || (meetingIdParam !== 'all' ? meetingIdParam : undefined);
+    return meetings.find(m => m.id === targetId)?.title;
+  }, [meetingProcStatus, meetingIdParam, meetings]);
+
+  // Load team members
+  useEffect(() => {
+    if (!activeTeamId) return;
+    teamService
+      .getMembers(activeTeamId)
+      .then(members => {
+        setTeamMembers(
+          members.map(m => ({
+            id: m.user_id,
+            name: m.full_name,
+            avatar: m.avatar_url || undefined,
+            role: m.role,
+          }))
+        );
+      })
+      .catch(() => {
+        // Fallback or ignore
+      });
+  }, [activeTeamId]);
+
+  // Fetch Board Data
+  const fetchBoardData = useCallback(async () => {
+    if (!activeTeamId) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setActionError(null);
+
+    try {
+      const [data, proc] = await Promise.all([
+        kanbanService.getKanbanTasks(
+          activeTeamId,
+          meetingIdParam === 'all' ? null : meetingIdParam
+        ),
+        meetingIdParam !== 'all'
+          ? meetingService.getProcessingStatus(meetingIdParam).catch(() => null)
+          : Promise.resolve(null),
+      ]);
+      setTasks(data.tasks);
+      setMeetings(data.meetings);
+      setMeetingProcStatus(proc);
+    } catch (err: any) {
+      setError(
+        err.response?.data?.message || err.message || 'Failed to load Kanban tasks'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [activeTeamId, meetingIdParam]);
+
+  useEffect(() => {
+    fetchBoardData();
+  }, [fetchBoardData]);
+
+  // Poll processing status if meeting is in progress
+  useEffect(() => {
+    if (!meetingProcStatus?.is_processing || meetingIdParam === 'all') return;
+    const interval = setInterval(async () => {
+      try {
+        const proc = await meetingService.getProcessingStatus(meetingIdParam);
+        setMeetingProcStatus(proc);
+        if (!proc.is_processing) {
+          fetchBoardData();
+        }
+      } catch (_) {}
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [meetingProcStatus?.is_processing, meetingIdParam, fetchBoardData]);
+
+  const handleRetryProcessing = async () => {
+    if (!meetingIdParam || meetingIdParam === 'all') return;
+    setIsRetryingProc(true);
+    setActionError(null);
+    try {
+      await meetingService.retryProcessing(meetingIdParam);
+      await fetchBoardData();
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || err.message || 'Retry failed');
+    } finally {
+      setIsRetryingProc(false);
+    }
+  };
+
+  // Handle meeting filter dropdown change
+  const handleMeetingChange = (newMeetingId: string) => {
+    const updatedParams = new URLSearchParams(searchParams);
+    if (newMeetingId === 'all') {
+      updatedParams.delete('meeting_id');
+    } else {
+      updatedParams.set('meeting_id', newMeetingId);
+    }
+    setSearchParams(updatedParams);
+  };
+
   // Open Create Dialog
-  const handleOpenCreate = (status: KanbanStatus = 'backlog') => {
+  const handleOpenCreate = (status: KanbanStatus = 'todo') => {
     setEditingTask(null);
     setDefaultColumnStatus(status);
     setDialogOpen(true);
@@ -69,7 +207,7 @@ export default function KanbanPage() {
     setSelectedTaskForDrawer(null);
   };
 
-  // Save Task (Create or Update)
+  // Save Task (Create or Update local fallback)
   const handleSaveTask = (taskData: Partial<KanbanTask>) => {
     if (editingTask) {
       const updated = { ...editingTask, ...taskData } as KanbanTask;
@@ -80,14 +218,16 @@ export default function KanbanPage() {
     } else {
       const newTask: KanbanTask = {
         id: `task-${Date.now()}`,
+        ticket_id: `task-${Date.now()}`,
         title: taskData.title || 'Untitled Task',
         description: taskData.description,
         status: taskData.status || defaultColumnStatus,
         priority: taskData.priority || 'medium',
         assignee: taskData.assignee,
         dueDate: taskData.dueDate,
-        labels: taskData.labels,
+        labels: taskData.labels || ['manual'],
         source: 'manual',
+        team_id: activeTeamId,
         createdAt: new Date().toISOString(),
       };
       setTasks(prev => [newTask, ...prev]);
@@ -102,13 +242,33 @@ export default function KanbanPage() {
     }
   };
 
-  // Move Task Status (via Drag and Drop, Card Arrow, or Drawer)
-  const handleMoveStatus = (taskId: string, newStatus: KanbanStatus) => {
+  // Move Task Status with Optimistic UI & Server Persistence
+  const handleMoveStatus = async (taskId: string, newStatus: KanbanStatus) => {
+    const previousTasks = [...tasks];
+
+    // Optimistically update UI
     setTasks(prev =>
       prev.map(t => (t.id === taskId ? { ...t, status: newStatus } : t))
     );
     if (selectedTaskForDrawer?.id === taskId) {
       setSelectedTaskForDrawer(prev => (prev ? { ...prev, status: newStatus } : null));
+    }
+    setActionError(null);
+
+    if (!activeTeamId) return;
+
+    try {
+      await kanbanService.updateTicketStatus(activeTeamId, taskId, newStatus);
+    } catch (err: any) {
+      // Rollback on server error
+      setTasks(previousTasks);
+      if (selectedTaskForDrawer?.id === taskId) {
+        const reverted = previousTasks.find(t => t.id === taskId);
+        if (reverted) setSelectedTaskForDrawer(reverted);
+      }
+      setActionError(
+        err.response?.data?.message || err.message || 'Failed to update ticket status on server'
+      );
     }
   };
 
@@ -138,9 +298,10 @@ export default function KanbanPage() {
           const q = searchQuery.toLowerCase();
           const matchTitle = task.title.toLowerCase().includes(q);
           const matchDesc = task.description?.toLowerCase().includes(q) ?? false;
-          const matchAssignee = task.assignee?.name.toLowerCase().includes(q) ?? false;
+          const matchAssignee = task.assignee?.name?.toLowerCase().includes(q) ?? false;
+          const matchMeeting = task.meeting_title?.toLowerCase().includes(q) ?? false;
           const matchLabel = task.labels?.some(l => l.toLowerCase().includes(q)) ?? false;
-          if (!matchTitle && !matchDesc && !matchAssignee && !matchLabel) {
+          if (!matchTitle && !matchDesc && !matchAssignee && !matchMeeting && !matchLabel) {
             return false;
           }
         }
@@ -151,8 +312,8 @@ export default function KanbanPage() {
 
         if (assigneeFilter !== 'all') {
           if (assigneeFilter === 'unassigned') {
-            if (task.assignee) return false;
-          } else if (task.assignee?.id !== assigneeFilter) {
+            if (task.assignee?.id && task.assignee.id !== 'unassigned') return false;
+          } else if (task.assignee?.id !== assigneeFilter && task.assignee_id !== assigneeFilter) {
             return false;
           }
         }
@@ -164,25 +325,26 @@ export default function KanbanPage() {
         return true;
       })
       .sort((a, b) => {
-        switch (sortBy) {
-          case 'priority-desc':
-            return priorityWeight[b.priority] - priorityWeight[a.priority];
-          case 'priority-asc':
-            return priorityWeight[a.priority] - priorityWeight[b.priority];
-          case 'due-asc':
-            if (!a.dueDate) return 1;
-            if (!b.dueDate) return -1;
-            return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-          case 'due-desc':
-            if (!a.dueDate) return 1;
-            if (!b.dueDate) return -1;
-            return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
-          case 'recent':
-          default:
-            return (
-              new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
-            );
+        if (sortBy === 'priority-desc') {
+          return (priorityWeight[b.priority] || 0) - (priorityWeight[a.priority] || 0);
         }
+        if (sortBy === 'priority-asc') {
+          return (priorityWeight[a.priority] || 0) - (priorityWeight[b.priority] || 0);
+        }
+        if (sortBy === 'due-asc') {
+          const dateA = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+          const dateB = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+          return dateA - dateB;
+        }
+        if (sortBy === 'due-desc') {
+          const dateA = a.dueDate ? new Date(a.dueDate).getTime() : -Infinity;
+          const dateB = b.dueDate ? new Date(b.dueDate).getTime() : -Infinity;
+          return dateB - dateA;
+        }
+        // default recent
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return timeB - timeA;
       });
   }, [tasks, searchQuery, priorityFilter, assigneeFilter, statusFilter, sortBy]);
 
@@ -206,6 +368,8 @@ export default function KanbanPage() {
   const reviewCount = tasks.filter(t => t.status === 'review').length;
   const doneCount = tasks.filter(t => t.status === 'done').length;
 
+  const currentFilteredMeeting = meetings.find(m => m.id === meetingIdParam);
+
   return (
     <AppLayout teamId={activeTeamId}>
       <div className="flex flex-col h-full px-3 sm:px-5 py-3.5 max-w-[1600px] mx-auto select-none">
@@ -218,9 +382,25 @@ export default function KanbanPage() {
                   <Kanban size={15} />
                 </div>
                 <div>
-                  <h1 className="text-base sm:text-lg font-bold tracking-tight text-[#f4f4f5]">
-                    Kanban Board
-                  </h1>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-base sm:text-lg font-bold tracking-tight text-[#f4f4f5]">
+                      Kanban Board
+                    </h1>
+                    {meetingIdParam !== 'all' && currentFilteredMeeting && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-300">
+                        <Video size={10} />
+                        <span className="max-w-[140px] truncate">{currentFilteredMeeting.title}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleMeetingChange('all')}
+                          className="hover:text-blue-100 ml-0.5 cursor-pointer"
+                          title="Show all meetings"
+                        >
+                          <X size={10} />
+                        </button>
+                      </span>
+                    )}
+                  </div>
                   <p className="text-[11px] text-[#9ca3af]">
                     Manage tasks across{' '}
                     <span className="text-[#f4f4f5] font-medium">
@@ -258,7 +438,7 @@ export default function KanbanPage() {
               <AppButton
                 variant="mono"
                 size="sm"
-                onClick={() => handleOpenCreate('backlog')}
+                onClick={() => handleOpenCreate('todo')}
                 className="gap-1 shadow-sm h-7.5 px-2.5 text-xs"
               >
                 <Plus size={13} strokeWidth={2.5} />
@@ -266,6 +446,20 @@ export default function KanbanPage() {
               </AppButton>
             </div>
           </div>
+
+          {/* Action error banner */}
+          {actionError && (
+            <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs">
+              <span>{actionError}</span>
+              <button
+                type="button"
+                onClick={() => setActionError(null)}
+                className="text-rose-400 hover:text-rose-200"
+              >
+                <X size={13} />
+              </button>
+            </div>
+          )}
 
           {/* Interactive Controls Bar: Search, Filters, Sort */}
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2">
@@ -295,6 +489,32 @@ export default function KanbanPage() {
 
             {/* Filter and Sort Controls */}
             <div className="flex flex-wrap items-center gap-1.5">
+              {/* Meeting Filter Dropdown */}
+              <div
+                className={`flex items-center gap-1 border rounded-lg px-2 py-0.5 text-xs transition-colors ${
+                  meetingIdParam !== 'all'
+                    ? 'border-blue-500/50 bg-blue-500/10 text-blue-300'
+                    : 'border-[#242636] bg-[#13141a] text-[#a1a1aa]'
+                }`}
+              >
+                <Video size={11} className={meetingIdParam !== 'all' ? 'text-blue-400' : 'text-[#71717a]'} />
+                <span className="text-[10.5px] font-mono opacity-80">Meeting:</span>
+                <select
+                  value={meetingIdParam}
+                  onChange={e => handleMeetingChange(e.target.value)}
+                  className="bg-transparent text-[11px] text-inherit outline-none cursor-pointer max-w-[130px] truncate font-medium"
+                >
+                  <option value="all" className="bg-[#181920] text-[#f4f4f5]">
+                    All Meetings ({meetings.reduce((acc, m) => acc + (m.task_count || 0), 0)})
+                  </option>
+                  {meetings.map(m => (
+                    <option key={m.id} value={m.id} className="bg-[#181920] text-[#f4f4f5]">
+                      {m.title} ({m.task_count})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Priority Filter */}
               <div
                 className={`flex items-center gap-1 border rounded-lg px-2 py-0.5 text-xs transition-colors ${
@@ -340,7 +560,7 @@ export default function KanbanPage() {
                 >
                   <option value="all" className="bg-[#181920] text-[#f4f4f5]">All</option>
                   <option value="unassigned" className="bg-[#181920] text-[#f4f4f5]">Unassigned</option>
-                  {MOCK_TEAM_MEMBERS.map(m => (
+                  {teamMembers.map(m => (
                     <option key={m.id} value={m.id} className="bg-[#181920] text-[#f4f4f5]">
                       {m.name}
                     </option>
@@ -403,13 +623,119 @@ export default function KanbanPage() {
           </div>
         </div>
 
-        {/* Board Component */}
-        <KanbanBoard
-          tasks={filteredTasks}
-          onAddTask={handleOpenCreate}
-          onCardClick={handleOpenDrawer}
-          onMoveStatus={handleMoveStatus}
-        />
+        {/* Loading State */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-80 gap-3">
+            <Loader2 size={24} className="animate-spin text-blue-400" />
+            <p className="text-xs text-[#a1a1aa] font-mono">Loading Kanban board...</p>
+          </div>
+        ) : error ? (
+          /* Error State */
+          <div className="flex flex-col items-center justify-center h-80 gap-3 border border-rose-500/20 rounded-xl bg-rose-500/5 p-6 text-center">
+            <AlertCircle size={28} className="text-rose-400" />
+            <h3 className="text-sm font-semibold text-[#f4f4f5]">Unable to Load Board</h3>
+            <p className="text-xs text-[#a1a1aa] max-w-sm">{error}</p>
+            <AppButton variant="mono-outline" size="sm" onClick={fetchBoardData} className="mt-2 gap-1.5">
+              <RefreshCw size={13} />
+              <span>Retry</span>
+            </AppButton>
+          </div>
+        ) : tasks.length === 0 ? (
+          meetingProcStatus?.is_processing ? (
+            /* Processing State with Premium Stepper */
+            <div className="py-2">
+              <AIProcessingStepper
+                currentStage={meetingProcStatus.current_stage}
+                meetingTitle={activeProcessingMeetingTitle}
+              />
+            </div>
+          ) : (meetingProcStatus?.transcript_status === 'failed' || meetingProcStatus?.ai_status === 'failed') ? (
+            /* Failed State */
+            <div className="flex flex-col items-center justify-center h-80 gap-3 border border-rose-500/30 rounded-xl bg-rose-500/[0.03] p-8 text-center">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-rose-500/15 border border-rose-500/30 text-rose-400">
+                <AlertCircle size={20} />
+              </div>
+              <h3 className="text-sm font-semibold text-[#f4f4f5]">AI processing failed</h3>
+              <p className="text-xs text-[#9ca3af] max-w-md leading-relaxed">
+                {meetingProcStatus.error || 'We encountered an error processing the transcript for this meeting.'}
+              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <AppButton
+                  variant="mono"
+                  size="sm"
+                  disabled={isRetryingProc}
+                  onClick={handleRetryProcessing}
+                  className="gap-1.5"
+                >
+                  {isRetryingProc ? (
+                    <>
+                      <Loader2 size={12} className="animate-spin" />
+                      <span>Retrying...</span>
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw size={12} />
+                      <span>Retry Processing</span>
+                    </>
+                  )}
+                </AppButton>
+                <AppButton variant="mono-outline" size="sm" onClick={() => handleMeetingChange('all')}>
+                  Show All Meetings
+                </AppButton>
+              </div>
+            </div>
+          ) : (
+            /* Standard Empty State */
+            <div className="flex flex-col items-center justify-center h-80 gap-3 border border-[#242636] rounded-xl bg-[#14151e] p-8 text-center">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#1d1f2b] border border-[#2c2f42] text-indigo-400">
+                <Sparkles size={20} />
+              </div>
+              <h3 className="text-sm font-semibold text-[#f4f4f5]">
+                {meetingIdParam !== 'all' ? 'No tasks from this meeting' : 'No tasks on this board yet'}
+              </h3>
+              <p className="text-xs text-[#a1a1aa] max-w-md leading-relaxed">
+                {meetingIdParam !== 'all'
+                  ? 'This meeting was processed, but did not produce any actionable tasks.'
+                  : 'Tasks generated by the Scrum Intelligence Agent after completed meetings will appear here automatically.'}
+              </p>
+              <div className="flex items-center gap-2 mt-2">
+                {meetingIdParam !== 'all' && (
+                  <AppButton variant="mono-outline" size="sm" onClick={() => handleMeetingChange('all')}>
+                    Show All Meetings
+                  </AppButton>
+                )}
+                {activeTeamId && (
+                  <AppButton
+                    variant="mono-outline"
+                    size="sm"
+                    onClick={() => navigate(`/teams/${activeTeamId}/meetings`)}
+                  >
+                    <Video size={13} className="mr-1.5" /> Go to Meetings
+                  </AppButton>
+                )}
+                <AppButton variant="mono" size="sm" onClick={() => handleOpenCreate('todo')}>
+                  <Plus size={13} className="mr-1.5" /> Create Task Manually
+                </AppButton>
+              </div>
+            </div>
+          )
+        ) : (
+          /* Kanban Board Component */
+          <div className="space-y-6">
+            {meetingProcStatus?.is_processing && (
+              <AIProcessingStepper
+                currentStage={meetingProcStatus.current_stage}
+                meetingTitle={activeProcessingMeetingTitle}
+              />
+            )}
+            <KanbanBoard
+              tasks={filteredTasks}
+              onAddTask={handleOpenCreate}
+              onCardClick={handleOpenDrawer}
+              onMoveStatus={handleMoveStatus}
+            />
+          </div>
+        )}
 
         {/* Right-Side Full Task Detail Drawer */}
         <TaskDetailDrawer

@@ -20,7 +20,7 @@ import { logger } from '../../utils/logger.js';
  */
 
 const DEEPGRAM_WS_URL = 'wss://api.deepgram.com/v1/listen';
-const KEEPALIVE_INTERVAL_MS = 5000;
+const KEEPALIVE_INTERVAL_MS = 3000;
 const AUDIO_BUFFER_MAX_MS = 2000; // Max buffer duration before dropping old audio
 
 export class DeepgramStreamingProvider {
@@ -80,6 +80,14 @@ class DeepgramSession {
 
     this.ws = new WebSocket(url, {
       headers: { Authorization: `Token ${apiKey}` },
+    });
+
+    this.ws.on('unexpected-response', (req, res) => {
+      let body = '';
+      res.on('data', chunk => { body += chunk; });
+      res.on('end', () => {
+        logger.error(`[deepgram] Unexpected handshake response for ${participantName}: status=${res.statusCode} body=${body}`);
+      });
     });
 
     this.ws.on('open', () => {
@@ -261,17 +269,31 @@ class DeepgramSession {
 
     // Send Finalize to flush remaining audio in Deepgram's buffer
     if (this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ type: 'Finalize' }));
-      // Wait up to 5 seconds for Deepgram to process and send final results
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      try {
+        this.ws.send(JSON.stringify({ type: 'Finalize' }));
+      } catch (err) {
+        logger.warn(`[deepgram] Failed to send Finalize: ${err.message}`);
+      }
+
+      // Wait briefly (up to 1500ms) for Deepgram to send final results or initiate close
+      await new Promise((resolve) => {
+        const timer = setTimeout(resolve, 1500);
+        this.ws.once('close', () => {
+          clearTimeout(timer);
+          resolve();
+        });
+      });
     }
 
-    // Now close the WebSocket
+    if (this._closed) return;
+    this._closed = true;
+
+    // Close the WebSocket connection cleanly
     return new Promise((resolve) => {
       const timeout = setTimeout(() => {
-        this.ws.terminate();
+        try { this.ws.terminate(); } catch (_) {}
         resolve();
-      }, 3000);
+      }, 1500);
 
       this.ws.once('close', () => {
         clearTimeout(timeout);
@@ -281,7 +303,7 @@ class DeepgramSession {
       if (this.ws.readyState === WebSocket.OPEN) {
         this.ws.close();
       } else {
-        this.ws.terminate();
+        try { this.ws.terminate(); } catch (_) {}
         resolve();
       }
     });

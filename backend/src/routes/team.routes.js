@@ -2,13 +2,16 @@ import { Router }         from 'express';
 import multer             from 'multer';
 import { teamController } from '../controllers/team.controller.js';
 import { meetingController } from '../controllers/meeting.controller.js';
-import { requireAuth }    from '../middleware/auth.middleware.js';
+import { kanbanController } from '../controllers/kanban.controller.js';
+import { requireAuth, optionalAuth } from '../middleware/auth.middleware.js';
 
 const router = Router();
 const upload = multer({ dest: 'uploads/', limits: { fileSize: 2 * 1024 * 1024 } });
 
 // Invitation preview — public (no auth required)
 router.get('/invite/:token',              teamController.getInvitePreview);
+// Decline invitation (works whether user is logged in or anonymous with token)
+router.post('/reject',                    optionalAuth, teamController.rejectInvitation);
 
 router.use(requireAuth);
 
@@ -21,9 +24,8 @@ router.get('/',                           teamController.getMyTeams);
 // Create team
 router.post('/',                          upload.single('avatar'), teamController.createTeam);
 
-// Accept / reject invitation (auth required)
+// Accept invitation (auth required)
 router.post('/join',                      teamController.acceptInvitation);
-router.post('/reject',                    teamController.rejectInvitation);
 
 // Team CRUD
 router.get('/:id',                        teamController.getTeam);
@@ -41,5 +43,9 @@ router.get('/:id/invitations',           teamController.getInvitations);
 
 // Team meetings
 router.get('/:teamId/meetings',          meetingController.getTeamMeetings);
+
+// Team Kanban board & task status updates
+router.get('/:teamId/kanban',            kanbanController.getKanban);
+router.patch('/:teamId/kanban/tickets/:ticketId/status', kanbanController.updateTicketStatus);
 
 export default router;

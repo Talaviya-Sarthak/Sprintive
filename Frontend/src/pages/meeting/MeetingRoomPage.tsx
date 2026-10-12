@@ -67,11 +67,15 @@ export default function MeetingRoomPage() {
     setSidebarTab, resetUnread, reset,
   } = useMeetingStore();
 
-  const { stream, toggleMic, toggleCamera: toggleCam, startScreenShare, stopScreenShare, error: mediaError } = useMediaDevices();
-  const { sendChat, startMeeting, endMeeting, onMeetingEnded, onRedirect, onForceLeave, setLocalStream, toggleCamera: socketToggleCamera, toggleMic: socketToggleMic, isConnected, socketError, sttStatus, sendAudioChunk, screenShareStart, screenShareStop, addScreenShareTrack, removeScreenShareTrack } = useMeetingSocket(meetingId);
+  const { stream, toggleMic, toggleCamera: toggleCam, startScreenShare, stopScreenShare, stopMedia, error: mediaError } = useMediaDevices();
+  const { sendChat, startMeeting, endMeeting, onMeetingEnded, onRedirect, onForceLeave, leaveMeeting: leaveSocket, setLocalStream, toggleCamera: socketToggleCamera, toggleMic: socketToggleMic, isConnected, socketError, sttStatus, sendAudioChunk, screenShareStart, screenShareStop, addScreenShareTrack, removeScreenShareTrack } = useMeetingSocket(meetingId);
+
+  const [isEnding, setIsEnding] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [endedData, setEndedData] = useState<EndMeetingData | null>(null);
 
   // Audio capture: send chunks to server for STT when meeting is active
-  const isMeetingActive = meeting?.status === 'active';
+  const isMeetingActive = meeting?.status === 'active' || meeting?.status === 'live';
   useAudioCapture({
     stream,
     enabled: isMeetingActive && !isMuted,
@@ -79,25 +83,100 @@ export default function MeetingRoomPage() {
     chunkIntervalMs: 250,
   });
 
-  const [loading, setLoading] = useState(true);
-  const [endedData, setEndedData] = useState<EndMeetingData | null>(null);
-
   const userId = user?.id ?? '';
   const isHost = meeting?.host_id === userId;
+  const cleanedUpRef = useRef(false);
+
+  const performMeetingCleanup = useCallback(() => {
+    if (cleanedUpRef.current) return;
+    cleanedUpRef.current = true;
+
+    // 1. Stop screen share tracks and notify peers
+    try {
+      removeScreenShareTrack();
+      screenShareStop();
+      stopScreenShare();
+    } catch { /* ignore */ }
+
+    // 2. Stop all local camera and microphone tracks immediately
+    try {
+      stopMedia();
+    } catch { /* ignore */ }
+
+    // 3. Clear video element srcObjects
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null;
+    }
+    if (screenShareVideoRef.current) {
+      screenShareVideoRef.current.srcObject = null;
+    }
+
+    // 4. Disconnect meeting socket & close all peer connections
+    try {
+      leaveSocket();
+    } catch { /* ignore */ }
+
+    // 5. Notify backend API of leave
+    if (meetingId) {
+      meetingService.leaveMeeting?.(meetingId).catch(() => {});
+    }
+
+    // 6. Reset meeting store state
+    try {
+      reset();
+    } catch { /* ignore */ }
+  }, [meetingId, removeScreenShareTrack, screenShareStop, stopScreenShare, stopMedia, leaveSocket, reset]);
 
   // Any participant shows the ended screen when the host ends the meeting.
   useEffect(() => {
-    const cleanup = onMeetingEnded((data) => setEndedData(data));
-    return cleanup;
-  }, [onMeetingEnded]);
-
-  // Force leave when host ends meeting — disconnect immediately
-  useEffect(() => {
-    const cleanup = onForceLeave(() => {
-      navigate('/dashboard');
+    const cleanup = onMeetingEnded((data) => {
+      performMeetingCleanup();
+      setEndedData(data);
+      if (meetingId) {
+        navigate(`/meetings/${meetingId}/summary`, { replace: true });
+      }
     });
     return cleanup;
-  }, [onForceLeave, navigate]);
+  }, [onMeetingEnded, meetingId, navigate, performMeetingCleanup]);
+
+  // Route to meeting summary when host ends meeting
+  useEffect(() => {
+    const cleanup = onForceLeave(() => {
+      performMeetingCleanup();
+      if (meetingId) {
+        navigate(`/meetings/${meetingId}/summary`, { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
+    });
+    return cleanup;
+  }, [onForceLeave, navigate, meetingId, performMeetingCleanup]);
+
+  useEffect(() => {
+    const cleanup = onRedirect(({ url }) => {
+      performMeetingCleanup();
+      if (url) {
+        navigate(url, { replace: true });
+      } else if (meetingId) {
+        navigate(`/meetings/${meetingId}/summary`, { replace: true });
+      }
+    });
+    return cleanup;
+  }, [onRedirect, navigate, meetingId, performMeetingCleanup]);
+
+  // Window beforeunload / pagehide listener for browser tab close/navigation
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      performMeetingCleanup();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handleBeforeUnload);
+      performMeetingCleanup();
+    };
+  }, [performMeetingCleanup]);
 
   // Fetch initial data on mount
   useEffect(() => {
@@ -246,16 +325,19 @@ export default function MeetingRoomPage() {
   const handleStartMeeting = () => startMeeting();
 
   const handleEndMeeting = () => {
-    endMeeting((data) => setEndedData(data));
+    if (isEnding) return;
+    setIsEnding(true);
+    endMeeting((data) => {
+      performMeetingCleanup();
+      setEndedData(data);
+      if (meetingId) {
+        navigate(`/meetings/${meetingId}/summary`, { replace: true });
+      }
+    });
   };
 
-  const handleLeave = async () => {
-    if (isScreenSharing) {
-      removeScreenShareTrack();
-      screenShareStop();
-    }
-    stopScreenShare();
-    if (meetingId) await meetingService.leaveMeeting(meetingId).catch(() => {});
+  const handleLeave = () => {
+    performMeetingCleanup();
     navigate(-1);
   };
 
@@ -517,6 +599,7 @@ export default function MeetingRoomPage() {
           isCameraOff={isCameraOff}
           isScreenSharing={isScreenSharing}
           isHost={isHost}
+          isEnding={isEnding}
           meetingStatus={meeting?.status ?? 'scheduled'}
           unreadCount={unreadCount}
           sidebarTab={sidebarTab}

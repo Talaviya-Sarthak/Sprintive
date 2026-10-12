@@ -304,7 +304,7 @@ export const meetingRepository = {
 
   // ── Meeting Summary ──────────────────────────────────────────────────────────
 
-  async upsertSummary({ meeting_id, duration_minutes, attendance_count, total_participants, ai_summary, action_items, tickets_generated }) {
+  async upsertSummary({ meeting_id, duration_minutes = 0, attendance_count = 0, total_participants = 0, ai_summary, action_items, tickets_generated }) {
     const { rows } = await pool.query(
       `INSERT INTO meeting_summaries (meeting_id, duration_minutes, attendance_count, total_participants, ai_summary, action_items, tickets_generated)
        VALUES ($1,$2,$3,$4,$5,$6,$7)
@@ -316,7 +316,7 @@ export const meetingRepository = {
          action_items = EXCLUDED.action_items,
          tickets_generated = EXCLUDED.tickets_generated
        RETURNING *`,
-      [meeting_id, duration_minutes, attendance_count, total_participants, ai_summary ?? null, action_items ? JSON.stringify(action_items) : '[]', tickets_generated ? JSON.stringify(tickets_generated) : '[]']
+      [meeting_id, duration_minutes ?? 0, attendance_count ?? 0, total_participants ?? 0, ai_summary ?? null, action_items ? JSON.stringify(action_items) : '[]', tickets_generated ? JSON.stringify(tickets_generated) : '[]']
     );
     return rows[0];
   },
