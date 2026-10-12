@@ -124,7 +124,24 @@ export function useMeetingSocket(meetingId: string | undefined) {
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
         { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:openrelay.metered.ca:80' },
+        {
+          urls: 'turn:openrelay.metered.ca:80',
+          username: 'openrelayproject',
+          credential: 'openrelayproject',
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443',
+          username: 'openrelayproject',
+          credential: 'openrelayproject',
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+          username: 'openrelayproject',
+          credential: 'openrelayproject',
+        },
       ],
+      iceCandidatePoolSize: 10,
     });
     const flags = { isInitiator, makingOffer: false, settingAnswer: false, negotiated: isInitiator };
     negotiationFlags.current.set(socketId, flags);
@@ -144,10 +161,10 @@ export function useMeetingSocket(meetingId: string | undefined) {
       log(`makeOffer CALLED for ${socketId.slice(-5)}: state=${pc.signalingState}, making=${flags.makingOffer}, settingAns=${flags.settingAnswer}, isInit=${flags.isInitiator}, negotiated=${flags.negotiated}, senders=${pc.getSenders().length}`);
       if (flags.makingOffer || flags.settingAnswer) { log(`makeOffer SKIPPED (making=${flags.makingOffer} settingAns=${flags.settingAnswer}) ${socketId.slice(-5)}`); return; }
       if (pc.signalingState !== 'stable') { log(`makeOffer SKIPPED (state=${pc.signalingState}) ${socketId.slice(-5)}`); return; }
-      // Non-initiator must NOT offer until its first offer/answer exchange completes —
-      // otherwise addTrack's negotiationneeded races with the peer's initial offer.
-      if (!flags.isInitiator && !flags.negotiated) {
-        log(`makeOffer SKIPPED (non-initiator, not yet negotiated) ${socketId.slice(-5)}`);
+      // Non-initiator must NOT offer unless actively adding a screen share track
+      const isScreenActive = !!(screenShareTrackRef.current && screenShareTrackRef.current.readyState === 'live');
+      if (!flags.isInitiator && !isScreenActive) {
+        log(`makeOffer SKIPPED (non-initiator, no screen share active) ${socketId.slice(-5)}`);
         return;
       }
       flags.makingOffer = true;
@@ -271,9 +288,31 @@ export function useMeetingSocket(meetingId: string | undefined) {
 
     pc.onsignalingstatechange = () => { log(`signalingstatechange ${socketId.slice(-5)}: ${pc.signalingState}`); };
 
-    pc.oniceconnectionstatechange = () => { log(`ICE state ${socketId.slice(-5)}: ${pc.iceConnectionState}`); };
+    pc.oniceconnectionstatechange = () => {
+      log(`ICE state ${socketId.slice(-5)}: ${pc.iceConnectionState}`);
+      if (pc.iceConnectionState === 'failed') {
+        log(`ICE connection failed for ${socketId.slice(-5)} — attempting ICE restart`);
+        try {
+          pc.restartIce();
+          makeOffer();
+        } catch (e) {
+          errLog('restartIce failed', e);
+        }
+      }
+    };
 
-    pc.onconnectionstatechange = () => { log(`connection state ${socketId.slice(-5)}: ${pc.connectionState}`); };
+    pc.onconnectionstatechange = () => {
+      log(`connection state ${socketId.slice(-5)}: ${pc.connectionState}`);
+      if (pc.connectionState === 'failed') {
+        log(`Connection failed for ${socketId.slice(-5)} — attempting ICE restart`);
+        try {
+          pc.restartIce();
+          makeOffer();
+        } catch (e) {
+          errLog('restartIce failed', e);
+        }
+      }
+    };
 
     if (isInitiator) makeOffer();
 
@@ -700,10 +739,12 @@ export function useMeetingSocket(meetingId: string | undefined) {
         }
       });
 
-      // Always trigger renegotiation so the newly assigned tracks are sent over SDP
-      const requestOffer = peerOfferFns.current.get(sid);
-      if (requestOffer) {
-        setTimeout(() => { requestOffer(); }, 50);
+      // Only trigger renegotiation if new tracks were actually added (replaceTrack requires no renegotiation)
+      if (added > 0) {
+        const requestOffer = peerOfferFns.current.get(sid);
+        if (requestOffer) {
+          setTimeout(() => { requestOffer(); }, 50);
+        }
       }
     });
   }, []);

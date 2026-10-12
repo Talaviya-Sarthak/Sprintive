@@ -437,6 +437,11 @@ export default function MeetingRoom() {
             </div>
           )}
 
+          {/* Remote audio playback for all remote participants */}
+          {remoteParticipants.map((p) => (
+            <RemoteAudioPlayer key={`remote-audio-${p.user_id}`} stream={p.stream} />
+          ))}
+
           <div className={`grid ${gridCols} gap-3 h-full`}>
             <AnimatePresence>
               {allParticipants.map((p) => (

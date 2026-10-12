@@ -91,6 +91,29 @@ export default function ParticipantCard({ participant, isActive, videoRef }: Pro
         </div>
       )}
 
+      {/* Remote audio playback for peer audio tracks */}
+      {!isLocal && participant.stream && (
+        <audio
+          ref={(el) => {
+            if (!el) return;
+            const aTracks = participant.stream?.getAudioTracks().filter((t) => t.readyState === 'live') ?? [];
+            if (aTracks.length > 0) {
+              const aStream = new MediaStream(aTracks);
+              if (el.srcObject !== aStream) {
+                el.srcObject = aStream;
+              }
+              el.muted = false;
+              el.volume = 1.0;
+              el.play().catch(() => {});
+            } else {
+              el.srcObject = null;
+            }
+          }}
+          autoPlay
+          playsInline
+        />
+      )}
+
       {/* Speaking ring */}
       {isActive && (
         <motion.div
