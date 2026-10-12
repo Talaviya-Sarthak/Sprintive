@@ -61,11 +61,11 @@ class Settings(BaseSettings):
 
     # Groq Client Reliability & Model Fallback settings
     GROQ_PRIMARY_MODEL: str = Field(
-        default="qwen/qwen3.8-27b",
+        default="llama-3.3-70b-versatile",
         validation_alias=AliasChoices("GROQ_PRIMARY_MODEL", "LLM_MODEL"),
     )
     GROQ_FALLBACK_MODELS: str = Field(
-        default="openai/gpt-oss-120b,allam-2-7b,openai/gpt-oss-20b",
+        default="llama-3.1-8b-instant,mixtral-8x7b-32768,gemma2-9b-it",
         validation_alias=AliasChoices("GROQ_FALLBACK_MODELS", "LLM_FALLBACK_MODELS"),
     )
     GROQ_MAX_RETRIES: int = Field(
@@ -130,7 +130,7 @@ class Settings(BaseSettings):
             if self.LLM_BASE_URL == "https://api.openai.com/v1":
                 self.LLM_BASE_URL = "https://api.groq.com/openai/v1"
             if self.LLM_MODEL == "gpt-4o-mini":
-                self.LLM_MODEL = "openai/gpt-oss-20b"
+                self.LLM_MODEL = "llama-3.3-70b-versatile"
             if self.LLM_PROVIDER.lower() in ("openai", "mock"):
                 self.LLM_PROVIDER = "groq"
         return self

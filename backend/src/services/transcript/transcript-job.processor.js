@@ -57,6 +57,29 @@ export async function processTranscriptJob(job) {
 
   await job.updateProgress(10);
 
+async function pollTranscriptServiceStatus(serviceBaseUrl, meetingId, maxWaitMs = 360000) {
+  const startTime = Date.now();
+  while (Date.now() - startTime < maxWaitMs) {
+    await new Promise((r) => setTimeout(r, 4000));
+    try {
+      const res = await fetch(`${serviceBaseUrl}/transcript/status/${meetingId}`);
+      if (res.ok) {
+        const record = await res.json();
+        if (record.processing_status === 'READY_FOR_AI' || record.processing_status === 'COMPLETED') {
+          return record;
+        }
+        if (record.processing_status === 'FAILED') {
+          throw new Error(record.error_message || 'Transcript processing failed in service');
+        }
+      }
+    } catch (err) {
+      if (err.message && err.message.includes('failed in service')) throw err;
+      // Temporary network blip while polling, continue waiting
+    }
+  }
+  throw new Error(`Timed out waiting for transcript service to process meeting ${meetingId}`);
+}
+
   // 5. Invoke Python Transcript Processing Service (FastAPI)
   const serviceBaseUrl = (env.transcriptProcessingServiceUrl || 'http://localhost:8001').replace(/\/+$/, '');
   const url = `${serviceBaseUrl}/transcript/process`;
@@ -78,9 +101,46 @@ export async function processTranscriptJob(job) {
       body: JSON.stringify(payload),
     });
   } catch (netErr) {
-    logger.error(`[worker:job] Network failure calling transcript service (${url}): ${netErr.message}`);
-    // Transient network error -> throw standard error to trigger BullMQ exponential retry
-    throw new Error(`Failed to reach transcript service: ${netErr.message}`);
+    logger.warn(`[worker:job] Direct call to transcript service failed (${url}): ${netErr.message}. Checking if service is already processing in background...`);
+    // Check if the service actually received it and is processing or already completed
+    try {
+      const statusRes = await fetch(`${serviceBaseUrl}/transcript/status/${meetingId}`);
+      if (statusRes.ok) {
+        const record = await statusRes.json();
+        if (record.processing_status === 'READY_FOR_AI' || record.processing_status === 'COMPLETED') {
+          logger.info(`[worker:job] Transcript service already completed meeting ${meetingId}! Proceeding...`);
+          response = {
+            ok: true,
+            status: 200,
+            json: async () => record,
+          };
+        } else if (['PROCESSING', 'CLEANING', 'VALIDATING', 'PENDING'].includes(record.processing_status)) {
+          logger.info(`[worker:job] Transcript service is actively processing meeting ${meetingId}. Polling for completion...`);
+          const completedRecord = await pollTranscriptServiceStatus(serviceBaseUrl, meetingId, 360000);
+          response = {
+            ok: true,
+            status: 200,
+            json: async () => completedRecord,
+          };
+        }
+      }
+    } catch { /* ignore and throw original netErr */ }
+
+    if (!response) {
+      logger.error(`[worker:job] Network failure calling transcript service (${url}): ${netErr.message}`);
+      throw new Error(`Failed to reach transcript service: ${netErr.message}`);
+    }
+  }
+
+  // Handle HTTP 409 (meeting is already actively being processed by service)
+  if (response.status === 409) {
+    logger.info(`[worker:job] Transcript service returned 409 (already processing). Polling for completion...`);
+    const completedRecord = await pollTranscriptServiceStatus(serviceBaseUrl, meetingId, 360000);
+    response = {
+      ok: true,
+      status: 200,
+      json: async () => completedRecord,
+    };
   }
 
   // 6. Handle HTTP 429 Rate Limits from Groq / Transcript Service
