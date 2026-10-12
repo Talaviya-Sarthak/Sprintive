@@ -82,6 +82,7 @@ export default function CreateMeeting() {
         date: form.date,
         start_time: form.start_time,
         end_time: form.end_time,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
         sprint_name: form.sprint_name.trim() || undefined,
       });
 

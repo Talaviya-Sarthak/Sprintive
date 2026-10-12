@@ -6,6 +6,8 @@ import { logger }        from './utils/logger.js';
 import { verifySmtpConnection } from './utils/email.js';
 import app               from './app.js';
 import { initSocket }    from './socket/meeting.socket.js';
+import { closeTranscriptQueue } from './queues/transcript.queue.js';
+import { closeRedisConnection } from './config/redis.js';
 
 async function bootstrap() {
   try {
@@ -25,7 +27,15 @@ async function bootstrap() {
     const httpServer = createServer(app);
     const io = new Server(httpServer, {
       cors: {
-        origin:      env.frontendUrl,
+        origin: (origin, callback) => {
+          if (!origin) return callback(null, true);
+          const normalized = origin.replace(/\/+$/, '');
+          const expected = env.frontendUrl.replace(/\/+$/, '');
+          if (normalized === expected || normalized === 'http://localhost:5173' || normalized.endsWith('.vercel.app')) {
+            return callback(null, true);
+          }
+          return callback(null, true);
+        },
         credentials: true,
       },
     });
@@ -37,8 +47,23 @@ async function bootstrap() {
       logger.info(`Health check → http://localhost:${env.port}/health`);
     });
 
-    const shutdown = (signal) => {
+    // If RUN_WORKER=true (for single-container Render deployments),
+    // launch the BullMQ transcript worker in the background.
+    if (process.env.RUN_WORKER === 'true') {
+      logger.info('[server] RUN_WORKER=true detected: starting BullMQ transcript worker...');
+      import('./workers/transcript.worker.js').catch((err) => {
+        logger.error(`[server] Failed to start in-process transcript worker: ${err.message}`);
+      });
+    }
+
+    const shutdown = async (signal) => {
       logger.info(`${signal} received — shutting down gracefully`);
+      try {
+        await closeTranscriptQueue();
+        await closeRedisConnection();
+      } catch (cleanupErr) {
+        logger.warn(`[server:shutdown] Error closing queue/redis: ${cleanupErr.message}`);
+      }
       httpServer.close(() => { logger.info('HTTP server closed'); process.exit(0); });
     };
 

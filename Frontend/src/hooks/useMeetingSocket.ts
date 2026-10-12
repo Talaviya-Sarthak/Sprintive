@@ -4,7 +4,7 @@ import { useMeetingStore, type TranscriptSegment, type LiveCaption } from '../st
 import { ensureFreshAccessToken } from '../services/api';
 import type { Participant, ChatMessage, Meeting } from '../types';
 
-const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') ?? 'http://localhost:5000';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const log = (...args: any[]) => console.log('[wss]', ...args);
@@ -99,6 +99,15 @@ export function useMeetingSocket(meetingId: string | undefined) {
     const flags = { isInitiator, makingOffer: false, settingAnswer: false, negotiated: isInitiator };
     negotiationFlags.current.set(socketId, flags);
 
+    if (pc.getTransceivers().length === 0) {
+      try {
+        pc.addTransceiver('audio', { direction: 'sendrecv' });
+        pc.addTransceiver('video', { direction: 'sendrecv' });
+      } catch (err) {
+        log(`transceiver creation error: ${err}`);
+      }
+    }
+
     addTracksToPeer(pc);
 
     const makeOffer = async () => {
@@ -125,43 +134,95 @@ export function useMeetingSocket(meetingId: string | undefined) {
     pc.onicecandidate = (e) => {
       if (e.candidate) {
         log(`local ICE candidate sent to ${socketId.slice(-5)}: ${e.candidate.type} ${e.candidate.candidate?.slice(0, 30)}`);
-        socketRef.current?.emit('webrtc:candidate', { targetSocketId: socketId, candidate: e.candidate });
+        socketRef.current?.emit('webrtc:candidate', { meetingId, targetSocketId: socketId, candidate: e.candidate });
       }
     };
 
     pc.ontrack = (e) => {
-      const stream = e.streams[0] ?? new MediaStream([e.track]);
-      // Identify screen share: second video track from a peer is the screen share
+      const incomingTrack = e.track;
+      const isVideo = incomingTrack?.kind === 'video';
       const currentCount = remoteVideoTrackCount.current.get(socketId) ?? 0;
-      const isVideo = e.track?.kind === 'video';
       const newCount = isVideo ? currentCount + 1 : currentCount;
       if (isVideo) remoteVideoTrackCount.current.set(socketId, newCount);
-      const isScreenShareTrack = isVideo && newCount > 1;
-      log(`ontrack from ${socketId.slice(-5)}: kind=${e.track.kind}, id=${e.track.id?.slice(0, 8)}, streams=${e.streams.length}, videoCount=${newCount}, isScreen=${isScreenShareTrack}, track.enabled=${e.track.enabled}, track.readyState=${e.track.readyState}`);
+
       let uid = socketToUser.current.get(socketId);
       if (!uid) {
         const p = useMeetingStore.getState().participants.find(x => x.socketId === socketId);
-        if (p) uid = p.user_id;
-        if (p) log(`ontrack: resolved uid from participants store: ${uid?.slice(0, 8)}`);
+        if (p) {
+          uid = p.user_id;
+          socketToUser.current.set(socketId, uid);
+          log(`ontrack: resolved uid from participants store: ${uid?.slice(0, 8)}`);
+        }
       } else {
         log(`ontrack: resolved uid from socketToUser: ${uid?.slice(0, 8)}`);
       }
+
+      if (!uid) {
+        // Fallback: If there is only one remote participant, map them
+        const remotes = useMeetingStore.getState().participants.filter(x => x.socketId && x.socketId !== socketRef.current?.id);
+        if (remotes.length === 1) {
+          uid = remotes[0].user_id;
+          socketToUser.current.set(socketId, uid);
+          log(`ontrack: resolved uid as single remote participant: ${uid?.slice(0, 8)}`);
+        }
+      }
+
+      const participant = uid ? useMeetingStore.getState().participants.find(x => x.user_id === uid) : undefined;
+      const isSharer = participant?.isScreenSharing === true;
+
+      const trackLabel = (incomingTrack?.label || '').toLowerCase();
+      const hasScreenKeyword = trackLabel.includes('screen') || trackLabel.includes('window');
+
+      // A track is ONLY a screen share track if the remote participant is actively confirmed
+      // to be sharing screen via the socket event ('screen-share-state', isSharer === true).
+      // NEVER classify any track as screen sharing if the participant is not confirmed sharing.
+      const isScreenShareTrack = isVideo && isSharer && (
+        hasScreenKeyword ||
+        (participant?.stream && participant.stream.id !== e.streams[0]?.id) ||
+        (participant?.stream?.getVideoTracks().length ?? 0) > 0
+      );
+
+      log(`ontrack from ${socketId.slice(-5)}: kind=${incomingTrack.kind}, label="${incomingTrack.label}", videoCount=${newCount}, isScreen=${isScreenShareTrack}, readyState=${incomingTrack.readyState}`);
+
       if (uid) {
         if (isScreenShareTrack) {
-          log(`ontrack: updating participant ${uid?.slice(0, 8)} with screenStream (stream id=${stream.id?.slice(0, 8)}, tracks=${stream.getTracks().length})`);
-          updateParticipant(uid, { screenStream: stream });
-          // Clean up when the remote screen share track ends (sharer stopped)
-          e.track.onended = () => {
+          const screenStream = e.streams[0] ?? new MediaStream([incomingTrack]);
+          log(`ontrack: updating participant ${uid?.slice(0, 8)} with screenStream (stream id=${screenStream.id?.slice(0, 8)}, tracks=${screenStream.getTracks().length})`);
+          updateParticipant(uid, { screenStream, isScreenSharing: true });
+          incomingTrack.onended = () => {
             log(`remote screen share track ended from ${socketId.slice(-5)}`);
             updateParticipant(uid!, { screenStream: undefined, isScreenSharing: false });
           };
         } else {
-          log(`ontrack: updating participant ${uid?.slice(0, 8)} with regular stream`);
-          updateParticipant(uid, { stream });
+          incomingTrack.enabled = true;
+          let regularStream = participant?.stream ?? e.streams[0] ?? new MediaStream();
+          const existingOfKind = regularStream.getTracks().find(t => t.kind === incomingTrack.kind && t.id !== incomingTrack.id);
+          if (existingOfKind) {
+            regularStream.removeTrack(existingOfKind);
+          }
+          if (!regularStream.getTracks().some(t => t.id === incomingTrack.id)) {
+            regularStream.addTrack(incomingTrack);
+          }
+          log(`ontrack: updating participant ${uid?.slice(0, 8)} with regular stream (tracks=${regularStream.getTracks().length}, audio=${regularStream.getAudioTracks().length}, video=${regularStream.getVideoTracks().length})`);
+          updateParticipant(uid, { stream: regularStream });
+          incomingTrack.onunmute = () => {
+            log(`ontrack: incoming ${incomingTrack.kind} track UNMUTED for ${uid?.slice(0, 8)}`);
+            updateParticipant(uid, { stream: regularStream });
+          };
         }
       } else {
-        log(`ontrack: NO uid found for ${socketId.slice(-5)} — queuing in pendingStreams`);
-        pendingStreams.current.set(socketId, stream);
+        const existing = pendingStreams.current.get(socketId);
+        let pending = existing ?? (e.streams[0] ? new MediaStream(e.streams[0].getTracks()) : new MediaStream());
+        const existingOfKind = pending.getTracks().find(t => t.kind === incomingTrack.kind && t.id !== incomingTrack.id);
+        if (existingOfKind) {
+          pending.removeTrack(existingOfKind);
+        }
+        if (!pending.getTracks().some(t => t.id === incomingTrack.id)) {
+          pending.addTrack(incomingTrack);
+        }
+        const accumulated = new MediaStream(pending.getTracks());
+        log(`ontrack: NO uid found for ${socketId.slice(-5)} — queuing in pendingStreams (tracks=${accumulated.getTracks().length}, audio=${accumulated.getAudioTracks().length}, video=${accumulated.getVideoTracks().length})`);
+        pendingStreams.current.set(socketId, accumulated);
       }
     };
 
@@ -265,6 +326,11 @@ export function useMeetingSocket(meetingId: string | undefined) {
           log(`  roster: ${p.name} socket=${p.socketId.slice(-5)} -> create peer (non-initiator)`);
           socketToUser.current.set(p.socketId, p.userId);
           addParticipant(toParticipant(p, meetingId, p.socketId));
+          const ps = pendingStreams.current.get(p.socketId);
+          if (ps) {
+            updateParticipant(p.userId, { stream: ps });
+            pendingStreams.current.delete(p.socketId);
+          }
           getOrCreatePeer(p.socketId, false);
         });
       });
@@ -393,6 +459,10 @@ export function useMeetingSocket(meetingId: string | undefined) {
         updateParticipant(userId, { isScreenSharing: sharing });
         if (!sharing) {
           updateParticipant(userId, { screenStream: undefined });
+          const p = useMeetingStore.getState().participants.find(x => x.user_id === userId);
+          if (p?.socketId) {
+            remoteVideoTrackCount.current.delete(p.socketId);
+          }
         }
       });
 
@@ -423,7 +493,7 @@ export function useMeetingSocket(meetingId: string | undefined) {
           await pc.setLocalDescription(answer);
           log(`  SENT answer to ${fromSocketId.slice(-5)} (state=${pc.signalingState})`);
           if (flags) flags.negotiated = true;
-          socket.emit('webrtc:answer', { targetSocketId: fromSocketId, answer });
+          socket.emit('webrtc:answer', { meetingId, targetSocketId: fromSocketId, answer });
           await flushPendingCandidates(fromSocketId, pc);
         } catch (e) {
           if (flags) flags.settingAnswer = false;
@@ -573,29 +643,38 @@ export function useMeetingSocket(meetingId: string | undefined) {
     log(`setLocalStream: ${stream.getTracks().length} tracks, ${peerConnections.current.size} peers`);
     localStreamRef.current = stream;
     const tracks = stream.getTracks();
-    const trackMap = new Map(tracks.map((t) => [t.kind, t]));
 
-    peerConnections.current.forEach((pc) => {
+    peerConnections.current.forEach((pc, sid) => {
+      let added = 0;
       // Add any missing tracks (e.g. peer was created before the stream was ready)
       tracks.forEach((t) => {
-        if (!pc.getSenders().some((s) => s.track === t)) pc.addTrack(t, stream);
+        if (!pc.getSenders().some((s) => s.track === t)) {
+          pc.addTrack(t, stream);
+          added++;
+        }
       });
       // replaceTrack on existing senders (no renegotiation needed)
+      const trackMap = new Map(tracks.map((t) => [t.kind, t]));
       pc.getSenders().forEach(sender => {
         const kind = sender.track?.kind;
-        if (kind && trackMap.has(kind)) {
+        if (kind && trackMap.has(kind) && sender.track !== screenShareTrackRef.current) {
           sender.replaceTrack(trackMap.get(kind)!);
-          trackMap.delete(kind);
         }
       });
 
       pc.getTransceivers().forEach(t => {
-        const kind = t.receiver?.track?.kind;
-        if (kind && trackMap.has(kind)) {
+        const kind = t.receiver?.track?.kind || t.sender?.track?.kind;
+        if (kind && trackMap.has(kind) && t.sender.track !== screenShareTrackRef.current) {
+          t.direction = 'sendrecv';
           t.sender.replaceTrack(trackMap.get(kind)!);
-          trackMap.delete(kind);
         }
       });
+
+      // Always trigger renegotiation so the newly assigned tracks are sent over SDP
+      const requestOffer = peerOfferFns.current.get(sid);
+      if (requestOffer) {
+        setTimeout(() => { requestOffer(); }, 50);
+      }
     });
   }, []);
 
@@ -633,12 +712,16 @@ export function useMeetingSocket(meetingId: string | undefined) {
     log('removeScreenShareTrack: removing screen track from all peers');
     track.stop();
     screenShareTrackRef.current = null;
-    peerConnections.current.forEach((pc) => {
+    peerConnections.current.forEach((pc, sid) => {
       pc.getSenders().forEach((sender) => {
         if (sender.track === track) {
           try { pc.removeTrack(sender); } catch { /* may already be removed */ }
         }
       });
+      const requestOffer = peerOfferFns.current.get(sid);
+      if (requestOffer) {
+        setTimeout(() => requestOffer(), 100);
+      }
     });
   }, []);
 

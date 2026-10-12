@@ -157,7 +157,17 @@ class InMemoryTranscriptRepository(BaseTranscriptRepository):
     ) -> ProcessingRecord:
         with self._lock:
             existing = self._records.get(meeting_id)
-            if enforce_concurrency and existing and existing.processing_status in (
+            now = datetime.now(timezone.utc)
+
+            # Stale lock recovery: If a previous attempt has been running for > 300 seconds (5 min),
+            # consider it crashed/abandoned so retries are not permanently locked out with HTTP 409.
+            is_stale = False
+            if existing and existing.started_at:
+                age_seconds = (now - existing.started_at).total_seconds()
+                if age_seconds > 300.0:
+                    is_stale = True
+
+            if enforce_concurrency and existing and not is_stale and existing.processing_status in (
                 ProcessingStatus.PROCESSING,
                 ProcessingStatus.CLEANING,
                 ProcessingStatus.VALIDATING,
@@ -165,7 +175,6 @@ class InMemoryTranscriptRepository(BaseTranscriptRepository):
                 raise ConcurrentProcessingError(
                     f"Meeting {meeting_id} is already actively being processed (attempt={existing.attempt})."
                 )
-            now = datetime.now(timezone.utc)
             if existing:
                 existing.attempt += 1
                 existing.started_at = now

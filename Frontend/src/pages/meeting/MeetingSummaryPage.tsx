@@ -107,6 +107,11 @@ export default function MeetingSummaryPage() {
     queryKey: ['transcript', meetingId],
     queryFn: () => meetingService.getTranscript(meetingId!),
     enabled: !!meetingId,
+    refetchInterval: (query) => {
+      // Poll every 3 seconds while raw_stored or processing
+      const status = query.state.data?.status;
+      return (status === 'processing' || status === 'raw_stored') ? 3000 : false;
+    },
   });
 
   const handleRetry = async () => {
@@ -286,6 +291,7 @@ export default function MeetingSummaryPage() {
                     </p>
                   </div>
                 </div>
+<<<<<<< HEAD
 
                 {/* Timeline Stepper */}
                 <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 pt-2">

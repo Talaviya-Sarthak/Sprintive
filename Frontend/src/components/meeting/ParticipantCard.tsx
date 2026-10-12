@@ -11,15 +11,51 @@ interface Props {
 export default function ParticipantCard({ participant, isActive, videoRef }: Props) {
   const initials = participant.full_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
   const internalRef = useRef<HTMLVideoElement | null>(null);
-  const playedStreams = useRef<Set<string>>(new Set());
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const isLocal = participant.id === 'local' || !!videoRef;
+
+  // Remote audio playback: persistent across camera toggle and layout changes
+  useEffect(() => {
+    if (isLocal) return;
+    const el = audioRef.current;
+    if (!el) return;
+
+    if (participant.stream) {
+      if (el.srcObject !== participant.stream) {
+        el.srcObject = participant.stream;
+      }
+      el.muted = false;
+      el.volume = 1.0;
+
+      const playPromise = el.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn(`[ParticipantCard] Audio play blocked for ${participant.user_id}:`, err);
+          const resume = () => {
+            el.play().catch(() => {});
+            window.removeEventListener('click', resume);
+            window.removeEventListener('keydown', resume);
+            window.removeEventListener('touchstart', resume);
+          };
+          window.addEventListener('click', resume, { once: true });
+          window.addEventListener('keydown', resume, { once: true });
+          window.addEventListener('touchstart', resume, { once: true });
+        });
+      }
+    } else {
+      el.srcObject = null;
+    }
+  }, [participant.stream, isLocal, participant.user_id]);
 
   const handleVideoRef = useCallback((el: HTMLVideoElement | null) => {
     internalRef.current = el;
     if (videoRef) (videoRef as React.MutableRefObject<HTMLVideoElement | null>).current = el;
     if (el && participant.stream) {
-      el.srcObject = participant.stream;
-      // Guarantee playback: unmuted autoplay may be blocked, so retry muted.
-      el.play().catch(() => { el.muted = true; el.play().catch(() => {}); });
+      if (el.srcObject !== participant.stream) {
+        el.srcObject = participant.stream;
+      }
+      el.muted = true;
+      el.play().catch(() => {});
     }
   }, [videoRef, participant.stream]);
 
@@ -29,11 +65,8 @@ export default function ParticipantCard({ participant, isActive, videoRef }: Pro
       if (el.srcObject !== participant.stream) {
         el.srcObject = participant.stream;
       }
-      const sid = participant.stream.id;
-      if (!playedStreams.current.has(sid)) {
-        playedStreams.current.add(sid);
-        el.play().catch(() => { el.muted = true; el.play().catch(() => {}); });
-      }
+      el.muted = true;
+      el.play().catch(() => {});
     }
   }, [participant.stream, participant.isCameraOff, videoRef]);
 
@@ -47,13 +80,22 @@ export default function ParticipantCard({ participant, isActive, videoRef }: Pro
         isActive ? 'border-[#f4f4f5] shadow-md shadow-[#f4f4f5]/10' : 'border-[#27272a]'
       }`}
     >
+      {/* Remote audio: always mounted for remote participants, regardless of camera state */}
+      {!isLocal && (
+        <audio
+          ref={audioRef}
+          autoPlay
+          playsInline
+        />
+      )}
+
       {/* Video: uses merged callback ref that handles both local and remote */}
       {participant.isCameraOff !== true && (participant.stream || videoRef) ? (
         <video
           ref={handleVideoRef}
           autoPlay
           playsInline
-          muted={participant.id === 'local' || participant.role === 'host' || !!videoRef}
+          muted={true}
           className="w-full h-full object-cover"
         />
       ) : (

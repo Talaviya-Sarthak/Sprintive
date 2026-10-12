@@ -11,18 +11,32 @@ export function useMediaDevices() {
 
   useEffect(() => {
     mountedRef.current = true;
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-      .then((s) => {
+    const acquireMedia = async () => {
+      try {
+        const s = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         if (!mountedRef.current) { s.getTracks().forEach((t) => t.stop()); return; }
+        s.getAudioTracks().forEach((t) => { t.enabled = true; });
         streamRef.current = s;
         setStream(s);
-      })
-      .catch((err) => {
+      } catch (err: any) {
+        // Fallback: If camera is busy or unavailable, still acquire microphone
+        try {
+          const audioOnly = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          if (!mountedRef.current) { audioOnly.getTracks().forEach((t) => t.stop()); return; }
+          audioOnly.getAudioTracks().forEach((t) => { t.enabled = true; });
+          streamRef.current = audioOnly;
+          setStream(audioOnly);
+          setCamera(true); // camera is off because only mic was acquired
+          return;
+        } catch { /* both failed */ }
+
         if (err.name === 'NotAllowedError') setError('Camera/mic permission denied. Please allow access in your browser settings.');
         else if (err.name === 'NotFoundError') setError('No camera or microphone found.');
         else if (err.name === 'NotReadableError') setError('Camera or microphone is in use by another app.');
         else setError('Camera/mic access denied: ' + err.message);
-      });
+      }
+    };
+    acquireMedia();
     return () => {
       // Only stop tracks on real unmount (StrictMode phantom unmount must not kill the camera)
       mountedRef.current = false;

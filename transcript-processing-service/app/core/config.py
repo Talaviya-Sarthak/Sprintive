@@ -50,11 +50,37 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("LLM_MODEL", "OPENAI_MODEL"),
     )
     LLM_TEMPERATURE: float = 0.0
+    LLM_MAX_TOKENS: int = Field(
+        default=1024,
+        validation_alias=AliasChoices("LLM_MAX_TOKENS", "MAX_TOKENS"),
+    )
     LLM_TIMEOUT_SECONDS: float = 30.0
-    LLM_MAX_RETRIES: int = 2
+    LLM_MAX_RETRIES: int = 3
     STT_CONFIDENCE_THRESHOLD: float = 0.90
     STT_CONTEXT_BEFORE: int = 2
     STT_CONTEXT_AFTER: int = 2
+
+    # Groq Client Reliability & Model Fallback settings
+    GROQ_PRIMARY_MODEL: str = Field(
+        default="qwen/qwen3.8-27b",
+        validation_alias=AliasChoices("GROQ_PRIMARY_MODEL", "LLM_MODEL"),
+    )
+    GROQ_FALLBACK_MODELS: str = Field(
+        default="openai/gpt-oss-120b,allam-2-7b,openai/gpt-oss-20b",
+        validation_alias=AliasChoices("GROQ_FALLBACK_MODELS", "LLM_FALLBACK_MODELS"),
+    )
+    GROQ_MAX_RETRIES: int = Field(
+        default=2,
+        validation_alias=AliasChoices("GROQ_MAX_RETRIES", "LLM_MAX_RETRIES"),
+    )
+    GROQ_REQUEST_TIMEOUT: float = Field(
+        default=10.0,
+        validation_alias=AliasChoices("GROQ_REQUEST_TIMEOUT", "LLM_TIMEOUT_SECONDS"),
+    )
+    GROQ_MAX_BACKOFF_SECONDS: float = 15.0
+    GROQ_CIRCUIT_BREAKER_COOLDOWN_SECONDS: float = 300.0
+    GROQ_CONCURRENCY_LIMIT: int = 1
+    GROQ_PACING_DELAY_SECONDS: float = 0.5
 
     # Grammar and Punctuation Normalization settings (Part 7)
     GRAMMAR_CONFIDENCE_THRESHOLD: float = 0.85

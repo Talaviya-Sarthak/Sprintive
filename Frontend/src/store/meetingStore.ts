@@ -85,7 +85,7 @@ export const useMeetingStore = create<MeetingState>((set) => ({
   updateParticipant: (userId, patch) => set((s) => ({
     participants: s.participants.map(p => p.user_id === userId ? { ...p, ...patch } : p),
   })),
-  addChat:           (c)          => set((s) => ({ chats: [...s.chats, c] })),
+  addChat:           (c)          => set((s) => s.chats.some(x => x.id === c.id) ? s : ({ chats: [...s.chats, c] })),
   setChats:          (chats)      => set({ chats }),
   setLiveCaption:    (caption)    => set({ liveCaption: caption }),
   addTranscriptSegments: (segments) => set((s) => ({

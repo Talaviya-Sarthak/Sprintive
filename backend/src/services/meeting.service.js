@@ -122,7 +122,9 @@ export const meetingService = {
 
     if (meeting.status === 'scheduled' && meeting.scheduled_start) {
       const scheduledStart = new Date(meeting.scheduled_start);
-      if (Date.now() < scheduledStart.getTime()) {
+      const isHost = meeting.host_id === userId;
+      const earlyBufferMs = 15 * 60 * 1000; // Allow joining 15 minutes before scheduled start
+      if (!isHost && (Date.now() + earlyBufferMs) < scheduledStart.getTime()) {
         throw new AppError('Meeting has not started yet', 400);
       }
     }

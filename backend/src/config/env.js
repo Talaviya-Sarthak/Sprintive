@@ -50,7 +50,7 @@ export const env = {
   githubClientId:     process.env.GITHUB_CLIENT_ID     ?? '',
   githubClientSecret: process.env.GITHUB_CLIENT_SECRET ?? '',
 
-  frontendUrl:        process.env.FRONTEND_URL ?? 'http://localhost:5173',
+  frontendUrl:        (process.env.FRONTEND_URL ?? 'http://localhost:5173').replace(/\/+$/, ''),
 
   // ── Object Storage ─────────────────────────────────────────────────────────
   // Change SUPABASE_STORAGE_URL to switch Supabase projects.
@@ -71,6 +71,9 @@ export const env = {
   // ── Deepgram STT ──────────────────────────────────────────────────────────
   deepgramApiKey:     process.env.DEEPGRAM_API_KEY ?? '',
   deepgramModel:      process.env.DEEPGRAM_MODEL  ?? 'nova-3',
+
+  // ── Redis / BullMQ ─────────────────────────────────────────────────────────
+  redisUrl:           process.env.REDIS_URL ?? '',
 
   // ── Brevo Email ────────────────────────────────────────────────────────────
   brevoApiKey:        process.env.BREVO_API_KEY            ?? '',
