@@ -18,6 +18,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import AppLayout from '../../layouts/AppLayout';
 import { AppButton } from '../../components/app-ui/AppButton';
+import AIProcessingStepper from '../../components/meeting/AIProcessingStepper';
 import KanbanBoard from './components/KanbanBoard';
 import TaskDialog from './components/TaskDialog';
 import TaskDetailDrawer from './components/TaskDetailDrawer';
@@ -79,6 +80,12 @@ export default function KanbanPage() {
     error: string | null;
   } | null>(null);
   const [isRetryingProc, setIsRetryingProc] = useState(false);
+
+  // Active meeting title for processing stepper
+  const activeProcessingMeetingTitle = useMemo(() => {
+    const targetId = meetingProcStatus?.meeting_id || (meetingIdParam !== 'all' ? meetingIdParam : undefined);
+    return meetings.find(m => m.id === targetId)?.title;
+  }, [meetingProcStatus, meetingIdParam, meetings]);
 
   // Load team members
   useEffect(() => {
@@ -635,26 +642,12 @@ export default function KanbanPage() {
           </div>
         ) : tasks.length === 0 ? (
           meetingProcStatus?.is_processing ? (
-            /* Processing State */
-            <div className="flex flex-col items-center justify-center h-80 gap-3 border border-blue-500/30 rounded-xl bg-blue-500/[0.03] p-8 text-center">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-500/15 border border-blue-500/30 text-blue-400">
-                <Sparkles size={20} className="animate-pulse" />
-              </div>
-              <h3 className="text-sm font-semibold text-[#f4f4f5]">AI is analyzing your latest meeting</h3>
-              <p className="text-xs text-[#9ca3af] max-w-md leading-relaxed">
-                Tasks will appear here automatically when processing is complete.
-                {meetingProcStatus.current_stage && (
-                  <span className="block mt-1 font-mono text-[11px] text-blue-300">
-                    Stage: {meetingProcStatus.current_stage.replace(/_/g, ' ')}
-                  </span>
-                )}
-              </p>
-              <div className="flex items-center gap-2 mt-2">
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-300 text-xs font-mono">
-                  <Loader2 size={12} className="animate-spin" />
-                  <span>Processing in progress...</span>
-                </div>
-              </div>
+            /* Processing State with Premium Stepper */
+            <div className="py-2">
+              <AIProcessingStepper
+                currentStage={meetingProcStatus.current_stage}
+                meetingTitle={activeProcessingMeetingTitle}
+              />
             </div>
           ) : (meetingProcStatus?.transcript_status === 'failed' || meetingProcStatus?.ai_status === 'failed') ? (
             /* Failed State */
@@ -728,12 +721,20 @@ export default function KanbanPage() {
           )
         ) : (
           /* Kanban Board Component */
-          <KanbanBoard
-            tasks={filteredTasks}
-            onAddTask={handleOpenCreate}
-            onCardClick={handleOpenDrawer}
-            onMoveStatus={handleMoveStatus}
-          />
+          <div className="space-y-6">
+            {meetingProcStatus?.is_processing && (
+              <AIProcessingStepper
+                currentStage={meetingProcStatus.current_stage}
+                meetingTitle={activeProcessingMeetingTitle}
+              />
+            )}
+            <KanbanBoard
+              tasks={filteredTasks}
+              onAddTask={handleOpenCreate}
+              onCardClick={handleOpenDrawer}
+              onMoveStatus={handleMoveStatus}
+            />
+          </div>
         )}
 
         {/* Right-Side Full Task Detail Drawer */}

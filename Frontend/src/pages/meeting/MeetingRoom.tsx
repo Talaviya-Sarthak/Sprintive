@@ -93,31 +93,73 @@ export default function MeetingRoom() {
   const payload = parseJwt(token);
   const userId = payload.id ?? payload.sub ?? '';
   const isHost = meeting?.host_id === userId;
+  const cleanedUpRef = useRef(false);
 
-  // Any participant shows the ended screen when the host ends the meeting.
+  const performMeetingCleanup = useCallback(() => {
+    if (cleanedUpRef.current) return;
+    cleanedUpRef.current = true;
+
+    // 1. Stop screen share tracks and notify peers
+    try {
+      removeScreenShareTrack();
+      screenShareStop();
+      stopScreenShare();
+    } catch { /* ignore */ }
+
+    // 2. Stop all local camera and microphone tracks immediately
+    try {
+      stopMedia();
+    } catch { /* ignore */ }
+
+    // 3. Clear video elements srcObjects
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null;
+    }
+    if (screenShareVideoRef.current) {
+      screenShareVideoRef.current.srcObject = null;
+    }
+
+    // 4. Disconnect meeting socket & close all peer connections
+    try {
+      leaveSocket();
+    } catch { /* ignore */ }
+
+    // 5. Notify backend API of leave
+    if (id) {
+      meetingService.leaveMeeting?.(id).catch(() => {});
+    }
+
+    // 6. Reset meeting store state
+    try {
+      reset();
+    } catch { /* ignore */ }
+  }, [id, removeScreenShareTrack, screenShareStop, stopScreenShare, stopMedia, leaveSocket, reset]);
+
+  // Handle meeting ended notification
   useEffect(() => {
     const cleanup = onMeetingEnded((data) => {
+      performMeetingCleanup();
       setEndedData(data);
       if (id) {
         navigate(`/meetings/${id}/summary`, { replace: true });
       }
     });
     return cleanup;
-  }, [onMeetingEnded, id, navigate]);
+  }, [onMeetingEnded, id, navigate, performMeetingCleanup]);
 
   // Handle redirect emitted by server after meeting ends
   useEffect(() => {
     const cleanup = onRedirect((url) => {
-      stopMedia();
+      performMeetingCleanup();
       navigate(url);
     });
     return cleanup;
-  }, [onRedirect, navigate, stopMedia]);
+  }, [onRedirect, navigate, performMeetingCleanup]);
 
   // Force leave fallback when host ends meeting
   useEffect(() => {
     const cleanup = onForceLeave(() => {
-      stopMedia();
+      performMeetingCleanup();
       if (id) {
         navigate(`/meetings/${id}/summary`, { replace: true });
       } else {
@@ -125,7 +167,21 @@ export default function MeetingRoom() {
       }
     });
     return cleanup;
-  }, [onForceLeave, navigate, stopMedia, id]);
+  }, [onForceLeave, navigate, id, performMeetingCleanup]);
+
+  // Window beforeunload / pagehide listener for browser tab close/navigation
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      performMeetingCleanup();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handleBeforeUnload);
+      performMeetingCleanup();
+    };
+  }, [performMeetingCleanup]);
 
   useEffect(() => {
     if (!id) return;
@@ -136,8 +192,7 @@ export default function MeetingRoom() {
       meetingService.getMeeting(id).then(setMeeting).catch(() => {});
     });
     meetingService.getChats(id).then(setChats).catch(() => {});
-    return () => reset();
-  }, [id]);
+  }, [id, setMeeting, setParticipants, setChats]);
 
   useEffect(() => {
     if (stream) {
@@ -235,6 +290,7 @@ export default function MeetingRoom() {
     if (isEnding) return;
     setIsEnding(true);
     endMeeting((data) => {
+      performMeetingCleanup();
       setEndedData(data);
       if (id) {
         navigate(`/meetings/${id}/summary`, { replace: true });
@@ -243,14 +299,7 @@ export default function MeetingRoom() {
   };
 
   const handleLeave = () => {
-    if (isScreenSharing) {
-      removeScreenShareTrack();
-      screenShareStop();
-    }
-    stopScreenShare();
-    stopMedia();
-    leaveSocket();
-    if (id) meetingService.leaveMeeting?.(id).catch(() => {});
+    performMeetingCleanup();
     navigate('/dashboard');
   };
 

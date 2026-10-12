@@ -146,7 +146,7 @@ class ProcessTranscriptRequest(BaseModel):
         description="Optional formatting settings for Part 13.",
     )
     run_ai_pipeline: bool = Field(
-        default=False,
+        default=True,
         description="Whether to execute the First Stage AI Meeting Agent pipeline after cleaned transcript is stored.",
     )
 

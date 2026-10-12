@@ -521,7 +521,7 @@ class TranscriptService:
         raw_transcript_path: Optional[str] = None,
         formatting_config: Optional[FormattingConfig] = None,
         enforce_concurrency: bool = True,
-        run_ai_pipeline: bool = False,
+        run_ai_pipeline: bool = True,
         orchestrator: Optional[TranscriptOrchestrator] = None,
     ) -> ProcessTranscriptResponse:
         """

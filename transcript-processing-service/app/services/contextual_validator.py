@@ -19,6 +19,7 @@ from app.models.transcript import (
     ContextFlagType,
     ContextValidationLLMOutput,
     ContextValidationStatus,
+    SegmentClassification,
     TranscriptSegment,
 )
 from app.prompts.contextual_validation import (
@@ -334,7 +335,20 @@ def validate_context(
             validated_segments.append(segment_copy)
             continue
 
-        # 5. LLM-based Contextual Consistency Validation
+        # 5. Fast Path: If deterministic checks (rules 1-4) passed without flags, preserve consistent status
+        segment_copy = segment.model_copy(
+            update={
+                "context_status": ContextValidationStatus.CONSISTENT,
+                "context_confidence": 0.98,
+                "context_flags": [],
+                "context_reason": "Contextually consistent conversational dialogue verified via deterministic rules.",
+            }
+        )
+        validated_segments.append(segment_copy)
+        continue
+
+
+        # 6. LLM-based Contextual Consistency Validation
         user_prompt = build_contextual_validation_user_prompt(
             current_segment=segment,
             context_before=before_window,

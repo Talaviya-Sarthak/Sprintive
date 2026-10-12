@@ -7,14 +7,54 @@ export function useMediaDevices() {
   const [error, setError]           = useState<string | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const mountedRef = useRef(false);
+  const isStoppedRef = useRef(false);
+  const cleanupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
+
+  const stopAllTracks = useCallback((s: MediaStream | null) => {
+    if (!s) return;
+    s.getTracks().forEach((track) => {
+      try {
+        track.stop();
+      } catch { /* ignore */ }
+    });
+  }, []);
+
+  const stopMedia = useCallback(() => {
+    isStoppedRef.current = true;
+    if (cleanupTimerRef.current) {
+      clearTimeout(cleanupTimerRef.current);
+      cleanupTimerRef.current = null;
+    }
+    if (streamRef.current) {
+      stopAllTracks(streamRef.current);
+      streamRef.current = null;
+    }
+    setStream(null);
+  }, [stopAllTracks]);
+
+  const stopScreenShare = useCallback(() => {
+    if (screenStreamRef.current) {
+      stopAllTracks(screenStreamRef.current);
+      screenStreamRef.current = null;
+    }
+  }, [stopAllTracks]);
 
   useEffect(() => {
     mountedRef.current = true;
+    isStoppedRef.current = false;
+    if (cleanupTimerRef.current) {
+      clearTimeout(cleanupTimerRef.current);
+      cleanupTimerRef.current = null;
+    }
+
     const acquireMedia = async () => {
       try {
         const s = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        if (!mountedRef.current) { s.getTracks().forEach((t) => t.stop()); return; }
+        if (!mountedRef.current || isStoppedRef.current) {
+          stopAllTracks(s);
+          return;
+        }
         s.getAudioTracks().forEach((t) => { t.enabled = true; });
         streamRef.current = s;
         setStream(s);
@@ -22,7 +62,10 @@ export function useMediaDevices() {
         // Fallback: If camera is busy or unavailable, still acquire microphone
         try {
           const audioOnly = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-          if (!mountedRef.current) { audioOnly.getTracks().forEach((t) => t.stop()); return; }
+          if (!mountedRef.current || isStoppedRef.current) {
+            stopAllTracks(audioOnly);
+            return;
+          }
           audioOnly.getAudioTracks().forEach((t) => { t.enabled = true; });
           streamRef.current = audioOnly;
           setStream(audioOnly);
@@ -37,13 +80,27 @@ export function useMediaDevices() {
       }
     };
     acquireMedia();
+
     return () => {
-      // Only stop tracks on real unmount (StrictMode phantom unmount must not kill the camera)
       mountedRef.current = false;
-      if (import.meta.env.DEV) return;
-      streamRef.current?.getTracks().forEach((t) => { t.stop(); });
+      // In dev StrictMode, React unmounts and immediately remounts.
+      // We use a small timer: if component is remounted within 60ms, timer is cancelled.
+      // On real unmount (user leaves meeting/navigates away), all tracks are stopped.
+      cleanupTimerRef.current = setTimeout(() => {
+        if (!mountedRef.current) {
+          isStoppedRef.current = true;
+          if (streamRef.current) {
+            stopAllTracks(streamRef.current);
+            streamRef.current = null;
+          }
+          if (screenStreamRef.current) {
+            stopAllTracks(screenStreamRef.current);
+            screenStreamRef.current = null;
+          }
+        }
+      }, 60);
     };
-  }, []);
+  }, [stopAllTracks]);
 
   const toggleMic = useCallback(() => {
     setIsMuted((prev) => {
@@ -68,17 +125,6 @@ export function useMediaDevices() {
       return s;
     } catch { return null; }
   }, []);
-
-  const stopScreenShare = useCallback(() => {
-    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
-    screenStreamRef.current = null;
-  }, []);
-
-  const stopMedia = () => {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-    setStream(null);
-  };
 
   return { stream, isMuted, isCameraOff, error, toggleMic, toggleCamera, startScreenShare, stopScreenShare, stopMedia };
 }

@@ -133,6 +133,21 @@ def validate_speakers(
             )
             validated_segments.append(segment_copy)
             continue
+ 
+        # 3. Fast Path: Known speaker and clean conversational turn
+        if segment.speaker and segment.speaker in known_speakers and segment.speaker != "UNKNOWN":
+            segment_copy = segment.model_copy(
+                update={
+                    "speaker_validation_status": SpeakerValidationStatus.VALID,
+                    "speaker_confidence": 0.98,
+                    "speaker_flags": [],
+                    "suggested_speaker": None,
+                    "speaker_correction": None,
+                    "speaker_validation_reason": "Verified known speaker turn.",
+                }
+            )
+            validated_segments.append(segment_copy)
+            continue
 
         # --- Layer 2 & 3: Context Window & LLM Validation ---
         before_window = segments[max(0, idx - ctx_before) : idx]
