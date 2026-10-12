@@ -25,10 +25,10 @@ function RemoteAudioPlayer({ stream }: { stream?: MediaStream }) {
   useEffect(() => {
     const el = audioRef.current;
     if (!el) return;
-    if (stream && stream.getAudioTracks().length > 0) {
-      if (el.srcObject !== stream) {
-        el.srcObject = stream;
-      }
+    const audioTracks = stream ? stream.getAudioTracks().filter(t => t.readyState === 'live') : [];
+    if (audioTracks.length > 0) {
+      const audioStream = new MediaStream(audioTracks);
+      el.srcObject = audioStream;
       el.muted = false;
       el.volume = 1.0;
       const p = el.play();

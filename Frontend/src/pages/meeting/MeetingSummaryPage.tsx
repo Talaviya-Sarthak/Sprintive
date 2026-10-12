@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Clock, Users, CheckCircle2, Download, LayoutDashboard,
   Sparkles, AlertCircle, RefreshCw, Loader2, FileText, Check,
   ChevronDown, ChevronUp, Tag, UserCheck, Calendar, ListChecks,
-  ArrowRight,
+  ExternalLink, ArrowRight,
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { meetingService } from '../../services/meeting.service';
@@ -14,7 +14,6 @@ import { useMeetingParticipants } from '../../hooks/useMeetingParticipants';
 import AppLayout from '../../layouts/AppLayout';
 import { MeetingStatusBadge, MeetingTypeBadge, RoleBadge } from '../../components/ui/Badge';
 import { AppButton, AppCard } from '../../components/app-ui';
-import AIProcessingStepper from '../../components/meeting/AIProcessingStepper';
 import type { MeetingParticipant, GeneratedTicket } from '../../types';
 
 function formatDateLong(dateStr?: string) {
@@ -279,11 +278,82 @@ export default function MeetingSummaryPage() {
           {/* STATE 1: PROCESSING STATE                             */}
           {/* ══════════════════════════════════════════════════════ */}
           {isProcessing && (
-            <AIProcessingStepper
-              currentStage={currentStage}
-              meetingTitle={meeting.title}
-              className="my-2"
-            />
+            <AppCard variant="dashboard" className="p-6 border-blue-500/30 bg-blue-500/[0.03]">
+              <div className="space-y-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                    <Sparkles size={18} className="animate-pulse" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-semibold text-[#f4f4f5]">AI is analyzing this meeting</h2>
+                    <p className="text-xs text-[#9ca3af]">
+                      Your summary and Kanban tasks will appear automatically when processing is complete.
+                    </p>
+                  </div>
+                </div>
+                <p className="text-xs text-[#9ca3af]">
+                  {transcriptStatus === 'raw_stored' && 'Transcript saved. Your processed transcript will be ready in a few minutes...'}
+                  {transcriptStatus === 'processing' && 'Cleaning and preparing transcript through the 14-stage preprocessing pipeline...'}
+                  {transcriptStatus === 'ready_for_ai' && 'Transcript preprocessing completed. Cleaned and normalized for AI models.'}
+                  {transcriptStatus === 'failed' && (transcriptData?.error_message ? `Transcript processing failed: ${transcriptData.error_message}` : 'Transcript processing failed.')}
+                  {!transcriptStatus && (transcriptLoading ? 'Retrieving transcript details...' : 'No transcript recorded for this meeting.')}
+                </p>
+
+                {/* Timeline Stepper */}
+                <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 pt-2">
+                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-[#242636] bg-[#14151e]">
+                    <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs shrink-0">
+                      <Check size={12} strokeWidth={3} />
+                    </div>
+                    <span className="text-xs font-medium text-emerald-300">Meeting ended</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-[#242636] bg-[#14151e]">
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
+                      stageIndex >= 2 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400 animate-pulse'
+                    }`}>
+                      {stageIndex >= 2 ? <Check size={12} strokeWidth={3} /> : <Loader2 size={12} className="animate-spin" />}
+                    </div>
+                    <span className={`text-xs font-medium ${stageIndex >= 2 ? 'text-emerald-300' : 'text-blue-300'}`}>
+                      Transcript saved
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-[#242636] bg-[#14151e]">
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
+                      stageIndex >= 4 ? 'bg-emerald-500/20 text-emerald-400' : (stageIndex === 3 ? 'bg-blue-500/20 text-blue-400 animate-pulse' : 'bg-[#242636] text-[#71717a]')
+                    }`}>
+                      {stageIndex >= 4 ? <Check size={12} strokeWidth={3} /> : (stageIndex === 3 ? <Loader2 size={12} className="animate-spin" /> : <span className="w-1.5 h-1.5 rounded-full bg-current" />)}
+                    </div>
+                    <span className={`text-xs font-medium ${stageIndex >= 4 ? 'text-emerald-300' : (stageIndex === 3 ? 'text-blue-300' : 'text-[#71717a]')}`}>
+                      AI analyzing
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-[#242636] bg-[#14151e]">
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
+                      stageIndex >= 5 ? 'bg-emerald-500/20 text-emerald-400' : (stageIndex === 4 ? 'bg-blue-500/20 text-blue-400 animate-pulse' : 'bg-[#242636] text-[#71717a]')
+                    }`}>
+                      {stageIndex >= 5 ? <Check size={12} strokeWidth={3} /> : (stageIndex === 4 ? <Loader2 size={12} className="animate-spin" /> : <span className="w-1.5 h-1.5 rounded-full bg-current" />)}
+                    </div>
+                    <span className={`text-xs font-medium ${stageIndex >= 5 ? 'text-emerald-300' : (stageIndex === 4 ? 'text-blue-300' : 'text-[#71717a]')}`}>
+                      Generating tasks
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-[#242636] bg-[#14151e]">
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
+                      stageIndex >= 6 ? 'bg-emerald-500/20 text-emerald-400' : (stageIndex === 5 ? 'bg-blue-500/20 text-blue-400 animate-pulse' : 'bg-[#242636] text-[#71717a]')
+                    }`}>
+                      {stageIndex >= 6 ? <Check size={12} strokeWidth={3} /> : (stageIndex === 5 ? <Loader2 size={12} className="animate-spin" /> : <span className="w-1.5 h-1.5 rounded-full bg-current" />)}
+                    </div>
+                    <span className={`text-xs font-medium ${stageIndex >= 6 ? 'text-emerald-300' : (stageIndex === 5 ? 'text-blue-300' : 'text-[#71717a]')}`}>
+                      Resolving tasks
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </AppCard>
           )}
 
           {/* ══════════════════════════════════════════════════════ */}
@@ -297,26 +367,18 @@ export default function MeetingSummaryPage() {
                     <AlertCircle size={20} />
                   </div>
                   <div className="space-y-1">
-                    <h2 className="text-sm font-semibold text-[#f4f4f5]">AI Transcript Processing Failed</h2>
+                    <h2 className="text-sm font-semibold text-[#f4f4f5]">Transcript processing failed</h2>
                     <p className="text-xs text-[#9ca3af] leading-relaxed">
-                      {errorMessage?.includes('Failed to reach transcript service') || errorMessage?.includes('fetch failed')
-                        ? 'The transcript processing service (port 8001) could not be reached. Ensure transcript-processing-service is running and click Retry.'
-                        : errorMessage?.includes('No speech detected')
-                        ? 'No speech audio was detected during this meeting. You can speak next time or upload a transcript.'
-                        : 'Your meeting was saved, but AI processing could not complete.'}
+                      Your meeting was saved, but we couldn't process the transcript.
+                      {errorMessage ? ` (${errorMessage})` : ''}
                     </p>
-                    {errorMessage && (
-                      <p className="text-[11px] font-mono text-[#71717a] pt-1">
-                        Reason: {errorMessage}
-                      </p>
-                    )}
                   </div>
                 </div>
 
                 <AppButton
                   variant="mono"
                   size="sm"
-                  disabled={isRetrying || Boolean(errorMessage && errorMessage.includes('No speech detected'))}
+                  disabled={isRetrying || (errorMessage && errorMessage.includes('No speech detected'))}
                   onClick={handleRetry}
                   className="shrink-0 gap-1.5"
                 >

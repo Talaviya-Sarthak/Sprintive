@@ -6,8 +6,8 @@ import { env } from '../../config/env.js';
 import { AppError } from '../../middleware/error.middleware.js';
 import { logger } from '../../utils/logger.js';
 import { aiHandoffService } from '../ai/ai-handoff.service.js';
-import { taskResolutionService } from '../task-resolution/task-resolution.service.js';
 import { enqueueTranscriptProcessing } from '../../queues/transcript.queue.js';
+import { taskResolutionService } from '../task-resolution/task-resolution.service.js';
 
 /**
  * Transcript Service — coordinates STT finalization, dialogue formatting,
