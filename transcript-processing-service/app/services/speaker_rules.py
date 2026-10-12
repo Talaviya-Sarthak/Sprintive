@@ -177,16 +177,14 @@ def is_natural_turn_taking(
     prev_text = select_input_text(previous_segment).strip()
     curr_text = select_input_text(current_segment).strip()
 
-    # If previous segment ends cleanly with terminal punctuation
-    if prev_text.endswith((".", "?", "!", "।")):
-        # And current segment starts cleanly with capitalized word
-        if curr_text and curr_text[0].isupper():
-            return SpeakerValidationResult(
-                status=SpeakerValidationStatus.VALID,
-                confidence=0.92,
-                flags=[],
-                suggested_speaker=None,
-                reason="Standard, natural turn-taking transition between speakers.",
-            )
+    # If current segment starts cleanly with capitalized word or punctuation
+    if curr_text and (curr_text[0].isupper() or curr_text[0] in ("¿", "¡")):
+        return SpeakerValidationResult(
+            status=SpeakerValidationStatus.VALID,
+            confidence=0.92,
+            flags=[],
+            suggested_speaker=None,
+            reason="Standard, natural turn-taking transition between speakers.",
+        )
 
     return None

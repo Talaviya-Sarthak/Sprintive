@@ -345,6 +345,12 @@ export function initSocket(io) {
       io.to(targetSocketId).emit('webrtc:candidate', { fromSocketId: socket.id, userId: user.id, candidate });
     });
 
+    socket.on('webrtc:ice-restart-request', ({ meetingId, targetSocketId }) => {
+      const room = resolveRoom(meetingId);
+      if (!room) return;
+      io.to(targetSocketId).emit('webrtc:ice-restart-request', { fromSocketId: socket.id, userId: user.id });
+    });
+
     socket.on('disconnect', () => {
       rooms.forEach((sockets, room) => {
         if (sockets.has(socket.id)) {

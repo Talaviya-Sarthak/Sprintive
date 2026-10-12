@@ -161,7 +161,8 @@ def test_primary_model_tpd_falls_over_to_fallback():
         # First call was qwen
         assert mock_post.call_args_list[0][1]["json"]["model"] == "qwen/qwen3.8-27b"
         # Second call switched to first fallback
-        assert mock_post.call_args_list[1][1]["json"]["model"] == "openai/gpt-oss-120b"
+        first_fallback = settings.GROQ_FALLBACK_MODELS.split(",")[0].strip()
+        assert mock_post.call_args_list[1][1]["json"]["model"] == first_fallback
 
     # Circuit breaker must now report primary model is blocked
     assert not model_circuit_breaker.is_available("qwen/qwen3.8-27b")
@@ -183,9 +184,10 @@ def test_skipping_quota_exhausted_model_on_subsequent_call():
     with patch("httpx.Client.post", return_value=resp_200) as mock_post:
         res = client.generate_structured("sys", "user", DummyResponseModel)
         assert res.result == "direct_fallback"
-        # Should have called openai/gpt-oss-120b directly without attempting qwen!
+        # Should have called first fallback directly without attempting qwen!
         assert mock_post.call_count == 1
-        assert mock_post.call_args[1]["json"]["model"] == "openai/gpt-oss-120b"
+        first_fallback = settings.GROQ_FALLBACK_MODELS.split(",")[0].strip()
+        assert mock_post.call_args[1]["json"]["model"] == first_fallback
 
 
 def test_model_404_blacklisted_permanently_and_switches():
@@ -207,7 +209,8 @@ def test_model_404_blacklisted_permanently_and_switches():
         res = client.generate_structured("sys", "user", DummyResponseModel)
         assert res.result == "switched_after_404"
         assert mock_post.call_count == 2
-        assert mock_post.call_args_list[1][1]["json"]["model"] == "openai/gpt-oss-120b"
+        first_fallback = settings.GROQ_FALLBACK_MODELS.split(",")[0].strip()
+        assert mock_post.call_args_list[1][1]["json"]["model"] == first_fallback
 
     assert not model_circuit_breaker.is_available("qwen/qwen3.8-27b")
     # Even after time passes, unavailable is permanent
@@ -244,8 +247,7 @@ def test_all_models_rate_limited_raises_all_models_exhausted_error():
         with pytest.raises(AllModelsExhaustedError):
             client.generate_structured("sys", "user", DummyResponseModel)
 
-        # Verified candidate chain is: qwen, openai/gpt-oss-120b, allam-2-7b, openai/gpt-oss-20b (4 models)
-        assert mock_post.call_count == 4
+        assert mock_post.call_count == len(client._get_candidate_models())
 
 
 def test_fast_fail_when_circuit_breaker_has_all_models_blocked():

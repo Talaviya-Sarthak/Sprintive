@@ -27,23 +27,27 @@ function RemoteAudioPlayer({ stream }: { stream?: MediaStream }) {
     if (!el) return;
     const audioTracks = stream ? stream.getAudioTracks().filter(t => t.readyState === 'live') : [];
     if (audioTracks.length > 0) {
-      const audioStream = new MediaStream(audioTracks);
-      el.srcObject = audioStream;
-      el.muted = false;
-      el.volume = 1.0;
-      const p = el.play();
-      if (p !== undefined) {
-        p.catch(() => {
-          const resume = () => {
-            el.play().catch(() => {});
-            window.removeEventListener('click', resume);
-            window.removeEventListener('keydown', resume);
-            window.removeEventListener('touchstart', resume);
-          };
-          window.addEventListener('click', resume, { once: true });
-          window.addEventListener('keydown', resume, { once: true });
-          window.addEventListener('touchstart', resume, { once: true });
-        });
+      const curTrackId = (el.srcObject as MediaStream)?.getAudioTracks()[0]?.id;
+      const newTrackId = audioTracks[0]?.id;
+      if (curTrackId !== newTrackId) {
+        const audioStream = new MediaStream(audioTracks);
+        el.srcObject = audioStream;
+        el.muted = false;
+        el.volume = 1.0;
+        const p = el.play();
+        if (p !== undefined) {
+          p.catch(() => {
+            const resume = () => {
+              el.play().catch(() => {});
+              window.removeEventListener('click', resume);
+              window.removeEventListener('keydown', resume);
+              window.removeEventListener('touchstart', resume);
+            };
+            window.addEventListener('click', resume, { once: true });
+            window.addEventListener('keydown', resume, { once: true });
+            window.addEventListener('touchstart', resume, { once: true });
+          });
+        }
       }
     } else {
       el.srcObject = null;

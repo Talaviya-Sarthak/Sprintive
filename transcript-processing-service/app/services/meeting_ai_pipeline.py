@@ -23,8 +23,14 @@ from app.models.meeting_agent import (
     MeetingAnalysisResult,
 )
 from app.models.resolved_task import ResolvedTask
-from app.models.scrum_agent import ScrumResult
-from app.services.llm_client import BaseLLMClient
+from app.models.scrum_agent import ScrumResult, ScrumTask
+from pydantic import BaseModel, Field
+from app.services.llm_client import (
+    BaseLLMClient,
+    MockLLMClient,
+    OpenAICompatibleLLMClient,
+    get_llm_client,
+)
 from app.services.meeting_agent import (
     EmptyTranscriptException,
     MainMeetingAgent,
@@ -47,6 +53,38 @@ from app.services.storage_service import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class ConsolidatedMeetingAIOutput(BaseModel):
+    summary: str = Field(..., description="High-level summary of the meeting")
+    topics: List[str] = Field(default_factory=list, description="Key discussion topics")
+    decisions: List[str] = Field(default_factory=list, description="Decisions made")
+    action_items: List[str] = Field(default_factory=list, description="Action items assigned")
+    blockers: List[str] = Field(default_factory=list, description="Blockers or obstacles raised")
+    tasks: List[ScrumTask] = Field(default_factory=list, description="Structured Scrum tasks derived from action items")
+
+
+CONSOLIDATED_AI_SYSTEM_PROMPT = (
+    "You are Sprintive's AI Meeting Intelligence and Scrum Assistant.\n"
+    "Your objective is to analyze a completed meeting transcript and extract both executive meeting insights "
+    "and structured Scrum work items in a single, accurate response.\n\n"
+    "CRITICAL REQUIREMENTS:\n"
+    "1. summary: A clear, executive-level summary synthesizing the overall discussion, outcomes, and progress.\n"
+    "2. topics: A list of key topics discussed.\n"
+    "3. decisions: A list of explicit agreements and decisions reached.\n"
+    "4. action_items: Concrete tasks or follow-ups explicitly committed to by participants.\n"
+    "5. blockers: Technical, operational, or external impediments explicitly raised.\n"
+    "6. tasks: Structured Scrum/Kanban work items derived from action_items and blockers. Each task must have:\n"
+    "   - title: Clear, actionable title.\n"
+    "   - description: Contextual description.\n"
+    "   - assignee: Person assigned, or null if unassigned.\n"
+    "   - priority: 'low', 'medium', 'high', or 'critical', or null if unspecified.\n"
+    "   - due_date: Deadlines mentioned, or null if unspecified.\n"
+    "   - type: 'task', 'bug', 'story', 'improvement', or 'research'.\n"
+    "   - acceptance_criteria: Verifiable completion criteria.\n"
+    "   - source_action_item: The exact verbatim or close source text from action_items/blockers for traceability.\n\n"
+    "Ground every claim strictly in the provided transcript. Do not hallucinate or invent deliverables."
+)
 
 
 class MeetingAIPipelineError(Exception):
@@ -143,25 +181,67 @@ async def run_meeting_ai_pipeline(
     logger.info("Transcript loaded successfully")
     logger.info("Transcript length: %d", len(transcript_str))
 
-    # 6. Call Main Meeting Agent (Stage 1)
-    logger.info("Calling Main Meeting Agent")
-    try:
-        analysis = analysis_agent.analyze_transcript(transcript_str)
-    except Exception as exc:
-        logger.error("Main Meeting Agent failed for meeting %s: %s", valid_id, exc)
-        raise
-
-    # 7. Call Scrum Intelligence Agent (Stage 2)
+    # 6. Call Meeting Analysis & Scrum Agents
+    # Optimization: When both Stage 1 and Stage 2 are needed with default agents and a production LLM,
+    # execute a consolidated structured prompt to cut downstream LLM calls from 2 to 1.
+    analysis = None
     scrum_result = None
-    if run_scrum_agent:
-        logger.info("Calling Scrum Intelligence Agent")
-        s_agent = scrum_agent or get_scrum_intelligence_agent(llm_client=llm_client)
+
+    active_client = llm_client or get_llm_client()
+    use_consolidated = (
+        run_scrum_agent
+        and agent is None
+        and scrum_agent is None
+        and isinstance(active_client, OpenAICompatibleLLMClient)
+    )
+
+    if use_consolidated:
         try:
-            scrum_result = s_agent.analyze(analysis)
+            logger.info("Calling Main Meeting Agent")
+            logger.info("Executing consolidated Meeting & Scrum Intelligence Agent prompt")
+            user_prompt = f"Meeting Transcript:\n\n{transcript_str}\n\nAnalyze this transcript and produce the structured meeting analysis and Scrum tasks."
+            combined: ConsolidatedMeetingAIOutput = active_client.generate_structured(
+                system_prompt=CONSOLIDATED_AI_SYSTEM_PROMPT,
+                user_prompt=user_prompt,
+                response_model=ConsolidatedMeetingAIOutput,
+            )
+            analysis = MeetingAnalysisResult(
+                summary=combined.summary,
+                topics=combined.topics,
+                decisions=combined.decisions,
+                action_items=combined.action_items,
+                blockers=combined.blockers,
+            )
+            scrum_result = ScrumResult(tasks=combined.tasks)
+            logger.info("LLM response received")
+            logger.info("Calling Scrum Intelligence Agent")
             logger.info("Scrum Intelligence Agent completed (%d tasks generated)", len(scrum_result.tasks))
         except Exception as exc:
-            logger.error("Scrum Intelligence Agent failed for meeting %s: %s", valid_id, exc)
+            logger.warning(
+                "Consolidated meeting analysis call failed (%s); falling back to sequential execution.",
+                exc,
+            )
+            analysis = None
+            scrum_result = None
+
+    if analysis is None:
+        # Standard sequential path (used in unit tests and as fallback)
+        logger.info("Calling Main Meeting Agent")
+        try:
+            analysis = analysis_agent.analyze_transcript(transcript_str)
+        except Exception as exc:
+            logger.error("Main Meeting Agent failed for meeting %s: %s", valid_id, exc)
             raise
+
+        if run_scrum_agent:
+            logger.info("Calling Scrum Intelligence Agent")
+            s_agent = scrum_agent or get_scrum_intelligence_agent(llm_client=llm_client)
+            try:
+                scrum_result = s_agent.analyze(analysis)
+                logger.info("Scrum Intelligence Agent completed (%d tasks generated)", len(scrum_result.tasks))
+            except Exception as exc:
+                logger.error("Scrum Intelligence Agent failed for meeting %s: %s", valid_id, exc)
+                raise
 
     # 8. Deterministic Task Resolution (Stage 3)
     resolved_tasks = None

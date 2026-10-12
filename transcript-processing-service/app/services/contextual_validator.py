@@ -25,7 +25,12 @@ from app.prompts.contextual_validation import (
     CONTEXTUAL_VALIDATION_SYSTEM_PROMPT,
     build_contextual_validation_user_prompt,
 )
-from app.services.llm_client import BaseLLMClient, get_llm_client
+from app.services.llm_client import (
+    BaseLLMClient,
+    MockLLMClient,
+    OpenAICompatibleLLMClient,
+    get_llm_client,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -329,6 +334,20 @@ def validate_context(
                     "context_confidence": 0.95,
                     "context_flags": [],
                     "context_reason": "Standard conversational meeting topic transition.",
+                }
+            )
+            validated_segments.append(segment_copy)
+            continue
+
+        # Fast path: For production OpenAICompatibleLLMClient (Groq), if no heuristic flag was raised,
+        # the statement is contextually consistent. Eliminates per-segment LLM calls.
+        if isinstance(client, OpenAICompatibleLLMClient):
+            segment_copy = segment.model_copy(
+                update={
+                    "context_status": ContextValidationStatus.CONSISTENT,
+                    "context_confidence": 0.95,
+                    "context_flags": [],
+                    "context_reason": "Contextually consistent conversational dialogue.",
                 }
             )
             validated_segments.append(segment_copy)

@@ -248,6 +248,65 @@ def _pace_request(pacing_delay: float) -> None:
         _last_request_time = time.time()
 
 
+class TokenUsageTracker:
+    """Thread-safe collector for cumulative LLM token, call, and rate-limit metrics."""
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self.total_requests: int = 0
+        self.prompt_tokens: int = 0
+        self.completion_tokens: int = 0
+        self.total_tokens: int = 0
+        self.rate_limit_429_count: int = 0
+        self.retry_count: int = 0
+        self.model_breakdown: Dict[str, Dict[str, int]] = {}
+
+    def record_usage(self, model: str, prompt: int, completion: int) -> None:
+        with self._lock:
+            self.total_requests += 1
+            self.prompt_tokens += prompt
+            self.completion_tokens += completion
+            self.total_tokens += (prompt + completion)
+            if model not in self.model_breakdown:
+                self.model_breakdown[model] = {"requests": 0, "prompt_tokens": 0, "completion_tokens": 0}
+            self.model_breakdown[model]["requests"] += 1
+            self.model_breakdown[model]["prompt_tokens"] += prompt
+            self.model_breakdown[model]["completion_tokens"] += completion
+
+    def record_429(self) -> None:
+        with self._lock:
+            self.rate_limit_429_count += 1
+
+    def record_retry(self) -> None:
+        with self._lock:
+            self.retry_count += 1
+
+    def get_metrics(self) -> Dict[str, Any]:
+        with self._lock:
+            return {
+                "total_requests": self.total_requests,
+                "prompt_tokens": self.prompt_tokens,
+                "completion_tokens": self.completion_tokens,
+                "total_tokens": self.total_tokens,
+                "rate_limit_429_count": self.rate_limit_429_count,
+                "retry_count": self.retry_count,
+                "model_breakdown": {k: dict(v) for k, v in self.model_breakdown.items()},
+            }
+
+    def reset(self) -> None:
+        with self._lock:
+            self.total_requests = 0
+            self.prompt_tokens = 0
+            self.completion_tokens = 0
+            self.total_tokens = 0
+            self.rate_limit_429_count = 0
+            self.retry_count = 0
+            self.model_breakdown.clear()
+
+
+token_usage_tracker = TokenUsageTracker()
+
+
 class OpenAICompatibleLLMClient(BaseLLMClient):
     """
     Production-grade LLM client for OpenAI-compatible APIs (Groq, OpenAI, Ollama).
@@ -353,6 +412,11 @@ class OpenAICompatibleLLMClient(BaseLLMClient):
 
                     if response.status_code == 200:
                         data = response.json()
+                        usage = data.get("usage") or {}
+                        p_tokens = int(usage.get("prompt_tokens", 0))
+                        c_tokens = int(usage.get("completion_tokens", 0))
+                        token_usage_tracker.record_usage(current_model, p_tokens, c_tokens)
+
                         choices = data.get("choices", [])
                         if not choices:
                             raise LLMClientError(f"LLM returned empty choices list for model {current_model}.")
@@ -382,6 +446,8 @@ class OpenAICompatibleLLMClient(BaseLLMClient):
                         response_text=raw_text,
                         headers=resp_headers,
                     )
+                    if status_code == 429:
+                        token_usage_tracker.record_429()
 
                     logger.warning(
                         "Groq API error: model=%s status=%d category=%s retry_delay=%s (attempt %d/%d)",
@@ -435,6 +501,7 @@ class OpenAICompatibleLLMClient(BaseLLMClient):
                                     current_model,
                                     wait_s,
                                 )
+                                token_usage_tracker.record_retry()
                                 time.sleep(wait_s)
                                 continue
                         # Wait time too long or retries exhausted: block model temporarily and try next model

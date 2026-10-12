@@ -1,6 +1,7 @@
 """Service implementation for Part 6 — STT Error Correction."""
 
 import logging
+import re
 from typing import List, Optional
 from app.core.config import settings
 from app.models.transcript import (
@@ -16,10 +17,31 @@ from app.prompts.stt_correction import (
 from app.services.llm_client import (
     AllModelsExhaustedError,
     BaseLLMClient,
+    MockLLMClient,
+    OpenAICompatibleLLMClient,
     get_llm_client,
 )
 
 logger = logging.getLogger(__name__)
+
+
+def is_candidate_stt_anomaly(text: str) -> bool:
+    """
+    Check if a text utterance contains candidate speech-to-text recognition anomalies
+    such as phonetic distortion, garbled consonant runs, or unparsed audio artifacts.
+    """
+    if not text:
+        return False
+    lower = text.lower()
+    # Explicit STT artifact markers
+    if any(m in lower for m in ("[?]", "???", "[inaudible]", "[unclear]", "[crosstalk]")):
+        return True
+    # Long consonant cluster (5+ consonants) indicating transcription garble in English words
+    words = re.findall(r"\b[a-z]+\b", lower)
+    for w in words:
+        if re.search(r"[bcdfghjklmnpqrstvwxyz]{5,}", w):
+            return True
+    return False
 
 
 def correct_stt_segments(
@@ -120,6 +142,23 @@ def correct_stt_segments(
             )
             corrected_segments.append(segment_copy)
             continue
+
+        # Fast path: For OpenAICompatibleLLMClient in production (Groq), skip LLM for clean segments without acoustic anomalies
+        if isinstance(client, OpenAICompatibleLLMClient):
+            is_clean = segment.classification in (SegmentClassification.CLEAN, None)
+            conf = segment.confidence if segment.confidence is not None else 1.0
+            if is_clean and conf >= 0.80 and not is_candidate_stt_anomaly(active_text):
+                segment_copy = segment.model_copy(
+                    update={
+                        "stt_corrected_text": active_text,
+                        "stt_modified": False,
+                        "stt_confidence": conf,
+                        "stt_error_type": None,
+                        "stt_reason": "Clean segment without STT recognition anomalies",
+                    }
+                )
+                corrected_segments.append(segment_copy)
+                continue
 
         # Extract surrounding context window
         before_window = segments[max(0, idx - ctx_before) : idx]

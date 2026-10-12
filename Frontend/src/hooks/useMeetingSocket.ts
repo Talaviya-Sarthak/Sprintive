@@ -56,7 +56,7 @@ export function useMeetingSocket(meetingId: string | undefined) {
   const localStreamRef  = useRef<MediaStream | null>(null);
   const screenShareTrackRef = useRef<MediaStreamTrack | null>(null);
   const remoteVideoTrackCount = useRef<Map<string, number>>(new Map());
-  const peerOfferFns = useRef<Map<string, () => void>>(new Map());
+  const peerOfferFns = useRef<Map<string, (isIceRestart?: boolean) => void>>(new Map());
 
   const endCallbacks = useRef<Map<string, (data: any) => void>>(new Map());
   const redirectCallbacks = useRef<Map<string, (url: string) => void>>(new Map());
@@ -89,7 +89,19 @@ export function useMeetingSocket(meetingId: string | undefined) {
     const tracks = stream.getTracks();
     let added = 0;
     tracks.forEach((t) => {
-      if (!pc.getSenders().some((s) => s.track === t)) { pc.addTrack(t, stream); added++; }
+      const existingTc = pc.getTransceivers().find(
+        (tc) => tc.receiver.track?.kind === t.kind && (!tc.sender.track || tc.sender.track === t)
+      );
+      if (existingTc) {
+        if (existingTc.sender.track !== t) {
+          existingTc.sender.replaceTrack(t);
+          existingTc.direction = 'sendrecv';
+          added++;
+        }
+      } else if (!pc.getSenders().some((s) => s.track === t)) {
+        pc.addTrack(t, stream);
+        added++;
+      }
     });
     // Also add the screen share track if one is currently active
     const ssTrack = screenShareTrackRef.current;
@@ -124,56 +136,64 @@ export function useMeetingSocket(meetingId: string | undefined) {
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
         { urls: 'stun:stun2.l.google.com:19302' },
-        { urls: 'stun:openrelay.metered.ca:80' },
+        { urls: 'stun:stun.cloudflare.com:3478' },
         {
-          urls: 'turn:openrelay.metered.ca:80',
-          username: 'openrelayproject',
-          credential: 'openrelayproject',
-        },
-        {
-          urls: 'turn:openrelay.metered.ca:443',
-          username: 'openrelayproject',
-          credential: 'openrelayproject',
-        },
-        {
-          urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+          urls: [
+            'turns:openrelay.metered.ca:443?transport=tcp',
+            'turn:openrelay.metered.ca:443?transport=tcp',
+            'turn:openrelay.metered.ca:80?transport=tcp',
+            'turn:openrelay.metered.ca:3478?transport=tcp',
+            'turn:openrelay.metered.ca:80',
+            'turn:openrelay.metered.ca:443',
+            'turn:openrelay.metered.ca:3478',
+          ],
           username: 'openrelayproject',
           credential: 'openrelayproject',
         },
       ],
-      iceCandidatePoolSize: 10,
     });
     const flags = { isInitiator, makingOffer: false, settingAnswer: false, negotiated: isInitiator };
     negotiationFlags.current.set(socketId, flags);
 
-    if (pc.getTransceivers().length === 0) {
-      try {
-        pc.addTransceiver('audio', { direction: 'sendrecv' });
-        pc.addTransceiver('video', { direction: 'sendrecv' });
-      } catch (err) {
-        log(`transceiver creation error: ${err}`);
-      }
-    }
-
     addTracksToPeer(pc);
 
-    const makeOffer = async () => {
-      log(`makeOffer CALLED for ${socketId.slice(-5)}: state=${pc.signalingState}, making=${flags.makingOffer}, settingAns=${flags.settingAnswer}, isInit=${flags.isInitiator}, negotiated=${flags.negotiated}, senders=${pc.getSenders().length}`);
-      if (flags.makingOffer || flags.settingAnswer) { log(`makeOffer SKIPPED (making=${flags.makingOffer} settingAns=${flags.settingAnswer}) ${socketId.slice(-5)}`); return; }
-      if (pc.signalingState !== 'stable') { log(`makeOffer SKIPPED (state=${pc.signalingState}) ${socketId.slice(-5)}`); return; }
-      // Non-initiator must NOT offer unless actively adding a screen share track
+    // If local stream didn't provide audio or video tracks, ensure we can still receive remote tracks
+    const senders = pc.getSenders();
+    const hasAudio = senders.some((s) => s.track?.kind === 'audio');
+    const hasVideo = senders.some((s) => s.track?.kind === 'video');
+    const transceivers = pc.getTransceivers();
+    if (!hasAudio && !transceivers.some((tc) => tc.receiver.track?.kind === 'audio')) {
+      pc.addTransceiver('audio', { direction: 'recvonly' });
+    }
+    if (!hasVideo && !transceivers.some((tc) => tc.receiver.track?.kind === 'video')) {
+      pc.addTransceiver('video', { direction: 'recvonly' });
+    }
+
+    const makeOffer = async (isIceRestart = false) => {
+      log(`makeOffer CALLED for ${socketId.slice(-5)}: state=${pc.signalingState}, making=${flags.makingOffer}, settingAns=${flags.settingAnswer}, isInit=${flags.isInitiator}, negotiated=${flags.negotiated}, senders=${pc.getSenders().length}, iceRestart=${isIceRestart}`);
+      if (flags.makingOffer || flags.settingAnswer) {
+        log(`makeOffer SKIPPED (making=${flags.makingOffer} settingAns=${flags.settingAnswer}) ${socketId.slice(-5)}`);
+        return;
+      }
+      if (pc.signalingState !== 'stable') {
+        log(`makeOffer SKIPPED (state=${pc.signalingState}) ${socketId.slice(-5)}`);
+        return;
+      }
+      // Non-initiator must NOT offer unless actively adding a screen share track or restarting ICE
       const isScreenActive = !!(screenShareTrackRef.current && screenShareTrackRef.current.readyState === 'live');
-      if (!flags.isInitiator && !isScreenActive) {
+      if (!flags.isInitiator && !isScreenActive && !isIceRestart) {
         log(`makeOffer SKIPPED (non-initiator, no screen share active) ${socketId.slice(-5)}`);
         return;
       }
       flags.makingOffer = true;
       try {
-        const offer = await pc.createOffer();
+        const offer = await pc.createOffer(isIceRestart ? { iceRestart: true } : undefined);
         await pc.setLocalDescription(offer);
         log(`makeOffer SENT offer for ${socketId.slice(-5)} (state=${pc.signalingState}) tracks=${pc.getSenders().length}`);
         socketRef.current?.emit('webrtc:offer', { meetingId, targetSocketId: socketId, offer });
-      } catch (e) { errLog('makeOffer failed', e); } finally {
+      } catch (e) {
+        errLog('makeOffer failed', e);
+      } finally {
         flags.makingOffer = false;
       }
     };
@@ -231,8 +251,7 @@ export function useMeetingSocket(meetingId: string | undefined) {
       // NEVER classify any track as screen sharing if the participant is not confirmed sharing.
       const isScreenShareTrack = isVideo && isSharer && (
         hasScreenKeyword ||
-        (participant?.stream && participant.stream.id !== e.streams[0]?.id) ||
-        (participant?.stream?.getVideoTracks().length ?? 0) > 0
+        ((participant?.stream?.getVideoTracks().length ?? 0) > 0 && incomingTrack.id !== participant?.stream?.getVideoTracks()[0]?.id)
       );
 
       log(`ontrack from ${socketId.slice(-5)}: kind=${incomingTrack.kind}, label="${incomingTrack.label}", videoCount=${newCount}, isScreen=${isScreenShareTrack}, readyState=${incomingTrack.readyState}`);
@@ -293,8 +312,12 @@ export function useMeetingSocket(meetingId: string | undefined) {
       if (pc.iceConnectionState === 'failed') {
         log(`ICE connection failed for ${socketId.slice(-5)} — attempting ICE restart`);
         try {
-          pc.restartIce();
-          makeOffer();
+          if (flags.isInitiator) {
+            pc.restartIce();
+            makeOffer(true);
+          } else {
+            socketRef.current?.emit('webrtc:ice-restart-request', { meetingId, targetSocketId: socketId });
+          }
         } catch (e) {
           errLog('restartIce failed', e);
         }
@@ -306,8 +329,12 @@ export function useMeetingSocket(meetingId: string | undefined) {
       if (pc.connectionState === 'failed') {
         log(`Connection failed for ${socketId.slice(-5)} — attempting ICE restart`);
         try {
-          pc.restartIce();
-          makeOffer();
+          if (flags.isInitiator) {
+            pc.restartIce();
+            makeOffer(true);
+          } else {
+            socketRef.current?.emit('webrtc:ice-restart-request', { meetingId, targetSocketId: socketId });
+          }
         } catch (e) {
           errLog('restartIce failed', e);
         }
@@ -607,6 +634,22 @@ export function useMeetingSocket(meetingId: string | undefined) {
           log(`candidate from ${fromSocketId.slice(-5)} added: ${candidate.candidate?.slice(0, 30)}`);
         } catch (e) { errLog('addIceCandidate failed', e); }
       });
+
+      socket.on('webrtc:ice-restart-request', ({ fromSocketId }: { fromSocketId: string }) => {
+        log(`webrtc:ice-restart-request received from ${fromSocketId.slice(-5)}`);
+        const pc = peerConnections.current.get(fromSocketId);
+        if (pc) {
+          try {
+            pc.restartIce();
+            const offerFn = peerOfferFns.current.get(fromSocketId);
+            if (offerFn) {
+              offerFn(true);
+            }
+          } catch (e) {
+            errLog('ice-restart-request handling failed', e);
+          }
+        }
+      });
     };
 
     connect();
@@ -715,27 +758,18 @@ export function useMeetingSocket(meetingId: string | undefined) {
 
     peerConnections.current.forEach((pc, sid) => {
       let added = 0;
-      // Add any missing tracks (e.g. peer was created before the stream was ready)
       tracks.forEach((t) => {
-        if (!pc.getSenders().some((s) => s.track === t)) {
+        const existingTc = pc.getTransceivers().find(
+          (tc) => tc.receiver.track?.kind === t.kind
+        );
+        if (existingTc) {
+          if (existingTc.sender.track !== t && existingTc.sender.track !== screenShareTrackRef.current) {
+            existingTc.direction = 'sendrecv';
+            existingTc.sender.replaceTrack(t);
+          }
+        } else if (!pc.getSenders().some((s) => s.track === t)) {
           pc.addTrack(t, stream);
           added++;
-        }
-      });
-      // replaceTrack on existing senders (no renegotiation needed)
-      const trackMap = new Map(tracks.map((t) => [t.kind, t]));
-      pc.getSenders().forEach(sender => {
-        const kind = sender.track?.kind;
-        if (kind && trackMap.has(kind) && sender.track !== screenShareTrackRef.current) {
-          sender.replaceTrack(trackMap.get(kind)!);
-        }
-      });
-
-      pc.getTransceivers().forEach(t => {
-        const kind = t.receiver?.track?.kind || t.sender?.track?.kind;
-        if (kind && trackMap.has(kind) && t.sender.track !== screenShareTrackRef.current) {
-          t.direction = 'sendrecv';
-          t.sender.replaceTrack(trackMap.get(kind)!);
         }
       });
 

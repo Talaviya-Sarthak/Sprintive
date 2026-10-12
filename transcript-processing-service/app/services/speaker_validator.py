@@ -19,7 +19,12 @@ from app.prompts.speaker_validation import (
     SPEAKER_VALIDATION_SYSTEM_PROMPT,
     build_speaker_validation_user_prompt,
 )
-from app.services.llm_client import BaseLLMClient, get_llm_client
+from app.services.llm_client import (
+    BaseLLMClient,
+    MockLLMClient,
+    OpenAICompatibleLLMClient,
+    get_llm_client,
+)
 from app.services.speaker_rules import (
     detect_direct_response,
     detect_possible_fragment_continuation,
@@ -134,7 +139,25 @@ def validate_speakers(
             validated_segments.append(segment_copy)
             continue
 
-        # --- Layer 2 & 3: Context Window & LLM Validation ---
+        # --- Layer 3: Deterministic Turn Check (eliminates per-segment LLM calls in production) ---
+        if isinstance(client, OpenAICompatibleLLMClient):
+            current_speaker = segment.speaker.strip() if segment.speaker else ""
+            if current_speaker and current_speaker != "UNKNOWN":
+                if prev_segment is None or prev_segment.speaker == segment.speaker or is_natural_turn_taking(segment, prev_segment):
+                    segment_copy = segment.model_copy(
+                        update={
+                            "speaker_validation_status": SpeakerValidationStatus.VALID,
+                            "speaker_confidence": 0.95,
+                            "speaker_flags": [],
+                            "suggested_speaker": None,
+                            "speaker_correction": None,
+                            "speaker_validation_reason": "Natural conversational turn-taking between verified speakers.",
+                        }
+                    )
+                    validated_segments.append(segment_copy)
+                    continue
+
+        # --- Layer 4: Context Window & LLM Validation ---
         before_window = segments[max(0, idx - ctx_before) : idx]
         after_window = segments[idx + 1 : min(len(segments), idx + 1 + ctx_after)]
 

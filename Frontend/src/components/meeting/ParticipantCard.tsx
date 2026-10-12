@@ -31,10 +31,12 @@ export default function ParticipantCard({ participant, isActive, videoRef }: Pro
     } else if (participant.stream) {
       const vTracks = participant.stream.getVideoTracks().filter(t => t.readyState === 'live');
       if (vTracks.length > 0) {
-        // Video-only stream so video element never interferes with or mutes the audio track
-        el.srcObject = new MediaStream(vTracks);
-        el.muted = true;
-        el.play().catch(() => {});
+        const curTrackId = (el.srcObject as MediaStream)?.getVideoTracks()[0]?.id;
+        if (curTrackId !== vTracks[0].id) {
+          el.srcObject = new MediaStream(vTracks);
+          el.muted = true;
+          el.play().catch(() => {});
+        }
       }
     }
   }, [videoRef, participant.stream, isLocal]);
@@ -51,9 +53,12 @@ export default function ParticipantCard({ participant, isActive, videoRef }: Pro
     } else if (participant.stream) {
       const vTracks = participant.stream.getVideoTracks().filter(t => t.readyState === 'live');
       if (vTracks.length > 0) {
-        el.srcObject = new MediaStream(vTracks);
-        el.muted = true;
-        el.play().catch(() => {});
+        const curTrackId = (el.srcObject as MediaStream)?.getVideoTracks()[0]?.id;
+        if (curTrackId !== vTracks[0].id) {
+          el.srcObject = new MediaStream(vTracks);
+          el.muted = true;
+          el.play().catch(() => {});
+        }
       } else {
         el.srcObject = null;
       }
@@ -89,29 +94,6 @@ export default function ParticipantCard({ participant, isActive, videoRef }: Pro
               : initials}
           </div>
         </div>
-      )}
-
-      {/* Remote audio playback for peer audio tracks */}
-      {!isLocal && participant.stream && (
-        <audio
-          ref={(el) => {
-            if (!el) return;
-            const aTracks = participant.stream?.getAudioTracks().filter((t) => t.readyState === 'live') ?? [];
-            if (aTracks.length > 0) {
-              const aStream = new MediaStream(aTracks);
-              if (el.srcObject !== aStream) {
-                el.srcObject = aStream;
-              }
-              el.muted = false;
-              el.volume = 1.0;
-              el.play().catch(() => {});
-            } else {
-              el.srcObject = null;
-            }
-          }}
-          autoPlay
-          playsInline
-        />
       )}
 
       {/* Speaking ring */}
