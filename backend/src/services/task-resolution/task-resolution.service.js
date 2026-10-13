@@ -9,8 +9,8 @@ import { logger } from '../../utils/logger.js';
 import { meetingRepository } from '../../repositories/meeting.repository.js';
 import { teamRepository } from '../../repositories/team.repository.js';
 
-const VALID_PRIORITIES = new Set(['low', 'medium', 'high', 'urgent']);
-const VALID_TYPES = new Set(['task', 'bug', 'feature', 'improvement']);
+const VALID_PRIORITIES = new Set(['low', 'medium', 'high', 'urgent', 'critical']);
+const VALID_TYPES = new Set(['task', 'bug', 'feature', 'improvement', 'story', 'research']);
 const VALID_STATUSES = new Set(['todo', 'backlog', 'in_progress', 'review', 'done']);
 
 const WEEKDAYS = {
@@ -408,6 +408,17 @@ export class TaskResolutionService {
       if (resolved_due_date) resolvedDueDates++;
       else if (due_date) unresolvedDueDates++;
 
+      // Normalize priority from Python LLM agent ('critical' -> 'urgent')
+      let normalizedPriority = String(rawTask.priority || 'medium').toLowerCase();
+      if (normalizedPriority === 'critical') normalizedPriority = 'urgent';
+      if (!VALID_PRIORITIES.has(normalizedPriority)) normalizedPriority = 'medium';
+
+      // Normalize task type from Python LLM agent ('story' -> 'feature', 'research' -> 'task')
+      let normalizedType = String(rawTask.type || 'task').toLowerCase();
+      if (normalizedType === 'story') normalizedType = 'feature';
+      if (normalizedType === 'research') normalizedType = 'task';
+      if (!VALID_TYPES.has(normalizedType)) normalizedType = 'task';
+
       // 3. Construct resolved task object
       const resolved = {
         id: stableId,
@@ -417,10 +428,10 @@ export class TaskResolutionService {
         assignee,
         assignee_id,
         raw_assignee,
-        priority: rawTask.priority || 'medium',
+        priority: normalizedPriority,
         due_date,
         resolved_due_date,
-        type: rawTask.type || 'task',
+        type: normalizedType,
         status: stableStatus,
         acceptance_criteria: Array.isArray(rawTask.acceptance_criteria) ? rawTask.acceptance_criteria : [],
         source_action_item: rawTask.source_action_item || null,

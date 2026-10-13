@@ -3,6 +3,7 @@ import { logger } from '../../utils/logger.js';
 import { meetingRepository } from '../../repositories/meeting.repository.js';
 import { storageService } from '../storage/storage.service.js';
 import { aiHandoffService } from '../ai/ai-handoff.service.js';
+import { taskResolutionService } from '../task-resolution/task-resolution.service.js';
 import { UnrecoverableError } from 'bullmq';
 
 /**
@@ -81,7 +82,8 @@ async function pollTranscriptServiceStatus(serviceBaseUrl, meetingId, maxWaitMs 
 }
 
   // 5. Invoke Python Transcript Processing Service (FastAPI)
-  const serviceBaseUrl = (env.transcriptProcessingServiceUrl || 'http://localhost:8001').replace(/\/+$/, '');
+  const rawServiceUrl = env.transcriptProcessingServiceUrl || 'http://127.0.0.1:8001';
+  const serviceBaseUrl = rawServiceUrl.replace('localhost', '127.0.0.1').replace(/\/+$/, '');
   const url = `${serviceBaseUrl}/transcript/process`;
 
   const payload = {
@@ -89,6 +91,7 @@ async function pollTranscriptServiceStatus(serviceBaseUrl, meetingId, maxWaitMs 
     raw_text: dbTranscript.content || undefined,
     raw_transcript_path: rawTranscriptPath || dbTranscript.raw_transcript_path || storageService.getRawPath(meetingId),
     async_processing: false,
+    run_ai_pipeline: true,
   };
 
   let response;
@@ -208,9 +211,30 @@ async function pollTranscriptServiceStatus(serviceBaseUrl, meetingId, maxWaitMs 
     error: null,
   });
 
+  // 10. Persist generated tasks and AI summary via Stage 3 task resolution
+  if (result.scrum_analysis?.tasks || result.meeting_analysis) {
+    try {
+      await taskResolutionService.resolveAndPersist({
+        meetingId,
+        scrumResult: result.scrum_analysis || { tasks: [] },
+        aiSummary: result.meeting_analysis?.summary || null,
+        actionItems: result.meeting_analysis?.action_items || [],
+      });
+      logger.info(`[worker:job] Successfully resolved and persisted Stage 3 tasks for meeting ${meetingId}`);
+    } catch (stage3Err) {
+      logger.error(`[worker:job] stage=task-resolution status=failed error=${stage3Err.message}`);
+      await meetingRepository.updateTranscriptStatus({
+        meeting_id: meetingId,
+        status: 'failed',
+        error: `Task resolution failed: ${stage3Err.message}`,
+      });
+      throw stage3Err;
+    }
+  }
+
   await job.updateProgress(90);
 
-  // 10. Automatically trigger AI Service handoff (non-blocking for worker completion)
+  // 11. Trigger AI Service handoff for backward compatibility if configured
   aiHandoffService.handoffWithRetry(meetingId).catch((aiErr) => {
     logger.warn(`[worker:job] Downstream AI handoff could not complete for meeting ${meetingId}: ${aiErr.message}`);
   });
@@ -223,5 +247,6 @@ async function pollTranscriptServiceStatus(serviceBaseUrl, meetingId, maxWaitMs 
     cleanedTranscriptPath: cleanedPath,
     durationMs: result.duration_ms,
     metrics: result.metrics,
+    tasksCount: result.scrum_analysis?.tasks?.length || 0,
   };
 }

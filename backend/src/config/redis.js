@@ -26,7 +26,7 @@ export function sanitizeRedisUrl(url) {
  * @returns {object} ioredis options
  */
 export function getRedisConfig(customUrl = null) {
-  const connectionUrl = customUrl || env.redisUrl;
+  const connectionUrl = (customUrl !== null && customUrl !== undefined) ? customUrl : env.redisUrl;
 
   if (!connectionUrl) {
     throw new Error(

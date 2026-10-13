@@ -60,6 +60,12 @@ export function initSocket(io) {
         const room = getRoomKey(meetingId);
         socket.join(room);
 
+        if (meetingData && (meetingData.status === 'active' || meetingData.status === 'live')) {
+          if (!sttService.hasSession(meetingId)) {
+            sttService.startSession(meetingId, [{ id: user.id, name: user.full_name }]);
+          }
+        }
+
         if (!rooms.has(room)) rooms.set(room, new Set());
         rooms.get(room).add(socket.id);
 
@@ -276,7 +282,7 @@ export function initSocket(io) {
       try {
         const room = getRoomKey(meetingId);
         if (!socket.rooms.has(room)) return;
-        if (!sttService.hasSession(meetingId)) return;
+        if (sttService.isFinalizing(meetingId)) return;
 
         const audioBuffer = Buffer.from(audio, 'base64');
         logger.debug(`[audio:chunk] meeting=${meetingId} participant=${user.full_name} size=${audioBuffer.length}`);
