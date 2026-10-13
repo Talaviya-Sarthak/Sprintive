@@ -56,14 +56,14 @@ export function AppModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className={`relative w-full ${resolvedMaxWidth} border rounded-2xl shadow-2xl overflow-hidden z-10`}
+            className={`relative w-full ${resolvedMaxWidth} max-h-[90vh] flex flex-col border rounded-2xl shadow-2xl overflow-hidden z-10`}
             style={{
               backgroundColor: 'var(--app-surface-card)',
               borderColor: 'var(--app-border)'
             }}
           >
             {(title || description) && (
-              <div className="flex items-start justify-between px-6 py-4.5 border-b" style={{ borderColor: 'var(--app-border-subtle)' }}>
+              <div className="flex items-start justify-between px-6 py-4.5 border-b shrink-0" style={{ borderColor: 'var(--app-border-subtle)' }}>
                 <div>
                   {title && <h3 className="text-sm font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>{title}</h3>}
                   {description && (
@@ -89,10 +89,10 @@ export function AppModal({
               </div>
             )}
 
-            <div className="p-6">{children}</div>
+            <div className="p-6 flex-1 overflow-y-auto app-scrollbar">{children}</div>
 
             {footer && (
-              <div className="px-6 py-4 border-t flex items-center justify-end gap-2.5" style={{ backgroundColor: 'var(--app-surface-subtle)', borderColor: 'var(--app-border-subtle)' }}>
+              <div className="px-6 py-4 border-t shrink-0 flex items-center justify-end gap-2.5" style={{ backgroundColor: 'var(--app-surface-subtle)', borderColor: 'var(--app-border-subtle)' }}>
                 {footer}
               </div>
             )}

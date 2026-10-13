@@ -21,7 +21,7 @@ export default function MeetingParticipants({ participants, currentUserId }: Mee
             key={p.id}
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/4 transition-colors"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[var(--app-surface-hover)] transition-colors border border-transparent hover:border-[var(--app-border)]"
           >
             <div className="relative">
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#06B6D4] flex items-center justify-center text-white text-xs font-bold">
@@ -30,14 +30,14 @@ export default function MeetingParticipants({ participants, currentUserId }: Mee
                   : getInitials(p.full_name)}
               </div>
               {p.is_speaking && (
-                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-400 border-2 border-[#0B1220]" />
+                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-[var(--app-surface-card)]" />
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-[#F8FAFC] font-medium truncate">
-                {p.full_name}{isMe && <span className="text-[#94A3B8] font-normal"> (you)</span>}
+              <p className="text-sm text-[var(--app-text-primary)] font-medium truncate">
+                {p.full_name}{isMe && <span className="text-[var(--app-text-muted)] font-normal"> (you)</span>}
               </p>
-              <p className="text-[11px] text-[#475569]">
+              <p className="text-[11px] text-[var(--app-text-muted)]">
                 {p.joined_at ? `Joined ${new Date(p.joined_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Invited'}
               </p>
             </div>

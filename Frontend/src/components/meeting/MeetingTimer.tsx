@@ -19,7 +19,7 @@ export default function MeetingTimer({ startedAt }: Props) {
   const fmt = (n: number) => String(n).padStart(2, '0');
 
   return (
-    <span className="font-mono text-sm text-[#94A3B8] tabular-nums">
+    <span className="font-mono text-sm text-[var(--app-text-secondary)] tabular-nums">
       {h > 0 ? `${fmt(h)}:` : ''}{fmt(m)}:{fmt(s)}
     </span>
   );

@@ -231,20 +231,20 @@ export default function MeetingSummaryPage() {
 
         {/* Meeting Header */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-          <div className="pb-5 border-b border-[#242636] space-y-2">
+          <div className="pb-5 border-b border-[var(--app-border)] space-y-2">
             <div className="flex items-center gap-2">
               <MeetingStatusBadge status={meeting.status} size="md" />
               <MeetingTypeBadge type={meeting.meeting_type} size="md" />
               {meeting.sprint_name && (
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#1c1d27] border border-[#2c2f42] text-zinc-300">
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-[var(--app-surface-subtle)] border border-[var(--app-border)] text-[var(--app-text-secondary)]">
                   {meeting.sprint_name}
                 </span>
               )}
             </div>
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-[#f4f4f5]">
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-[var(--app-text-primary)]">
               {meeting.title}
             </h1>
-            <p className="text-xs font-mono text-[#71717a]">
+            <p className="text-xs font-mono text-[var(--app-text-muted)]">
               {formatDateLong(meeting.date)} · {formatTime12h(meeting.start_time)} - {formatTime12h(meeting.end_time)} ({meeting.timezone || 'UTC'})
             </p>
           </div>
@@ -252,26 +252,26 @@ export default function MeetingSummaryPage() {
           {/* Quick Metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <AppCard variant="dashboard" className="text-center p-4">
-              <Clock size={16} className="mx-auto mb-2 text-[#9ca3af]" />
-              <p className="text-xl font-bold text-[#f4f4f5]">{meeting.duration_minutes || summary?.duration_minutes || 0}</p>
-              <p className="text-[10px] font-mono uppercase mt-0.5 text-[#71717a]">Minutes</p>
+              <Clock size={16} className="mx-auto mb-2 text-[var(--app-text-muted)]" />
+              <p className="text-xl font-bold text-[var(--app-text-primary)]">{meeting.duration_minutes || summary?.duration_minutes || 0}</p>
+              <p className="text-[10px] font-mono uppercase mt-0.5 text-[var(--app-text-muted)]">Minutes</p>
             </AppCard>
             <AppCard variant="dashboard" className="text-center p-4">
-              <Users size={16} className="mx-auto mb-2 text-[#9ca3af]" />
-              <p className="text-xl font-bold text-[#f4f4f5]">{participants.length}</p>
-              <p className="text-[10px] font-mono uppercase mt-0.5 text-[#71717a]">Participants</p>
+              <Users size={16} className="mx-auto mb-2 text-[var(--app-text-muted)]" />
+              <p className="text-xl font-bold text-[var(--app-text-primary)]">{participants.length}</p>
+              <p className="text-[10px] font-mono uppercase mt-0.5 text-[var(--app-text-muted)]">Participants</p>
             </AppCard>
             <AppCard variant="dashboard" className="text-center p-4">
-              <ListChecks size={16} className="mx-auto mb-2 text-indigo-400" />
-              <p className="text-xl font-bold text-[#f4f4f5]">{tickets.length}</p>
-              <p className="text-[10px] font-mono uppercase mt-0.5 text-[#71717a]">Generated Tasks</p>
+              <ListChecks size={16} className="mx-auto mb-2 text-indigo-500 dark:text-indigo-400" />
+              <p className="text-xl font-bold text-[var(--app-text-primary)]">{tickets.length}</p>
+              <p className="text-[10px] font-mono uppercase mt-0.5 text-[var(--app-text-muted)]">Generated Tasks</p>
             </AppCard>
             <AppCard variant="dashboard" className="text-center p-4">
-              <Sparkles size={16} className="mx-auto mb-2 text-blue-400" />
-              <p className="text-xs font-semibold mt-1 text-[#f4f4f5]">
+              <Sparkles size={16} className="mx-auto mb-2 text-blue-500 dark:text-blue-400" />
+              <p className="text-xs font-semibold mt-1 text-[var(--app-text-primary)]">
                 {isProcessing ? 'Processing' : isFailed ? 'Failed' : 'Completed'}
               </p>
-              <p className="text-[10px] font-mono uppercase mt-0.5 text-[#71717a]">AI Lifecycle</p>
+              <p className="text-[10px] font-mono uppercase mt-0.5 text-[var(--app-text-muted)]">AI Lifecycle</p>
             </AppCard>
           </div>
 
@@ -286,13 +286,13 @@ export default function MeetingSummaryPage() {
                     <Sparkles size={18} className="animate-pulse" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-semibold text-[#f4f4f5]">AI is analyzing this meeting</h2>
-                    <p className="text-xs text-[#9ca3af]">
+                    <h2 className="text-sm font-semibold text-[var(--app-text-primary)]">AI is analyzing this meeting</h2>
+                    <p className="text-xs text-[var(--app-text-secondary)]">
                       Your summary and Kanban tasks will appear automatically when processing is complete.
                     </p>
                   </div>
                 </div>
-                <p className="text-xs text-[#9ca3af]">
+                <p className="text-xs text-[var(--app-text-secondary)]">
                   {transcriptStatus === 'raw_stored' && 'Transcript saved. Your processed transcript will be ready in a few minutes...'}
                   {transcriptStatus === 'processing' && 'Cleaning and preparing transcript through the 14-stage preprocessing pipeline...'}
                   {transcriptStatus === 'ready_for_ai' && 'Transcript preprocessing completed. Cleaned and normalized for AI models.'}
@@ -302,53 +302,53 @@ export default function MeetingSummaryPage() {
 
                 {/* Timeline Stepper */}
                 <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 pt-2">
-                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-[#242636] bg-[#14151e]">
-                    <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs shrink-0">
+                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)]">
+                    <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-500 dark:text-emerald-400 flex items-center justify-center text-xs shrink-0">
                       <Check size={12} strokeWidth={3} />
                     </div>
-                    <span className="text-xs font-medium text-emerald-300">Meeting ended</span>
+                    <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">Meeting ended</span>
                   </div>
 
-                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-[#242636] bg-[#14151e]">
+                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)]">
                     <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                      stageIndex >= 2 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400 animate-pulse'
+                      stageIndex >= 2 ? 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400' : 'bg-blue-500/20 text-blue-600 dark:text-blue-400 animate-pulse'
                     }`}>
                       {stageIndex >= 2 ? <Check size={12} strokeWidth={3} /> : <Loader2 size={12} className="animate-spin" />}
                     </div>
-                    <span className={`text-xs font-medium ${stageIndex >= 2 ? 'text-emerald-300' : 'text-blue-300'}`}>
+                    <span className={`text-xs font-medium ${stageIndex >= 2 ? 'text-emerald-700 dark:text-emerald-300' : 'text-blue-700 dark:text-blue-300'}`}>
                       Transcript saved
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-[#242636] bg-[#14151e]">
+                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)]">
                     <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                      stageIndex >= 4 ? 'bg-emerald-500/20 text-emerald-400' : (stageIndex === 3 ? 'bg-blue-500/20 text-blue-400 animate-pulse' : 'bg-[#242636] text-[#71717a]')
+                      stageIndex >= 4 ? 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400' : (stageIndex === 3 ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400 animate-pulse' : 'bg-[var(--app-surface-hover)] text-[var(--app-text-muted)]')
                     }`}>
                       {stageIndex >= 4 ? <Check size={12} strokeWidth={3} /> : (stageIndex === 3 ? <Loader2 size={12} className="animate-spin" /> : <span className="w-1.5 h-1.5 rounded-full bg-current" />)}
                     </div>
-                    <span className={`text-xs font-medium ${stageIndex >= 4 ? 'text-emerald-300' : (stageIndex === 3 ? 'text-blue-300' : 'text-[#71717a]')}`}>
+                    <span className={`text-xs font-medium ${stageIndex >= 4 ? 'text-emerald-700 dark:text-emerald-300' : (stageIndex === 3 ? 'text-blue-700 dark:text-blue-300' : 'text-[var(--app-text-muted)]')}`}>
                       AI analyzing
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-[#242636] bg-[#14151e]">
+                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)]">
                     <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                      stageIndex >= 5 ? 'bg-emerald-500/20 text-emerald-400' : (stageIndex === 4 ? 'bg-blue-500/20 text-blue-400 animate-pulse' : 'bg-[#242636] text-[#71717a]')
+                      stageIndex >= 5 ? 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400' : (stageIndex === 4 ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400 animate-pulse' : 'bg-[var(--app-surface-hover)] text-[var(--app-text-muted)]')
                     }`}>
                       {stageIndex >= 5 ? <Check size={12} strokeWidth={3} /> : (stageIndex === 4 ? <Loader2 size={12} className="animate-spin" /> : <span className="w-1.5 h-1.5 rounded-full bg-current" />)}
                     </div>
-                    <span className={`text-xs font-medium ${stageIndex >= 5 ? 'text-emerald-300' : (stageIndex === 4 ? 'text-blue-300' : 'text-[#71717a]')}`}>
+                    <span className={`text-xs font-medium ${stageIndex >= 5 ? 'text-emerald-700 dark:text-emerald-300' : (stageIndex === 4 ? 'text-blue-700 dark:text-blue-300' : 'text-[var(--app-text-muted)]')}`}>
                       Generating tasks
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-[#242636] bg-[#14151e]">
+                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)]">
                     <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                      stageIndex >= 6 ? 'bg-emerald-500/20 text-emerald-400' : (stageIndex === 5 ? 'bg-blue-500/20 text-blue-400 animate-pulse' : 'bg-[#242636] text-[#71717a]')
+                      stageIndex >= 6 ? 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400' : (stageIndex === 5 ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400 animate-pulse' : 'bg-[var(--app-surface-hover)] text-[var(--app-text-muted)]')
                     }`}>
                       {stageIndex >= 6 ? <Check size={12} strokeWidth={3} /> : (stageIndex === 5 ? <Loader2 size={12} className="animate-spin" /> : <span className="w-1.5 h-1.5 rounded-full bg-current" />)}
                     </div>
-                    <span className={`text-xs font-medium ${stageIndex >= 6 ? 'text-emerald-300' : (stageIndex === 5 ? 'text-blue-300' : 'text-[#71717a]')}`}>
+                    <span className={`text-xs font-medium ${stageIndex >= 6 ? 'text-emerald-700 dark:text-emerald-300' : (stageIndex === 5 ? 'text-blue-700 dark:text-blue-300' : 'text-[var(--app-text-muted)]')}`}>
                       Resolving tasks
                     </span>
                   </div>
@@ -368,8 +368,8 @@ export default function MeetingSummaryPage() {
                     <AlertCircle size={20} />
                   </div>
                   <div className="space-y-1">
-                    <h2 className="text-sm font-semibold text-[#f4f4f5]">Transcript processing failed</h2>
-                    <p className="text-xs text-[#9ca3af] leading-relaxed">
+                    <h2 className="text-sm font-semibold text-[var(--app-text-primary)]">Transcript processing failed</h2>
+                    <p className="text-xs text-[var(--app-text-secondary)] leading-relaxed">
                       Your meeting was saved, but we couldn't process the transcript.
                       {errorMessage ? ` (${errorMessage})` : ''}
                     </p>
@@ -413,13 +413,13 @@ export default function MeetingSummaryPage() {
               variant="dashboard"
               title={
                 <div className="flex items-center gap-2">
-                  <Sparkles size={16} className="text-blue-400" />
-                  <span className="text-sm font-semibold text-[#f4f4f5]">AI Executive Summary</span>
+                  <Sparkles size={16} className="text-blue-500 dark:text-blue-400" />
+                  <span className="text-sm font-semibold text-[var(--app-text-primary)]">AI Executive Summary</span>
                 </div>
               }
               className="p-6"
             >
-              <div className="prose prose-invert max-w-none text-xs leading-relaxed text-[#d4d4d8] whitespace-pre-wrap">
+              <div className="max-w-none text-xs leading-relaxed text-[var(--app-text-secondary)] whitespace-pre-wrap">
                 {aiSummaryText}
               </div>
             </AppCard>
@@ -431,8 +431,8 @@ export default function MeetingSummaryPage() {
               variant="dashboard"
               title={
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-emerald-400" />
-                  <span className="text-sm font-semibold text-[#f4f4f5]">
+                  <CheckCircle2 size={16} className="text-emerald-500 dark:text-emerald-400" />
+                  <span className="text-sm font-semibold text-[var(--app-text-primary)]">
                     Action Items ({rawActionItems.length})
                   </span>
                 </div>
@@ -446,16 +446,16 @@ export default function MeetingSummaryPage() {
                   return (
                     <div
                       key={idx}
-                      className="flex items-start gap-3 p-3 rounded-lg border border-[#242636] bg-[#14151e]"
+                      className="flex items-start gap-3 p-3 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)]"
                     >
-                      <div className="w-5 h-5 rounded-md bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5">
+                      <div className="w-5 h-5 rounded-md bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">
                         <Check size={12} strokeWidth={2.5} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-[#f4f4f5] leading-relaxed">{text}</p>
+                        <p className="text-xs text-[var(--app-text-primary)] leading-relaxed">{text}</p>
                         {assignee && (
-                          <div className="flex items-center gap-1.5 mt-1 text-[11px] text-[#9ca3af]">
-                            <UserCheck size={11} className="text-blue-400" />
+                          <div className="flex items-center gap-1.5 mt-1 text-[11px] text-[var(--app-text-muted)]">
+                            <UserCheck size={11} className="text-blue-500 dark:text-blue-400" />
                             <span>Assignee: {assignee}</span>
                           </div>
                         )}
@@ -473,15 +473,15 @@ export default function MeetingSummaryPage() {
             title={
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-2">
-                  <LayoutDashboard size={16} className="text-indigo-400" />
-                  <span className="text-sm font-semibold text-[#f4f4f5]">
+                  <LayoutDashboard size={16} className="text-indigo-500 dark:text-indigo-400" />
+                  <span className="text-sm font-semibold text-[var(--app-text-primary)]">
                     Generated Tasks ({tickets.length})
                   </span>
                 </div>
                 {tickets.length > 0 && (
                   <button
                     onClick={() => navigate(`/teams/${meeting.team_id}/kanban?meeting_id=${meeting.id}`)}
-                    className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors cursor-pointer"
+                    className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors cursor-pointer"
                   >
                     <span>View all on Kanban</span>
                     <ArrowRight size={13} />
@@ -498,11 +498,11 @@ export default function MeetingSummaryPage() {
                   return (
                     <div
                       key={taskId || idx}
-                      className="p-4 rounded-xl border border-[#242636] bg-[#14151e] hover:border-[#383b54] transition-all space-y-2.5"
+                      className="p-4 rounded-xl border border-[var(--app-border)] bg-[var(--app-surface-subtle)] hover:border-[var(--app-border-focus)] transition-all space-y-2.5"
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-[#1c1d27] border border-[#2c2f42] text-zinc-300">
+                          <span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-[var(--app-surface-card)] border border-[var(--app-border)] text-[var(--app-text-secondary)]">
                             {taskId.slice(0, 8)}
                           </span>
                           <span className={`text-[10px] uppercase font-mono px-2 py-0.5 rounded-full border ${getTypeBadgeClass(t.type)}`}>
@@ -511,22 +511,22 @@ export default function MeetingSummaryPage() {
                           <span className={`text-[10px] uppercase font-mono px-2 py-0.5 rounded-full border ${getPriorityBadgeClass(t.priority)}`}>
                             {t.priority || 'medium'}
                           </span>
-                          <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-[#1c1d27] text-zinc-300 border border-[#2c2f42]">
+                          <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-[var(--app-surface-card)] text-[var(--app-text-secondary)] border border-[var(--app-border)]">
                             {t.status}
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-3 text-xs text-[#9ca3af]">
+                        <div className="flex items-center gap-3 text-xs text-[var(--app-text-muted)]">
                           {t.assignee && (
                             <div className="flex items-center gap-1.5">
-                              <div className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 flex items-center justify-center text-[10px] font-bold">
+                              <div className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-500/30 flex items-center justify-center text-[10px] font-bold">
                                 {getInitials(t.assignee)}
                               </div>
-                              <span className="text-[#f4f4f5]">{t.assignee}</span>
+                              <span className="text-[var(--app-text-primary)] font-medium">{t.assignee}</span>
                             </div>
                           )}
                           {(t.resolved_due_date || t.due_date) && (
-                            <div className="flex items-center gap-1 text-[11px] text-[#71717a]">
+                            <div className="flex items-center gap-1 text-[11px] text-[var(--app-text-muted)]">
                               <Calendar size={12} />
                               <span>{t.resolved_due_date || t.due_date}</span>
                             </div>
@@ -534,30 +534,30 @@ export default function MeetingSummaryPage() {
                         </div>
                       </div>
 
-                      <h3 className="text-sm font-semibold text-[#f4f4f5]">{t.title}</h3>
+                      <h3 className="text-sm font-semibold text-[var(--app-text-primary)]">{t.title}</h3>
 
                       {t.description && (
-                        <p className="text-xs text-[#9ca3af] leading-relaxed line-clamp-2">
+                        <p className="text-xs text-[var(--app-text-secondary)] leading-relaxed line-clamp-2">
                           {t.description}
                         </p>
                       )}
 
                       {/* Source Action Item Provenance */}
                       {t.source_action_item && (
-                        <div className="flex items-start gap-1.5 text-[11px] text-[#71717a] pt-1">
-                          <Tag size={12} className="shrink-0 mt-0.5 text-blue-400/70" />
-                          <span>Source action: <span className="text-zinc-400 italic">"{t.source_action_item}"</span></span>
+                        <div className="flex items-start gap-1.5 text-[11px] text-[var(--app-text-muted)] pt-1">
+                          <Tag size={12} className="shrink-0 mt-0.5 text-blue-500 dark:text-blue-400" />
+                          <span>Source action: <span className="text-[var(--app-text-secondary)] italic">"{t.source_action_item}"</span></span>
                         </div>
                       )}
 
                       {/* Acceptance Criteria */}
                       {Array.isArray(t.acceptance_criteria) && t.acceptance_criteria.length > 0 && (
-                        <div className="pt-2 border-t border-[#202230] space-y-1">
-                          <span className="text-[10.5px] uppercase font-mono text-[#71717a]">Acceptance Criteria:</span>
+                        <div className="pt-2 border-t border-[var(--app-border)] space-y-1">
+                          <span className="text-[10.5px] uppercase font-mono text-[var(--app-text-muted)]">Acceptance Criteria:</span>
                           <ul className="space-y-0.5">
                             {t.acceptance_criteria.map((ac, acIdx) => (
-                              <li key={acIdx} className="text-xs text-[#a1a1aa] flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-blue-400/60" />
+                              <li key={acIdx} className="text-xs text-[var(--app-text-secondary)] flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500/60 dark:bg-blue-400/60" />
                                 <span>{ac}</span>
                               </li>
                             ))}
@@ -570,8 +570,8 @@ export default function MeetingSummaryPage() {
               </div>
             ) : (
               <div className="text-center py-8 space-y-2">
-                <Sparkles size={20} className="mx-auto text-[#71717a]" />
-                <p className="text-xs text-[#9ca3af]">
+                <Sparkles size={20} className="mx-auto text-[var(--app-text-muted)]" />
+                <p className="text-xs text-[var(--app-text-muted)]">
                   {isProcessing
                     ? 'AI is generating tasks from meeting dialogue...'
                     : isFailed
@@ -587,8 +587,8 @@ export default function MeetingSummaryPage() {
             variant="dashboard"
             title={
               <div className="flex items-center gap-2">
-                <Users size={16} className="text-[#9ca3af]" />
-                <span className="text-sm font-semibold text-[#f4f4f5]">Participants ({participants.length})</span>
+                <Users size={16} className="text-[var(--app-text-muted)]" />
+                <span className="text-sm font-semibold text-[var(--app-text-primary)]">Participants ({participants.length})</span>
               </div>
             }
             className="p-6"
@@ -597,12 +597,12 @@ export default function MeetingSummaryPage() {
               {participants.map((p: MeetingParticipant) => (
                 <div
                   key={p.id}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[#242636] bg-[#14151e]"
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--app-border)] bg-[var(--app-surface-subtle)]"
                 >
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold bg-[#1d1f2b] border border-[#2c2f42] text-[#f4f4f5]">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold bg-[var(--app-surface-card)] border border-[var(--app-border)] text-[var(--app-text-primary)]">
                     {getInitials(p.full_name)}
                   </div>
-                  <span className="text-xs font-medium text-[#f4f4f5]">{p.full_name}</span>
+                  <span className="text-xs font-medium text-[var(--app-text-primary)]">{p.full_name}</span>
                   {p.role === 'host' && <RoleBadge role="host" size="sm" />}
                 </div>
               ))}
@@ -610,23 +610,23 @@ export default function MeetingSummaryPage() {
           </AppCard>
 
           {/* Transcript Viewer Accordion */}
-          <div className="border border-[#242636] rounded-xl bg-[#111217] overflow-hidden">
+          <div className="border border-[var(--app-border)] rounded-xl bg-[var(--app-surface-subtle)] overflow-hidden">
             <button
               onClick={() => setShowTranscript(prev => !prev)}
-              className="w-full flex items-center justify-between p-4 text-xs font-semibold text-[#f4f4f5] hover:bg-[#161822] transition-colors cursor-pointer"
+              className="w-full flex items-center justify-between p-4 text-xs font-semibold text-[var(--app-text-primary)] hover:bg-[var(--app-surface-hover)] transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-2">
-                <FileText size={15} className="text-[#9ca3af]" />
+                <FileText size={15} className="text-[var(--app-text-muted)]" />
                 <span>Meeting Transcript</span>
                 {transcriptData?.cleaned_transcript_path && (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                     14-Stage Preprocessed
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-3">
                 {transcriptData?.content && (
-                  <span className="text-[11px] font-mono text-[#71717a]">
+                  <span className="text-[11px] font-mono text-[var(--app-text-muted)]">
                     {transcriptData.content.length} chars
                   </span>
                 )}
@@ -640,12 +640,12 @@ export default function MeetingSummaryPage() {
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className="border-t border-[#242636] p-4 bg-[#0d0e13] space-y-3"
+                  className="border-t border-[var(--app-border)] p-4 bg-[var(--app-surface-subtle)] space-y-3"
                 >
                   {transcriptData?.content ? (
                     <>
-                      <div className="border border-[#202230] rounded-lg p-3 max-h-80 overflow-y-auto bg-[#0a0a0f]">
-                        <pre className="text-xs whitespace-pre-wrap font-sans leading-relaxed text-[#a1a1aa]">
+                      <div className="border border-[var(--app-border)] rounded-lg p-3 max-h-80 overflow-y-auto bg-[var(--app-surface-card)]">
+                        <pre className="text-xs whitespace-pre-wrap font-sans leading-relaxed text-[var(--app-text-secondary)]">
                           {transcriptData.content}
                         </pre>
                       </div>
@@ -657,7 +657,7 @@ export default function MeetingSummaryPage() {
                       </div>
                     </>
                   ) : (
-                    <p className="text-xs text-center py-4 text-[#71717a]">
+                    <p className="text-xs text-center py-4 text-[var(--app-text-muted)]">
                       {transcriptLoading ? 'Loading transcript...' : 'No transcript recorded for this meeting.'}
                     </p>
                   )}

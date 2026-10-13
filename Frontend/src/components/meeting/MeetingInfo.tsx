@@ -11,12 +11,12 @@ function MeetingInfoItem({ icon, label, value }: MeetingInfoItemProps) {
   const { theme } = useTheme();
   const isLight = theme === 'light';
 
-  const cardBg = isLight ? 'bg-[#f8fafc]' : 'bg-[#1c1c21]';
-  const cardBorder = isLight ? 'border-[#e2e8f0]' : 'border-[#27272a]';
-  const iconBg = isLight ? 'bg-white' : 'bg-[#141417]';
-  const iconColor = isLight ? 'text-[#475569]' : 'text-[#a1a1aa]';
-  const labelColor = isLight ? 'text-[#94a3b8]' : 'text-[#71717a]';
-  const valueColor = isLight ? 'text-[#0f172a]' : 'text-[#f4f4f5]';
+  const cardBg = 'bg-[var(--app-surface-card)]';
+  const cardBorder = 'border-[var(--app-border)]';
+  const iconBg = 'bg-[var(--app-surface-subtle)]';
+  const iconColor = 'text-[var(--app-text-secondary)]';
+  const labelColor = 'text-[var(--app-text-muted)]';
+  const valueColor = 'text-[var(--app-text-primary)]';
 
   return (
     <div className={`flex items-start gap-3 p-3.5 rounded-xl ${cardBg} border ${cardBorder}`}>

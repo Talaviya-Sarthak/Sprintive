@@ -24,24 +24,24 @@
 }
 
 @theme {
-  --color-primary: #f4f4f5;
-  --color-primary-hover: #e4e4e7;
-  --color-accent: #a1a1aa;
+  --color-primary: var(--app-text-primary);
+  --color-primary-hover: var(--app-text-secondary);
+  --color-accent: var(--app-text-muted);
   --color-success: #10B981;
   --color-warning: #F59E0B;
 
-  --color-bg: #09090b;
-  --color-bg2: #0c0c0e;
-  --color-bg3: #141417;
-  --color-surface: #121215;
-  --color-surface2: #18181b;
+  --color-bg: var(--app-bg);
+  --color-bg2: var(--app-surface-subtle);
+  --color-bg3: var(--app-surface-card);
+  --color-surface: var(--app-surface-card);
+  --color-surface2: var(--app-surface-hover);
 
-  --color-border: #27272a;
-  --color-border2: #3f3f46;
+  --color-border: var(--app-border);
+  --color-border2: var(--app-border-focus);
 
-  --color-text-h: #f4f4f5;
-  --color-text-body: #a1a1aa;
-  --color-text-muted: #71717a;
+  --color-text-h: var(--app-text-primary);
+  --color-text-body: var(--app-text-secondary);
+  --color-text-muted: var(--app-text-muted);
 
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-display: 'Inter', system-ui, -apple-system, sans-serif;
@@ -96,12 +96,12 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.12);
+    background: var(--app-border-focus);
     border-radius: 99px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #94A3B8;
+    background: var(--app-text-muted);
   }
 }
 

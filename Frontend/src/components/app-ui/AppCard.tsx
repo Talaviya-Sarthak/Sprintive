@@ -27,8 +27,11 @@ export function AppCard({
     ? {
         backgroundColor: 'var(--app-surface-card)',
         borderColor: 'var(--app-border)',
+        borderWidth: '1px',
+        borderStyle: 'solid',
         borderRadius: '0.75rem',
         overflow: 'hidden',
+        boxShadow: 'var(--app-shadow-card)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between'
@@ -36,9 +39,11 @@ export function AppCard({
     : {
         backgroundColor: 'var(--app-surface-card)',
         borderColor: 'var(--app-border)',
+        borderWidth: '1px',
+        borderStyle: 'solid',
         borderRadius: '0.75rem',
         overflow: 'hidden',
-        boxShadow: 'var(--app-shadow-sm)',
+        boxShadow: 'var(--app-shadow-card)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between'

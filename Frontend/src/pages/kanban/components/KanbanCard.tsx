@@ -19,34 +19,34 @@ const STATUS_ORDER: KanbanStatus[] = ['backlog', 'todo', 'in_progress', 'review'
 function getTagStyle(label: string) {
   const l = label.toLowerCase();
   if (l.includes('auth') || l.includes('sec') || l.includes('crit')) {
-    return 'bg-rose-500/10 text-rose-300 border-rose-500/25';
+    return 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30';
   }
   if (l.includes('webrtc') || l.includes('realtime') || l.includes('stream') || l.includes('net')) {
-    return 'bg-cyan-500/10 text-cyan-300 border-cyan-500/25';
+    return 'bg-cyan-500/10 text-cyan-800 dark:text-cyan-300 border-cyan-500/30';
   }
   if (l.includes('audio') || l.includes('media') || l.includes('video') || l.includes('voice')) {
-    return 'bg-violet-500/10 text-violet-300 border-violet-500/25';
+    return 'bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/30';
   }
   if (l.includes('ui') || l.includes('ux') || l.includes('frontend') || l.includes('access')) {
-    return 'bg-blue-500/10 text-blue-300 border-blue-500/25';
+    return 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30';
   }
   if (l.includes('db') || l.includes('data') || l.includes('devops') || l.includes('perf')) {
-    return 'bg-amber-500/10 text-amber-300 border-amber-500/25';
+    return 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30';
   }
   if (l.includes('transc') || l.includes('export') || l.includes('pipe') || l.includes('bug')) {
-    return 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25';
+    return 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-500/30';
   }
-  return 'bg-slate-500/10 text-slate-300 border-slate-500/25';
+  return 'bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/30';
 }
 
 function getAvatarTint(name: string) {
   const tints = [
-    'bg-indigo-500/20 text-indigo-300 border-indigo-500/35',
-    'bg-cyan-500/20 text-cyan-300 border-cyan-500/35',
-    'bg-amber-500/20 text-amber-300 border-amber-500/35',
-    'bg-emerald-500/20 text-emerald-300 border-emerald-500/35',
-    'bg-purple-500/20 text-purple-300 border-purple-500/35',
-    'bg-rose-500/20 text-rose-300 border-rose-500/35',
+    'bg-indigo-500/15 text-indigo-800 dark:text-indigo-300 border-indigo-500/30',
+    'bg-cyan-500/15 text-cyan-800 dark:text-cyan-300 border-cyan-500/30',
+    'bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/30',
+    'bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border-emerald-500/30',
+    'bg-purple-500/15 text-purple-800 dark:text-purple-300 border-purple-500/30',
+    'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30',
   ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = (hash << 5) - hash + name.charCodeAt(i);
@@ -89,29 +89,29 @@ export default function KanbanCard({
       case 'urgent':
         return {
           borderClass: 'border-l-[3px] border-l-rose-500',
-          badgeClass: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
-          dotClass: 'bg-rose-400 animate-pulse',
+          badgeClass: 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30',
+          dotClass: 'bg-rose-500 animate-pulse',
           label: 'URGENT',
         };
       case 'high':
         return {
           borderClass: 'border-l-[3px] border-l-amber-500',
-          badgeClass: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-          dotClass: 'bg-amber-400',
+          badgeClass: 'bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/30',
+          dotClass: 'bg-amber-500',
           label: 'HIGH',
         };
       case 'medium':
         return {
           borderClass: 'border-l-[3px] border-l-blue-500',
-          badgeClass: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
-          dotClass: 'bg-blue-400',
+          badgeClass: 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30',
+          dotClass: 'bg-blue-500',
           label: 'MEDIUM',
         };
       case 'low':
       default:
         return {
           borderClass: 'border-l-[3px] border-l-slate-400',
-          badgeClass: 'bg-slate-500/15 text-slate-300 border-slate-500/30',
+          badgeClass: 'bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-500/30',
           dotClass: 'bg-slate-400',
           label: 'LOW',
         };
@@ -146,8 +146,8 @@ export default function KanbanCard({
         priorityConfig.borderClass
       } ${
         isDragging
-          ? 'opacity-40 border-dashed border-[#52525b] scale-[0.98]'
-          : 'bg-[#181920] hover:bg-[#20212b] border-[#282a35] hover:border-[#3b3e4f] shadow-xs hover:shadow-md hover:shadow-black/50'
+          ? 'opacity-40 border-dashed border-[var(--app-border-focus)] scale-[0.98]'
+          : 'bg-[var(--kanban-card-bg)] hover:bg-[var(--kanban-card-hover)] border-[var(--kanban-card-border)] hover:border-[var(--kanban-card-border-hover)] shadow-xs hover:shadow-md'
       }`}
     >
       {/* Top Header Row: Priority & Quick Move Arrows */}
@@ -155,7 +155,7 @@ export default function KanbanCard({
         <div className="flex items-center gap-1.5">
           <GripVertical
             size={11}
-            className="text-[#52525b] opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing shrink-0 -ml-1"
+            className="text-[var(--app-text-dim)] opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing shrink-0 -ml-1"
           />
           <span
             className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold uppercase tracking-wider border ${priorityConfig.badgeClass}`}
@@ -177,7 +177,7 @@ export default function KanbanCard({
               type="button"
               title={`Move to ${prevStatus.replace('_', ' ')}`}
               onClick={() => onMoveStatus(task.id, prevStatus)}
-              className="p-0.5 rounded text-[#71717a] hover:text-[#f4f4f5] hover:bg-[#282a35] transition-colors cursor-pointer"
+              className="p-0.5 rounded text-[var(--app-text-muted)] hover:text-[var(--app-text-primary)] hover:bg-[var(--app-surface-hover)] transition-colors cursor-pointer"
             >
               <ChevronLeft size={12} />
             </button>
@@ -187,7 +187,7 @@ export default function KanbanCard({
               type="button"
               title={`Move to ${nextStatus.replace('_', ' ')}`}
               onClick={() => onMoveStatus(task.id, nextStatus)}
-              className="p-0.5 rounded text-[#71717a] hover:text-[#f4f4f5] hover:bg-[#282a35] transition-colors cursor-pointer"
+              className="p-0.5 rounded text-[var(--app-text-muted)] hover:text-[var(--app-text-primary)] hover:bg-[var(--app-surface-hover)] transition-colors cursor-pointer"
             >
               <ChevronRight size={12} />
             </button>
@@ -196,13 +196,13 @@ export default function KanbanCard({
       </div>
 
       {/* Task Title */}
-      <h4 className="text-xs font-semibold text-[#f4f4f5] group-hover:text-[#ffffff] transition-colors leading-snug line-clamp-2 mb-1">
+      <h4 className="text-xs font-semibold text-[var(--kanban-card-text-title)] group-hover:text-[var(--app-text-primary)] transition-colors leading-snug line-clamp-2 mb-1">
         {task.title}
       </h4>
 
       {/* Short Preview Description (Single Line Preview) */}
       {task.description && (
-        <p className="text-[11px] text-[#9ca3af] leading-normal line-clamp-1 mb-2">
+        <p className="text-[11px] text-[var(--kanban-card-text-desc)] leading-normal line-clamp-1 mb-2">
           {task.description}
         </p>
       )}
@@ -221,7 +221,7 @@ export default function KanbanCard({
             </span>
           ))}
           {remainingLabelsCount > 0 && (
-            <span className="text-[9px] font-mono text-[#71717a] px-1 py-0.5 rounded bg-[#13141a] border border-[#242633]">
+            <span className="text-[9px] font-mono text-[var(--app-text-muted)] px-1 py-0.5 rounded bg-[var(--app-surface-subtle)] border border-[var(--app-border)]">
               +{remainingLabelsCount}
             </span>
           )}
@@ -230,14 +230,14 @@ export default function KanbanCard({
 
       {/* Originating Meeting Badge */}
       {task.meeting_title && (
-        <div className="flex items-center gap-1.5 text-[10px] text-[#818498] font-mono truncate mb-2">
-          <Video size={10} className="text-[#9da1b8] shrink-0" />
+        <div className="flex items-center gap-1.5 text-[10px] text-[var(--app-text-muted)] font-mono truncate mb-2">
+          <Video size={10} className="text-[var(--app-text-dim)] shrink-0" />
           <span className="truncate">{task.meeting_title}</span>
         </div>
       )}
 
       {/* Card Footer: Assignee & Due Date */}
-      <div className="flex items-center justify-between pt-2 border-t border-[#232530] text-xs">
+      <div className="flex items-center justify-between pt-2 border-t border-[var(--kanban-card-border)] text-xs">
         <div className="flex items-center gap-1.5 min-w-0" title={assigneeName}>
           <div
             className={`w-4.5 h-4.5 rounded-full flex items-center justify-center text-[9px] font-bold border shrink-0 ${avatarStyle}`}
@@ -252,14 +252,14 @@ export default function KanbanCard({
               initials
             )}
           </div>
-          <span className="text-[11px] font-medium text-[#d4d4d8] truncate max-w-[85px]">
+          <span className="text-[11px] font-medium text-[var(--app-text-secondary)] truncate max-w-[85px]">
             {firstName}
           </span>
         </div>
 
         {formattedDueDate && (
-          <div className="flex items-center gap-1 text-[10.5px] text-[#9ca3af] shrink-0 font-mono bg-[#111217] px-1.5 py-0.5 rounded border border-[#232530]">
-            <Calendar size={10} className="text-[#a1a1aa]" />
+          <div className="flex items-center gap-1 text-[10.5px] text-[var(--app-text-muted)] shrink-0 font-mono bg-[var(--app-surface-subtle)] px-1.5 py-0.5 rounded border border-[var(--app-border)]">
+            <Calendar size={10} className="text-[var(--app-text-dim)]" />
             <span>{formattedDueDate}</span>
           </div>
         )}

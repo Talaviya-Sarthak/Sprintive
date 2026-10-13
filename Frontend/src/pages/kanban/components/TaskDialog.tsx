@@ -184,7 +184,7 @@ export default function TaskDialog({
 
         {/* Description */}
         <div className="space-y-1.5">
-          <label className="block text-[11px] font-mono font-medium uppercase tracking-wider text-[#71717a]">
+          <label className="block text-[11px] font-mono font-medium uppercase tracking-wider text-[var(--app-text-muted)]">
             Description
           </label>
           <textarea
@@ -192,7 +192,7 @@ export default function TaskDialog({
             value={description}
             onChange={e => setDescription(e.target.value)}
             placeholder="Detailed description, acceptance criteria, or technical notes..."
-            className="w-full border rounded-lg p-3 text-xs outline-none transition-colors resize-none text-[#f4f4f5] bg-[#141417] border-[#27272a] focus:border-[#3f3f46]"
+            className="w-full border rounded-lg p-3 text-xs outline-none transition-colors resize-none placeholder:text-[var(--app-text-dim)]"
             style={{
               backgroundColor: 'var(--app-surface-card)',
               borderColor: 'var(--app-border)',
@@ -230,9 +230,9 @@ export default function TaskDialog({
           />
         </div>
 
-        {/* Priority Selector (Monochromatic Subtle Badges) */}
+        {/* Priority Selector (Subtle Themed Badges) */}
         <div className="space-y-1.5">
-          <label className="block text-[11px] font-mono font-medium uppercase tracking-wider text-[#71717a]">
+          <label className="block text-[11px] font-mono font-medium uppercase tracking-wider text-[var(--app-text-muted)]">
             Priority Level
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -241,29 +241,29 @@ export default function TaskDialog({
 
               const getSelectedStyle = () => {
                 if (!isSelected) {
-                  return 'border-[#282a35] bg-[#181920] text-[#a1a1aa] hover:border-[#3d4154] hover:bg-[#1f202a]';
+                  return 'border-[var(--app-border)] bg-[var(--app-surface-subtle)] text-[var(--app-text-secondary)] hover:border-[var(--app-border-focus)] hover:bg-[var(--app-surface-hover)]';
                 }
                 switch (opt.value) {
                   case 'urgent':
-                    return 'border-rose-500/60 bg-rose-500/15 text-rose-200 shadow-sm shadow-rose-950/40';
+                    return 'border-rose-500/60 bg-rose-500/15 text-rose-700 dark:text-rose-200 shadow-sm';
                   case 'high':
-                    return 'border-amber-500/60 bg-amber-500/15 text-amber-200 shadow-sm shadow-amber-950/40';
+                    return 'border-amber-500/60 bg-amber-500/15 text-amber-800 dark:text-amber-200 shadow-sm';
                   case 'medium':
-                    return 'border-blue-500/60 bg-blue-500/15 text-blue-200 shadow-sm shadow-blue-950/40';
+                    return 'border-blue-500/60 bg-blue-500/15 text-blue-700 dark:text-blue-200 shadow-sm';
                   case 'low':
                   default:
-                    return 'border-slate-500/60 bg-slate-500/15 text-slate-200';
+                    return 'border-slate-500/60 bg-slate-500/15 text-slate-700 dark:text-slate-200';
                 }
               };
 
               const getDotColor = () => {
                 switch (opt.value) {
                   case 'urgent':
-                    return 'bg-rose-400';
+                    return 'bg-rose-500';
                   case 'high':
-                    return 'bg-amber-400';
+                    return 'bg-amber-500';
                   case 'medium':
-                    return 'bg-blue-400';
+                    return 'bg-blue-500';
                   case 'low':
                   default:
                     return 'bg-slate-400';
@@ -283,33 +283,31 @@ export default function TaskDialog({
                       {opt.label}
                     </span>
                   </div>
-                  <span className="text-[10px] text-[#71717a] mt-1 line-clamp-1">
+                  <span className="text-[10px] text-[var(--app-text-muted)] mt-1 line-clamp-1">
                     {opt.desc}
                   </span>
                 </button>
               );
             })}
-
           </div>
         </div>
 
         {/* Two Column Grid: Due Date & Labels */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <label className="block text-[11px] font-mono font-medium uppercase tracking-wider text-[#71717a]">
+            <label className="block text-[11px] font-mono font-medium uppercase tracking-wider text-[var(--app-text-muted)]">
               Due Date
             </label>
             <div className="relative flex items-center">
-              <div className="absolute left-3 pointer-events-none text-[#71717a]">
+              <div className="absolute left-3 pointer-events-none text-[var(--app-text-muted)]">
                 <Calendar size={13} />
               </div>
               <input
                 type="date"
                 value={dueDate}
                 onChange={e => setDueDate(e.target.value)}
-                className="w-full border rounded-lg pl-9 pr-3 py-2 text-xs outline-none transition-colors text-[#f4f4f5] bg-[#141417] border-[#27272a] focus:border-[#3f3f46]"
+                className="w-full border rounded-lg pl-9 pr-3 py-2 text-xs outline-none transition-colors"
                 style={{
-                  colorScheme: 'dark',
                   backgroundColor: 'var(--app-surface-card)',
                   borderColor: 'var(--app-border)',
                   color: 'var(--app-text-primary)',
@@ -319,11 +317,11 @@ export default function TaskDialog({
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-[11px] font-mono font-medium uppercase tracking-wider text-[#71717a]">
+            <label className="block text-[11px] font-mono font-medium uppercase tracking-wider text-[var(--app-text-muted)]">
               Labels (comma separated)
             </label>
             <div className="relative flex items-center">
-              <div className="absolute left-3 pointer-events-none text-[#71717a]">
+              <div className="absolute left-3 pointer-events-none text-[var(--app-text-muted)]">
                 <Tag size={13} />
               </div>
               <input
@@ -331,7 +329,7 @@ export default function TaskDialog({
                 value={labelsText}
                 onChange={e => setLabelsText(e.target.value)}
                 placeholder="e.g. auth, security, ui"
-                className="w-full border rounded-lg pl-9 pr-3 py-2 text-xs outline-none transition-colors text-[#f4f4f5] bg-[#141417] border-[#27272a] focus:border-[#3f3f46]"
+                className="w-full border rounded-lg pl-9 pr-3 py-2 text-xs outline-none transition-colors placeholder:text-[var(--app-text-dim)]"
                 style={{
                   backgroundColor: 'var(--app-surface-card)',
                   borderColor: 'var(--app-border)',

@@ -1,42 +1,49 @@
 /* ==========================================================================
    SPRINTIVE INTERNAL APPLICATION DESIGN SYSTEM (SaaS Theme)
-   Neutral-first, charcoal/graphite surfaces, high information density.
-   Modernized with refined elevation, spacing, and interaction tokens.
+   Neutral-first, charcoal/graphite surfaces in Dark Mode.
+   Crisp, modern, high-contrast, premium SaaS hierarchy in Light Mode.
    ========================================================================== */
 
 :root {
-  /* Surface Scale */
+  /* Surface Scale - Dark */
   --app-bg: #09090b;
   --app-surface-subtle: #0c0c0e;
   --app-surface-card: #141417;
+  --app-surface-section: #101013;
   --app-surface-hover: #1c1c21;
   --app-surface-active: #27272a;
 
-  /* Dashboard Monochromatic Design System Tokens */
+  /* Dashboard Monochromatic Design System Tokens - Dark */
   --dash-bg: #09090b;
   --dash-surface-sidebar: #0c0c0e;
   --dash-surface-card: #141417;
   --dash-surface-hover: #18181b;
   --dash-surface-active: #27272a;
 
-  /* Dashboard Border Scale */
+  /* Dashboard Border Scale - Dark */
   --dash-border: #27272a;
   --dash-border-subtle: #1f1f23;
+  --dash-border-strong: #3f3f46;
   --dash-border-hover: #3f3f46;
 
-  /* Dashboard Typography */
+  /* Dashboard Typography - Dark */
   --dash-text-primary: #f4f4f5;
+  --dash-text-heading: #ffffff;
+  --dash-text-body: #a1a1aa;
   --dash-text-secondary: #a1a1aa;
   --dash-text-muted: #71717a;
   --dash-text-dim: #52525b;
 
-  /* Border Scale */
+  /* Border Scale - Dark */
   --app-border: #27272a;
   --app-border-subtle: #1f1f23;
+  --app-border-strong: #3f3f46;
   --app-border-focus: #3f3f46;
 
-  /* Text Colors */
+  /* Text Colors - Dark */
   --app-text-primary: #f4f4f5;
+  --app-text-heading: #ffffff;
+  --app-text-body: #a1a1aa;
   --app-text-secondary: #a1a1aa;
   --app-text-muted: #71717a;
   --app-text-dim: #52525b;
@@ -48,16 +55,46 @@
   --app-accent-orange-border: rgba(249, 115, 22, 0.25);
 
   --app-accent-blue: #3B82F6;
+  --app-accent-blue-subtle: rgba(59, 130, 246, 0.12);
   --app-accent-green: #10B981;
+  --app-accent-green-subtle: rgba(16, 185, 129, 0.12);
   --app-accent-amber: #F59E0B;
+  --app-accent-amber-subtle: rgba(245, 158, 11, 0.12);
   --app-accent-red: #EF4444;
+  --app-accent-red-subtle: rgba(239, 68, 68, 0.12);
 
-  /* Shadows & Elevation */
+  /* Shadows & Elevation - Dark */
   --app-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
   --app-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
   --app-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.6);
+  --app-shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+  --app-shadow-overlay: 0 20px 25px -5px rgba(0, 0, 0, 0.7);
 
-  /* Landing Page Tokens */
+  /* Kanban Tokens - Dark */
+  --kanban-col-bg: #111217;
+  --kanban-col-border: #20222c;
+  --kanban-col-header: #15161f;
+  --kanban-card-bg: #181920;
+  --kanban-card-hover: #20212b;
+  --kanban-card-border: #282a35;
+  --kanban-card-border-hover: #3b3e4f;
+  --kanban-card-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --kanban-card-shadow-hover: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  --kanban-card-text-title: #f4f4f5;
+  --kanban-card-text-desc: #9ca3af;
+  --kanban-card-text-meta: #818498;
+  --kanban-empty-border: #242633;
+  --kanban-empty-bg: rgba(21, 22, 29, 0.3);
+
+  /* Drawer / Modal Tokens - Dark */
+  --modal-bg: #141417;
+  --modal-header-bg: #18181b;
+  --modal-border: #27272a;
+  --drawer-bg: #121319;
+  --drawer-header-bg: #15161f;
+  --drawer-border: #242634;
+
+  /* Landing Page Tokens - Dark */
   --landing-bg: #050505;
   --landing-text: #A1A1AA;
   --landing-text-heading: #ffffff;
@@ -70,75 +107,112 @@
 }
 
 /* ==========================================================================
-   LIGHT THEME
+   LIGHT THEME (Production-grade, modern SaaS design system)
    ========================================================================== */
 
 .light {
-  /* Surface Scale */
-  --app-bg: #f8fafc;
-  --app-surface-subtle: #f1f5f9;
-  --app-surface-card: #ffffff;
-  --app-surface-hover: #e2e8f0;
-  --app-surface-active: #cbd5e1;
+  /* Surface Scale - Light */
+  --app-bg: #F1F5F9;
+  --app-surface-subtle: #F8FAFC;
+  --app-surface-card: #FFFFFF;
+  --app-surface-section: #EAF0F7;
+  --app-surface-hover: #EEF2F7;
+  --app-surface-active: #E2E8F0;
 
-  /* Dashboard Monochromatic Design System Tokens */
-  --dash-bg: #f8fafc;
-  --dash-surface-sidebar: #f1f5f9;
-  --dash-surface-card: #ffffff;
-  --dash-surface-hover: #e2e8f0;
-  --dash-surface-active: #cbd5e1;
+  /* Dashboard Monochromatic Design System Tokens - Light */
+  --dash-bg: #F1F5F9;
+  --dash-surface-sidebar: #FFFFFF;
+  --dash-surface-card: #FFFFFF;
+  --dash-surface-hover: #EEF2F7;
+  --dash-surface-active: #E2E8F0;
 
-  /* Dashboard Border Scale */
-  --dash-border: #e2e8f0;
-  --dash-border-subtle: #f1f5f9;
-  --dash-border-hover: #cbd5e1;
+  /* Dashboard Border Scale - Light */
+  --dash-border: #D5DEE9;
+  --dash-border-subtle: #E2E8F0;
+  --dash-border-strong: #C3CEDD;
+  --dash-border-hover: #C3CEDD;
 
-  /* Dashboard Typography */
-  --dash-text-primary: #0f172a;
-  --dash-text-secondary: #475569;
-  --dash-text-muted: #94a3b8;
-  --dash-text-dim: #cbd5e1;
+  /* Dashboard Typography - Light */
+  --dash-text-primary: #172033;
+  --dash-text-heading: #111827;
+  --dash-text-body: #334155;
+  --dash-text-secondary: #334155;
+  --dash-text-muted: #475569;
+  --dash-text-dim: #64748B;
 
-  /* Border Scale */
-  --app-border: #e2e8f0;
-  --app-border-subtle: #f1f5f9;
-  --app-border-focus: #cbd5e1;
+  /* Border Scale - Light */
+  --app-border: #D5DEE9;
+  --app-border-subtle: #E2E8F0;
+  --app-border-strong: #C3CEDD;
+  --app-border-focus: #94A3B8;
 
-  /* Text Colors */
-  --app-text-primary: #0f172a;
-  --app-text-secondary: #475569;
-  --app-text-muted: #94a3b8;
-  --app-text-dim: #cbd5e1;
+  /* Text Colors - Light */
+  --app-text-primary: #172033;
+  --app-text-heading: #111827;
+  --app-text-body: #334155;
+  --app-text-secondary: #334155;
+  --app-text-muted: #475569;
+  --app-text-dim: #64748B;
 
-  /* Accent Colors */
+  /* Accent Colors - Light */
   --app-accent-orange: #F97316;
   --app-accent-orange-hover: #EA580C;
-  --app-accent-orange-subtle: rgba(249, 115, 22, 0.1);
+  --app-accent-orange-subtle: rgba(249, 115, 22, 0.08);
   --app-accent-orange-border: rgba(249, 115, 22, 0.2);
 
-  --app-accent-blue: #3B82F6;
-  --app-accent-green: #10B981;
-  --app-accent-amber: #F59E0B;
-  --app-accent-red: #EF4444;
+  --app-accent-blue: #2563EB;
+  --app-accent-blue-subtle: #EFF6FF;
+  --app-accent-green: #15803D;
+  --app-accent-green-subtle: #F0FDF4;
+  --app-accent-amber: #B45309;
+  --app-accent-amber-subtle: #FFFBEB;
+  --app-accent-red: #B91C1C;
+  --app-accent-red-subtle: #FEF2F2;
 
-  /* Shadows & Elevation */
-  --app-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --app-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  --app-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  /* Shadows & Elevation - Light */
+  --app-shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --app-shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --app-shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+  --app-shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --app-shadow-overlay: 0 20px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
+
+  /* Kanban Tokens - Light */
+  --kanban-col-bg: #EAF0F7;
+  --kanban-col-border: #D5DEE9;
+  --kanban-col-header: #DFE7F1;
+  --kanban-card-bg: #FFFFFF;
+  --kanban-card-hover: #F8FAFC;
+  --kanban-card-border: #D5DEE9;
+  --kanban-card-border-hover: #C3CEDD;
+  --kanban-card-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --kanban-card-shadow-hover: 0 4px 6px -1px rgba(15, 23, 42, 0.1), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --kanban-card-text-title: #172033;
+  --kanban-card-text-desc: #334155;
+  --kanban-card-text-meta: #475569;
+  --kanban-empty-border: #CBD5E1;
+  --kanban-empty-bg: rgba(234, 240, 247, 0.7);
+
+  /* Drawer / Modal Tokens - Light */
+  --modal-bg: #FFFFFF;
+  --modal-header-bg: #F8FAFC;
+  --modal-border: #D5DEE9;
+  --drawer-bg: #FFFFFF;
+  --drawer-header-bg: #F8FAFC;
+  --drawer-border: #D5DEE9;
 
   /* Landing Page Tokens - Light */
-  --landing-bg: #ffffff;
+  --landing-bg: #FFFFFF;
   --landing-text: #475569;
-  --landing-text-heading: #0f172a;
-  --landing-card-bg: #f8fafc;
-  --landing-card-border: #e2e8f0;
+  --landing-text-heading: #0F172A;
+  --landing-card-bg: #F8FAFC;
+  --landing-card-border: #E2E8F0;
   --landing-nav-bg: transparent;
-  --landing-nav-scrolled-bg: rgba(255, 255, 255, 0.8);
-  --landing-grid-color: rgba(0, 0, 0, 0.04);
-  --landing-shadow: 4px 4px 0px #0f172a;
+  --landing-nav-scrolled-bg: rgba(255, 255, 255, 0.85);
+  --landing-grid-color: rgba(15, 23, 42, 0.04);
+  --landing-shadow: 4px 4px 0px #0F172A;
 }
 
-/* Custom Scrollbar for Internal App */
+/* Custom Scrollbar */
 .app-scrollbar::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -149,18 +223,18 @@
 }
 
 .app-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.12);
+  background: var(--app-border-focus);
   border-radius: 99px;
 }
 
 .app-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.24);
+  background: var(--app-text-muted);
 }
 
 .light .app-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.12);
+  background: #CBD5E1;
 }
 
 .light .app-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.24);
+  background: #94A3B8;
 }

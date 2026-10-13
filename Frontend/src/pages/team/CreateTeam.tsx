@@ -151,13 +151,13 @@ export default function CreateTeam() {
       <div className="p-6 md:p-10 max-w-2xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#1c1c21] border border-[#27272a] text-[#f4f4f5] text-xs font-mono font-medium">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[var(--app-surface-subtle)] border border-[var(--app-border)] text-[var(--app-text-primary)] text-xs font-mono font-medium">
             <Users size={13} /> WORKSPACE ONBOARDING
           </div>
-          <h1 className="text-2xl md:text-3xl font-semibold text-[#f4f4f5] tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-semibold text-[var(--app-text-primary)] tracking-tight">
             Create Agile Scrum Team
           </h1>
-          <p className="text-[#a1a1aa] text-xs max-w-md mx-auto">
+          <p className="text-[var(--app-text-muted)] text-xs max-w-md mx-auto">
             Setup your workspace, configure daily standup preferences, and invite engineers.
           </p>
         </div>
@@ -174,22 +174,22 @@ export default function CreateTeam() {
                 onClick={() => s.num < step && setStep(s.num)}
                 className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
                   s.num === step
-                    ? 'bg-[#1c1c21] text-[#f4f4f5] border border-[#27272a] shadow-xs'
+                    ? 'bg-[var(--app-surface-card)] text-[var(--app-text-primary)] border border-[var(--app-border)] shadow-xs'
                     : s.num < step
-                    ? 'bg-[#141417] text-[#a1a1aa] border border-[#27272a] cursor-pointer'
-                    : 'bg-[#141417] text-[#71717a] border border-[#1f1f23]'
+                    ? 'bg-[var(--app-surface-subtle)] text-[var(--app-text-secondary)] border border-[var(--app-border)] cursor-pointer'
+                    : 'bg-[var(--app-surface-subtle)] text-[var(--app-text-muted)] border border-[var(--app-border-subtle)]'
                 }`}
               >
                 <span>{s.num}.</span>
                 <span>{s.label}</span>
               </button>
-              {s.num < 3 && <div className="w-4 h-px bg-[#27272a]" />}
+              {s.num < 3 && <div className="w-4 h-px bg-[var(--app-border)]" />}
             </div>
           ))}
         </div>
 
         {/* Main Card */}
-        <div className="bg-[#141417] border border-[#27272a] rounded-2xl p-6 shadow-sm">
+        <div className="bg-[var(--app-surface-card)] border border-[var(--app-border)] rounded-2xl p-6 shadow-sm">
           <AnimatePresence mode="wait">
             {/* Step 1: Details */}
             {step === 1 && (
@@ -200,14 +200,14 @@ export default function CreateTeam() {
                 exit={{ opacity: 0, x: -12 }}
                 className="space-y-5"
               >
-                <div className="flex items-center gap-4 pb-4 border-b border-[#1f1f23]">
+                <div className="flex items-center gap-4 pb-4 border-b border-[var(--app-border-subtle)]">
                   <button
                     type="button"
                     onClick={() => fileRef.current?.click()}
                     className="relative group shrink-0"
                   >
                     <div
-                      className="w-16 h-16 rounded-2xl flex items-center justify-center text-[#f4f4f5] text-xl font-bold border border-dashed border-[#27272a] group-hover:border-[#3f3f46] transition-colors overflow-hidden bg-[#1c1c21]"
+                      className="w-16 h-16 rounded-2xl flex items-center justify-center text-[var(--app-text-primary)] text-xl font-bold border border-dashed border-[var(--app-border)] group-hover:border-[var(--app-border-focus)] transition-colors overflow-hidden bg-[var(--app-surface-subtle)]"
                     >
                       {avatarPreview ? (
                         <img src={avatarPreview} className="w-full h-full object-cover" alt="Preview" />
@@ -316,8 +316,8 @@ export default function CreateTeam() {
                         onClick={() => toggleDay(d.id)}
                         className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
                           form.working_days.includes(d.id)
-                            ? 'bg-[#1c1c21] text-[#f4f4f5] border border-[#27272a]'
-                            : 'bg-[#18181b] text-[#71717a] hover:text-[#f4f4f5]'
+                            ? 'bg-[var(--app-surface-hover)] text-[var(--app-text-primary)] border border-[var(--app-border)]'
+                            : 'bg-[var(--app-surface-subtle)] text-[var(--app-text-muted)] hover:text-[var(--app-text-primary)]'
                         }`}
                       >
                         {d.label}
@@ -355,7 +355,7 @@ export default function CreateTeam() {
                 className="space-y-5"
               >
                 <div>
-                  <label className="block text-xs font-semibold text-[#71717a] mb-2 uppercase tracking-wider font-mono">
+                  <label className="block text-xs font-semibold text-[var(--app-text-muted)] mb-2 uppercase tracking-wider font-mono">
                     Invite Teammates by Email
                   </label>
                   <div className="flex gap-2">
@@ -364,7 +364,7 @@ export default function CreateTeam() {
                       onChange={e => setInviteInput(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addEmail())}
                       placeholder="engineer@company.com"
-                      className="flex-1 bg-[#141417] border border-[#27272a] rounded-lg px-3.5 py-2 text-xs text-[#f4f4f5] placeholder-[#71717a] outline-none focus:border-[#3f3f46]"
+                      className="flex-1 bg-[var(--app-surface-subtle)] border border-[var(--app-border)] rounded-lg px-3.5 py-2 text-xs text-[var(--app-text-primary)] placeholder:text-[var(--app-text-dim)] outline-none focus:border-[var(--app-border-focus)]"
                     />
                     <AppButton variant="mono-outline" size="xs" onClick={addEmail}>
                       <Plus size={13} className="mr-1" /> Add
@@ -375,13 +375,13 @@ export default function CreateTeam() {
                       {form.invite_emails.map(email => (
                         <span
                           key={email}
-                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#1c1c21] border border-[#27272a] text-[#f4f4f5] text-xs font-mono"
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--app-surface-subtle)] border border-[var(--app-border)] text-[var(--app-text-primary)] text-xs font-mono"
                         >
                           {email}
                           <button
                             type="button"
                             onClick={() => removeEmail(email)}
-                            className="hover:text-white transition-colors ml-1"
+                            className="hover:text-[var(--app-text-muted)] transition-colors ml-1 cursor-pointer"
                           >
                             ×
                           </button>
@@ -391,8 +391,8 @@ export default function CreateTeam() {
                   )}
                 </div>
 
-                <div className="pt-2 border-t border-[#1f1f23]">
-                  <label className="block text-xs font-semibold text-[#71717a] mb-2 uppercase tracking-wider font-mono">
+                <div className="pt-2 border-t border-[var(--app-border-subtle)]">
+                  <label className="block text-xs font-semibold text-[var(--app-text-muted)] mb-2 uppercase tracking-wider font-mono">
                     Shareable Invitation Link
                   </label>
                   {generatedLink ? (
@@ -400,15 +400,15 @@ export default function CreateTeam() {
                       <input
                         readOnly
                         value={generatedLink}
-                        className="flex-1 bg-[#141417] border border-[#27272a] rounded-lg px-3 py-2 text-xs text-[#a1a1aa] outline-none font-mono"
+                        className="flex-1 bg-[var(--app-surface-subtle)] border border-[var(--app-border)] rounded-lg px-3 py-2 text-xs text-[var(--app-text-secondary)] outline-none font-mono"
                       />
                       <AppButton variant="mono-outline" size="xs" onClick={copyLink}>
-                        {copied ? <Check size={13} className="mr-1 text-emerald-400" /> : <Copy size={13} className="mr-1" />}
+                        {copied ? <Check size={13} className="mr-1 text-emerald-500" /> : <Copy size={13} className="mr-1" />}
                         {copied ? 'Copied' : 'Copy'}
                       </AppButton>
                     </div>
                   ) : (
-                    <AppButton variant="mono-ghost" size="xs" className="w-full border border-dashed border-[#27272a] justify-center" onClick={handleGenerateLink}>
+                    <AppButton variant="mono-ghost" size="xs" className="w-full border border-dashed border-[var(--app-border)] justify-center" onClick={handleGenerateLink}>
                       Generate Workspace Invitation Link
                     </AppButton>
                   )}

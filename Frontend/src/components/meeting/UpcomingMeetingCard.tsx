@@ -33,20 +33,20 @@ export default function UpcomingMeetingCard({ meeting }: UpcomingMeetingCardProp
     <motion.button
       whileHover={{ y: -2 }}
       onClick={() => navigate(`/meetings/${meeting.id}`)}
-      className="w-full text-left bg-[#111827] border border-white/8 rounded-2xl p-5 hover:border-[#3B82F6]/30 transition-all group"
+      className="w-full text-left bg-[var(--app-surface-card)] border border-[var(--app-border)] rounded-2xl p-5 hover:border-[var(--app-border-focus)] hover:bg-[var(--app-surface-hover)] shadow-xs transition-all group cursor-pointer"
     >
       <div className="flex items-start justify-between mb-3">
         <div>
-          <p className="text-xs font-semibold text-[#3B82F6] uppercase tracking-wider mb-1">
+          <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">
             {formatDate(meeting.date)}
           </p>
-          <h4 className="text-base font-bold text-[#F8FAFC] group-hover:text-[#3B82F6] transition-colors">
+          <h4 className="text-base font-bold text-[var(--app-text-primary)] group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
             {meeting.title}
           </h4>
         </div>
         <MeetingStatusBadge status={meeting.status} />
       </div>
-      <div className="flex items-center gap-4 text-xs text-[#94A3B8]">
+      <div className="flex items-center gap-4 text-xs text-[var(--app-text-muted)]">
         <div className="flex items-center gap-1.5">
           <Clock size={13} />
           <span>{formatTime(meeting.start_time)}</span>
@@ -56,7 +56,7 @@ export default function UpcomingMeetingCard({ meeting }: UpcomingMeetingCardProp
           <span>{meeting.participant_count}</span>
         </div>
       </div>
-      <div className="mt-3 flex items-center gap-1 text-xs text-[#3B82F6] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="mt-3 flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
         View details <ArrowRight size={12} />
       </div>
     </motion.button>

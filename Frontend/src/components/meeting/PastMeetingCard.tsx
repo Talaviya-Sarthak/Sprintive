@@ -29,18 +29,18 @@ export default function PastMeetingCard({ meeting }: PastMeetingCardProps) {
     <motion.button
       whileHover={{ y: -2 }}
       onClick={() => navigate(meeting.status === 'ended' ? `/meetings/${meeting.id}/summary` : `/meetings/${meeting.id}`)}
-      className="w-full text-left bg-[#111827] border border-white/8 rounded-2xl p-5 hover:border-white/16 transition-all group"
+      className="w-full text-left bg-[var(--app-surface-card)] border border-[var(--app-border)] rounded-2xl p-5 hover:border-[var(--app-border-focus)] hover:bg-[var(--app-surface-hover)] shadow-xs transition-all group cursor-pointer"
     >
       <div className="flex items-start justify-between mb-3">
         <div>
-          <p className="text-xs text-[#475569] mb-1">{formatDate(meeting.date)}</p>
-          <h4 className="text-base font-bold text-[#F8FAFC] group-hover:text-[#3B82F6] transition-colors">
+          <p className="text-xs text-[var(--app-text-muted)] mb-1">{formatDate(meeting.date)}</p>
+          <h4 className="text-base font-bold text-[var(--app-text-primary)] group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
             {meeting.title}
           </h4>
         </div>
         <MeetingStatusBadge status={meeting.status} />
       </div>
-      <div className="flex items-center gap-4 text-xs text-[#94A3B8]">
+      <div className="flex items-center gap-4 text-xs text-[var(--app-text-muted)]">
         <div className="flex items-center gap-1.5">
           <Clock size={13} />
           <span>{formatTime(meeting.start_time)} — {meeting.duration_minutes} min</span>
@@ -51,7 +51,7 @@ export default function PastMeetingCard({ meeting }: PastMeetingCardProps) {
         </div>
       </div>
       {meeting.status === 'ended' && (
-        <div className="mt-3 flex items-center gap-1.5 text-xs text-[#3B82F6] font-medium">
+        <div className="mt-3 flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 font-medium">
           <CheckCircle size={12} />
           Summary available
         </div>

@@ -39,13 +39,13 @@ export default function MeetingChatPlaceholder({ messages }: MeetingChatPlacehol
                   : initials}
               </div>
               <div className="flex flex-col gap-1 max-w-[80%]">
-                <span className="text-[11px] text-[#94A3B8] font-medium px-1">{group[0].full_name}</span>
+                <span className="text-[11px] text-[var(--app-text-muted)] font-medium px-1">{group[0].full_name}</span>
                 {group.map((msg, mi) => (
-                  <div key={mi} className="px-3 py-2 rounded-2xl text-sm leading-relaxed bg-[#1a1f2e] text-[#CBD5E1] border border-white/6 rounded-tl-sm">
+                  <div key={mi} className="px-3 py-2 rounded-2xl text-sm leading-relaxed bg-[var(--app-surface-subtle)] text-[var(--app-text-primary)] border border-[var(--app-border)] rounded-tl-sm">
                     {msg.message}
                   </div>
                 ))}
-                <span className="text-[10px] text-[#475569] px-1">
+                <span className="text-[10px] text-[var(--app-text-muted)] px-1">
                   {new Date(group[group.length - 1].created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
@@ -53,15 +53,15 @@ export default function MeetingChatPlaceholder({ messages }: MeetingChatPlacehol
           );
         })}
       </div>
-      <div className="px-3 pb-3 pt-2 border-t border-white/6">
-        <div className="flex items-center gap-2 bg-[#1a1f2e] rounded-xl border border-white/8 px-3 py-2">
+      <div className="px-3 pb-3 pt-2 border-t border-[var(--app-border)]">
+        <div className="flex items-center gap-2 bg-[var(--app-surface-subtle)] rounded-xl border border-[var(--app-border)] px-3 py-2">
           <input
             placeholder="Type a message..."
             disabled
-            className="flex-1 bg-transparent text-sm text-[#CBD5E1] placeholder-[#475569] outline-none"
+            className="flex-1 bg-transparent text-sm text-[var(--app-text-primary)] placeholder-[var(--app-text-muted)] outline-none"
           />
-          <button disabled className="w-7 h-7 rounded-lg bg-[#3B82F6]/50 flex items-center justify-center">
-            <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <button disabled className="w-7 h-7 rounded-lg bg-[var(--app-text-primary)]/50 text-[var(--app-bg)] flex items-center justify-center">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.269 20.876L5.999 12zm0 0h7.5" />
             </svg>
           </button>

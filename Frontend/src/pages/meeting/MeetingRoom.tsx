@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Sun, Moon } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 import { useMeetingSocket } from '../../hooks/useMeetingSocket';
 import { useMediaDevices }  from '../../hooks/useMediaDevices';
 import { useAudioCapture }  from '../../hooks/useAudioCapture';
@@ -60,6 +62,7 @@ function RemoteAudioPlayer({ stream }: { stream?: MediaStream }) {
 export default function MeetingRoom() {
   const { id }   = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
 
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const screenShareVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -266,24 +269,24 @@ export default function MeetingRoom() {
   // ── Meeting Ended Modal ────────────────────────────────────────────────────
   if (endedData) {
     return (
-      <div className="min-h-screen bg-[#09090b] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[var(--app-bg)] flex items-center justify-center p-4">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-lg">
-          <div className="bg-[#141417] border border-[#27272a] rounded-2xl p-8 text-center shadow-xl space-y-6">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto text-emerald-400">
+          <div className="bg-[var(--app-surface-card)] border border-[var(--app-border)] rounded-2xl p-8 text-center shadow-xl space-y-6">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto text-emerald-500 dark:text-emerald-400">
               <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-[#f4f4f5]">Meeting Ended</h2>
-              <p className="text-[#a1a1aa] text-xs mt-1">
+              <h2 className="text-xl font-semibold text-[var(--app-text-primary)]">Meeting Ended</h2>
+              <p className="text-[var(--app-text-muted)] text-xs mt-1">
                 Transcript saved. Your processed transcript will be ready in a few minutes.
               </p>
             </div>
 
             {/* Transcript preview */}
             <div className="text-left">
-              <p className="text-xs font-mono font-semibold text-[#71717a] mb-2 uppercase tracking-wider">Meeting Transcript</p>
-              <div className="bg-[#1c1c21] border border-[#27272a] rounded-xl p-4 max-h-48 overflow-y-auto">
-                <pre className="text-xs text-[#a1a1aa] whitespace-pre-wrap font-sans leading-relaxed">
+              <p className="text-xs font-mono font-semibold text-[var(--app-text-muted)] mb-2 uppercase tracking-wider">Meeting Transcript</p>
+              <div className="bg-[var(--app-surface-subtle)] border border-[var(--app-border)] rounded-xl p-4 max-h-48 overflow-y-auto">
+                <pre className="text-xs text-[var(--app-text-secondary)] whitespace-pre-wrap font-sans leading-relaxed">
                   {endedData.transcript?.content || 'Raw dialogue captured and sent to preprocessing pipeline.'}
                 </pre>
               </div>
@@ -292,13 +295,13 @@ export default function MeetingRoom() {
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => navigate(`/meetings/${id}/summary`)}
-                className="flex-1 py-3 rounded-xl bg-[#f4f4f5] hover:bg-[#e4e4e7] text-[#09090b] font-semibold text-xs transition-colors cursor-pointer"
+                className="flex-1 py-3 rounded-xl bg-[var(--app-text-primary)] text-[var(--app-bg)] font-semibold text-xs transition-opacity hover:opacity-90 cursor-pointer shadow-xs"
               >
                 View Meeting Summary & Transcript
               </button>
               <button
                 onClick={() => navigate('/dashboard')}
-                className="py-3 px-4 rounded-xl bg-[#1c1c21] hover:bg-[#27272a] text-[#a1a1aa] hover:text-[#f4f4f5] font-semibold text-xs transition-colors cursor-pointer"
+                className="py-3 px-4 rounded-xl bg-[var(--app-surface-hover)] border border-[var(--app-border)] text-[var(--app-text-secondary)] hover:text-[var(--app-text-primary)] font-semibold text-xs transition-colors cursor-pointer"
               >
                 Dashboard
               </button>
@@ -342,48 +345,48 @@ export default function MeetingRoom() {
                    allParticipants.length <= 4  ? 'grid-cols-2' : 'grid-cols-3';
 
   return (
-    <div className="h-screen bg-[#09090b] flex flex-col overflow-hidden text-[#a1a1aa]">
+    <div className="h-screen bg-[var(--app-bg)] flex flex-col overflow-hidden text-[var(--app-text-secondary)] transition-colors duration-200">
       {/* Remote audio elements: continuous playback regardless of video element mounting */}
       {remoteParticipants.map((p) => (
         <RemoteAudioPlayer key={`remote-audio-${p.user_id}`} stream={p.stream} />
       ))}
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-6 py-3.5 border-b border-[#27272a] bg-[#0c0c0e]/95 backdrop-blur-md flex-shrink-0">
+      <div className="flex items-center justify-between px-6 py-3.5 border-b border-[var(--app-border)] bg-[var(--app-surface-card)]/90 backdrop-blur-md flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-[#f4f4f5] animate-pulse" />
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <div>
-            <h1 className="text-xs md:text-sm font-semibold text-[#f4f4f5] leading-none">
+            <h1 className="text-xs md:text-sm font-semibold text-[var(--app-text-primary)] leading-none">
               {meeting?.title ?? 'Meeting Room'}
             </h1>
             {meeting?.sprint_name && (
-              <p className="text-[10px] text-[#71717a] font-mono mt-0.5">{meeting.sprint_name}</p>
+              <p className="text-[10px] text-[var(--app-text-muted)] font-mono mt-0.5">{meeting.sprint_name}</p>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3.5">
           {/* Timer */}
           <MeetingTimer startedAt={meeting?.started_at} />
 
           {/* AI / STT status indicator */}
           <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${
             sttStatus === 'active'
-              ? 'bg-[#8B5CF6]/10 border-[#8B5CF6]/20'
+              ? 'bg-purple-500/10 border-purple-500/20'
               : sttStatus === 'finalizing'
               ? 'bg-amber-500/10 border-amber-500/20'
               : sttStatus === 'completed'
               ? 'bg-green-500/10 border-green-500/20'
               : sttStatus === 'failed'
               ? 'bg-red-500/10 border-red-500/20'
-              : 'bg-[#1c1c21] border-[#27272a]'
+              : 'bg-[var(--app-surface-subtle)] border-[var(--app-border)]'
           }`}>
             <svg
               className={`w-3 h-3 ${
-                sttStatus === 'active' ? 'text-[#8B5CF6] animate-pulse' :
-                sttStatus === 'finalizing' ? 'text-amber-400 animate-pulse' :
-                sttStatus === 'completed' ? 'text-green-400' :
-                sttStatus === 'failed' ? 'text-red-400' :
-                'text-[#f4f4f5]'
+                sttStatus === 'active' ? 'text-purple-500 animate-pulse' :
+                sttStatus === 'finalizing' ? 'text-amber-500 animate-pulse' :
+                sttStatus === 'completed' ? 'text-green-500' :
+                sttStatus === 'failed' ? 'text-red-500' :
+                'text-[var(--app-text-muted)]'
               }`}
               fill="none"
               viewBox="0 0 24 24"
@@ -393,11 +396,11 @@ export default function MeetingRoom() {
               <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
             <span className={`text-[10px] font-mono font-semibold uppercase ${
-              sttStatus === 'active' ? 'text-[#8B5CF6]' :
-              sttStatus === 'finalizing' ? 'text-amber-400' :
-              sttStatus === 'completed' ? 'text-green-400' :
-              sttStatus === 'failed' ? 'text-red-400' :
-              'text-[#f4f4f5]'
+              sttStatus === 'active' ? 'text-purple-600 dark:text-purple-400' :
+              sttStatus === 'finalizing' ? 'text-amber-600 dark:text-amber-400' :
+              sttStatus === 'completed' ? 'text-green-600 dark:text-green-400' :
+              sttStatus === 'failed' ? 'text-red-600 dark:text-red-400' :
+              'text-[var(--app-text-secondary)]'
             }`}>
               {sttStatus === 'active' && 'STT Active'}
               {sttStatus === 'finalizing' && 'Finalizing...'}
@@ -409,9 +412,19 @@ export default function MeetingRoom() {
 
           {/* Connection status */}
           <div className="hidden sm:flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span className="text-[11px] text-[#71717a]">Connected</span>
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span className="text-[11px] text-[var(--app-text-muted)]">Connected</span>
           </div>
+
+          {/* Theme toggle */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="p-1.5 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] hover:bg-[var(--app-surface-hover)] text-[var(--app-text-secondary)] hover:text-[var(--app-text-primary)] transition-colors cursor-pointer"
+          >
+            {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+          </button>
         </div>
       </div>
 
@@ -421,13 +434,13 @@ export default function MeetingRoom() {
         <div className="flex-1 p-4 overflow-y-auto relative">
           {/* ── Screen Share Display ── */}
           {activeScreenShareStream && (
-            <div className="mb-3 rounded-xl overflow-hidden border border-[#3B82F6]/30 bg-[#0c0c0e] relative">
-              <div className="px-3 py-1.5 bg-[#3B82F6]/10 border-b border-[#3B82F6]/20 flex items-center gap-2">
-                <svg className="w-3.5 h-3.5 text-[#3B82F6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div className="mb-3 rounded-xl overflow-hidden border border-[var(--app-border)] bg-[var(--app-surface-card)] relative shadow-md">
+              <div className="px-3 py-1.5 bg-blue-500/10 border-b border-blue-500/20 flex items-center gap-2">
+                <svg className="w-3.5 h-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <rect x="2" y="3" width="20" height="14" rx="2" />
                   <path d="M8 21h8M12 17v4" />
                 </svg>
-                <span className="text-[11px] font-medium text-[#3B82F6]">
+                <span className="text-[11px] font-medium text-blue-600 dark:text-blue-400">
                   {activeScreenShareUserId === userId ? 'You are sharing your screen' : `${participants.find(p => p.user_id === activeScreenShareUserId)?.full_name ?? 'Participant'} is sharing their screen`}
                 </span>
               </div>
@@ -467,14 +480,14 @@ export default function MeetingRoom() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
                 transition={{ duration: 0.2 }}
-                className="absolute bottom-6 left-1/2 -translate-x-1/2 max-w-[80%] px-4 py-2.5 rounded-xl bg-black/70 backdrop-blur-md border border-white/10 shadow-xl"
+                className="absolute bottom-6 left-1/2 -translate-x-1/2 max-w-[80%] px-4 py-2.5 rounded-xl bg-[var(--app-surface-card)]/95 backdrop-blur-md border border-[var(--app-border)] shadow-xl"
               >
-                <span className="text-[10px] font-bold text-[#8B5CF6] mr-2">
+                <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 mr-2">
                   {liveCaption.speakerName}:
                 </span>
-                <span className="text-sm text-white/90 font-medium">
+                <span className="text-sm text-[var(--app-text-primary)] font-medium">
                   {liveCaption.text}
-                  <span className="inline-block w-0.5 h-4 bg-[#8B5CF6] ml-1 animate-pulse align-middle" />
+                  <span className="inline-block w-0.5 h-4 bg-purple-500 ml-1 animate-pulse align-middle" />
                 </span>
               </motion.div>
             )}
@@ -489,10 +502,10 @@ export default function MeetingRoom() {
               animate={{ width: 320, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 350, damping: 35 }}
-              className="border-l border-[#27272a] bg-[#0c0c0e] flex flex-col overflow-hidden flex-shrink-0"
+              className="border-l border-[var(--app-border)] bg-[var(--app-surface-card)] flex flex-col overflow-hidden flex-shrink-0"
             >
               {/* Sidebar tabs */}
-              <div className="flex border-b border-[#27272a]">
+              <div className="flex border-b border-[var(--app-border)]">
                 {(['participants', 'chat', 'transcript'] as const).map((tab) => (
                   <button
                     key={tab}
@@ -502,20 +515,20 @@ export default function MeetingRoom() {
                     }}
                     className={`flex-1 py-3 text-xs font-semibold capitalize transition-colors relative cursor-pointer ${
                       sidebarTab === tab
-                        ? 'text-[#f4f4f5]'
-                        : 'text-[#71717a] hover:text-[#a1a1aa]'
+                        ? 'text-[var(--app-text-primary)]'
+                        : 'text-[var(--app-text-muted)] hover:text-[var(--app-text-secondary)]'
                     }`}
                   >
                     {tab}
                     {tab === 'chat' && unreadCount > 0 && (
-                      <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#f4f4f5] text-[#09090b] text-[9px] font-bold flex items-center justify-center">
+                      <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[var(--app-text-primary)] text-[var(--app-bg)] text-[9px] font-bold flex items-center justify-center">
                         {unreadCount}
                       </span>
                     )}
                     {sidebarTab === tab && (
                       <motion.div
                         layoutId="sidebar-tab"
-                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#f4f4f5]"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--app-text-primary)]"
                       />
                     )}
                   </button>

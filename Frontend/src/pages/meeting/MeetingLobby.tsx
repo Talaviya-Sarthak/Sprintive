@@ -83,7 +83,7 @@ export default function MeetingLobby() {
   }
 
   return (
-    <div className="min-h-screen bg-[#09090b] flex items-center justify-center p-4 md:p-6">
+    <div className="min-h-screen bg-[var(--app-bg)] flex items-center justify-center p-4 md:p-6">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -91,7 +91,7 @@ export default function MeetingLobby() {
       >
         {/* Camera Preview */}
         <div className="space-y-4">
-          <div className="relative rounded-2xl overflow-hidden bg-[#141417] border border-[#27272a] aspect-video flex items-center justify-center shadow-lg">
+          <div className="relative rounded-2xl overflow-hidden bg-neutral-900 border border-[var(--app-border)] aspect-video flex items-center justify-center shadow-lg">
             {!isCameraOff && stream ? (
               <video
                 ref={bindVideoRef}
@@ -101,8 +101,8 @@ export default function MeetingLobby() {
                 className="w-full h-full object-cover -scale-x-100"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-[#141417]">
-                <div className="w-16 h-16 rounded-full bg-[#1c1c21] border border-[#27272a] flex items-center justify-center text-[#f4f4f5] text-lg font-semibold">
+              <div className="w-full h-full flex items-center justify-center bg-neutral-900">
+                <div className="w-16 h-16 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center text-white text-lg font-semibold">
                   You
                 </div>
               </div>
@@ -116,7 +116,7 @@ export default function MeetingLobby() {
                 className={`w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer ${
                   isMuted
                     ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                    : 'bg-[#1c1c21]/90 text-[#f4f4f5] border border-[#27272a] hover:bg-[#27272a]'
+                    : 'bg-neutral-800/90 text-white border border-neutral-700 hover:bg-neutral-700'
                 }`}
               >
                 {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
@@ -127,7 +127,7 @@ export default function MeetingLobby() {
                 className={`w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer ${
                   isCameraOff
                     ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                    : 'bg-[#1c1c21]/90 text-[#f4f4f5] border border-[#27272a] hover:bg-[#27272a]'
+                    : 'bg-neutral-800/90 text-white border border-neutral-700 hover:bg-neutral-700'
                 }`}
               >
                 {isCameraOff ? <VideoOff size={16} /> : <VideoIcon size={16} />}
@@ -135,13 +135,13 @@ export default function MeetingLobby() {
             </div>
           </div>
 
-          <div className="flex justify-center gap-6 text-xs text-[#71717a] font-mono">
-            <span className={`flex items-center gap-1.5 ${isMuted ? 'text-red-400' : 'text-emerald-400'}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${isMuted ? 'bg-red-400' : 'bg-emerald-400'}`} />
+          <div className="flex justify-center gap-6 text-xs text-[var(--app-text-muted)] font-mono">
+            <span className={`flex items-center gap-1.5 ${isMuted ? 'text-red-500 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${isMuted ? 'bg-red-500 dark:bg-red-400' : 'bg-emerald-500 dark:bg-emerald-400'}`} />
               {isMuted ? 'Mic Off' : 'Mic On'}
             </span>
-            <span className={`flex items-center gap-1.5 ${isCameraOff ? 'text-red-400' : 'text-emerald-400'}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${isCameraOff ? 'bg-red-400' : 'bg-emerald-400'}`} />
+            <span className={`flex items-center gap-1.5 ${isCameraOff ? 'text-red-500 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${isCameraOff ? 'bg-red-500 dark:bg-red-400' : 'bg-emerald-500 dark:bg-emerald-400'}`} />
               {isCameraOff ? 'Camera Off' : 'Camera On'}
             </span>
           </div>
@@ -150,17 +150,17 @@ export default function MeetingLobby() {
         {/* Info & Join Action */}
         <div className="space-y-6">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#1c1c21] border border-[#27272a] text-[10px] text-[#a1a1aa] font-mono mb-3">
-              <ShieldCheck size={12} className="text-emerald-400" /> READY TO JOIN
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--app-surface-subtle)] border border-[var(--app-border)] text-[10px] text-[var(--app-text-secondary)] font-mono mb-3">
+              <ShieldCheck size={12} className="text-emerald-500 dark:text-emerald-400" /> READY TO JOIN
             </div>
-            <h1 className="text-2xl md:text-3xl font-semibold text-[#f4f4f5] tracking-tight leading-snug">
+            <h1 className="text-2xl md:text-3xl font-semibold text-[var(--app-text-primary)] tracking-tight leading-snug">
               {meeting?.title ?? 'Scrum Session'}
             </h1>
             {meeting?.team_name && (
-              <p className="text-xs text-[#a1a1aa] mt-1">{meeting.team_name}</p>
+              <p className="text-xs text-[var(--app-text-muted)] mt-1">{meeting.team_name}</p>
             )}
             {meeting?.sprint_name && (
-              <span className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-0.5 rounded-md bg-[#1c1c21] border border-[#27272a] text-[#a1a1aa] text-xs font-mono">
+              <span className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-0.5 rounded-md bg-[var(--app-surface-subtle)] border border-[var(--app-border)] text-[var(--app-text-secondary)] text-xs font-mono">
                 {meeting.sprint_name}
               </span>
             )}
@@ -169,19 +169,19 @@ export default function MeetingLobby() {
           <AppCard variant="dashboard">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#1c1c21] border border-[#27272a] flex items-center justify-center text-[#f4f4f5] text-sm font-semibold">
+                <div className="w-10 h-10 rounded-full bg-[var(--app-surface-subtle)] border border-[var(--app-border)] flex items-center justify-center text-[var(--app-text-primary)] text-sm font-semibold">
                   {meeting?.host_name?.[0]?.toUpperCase() ?? 'H'}
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-[#f4f4f5]">{meeting?.host_name ?? 'Host'}</p>
-                  <p className="text-[10px] text-[#71717a]">Meeting Host</p>
+                  <p className="text-xs font-semibold text-[var(--app-text-primary)]">{meeting?.host_name ?? 'Host'}</p>
+                  <p className="text-[10px] text-[var(--app-text-muted)]">Meeting Host</p>
                 </div>
               </div>
               <MeetingStatusBadge status={meeting?.status ?? 'scheduled'} />
             </div>
           </AppCard>
 
-          {error && <p className="text-xs text-red-400 font-medium">{error}</p>}
+          {error && <p className="text-xs text-red-500 dark:text-red-400 font-medium">{error}</p>}
 
           <div className="space-y-3 pt-2">
             <AppButton
@@ -200,7 +200,7 @@ export default function MeetingLobby() {
             </AppButton>
 
             {meeting?.status === 'scheduled' && !isMeetingJoinable(meeting) && (
-              <div className="flex items-center justify-center gap-2 text-xs text-[#a1a1aa] font-mono">
+              <div className="flex items-center justify-center gap-2 text-xs text-[var(--app-text-muted)] font-mono">
                 <Clock size={12} />
                 <span>Meeting starts at {formatTime12h(meeting?.start_time)}</span>
               </div>
@@ -208,7 +208,7 @@ export default function MeetingLobby() {
 
             <button
               onClick={() => navigate(-1)}
-              className="w-full text-center text-xs text-[#71717a] hover:text-[#f4f4f5] transition-colors cursor-pointer flex items-center justify-center gap-1"
+              className="w-full text-center text-xs text-[var(--app-text-muted)] hover:text-[var(--app-text-primary)] transition-colors cursor-pointer flex items-center justify-center gap-1"
             >
               <ArrowLeft size={12} /> Go Back to Details
             </button>

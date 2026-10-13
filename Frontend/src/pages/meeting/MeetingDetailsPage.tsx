@@ -74,13 +74,13 @@ export default function MeetingDetailsPage() {
   const isLight = theme === 'light';
   const { getMeeting, getTeamMembers, updateMeeting: updateMockMeeting, deleteMeeting: deleteMockMeeting } = useMeetingMockData(teamId);
 
-  const headingColor = isLight ? 'text-[#0f172a]' : 'text-[#f4f4f5]';
-  const subtextColor = isLight ? 'text-[#475569]' : 'text-[#a1a1aa]';
-  const mutedColor = isLight ? 'text-[#94a3b8]' : 'text-[#71717a]';
-  const borderColor = isLight ? 'border-[#e2e8f0]' : 'border-[#1f1f23]';
-  const cardBg = isLight ? 'bg-[#f8fafc]' : 'bg-[#1c1c21]';
-  const cardBorder = isLight ? 'border-[#e2e8f0]' : 'border-[#27272a]';
-  const avatarBg = isLight ? 'bg-white' : 'bg-[#141417]';
+  const headingColor = 'text-[var(--app-text-primary)]';
+  const subtextColor = 'text-[var(--app-text-secondary)]';
+  const mutedColor = 'text-[var(--app-text-muted)]';
+  const borderColor = 'border-[var(--app-border)]';
+  const cardBg = 'bg-[var(--app-surface-card)]';
+  const cardBorder = 'border-[var(--app-border)]';
+  const avatarBg = 'bg-[var(--app-surface-hover)]';
 
   const [meeting, setMeeting] = useState<Meeting | null>(null);
   const [loading, setLoading] = useState(true);

@@ -21,20 +21,20 @@ export default function MeetingSidebar({ open, tab, onTabChange, participants, c
           animate={{ width: 320, opacity: 1 }}
           exit={{ width: 0, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="border-l border-white/6 bg-[#0d1117] flex flex-col overflow-hidden flex-shrink-0"
+          className="border-l border-[var(--app-border)] bg-[var(--app-surface-card)] flex flex-col overflow-hidden flex-shrink-0"
         >
-          <div className="flex border-b border-white/6">
+          <div className="flex border-b border-[var(--app-border)]">
             {(['participants', 'chat'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => onTabChange(t)}
-                className={`flex-1 py-3 text-xs font-semibold capitalize transition-colors relative ${
-                  tab === t ? 'text-[#3B82F6]' : 'text-[#475569] hover:text-[#94A3B8]'
+                className={`flex-1 py-3 text-xs font-semibold capitalize transition-colors relative cursor-pointer ${
+                  tab === t ? 'text-[var(--app-text-primary)]' : 'text-[var(--app-text-muted)] hover:text-[var(--app-text-secondary)]'
                 }`}
               >
                 {t === 'participants' ? `Participants (${participants.length})` : 'Chat'}
                 {tab === t && (
-                  <motion.div layoutId="sidebar-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3B82F6]" />
+                  <motion.div layoutId="sidebar-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--app-text-primary)]" />
                 )}
               </button>
             ))}

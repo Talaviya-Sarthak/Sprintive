@@ -365,28 +365,28 @@ export default function KanbanPage() {
 
   return (
     <AppLayout teamId={activeTeamId}>
-      <div className="flex flex-col h-full px-3 sm:px-5 py-3.5 max-w-[1600px] mx-auto select-none">
+      <div className="flex flex-col h-full min-h-0 w-full px-3 sm:px-5 py-3 max-w-[1600px] mx-auto select-none overflow-hidden">
         {/* Compact Page Header */}
-        <div className="flex flex-col gap-3 pb-3.5 border-b border-[#1f202b] mb-3.5">
+        <div className="flex flex-col gap-3 pb-3 border-b border-[var(--app-border)] mb-3 shrink-0">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <div>
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#15161f] border border-[#242636] text-[#f4f4f5]">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--app-surface-subtle)] border border-[var(--app-border)] text-[var(--app-text-primary)]">
                   <Kanban size={15} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h1 className="text-base sm:text-lg font-bold tracking-tight text-[#f4f4f5]">
+                    <h1 className="text-base sm:text-lg font-bold tracking-tight text-[var(--app-text-primary)]">
                       Kanban Board
                     </h1>
                     {meetingIdParam !== 'all' && currentFilteredMeeting && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-300">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-700 dark:text-blue-300">
                         <Video size={10} />
                         <span className="max-w-[140px] truncate">{currentFilteredMeeting.title}</span>
                         <button
                           type="button"
                           onClick={() => handleMeetingChange('all')}
-                          className="hover:text-blue-100 ml-0.5 cursor-pointer"
+                          className="hover:text-blue-900 dark:hover:text-blue-100 ml-0.5 cursor-pointer"
                           title="Show all meetings"
                         >
                           <X size={10} />
@@ -394,9 +394,9 @@ export default function KanbanPage() {
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-[#9ca3af]">
+                  <p className="text-[11px] text-[var(--app-text-muted)]">
                     Manage tasks across{' '}
-                    <span className="text-[#f4f4f5] font-medium">
+                    <span className="text-[var(--app-text-primary)] font-medium">
                       {activeTeam?.name ?? 'your workspace'}
                     </span>
                   </p>
@@ -406,25 +406,25 @@ export default function KanbanPage() {
 
             {/* Quick Metrics Bar & Add Task CTA */}
             <div className="flex items-center gap-2">
-              <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#262836] bg-[#111217] text-xs">
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#1c1d27] border border-[#2b2d3d] text-zinc-300">
-                  <span className="text-[10.5px] text-[#9ca3af]">Total:</span>
-                  <span className="font-mono font-bold text-[#f4f4f5]">{totalCount}</span>
+              <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-card)] text-xs shadow-xs">
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--app-surface-subtle)] border border-[var(--app-border)] text-[var(--app-text-secondary)]">
+                  <span className="text-[10.5px] text-[var(--app-text-muted)]">Total:</span>
+                  <span className="font-mono font-bold text-[var(--app-text-primary)]">{totalCount}</span>
                 </div>
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-blue-300">
-                  <Clock size={11} className="text-blue-400" />
-                  <span className="text-[10.5px] text-blue-300/80">Active:</span>
-                  <span className="font-mono font-bold text-blue-200">{inProgressCount}</span>
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-blue-700 dark:text-blue-300">
+                  <Clock size={11} className="text-blue-600 dark:text-blue-400" />
+                  <span className="text-[10.5px] text-blue-700/80 dark:text-blue-300/80">Active:</span>
+                  <span className="font-mono font-bold text-blue-800 dark:text-blue-200">{inProgressCount}</span>
                 </div>
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300">
-                  <AlertCircle size={11} className="text-amber-400" />
-                  <span className="text-[10.5px] text-amber-300/80">Review:</span>
-                  <span className="font-mono font-bold text-amber-200">{reviewCount}</span>
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300">
+                  <AlertCircle size={11} className="text-amber-600 dark:text-amber-400" />
+                  <span className="text-[10.5px] text-amber-800/80 dark:text-amber-300/80">Review:</span>
+                  <span className="font-mono font-bold text-amber-900 dark:text-amber-200">{reviewCount}</span>
                 </div>
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">
-                  <CheckCircle2 size={11} className="text-emerald-400" />
-                  <span className="text-[10.5px] text-emerald-300/80">Done:</span>
-                  <span className="font-mono font-bold text-emerald-200">{doneCount}</span>
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300">
+                  <CheckCircle2 size={11} className="text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-[10.5px] text-emerald-800/80 dark:text-emerald-300/80">Done:</span>
+                  <span className="font-mono font-bold text-emerald-900 dark:text-emerald-200">{doneCount}</span>
                 </div>
               </div>
 
@@ -442,12 +442,12 @@ export default function KanbanPage() {
 
           {/* Action error banner */}
           {actionError && (
-            <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs">
+            <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/25 text-rose-700 dark:text-rose-300 text-xs">
               <span>{actionError}</span>
               <button
                 type="button"
                 onClick={() => setActionError(null)}
-                className="text-rose-400 hover:text-rose-200"
+                className="text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-200"
               >
                 <X size={13} />
               </button>
@@ -455,25 +455,25 @@ export default function KanbanPage() {
           )}
 
           {/* Interactive Controls Bar: Search, Filters, Sort */}
-          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2 shrink-0 mb-2">
             {/* Search Input */}
             <div className="relative flex-1 max-w-sm">
               <Search
                 size={13}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#71717a] pointer-events-none"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--app-text-muted)] pointer-events-none"
               />
               <input
                 type="text"
                 placeholder="Filter tasks by name, assignee, tag..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full border rounded-lg pl-8 pr-7 py-1 text-xs outline-none transition-colors bg-[#13141a] border-[#242636] text-[#f4f4f5] focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30"
+                className="w-full border rounded-lg pl-8 pr-7 py-1 text-xs outline-none transition-colors bg-[var(--app-surface-card)] border-[var(--app-border)] text-[var(--app-text-primary)] placeholder:text-[var(--app-text-dim)] focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[#71717a] hover:text-[#f4f4f5] cursor-pointer"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--app-text-muted)] hover:text-[var(--app-text-primary)] cursor-pointer"
                 >
                   <X size={11} />
                 </button>
@@ -486,22 +486,22 @@ export default function KanbanPage() {
               <div
                 className={`flex items-center gap-1 border rounded-lg px-2 py-0.5 text-xs transition-colors ${
                   meetingIdParam !== 'all'
-                    ? 'border-blue-500/50 bg-blue-500/10 text-blue-300'
-                    : 'border-[#242636] bg-[#13141a] text-[#a1a1aa]'
+                    ? 'border-blue-500/50 bg-blue-500/10 text-blue-700 dark:text-blue-300'
+                    : 'border-[var(--app-border)] bg-[var(--app-surface-card)] text-[var(--app-text-secondary)]'
                 }`}
               >
-                <Video size={11} className={meetingIdParam !== 'all' ? 'text-blue-400' : 'text-[#71717a]'} />
+                <Video size={11} className={meetingIdParam !== 'all' ? 'text-blue-600 dark:text-blue-400' : 'text-[var(--app-text-muted)]'} />
                 <span className="text-[10.5px] font-mono opacity-80">Meeting:</span>
                 <select
                   value={meetingIdParam}
                   onChange={e => handleMeetingChange(e.target.value)}
                   className="bg-transparent text-[11px] text-inherit outline-none cursor-pointer max-w-[130px] truncate font-medium"
                 >
-                  <option value="all" className="bg-[#181920] text-[#f4f4f5]">
+                  <option value="all" className="bg-[var(--app-surface-card)] text-[var(--app-text-primary)]">
                     All Meetings ({meetings.reduce((acc, m) => acc + (m.task_count || 0), 0)})
                   </option>
                   {meetings.map(m => (
-                    <option key={m.id} value={m.id} className="bg-[#181920] text-[#f4f4f5]">
+                    <option key={m.id} value={m.id} className="bg-[var(--app-surface-card)] text-[var(--app-text-primary)]">
                       {m.title} ({m.task_count})
                     </option>
                   ))}
@@ -513,27 +513,27 @@ export default function KanbanPage() {
                 className={`flex items-center gap-1 border rounded-lg px-2 py-0.5 text-xs transition-colors ${
                   priorityFilter !== 'all'
                     ? priorityFilter === 'urgent'
-                      ? 'border-rose-500/50 bg-rose-500/10 text-rose-300'
+                      ? 'border-rose-500/50 bg-rose-500/10 text-rose-700 dark:text-rose-300'
                       : priorityFilter === 'high'
-                      ? 'border-amber-500/50 bg-amber-500/10 text-amber-300'
+                      ? 'border-amber-500/50 bg-amber-500/10 text-amber-800 dark:text-amber-300'
                       : priorityFilter === 'medium'
-                      ? 'border-blue-500/50 bg-blue-500/10 text-blue-300'
-                      : 'border-slate-500/50 bg-slate-500/10 text-slate-300'
-                    : 'border-[#242636] bg-[#13141a] text-[#a1a1aa]'
+                      ? 'border-blue-500/50 bg-blue-500/10 text-blue-700 dark:text-blue-300'
+                      : 'border-slate-500/50 bg-slate-500/10 text-slate-700 dark:text-slate-300'
+                    : 'border-[var(--app-border)] bg-[var(--app-surface-card)] text-[var(--app-text-secondary)]'
                 }`}
               >
-                <SlidersHorizontal size={11} className={priorityFilter !== 'all' ? 'text-current' : 'text-[#71717a]'} />
+                <SlidersHorizontal size={11} className={priorityFilter !== 'all' ? 'text-current' : 'text-[var(--app-text-muted)]'} />
                 <span className="text-[10.5px] font-mono opacity-80">Priority:</span>
                 <select
                   value={priorityFilter}
                   onChange={e => setPriorityFilter(e.target.value as TaskPriority | 'all')}
                   className="bg-transparent text-[11px] text-inherit outline-none cursor-pointer font-medium"
                 >
-                  <option value="all" className="bg-[#181920] text-[#f4f4f5]">All</option>
-                  <option value="urgent" className="bg-[#181920] text-rose-300">Urgent</option>
-                  <option value="high" className="bg-[#181920] text-amber-300">High</option>
-                  <option value="medium" className="bg-[#181920] text-blue-300">Medium</option>
-                  <option value="low" className="bg-[#181920] text-slate-300">Low</option>
+                  <option value="all" className="bg-[var(--app-surface-card)] text-[var(--app-text-primary)]">All</option>
+                  <option value="urgent" className="bg-[var(--app-surface-card)] text-rose-600 dark:text-rose-300">Urgent</option>
+                  <option value="high" className="bg-[var(--app-surface-card)] text-amber-600 dark:text-amber-300">High</option>
+                  <option value="medium" className="bg-[var(--app-surface-card)] text-blue-600 dark:text-blue-300">Medium</option>
+                  <option value="low" className="bg-[var(--app-surface-card)] text-slate-600 dark:text-slate-300">Low</option>
                 </select>
               </div>
 
@@ -541,8 +541,8 @@ export default function KanbanPage() {
               <div
                 className={`flex items-center gap-1 border rounded-lg px-2 py-0.5 text-xs transition-colors ${
                   assigneeFilter !== 'all'
-                    ? 'border-indigo-500/50 bg-indigo-500/10 text-indigo-300'
-                    : 'border-[#242636] bg-[#13141a] text-[#a1a1aa]'
+                    ? 'border-indigo-500/50 bg-indigo-500/10 text-indigo-700 dark:text-indigo-300'
+                    : 'border-[var(--app-border)] bg-[var(--app-surface-card)] text-[var(--app-text-secondary)]'
                 }`}
               >
                 <span className="text-[10.5px] font-mono opacity-80">Assignee:</span>
@@ -551,10 +551,10 @@ export default function KanbanPage() {
                   onChange={e => setAssigneeFilter(e.target.value)}
                   className="bg-transparent text-[11px] text-inherit outline-none cursor-pointer max-w-[105px] truncate font-medium"
                 >
-                  <option value="all" className="bg-[#181920] text-[#f4f4f5]">All</option>
-                  <option value="unassigned" className="bg-[#181920] text-[#f4f4f5]">Unassigned</option>
+                  <option value="all" className="bg-[var(--app-surface-card)] text-[var(--app-text-primary)]">All</option>
+                  <option value="unassigned" className="bg-[var(--app-surface-card)] text-[var(--app-text-primary)]">Unassigned</option>
                   {teamMembers.map(m => (
-                    <option key={m.id} value={m.id} className="bg-[#181920] text-[#f4f4f5]">
+                    <option key={m.id} value={m.id} className="bg-[var(--app-surface-card)] text-[var(--app-text-primary)]">
                       {m.name}
                     </option>
                   ))}
@@ -565,8 +565,8 @@ export default function KanbanPage() {
               <div
                 className={`flex items-center gap-1 border rounded-lg px-2 py-0.5 text-xs transition-colors ${
                   statusFilter !== 'all'
-                    ? 'border-blue-500/50 bg-blue-500/10 text-blue-300'
-                    : 'border-[#242636] bg-[#13141a] text-[#a1a1aa]'
+                    ? 'border-blue-500/50 bg-blue-500/10 text-blue-700 dark:text-blue-300'
+                    : 'border-[var(--app-border)] bg-[var(--app-surface-card)] text-[var(--app-text-secondary)]'
                 }`}
               >
                 <span className="text-[10.5px] font-mono opacity-80">Status:</span>
@@ -575,29 +575,29 @@ export default function KanbanPage() {
                   onChange={e => setStatusFilter(e.target.value as KanbanStatus | 'all')}
                   className="bg-transparent text-[11px] text-inherit outline-none cursor-pointer font-medium"
                 >
-                  <option value="all" className="bg-[#181920] text-[#f4f4f5]">All</option>
-                  <option value="backlog" className="bg-[#181920] text-[#f4f4f5]">Backlog</option>
-                  <option value="todo" className="bg-[#181920] text-[#f4f4f5]">To Do</option>
-                  <option value="in_progress" className="bg-[#181920] text-[#f4f4f5]">In Progress</option>
-                  <option value="review" className="bg-[#181920] text-[#f4f4f5]">Review</option>
-                  <option value="done" className="bg-[#181920] text-[#f4f4f5]">Done</option>
+                  <option value="all" className="bg-[var(--app-surface-card)] text-[var(--app-text-primary)]">All</option>
+                  <option value="backlog" className="bg-[var(--app-surface-card)] text-[var(--app-text-primary)]">Backlog</option>
+                  <option value="todo" className="bg-[var(--app-surface-card)] text-[var(--app-text-primary)]">To Do</option>
+                  <option value="in_progress" className="bg-[var(--app-surface-card)] text-[var(--app-text-primary)]">In Progress</option>
+                  <option value="review" className="bg-[var(--app-surface-card)] text-[var(--app-text-primary)]">Review</option>
+                  <option value="done" className="bg-[var(--app-surface-card)] text-[var(--app-text-primary)]">Done</option>
                 </select>
               </div>
 
               {/* Sort Dropdown */}
-              <div className="flex items-center gap-1 border border-[#242636] rounded-lg px-2 py-0.5 bg-[#13141a] text-xs text-[#a1a1aa]">
-                <ArrowUpDown size={11} className="text-[#71717a]" />
-                <span className="text-[10.5px] font-mono text-[#71717a]">Sort:</span>
+              <div className="flex items-center gap-1 border border-[var(--app-border)] rounded-lg px-2 py-0.5 bg-[var(--app-surface-card)] text-xs text-[var(--app-text-secondary)]">
+                <ArrowUpDown size={11} className="text-[var(--app-text-muted)]" />
+                <span className="text-[10.5px] font-mono text-[var(--app-text-muted)]">Sort:</span>
                 <select
                   value={sortBy}
                   onChange={e => setSortBy(e.target.value as SortOption)}
-                  className="bg-transparent text-[11px] text-[#f4f4f5] outline-none cursor-pointer font-medium"
+                  className="bg-transparent text-[11px] text-[var(--app-text-primary)] outline-none cursor-pointer font-medium"
                 >
-                  <option value="recent" className="bg-[#181920] text-[#f4f4f5]">Recent</option>
-                  <option value="priority-desc" className="bg-[#181920] text-[#f4f4f5]">Priority (High)</option>
-                  <option value="priority-asc" className="bg-[#181920] text-[#f4f4f5]">Priority (Low)</option>
-                  <option value="due-asc" className="bg-[#181920] text-[#f4f4f5]">Due (Soon)</option>
-                  <option value="due-desc" className="bg-[#181920] text-[#f4f4f5]">Due (Late)</option>
+                  <option value="recent" className="bg-[var(--app-surface-card)] text-[var(--app-text-primary)]">Recent</option>
+                  <option value="priority-desc" className="bg-[var(--app-surface-card)] text-[var(--app-text-primary)]">Priority (High)</option>
+                  <option value="priority-asc" className="bg-[var(--app-surface-card)] text-[var(--app-text-primary)]">Priority (Low)</option>
+                  <option value="due-asc" className="bg-[var(--app-surface-card)] text-[var(--app-text-primary)]">Due (Soon)</option>
+                  <option value="due-desc" className="bg-[var(--app-surface-card)] text-[var(--app-text-primary)]">Due (Late)</option>
                 </select>
               </div>
 
@@ -606,7 +606,7 @@ export default function KanbanPage() {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="flex items-center gap-1 text-[11px] text-rose-300 hover:text-rose-200 px-1.5 py-0.5 rounded-md bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 transition-colors cursor-pointer"
+                  className="flex items-center gap-1 text-[11px] text-rose-700 dark:text-rose-300 hover:text-rose-800 dark:hover:text-rose-200 px-1.5 py-0.5 rounded-md bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 transition-colors cursor-pointer"
                 >
                   <X size={11} />
                   <span>Reset</span>
@@ -616,18 +616,20 @@ export default function KanbanPage() {
           </div>
         </div>
 
-        {/* Loading State */}
-        {loading ? (
+        {/* Main Board Viewport Container */}
+        <div className="flex-1 min-h-0 w-full overflow-hidden flex flex-col">
+          {/* Loading State */}
+          {loading ? (
           <div className="flex flex-col items-center justify-center h-80 gap-3">
-            <Loader2 size={24} className="animate-spin text-blue-400" />
-            <p className="text-xs text-[#a1a1aa] font-mono">Loading Kanban board...</p>
+            <Loader2 size={24} className="animate-spin text-blue-500 dark:text-blue-400" />
+            <p className="text-xs text-[var(--app-text-muted)] font-mono">Loading Kanban board...</p>
           </div>
         ) : error ? (
           /* Error State */
           <div className="flex flex-col items-center justify-center h-80 gap-3 border border-rose-500/20 rounded-xl bg-rose-500/5 p-6 text-center">
-            <AlertCircle size={28} className="text-rose-400" />
-            <h3 className="text-sm font-semibold text-[#f4f4f5]">Unable to Load Board</h3>
-            <p className="text-xs text-[#a1a1aa] max-w-sm">{error}</p>
+            <AlertCircle size={28} className="text-rose-500 dark:text-rose-400" />
+            <h3 className="text-sm font-semibold text-[var(--app-text-primary)]">Unable to Load Board</h3>
+            <p className="text-xs text-[var(--app-text-muted)] max-w-sm">{error}</p>
             <AppButton variant="mono-outline" size="sm" onClick={fetchBoardData} className="mt-2 gap-1.5">
               <RefreshCw size={13} />
               <span>Retry</span>
@@ -637,20 +639,20 @@ export default function KanbanPage() {
           meetingProcStatus?.is_processing ? (
             /* Processing State */
             <div className="flex flex-col items-center justify-center h-80 gap-3 border border-blue-500/30 rounded-xl bg-blue-500/[0.03] p-8 text-center">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-500/15 border border-blue-500/30 text-blue-400">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-500/15 border border-blue-500/30 text-blue-600 dark:text-blue-400">
                 <Sparkles size={20} className="animate-pulse" />
               </div>
-              <h3 className="text-sm font-semibold text-[#f4f4f5]">AI is analyzing your latest meeting</h3>
-              <p className="text-xs text-[#9ca3af] max-w-md leading-relaxed">
+              <h3 className="text-sm font-semibold text-[var(--app-text-primary)]">AI is analyzing your latest meeting</h3>
+              <p className="text-xs text-[var(--app-text-secondary)] max-w-md leading-relaxed">
                 Tasks will appear here automatically when processing is complete.
                 {meetingProcStatus.current_stage && (
-                  <span className="block mt-1 font-mono text-[11px] text-blue-300">
+                  <span className="block mt-1 font-mono text-[11px] text-blue-600 dark:text-blue-300">
                     Stage: {meetingProcStatus.current_stage.replace(/_/g, ' ')}
                   </span>
                 )}
               </p>
               <div className="flex items-center gap-2 mt-2">
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-300 text-xs font-mono">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-700 dark:text-blue-300 text-xs font-mono">
                   <Loader2 size={12} className="animate-spin" />
                   <span>Processing in progress...</span>
                 </div>
@@ -659,11 +661,11 @@ export default function KanbanPage() {
           ) : (meetingProcStatus?.transcript_status === 'failed' || meetingProcStatus?.ai_status === 'failed') ? (
             /* Failed State */
             <div className="flex flex-col items-center justify-center h-80 gap-3 border border-rose-500/30 rounded-xl bg-rose-500/[0.03] p-8 text-center">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-rose-500/15 border border-rose-500/30 text-rose-400">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-rose-500/15 border border-rose-500/30 text-rose-500 dark:text-rose-400">
                 <AlertCircle size={20} />
               </div>
-              <h3 className="text-sm font-semibold text-[#f4f4f5]">AI processing failed</h3>
-              <p className="text-xs text-[#9ca3af] max-w-md leading-relaxed">
+              <h3 className="text-sm font-semibold text-[var(--app-text-primary)]">AI processing failed</h3>
+              <p className="text-xs text-[var(--app-text-secondary)] max-w-md leading-relaxed">
                 {meetingProcStatus.error || 'We encountered an error processing the transcript for this meeting.'}
               </p>
               <div className="flex items-center gap-2 mt-2">
@@ -693,14 +695,14 @@ export default function KanbanPage() {
             </div>
           ) : (
             /* Standard Empty State */
-            <div className="flex flex-col items-center justify-center h-80 gap-3 border border-[#242636] rounded-xl bg-[#14151e] p-8 text-center">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#1d1f2b] border border-[#2c2f42] text-indigo-400">
+            <div className="flex flex-col items-center justify-center h-80 gap-3 border border-[var(--app-border)] rounded-xl bg-[var(--app-surface-card)] shadow-xs p-8 text-center">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--app-surface-subtle)] border border-[var(--app-border)] text-indigo-500 dark:text-indigo-400">
                 <Sparkles size={20} />
               </div>
-              <h3 className="text-sm font-semibold text-[#f4f4f5]">
+              <h3 className="text-sm font-semibold text-[var(--app-text-primary)]">
                 {meetingIdParam !== 'all' ? 'No tasks from this meeting' : 'No tasks on this board yet'}
               </h3>
-              <p className="text-xs text-[#a1a1aa] max-w-md leading-relaxed">
+              <p className="text-xs text-[var(--app-text-secondary)] max-w-md leading-relaxed">
                 {meetingIdParam !== 'all'
                   ? 'This meeting was processed, but did not produce any actionable tasks.'
                   : 'Tasks generated by the Scrum Intelligence Agent after completed meetings will appear here automatically.'}
@@ -735,6 +737,7 @@ export default function KanbanPage() {
             onMoveStatus={handleMoveStatus}
           />
         )}
+        </div>
 
         {/* Right-Side Full Task Detail Drawer */}
         <TaskDetailDrawer

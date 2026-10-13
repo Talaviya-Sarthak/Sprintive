@@ -20,18 +20,18 @@ function ToolbarButton({ icon, label, onClick, active, danger, disabled, badge }
       title={disabled ? `${label} (Unsupported in current environment)` : label}
       className={`relative flex flex-col items-center gap-1 px-3.5 py-2 rounded-xl transition-all duration-150 cursor-pointer ${
         disabled
-          ? 'bg-[#141417]/50 text-[#71717a] border border-[#27272a]/50 cursor-not-allowed opacity-50'
+          ? 'bg-[var(--app-surface-subtle)]/50 text-[var(--app-text-muted)] border border-[var(--app-border)]/50 cursor-not-allowed opacity-50'
           : danger
-          ? 'bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20'
+          ? 'bg-red-500/10 hover:bg-red-500 text-red-500 dark:text-red-400 hover:text-white border border-red-500/20'
           : active
-          ? 'bg-[#1c1c21] text-[#f4f4f5] border border-[#27272a]'
-          : 'bg-[#141417] hover:bg-[#18181b] text-[#a1a1aa] hover:text-[#f4f4f5] border border-[#27272a]'
+          ? 'bg-[var(--app-surface-hover)] text-[var(--app-text-primary)] border border-[var(--app-border)] font-semibold shadow-xs'
+          : 'bg-[var(--app-surface-subtle)] hover:bg-[var(--app-surface-hover)] text-[var(--app-text-secondary)] hover:text-[var(--app-text-primary)] border border-[var(--app-border)]'
       }`}
     >
       <span className="w-4.5 h-4.5">{icon}</span>
       <span className="text-[10px] font-medium">{label}</span>
       {badge != null && badge > 0 && (
-        <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#f4f4f5] text-[#09090b] text-[9px] font-bold flex items-center justify-center shadow-xs">
+        <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[var(--app-text-primary)] text-[var(--app-bg)] text-[9px] font-bold flex items-center justify-center shadow-xs">
           {badge > 9 ? '9+' : badge}
         </span>
       )}
@@ -72,7 +72,7 @@ export default function MeetingToolbar({
       initial={{ y: 60, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 350, damping: 35 }}
-      className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-[#0c0c0e]/95 backdrop-blur-xl border border-[#27272a] shadow-2xl"
+      className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-[var(--app-surface-card)]/95 backdrop-blur-xl border border-[var(--app-border)] shadow-xl"
     >
       <ToolbarButton
         icon={
@@ -124,7 +124,7 @@ export default function MeetingToolbar({
         active={isScreenSharing}
       />
 
-      <div className="w-px h-6 bg-[#27272a] mx-1" />
+      <div className="w-px h-6 bg-[var(--app-border)] mx-1" />
 
       <ToolbarButton
         icon={

@@ -20,8 +20,11 @@ import {
   Kanban,
   PanelLeftClose,
   PanelLeftOpen,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -30,8 +33,11 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children, teamId }: AppLayoutProps) {
   const { user, teams, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const isLight = theme === 'light';
   const navigate = useNavigate();
   const location = useLocation();
+  const isKanbanPage = location.pathname.includes('/kanban');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [teamMenuOpen, setTeamMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -122,7 +128,16 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
               type="button"
               onClick={toggleSidebar}
               title="Expand sidebar"
-              className="p-1 rounded-md text-[#71717a] hover:text-[#f4f4f5] hover:bg-[#181920] transition-colors cursor-pointer"
+              className="p-1 rounded-md transition-colors cursor-pointer"
+              style={{ color: 'var(--app-text-muted)' }}
+              onMouseEnter={e => {
+                e.currentTarget.style.color = 'var(--app-text-primary)';
+                e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.color = 'var(--app-text-muted)';
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
             >
               <PanelLeftOpen size={14} />
             </button>
@@ -168,7 +183,16 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
                 type="button"
                 onClick={toggleSidebar}
                 title="Collapse sidebar"
-                className="p-1 rounded-md text-[#71717a] hover:text-[#f4f4f5] hover:bg-[#181920] transition-colors cursor-pointer shrink-0"
+                className="p-1 rounded-md transition-colors cursor-pointer shrink-0"
+                style={{ color: 'var(--app-text-muted)' }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.color = 'var(--app-text-primary)';
+                  e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.color = 'var(--app-text-muted)';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
               >
                 <PanelLeftClose size={15} />
               </button>
@@ -614,6 +638,27 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
                   <span>View Profile</span>
                 </button>
                 <button
+                  onClick={toggleTheme}
+                  className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs transition-colors cursor-pointer"
+                  style={{ color: 'var(--app-text-secondary)' }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+                    e.currentTarget.style.color = 'var(--app-text-primary)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'var(--app-text-secondary)';
+                  }}
+                >
+                  <div className="flex items-center gap-2.5">
+                    {isLight ? <Moon size={14} /> : <Sun size={14} />}
+                    <span>{isLight ? 'Dark Mode' : 'Light Mode'}</span>
+                  </div>
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded border" style={{ borderColor: 'var(--app-border)', backgroundColor: 'var(--app-surface-subtle)' }}>
+                    {isLight ? 'Light' : 'Dark'}
+                  </span>
+                </button>
+                <button
                   onClick={handleLogout}
                   className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs transition-colors cursor-pointer"
                   style={{ color: '#EF4444' }}
@@ -722,7 +767,16 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
               type="button"
               onClick={toggleSidebar}
               title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              className="hidden md:flex p-1.5 rounded-lg text-[#71717a] hover:text-[#f4f4f5] hover:bg-[#181920] border border-transparent hover:border-[#27272a] transition-colors cursor-pointer"
+              className="hidden md:flex p-1.5 rounded-lg transition-colors cursor-pointer"
+              style={{ color: 'var(--app-text-muted)' }}
+              onMouseEnter={e => {
+                e.currentTarget.style.color = 'var(--app-text-primary)';
+                e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.color = 'var(--app-text-muted)';
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
             >
               {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
             </button>
@@ -750,6 +804,29 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Global Theme Toggle Button */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              title={isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+              className="p-1.5 rounded-lg border transition-all cursor-pointer flex items-center justify-center shadow-xs"
+              style={{
+                backgroundColor: 'var(--app-surface-card)',
+                borderColor: 'var(--app-border)',
+                color: isLight ? '#B45309' : '#F59E0B',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = 'var(--app-border-focus)';
+                e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = 'var(--app-border)';
+                e.currentTarget.style.backgroundColor = 'var(--app-surface-card)';
+              }}
+            >
+              {isLight ? <Moon size={15} /> : <Sun size={15} />}
+            </button>
+
             {/* New Meeting CTA */}
             <button
               onClick={() => navigate(teamId ? `/meetings/create?team_id=${teamId}` : '/meetings/create')}
@@ -819,7 +896,12 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
         </header>
 
         {/* Dynamic Viewport Container */}
-        <main className="flex-1 overflow-y-auto app-scrollbar" style={{ backgroundColor: 'var(--app-bg)' }}>{children}</main>
+        <main
+          className={`flex-1 min-h-0 ${isKanbanPage ? 'overflow-hidden flex flex-col' : 'overflow-y-auto app-scrollbar'}`}
+          style={{ backgroundColor: 'var(--app-bg)' }}
+        >
+          {children}
+        </main>
       </div>
     </div>
   );

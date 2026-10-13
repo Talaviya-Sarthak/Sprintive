@@ -73,8 +73,8 @@ export default function ParticipantCard({ participant, isActive, videoRef }: Pro
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className={`relative rounded-2xl overflow-hidden bg-[#141417] border transition-all duration-300 aspect-video flex items-center justify-center ${
-        isActive ? 'border-[#f4f4f5] shadow-md shadow-[#f4f4f5]/10' : 'border-[#27272a]'
+      className={`relative rounded-2xl overflow-hidden bg-neutral-900 border transition-all duration-300 aspect-video flex items-center justify-center ${
+        isActive ? 'border-emerald-500 shadow-md shadow-emerald-500/20 ring-2 ring-emerald-500/30' : 'border-[var(--app-border)]'
       }`}
     >
       {/* Video: only rendered when video track actually exists; avatar shown otherwise */}
@@ -87,8 +87,8 @@ export default function ParticipantCard({ participant, isActive, videoRef }: Pro
           className="w-full h-full object-cover"
         />
       ) : (
-        <div className="w-full h-full flex items-center justify-center bg-[#141417]">
-          <div className="w-16 h-16 rounded-full flex items-center justify-center text-[#f4f4f5] font-semibold text-lg bg-[#1c1c21] border border-[#27272a]">
+        <div className="w-full h-full flex items-center justify-center bg-neutral-900">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center text-white font-semibold text-lg bg-neutral-800 border border-neutral-700 shadow-sm">
             {participant.avatar_url
               ? <img src={participant.avatar_url} alt={participant.full_name} className="w-full h-full rounded-full object-cover" />
               : initials}
@@ -99,32 +99,32 @@ export default function ParticipantCard({ participant, isActive, videoRef }: Pro
       {/* Speaking ring */}
       {isActive && (
         <motion.div
-          className="absolute inset-0 rounded-2xl border-2 border-[#f4f4f5] pointer-events-none"
+          className="absolute inset-0 rounded-2xl border-2 border-emerald-500 pointer-events-none"
           animate={{ opacity: [0.5, 1, 0.5] }}
           transition={{ repeat: Infinity, duration: 1.2 }}
         />
       )}
 
       {/* Bottom bar */}
-      <div className="absolute bottom-0 left-0 right-0 px-3.5 py-2 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-center justify-between">
+      <div className="absolute bottom-0 left-0 right-0 px-3.5 py-2 bg-gradient-to-t from-black/85 via-black/45 to-transparent flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-[#f4f4f5] text-xs font-medium truncate max-w-[130px]">{participant.full_name}</span>
+          <span className="text-white text-xs font-medium truncate max-w-[130px] drop-shadow-xs">{participant.full_name}</span>
           {participant.role === 'host' && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#1c1c21] border border-[#27272a] text-[#f4f4f5] font-mono font-medium">Host</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/15 border border-white/20 text-white font-mono font-medium backdrop-blur-xs">Host</span>
           )}
         </div>
         <div className="flex items-center gap-1.5">
           {/* Screen sharing indicator */}
           {participant.isScreenSharing && (
-            <div className="w-5 h-5 rounded-full flex items-center justify-center bg-[#3B82F6]/20" title="Sharing screen">
-              <svg className="w-3 h-3 text-[#3B82F6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div className="w-5 h-5 rounded-full flex items-center justify-center bg-blue-500/30" title="Sharing screen">
+              <svg className="w-3 h-3 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <rect x="2" y="3" width="20" height="14" rx="2" />
                 <path d="M8 21h8M12 17v4" />
               </svg>
             </div>
           )}
           {/* Mic status */}
-          <div className={`w-5 h-5 rounded-full flex items-center justify-center ${participant.isMuted ? 'bg-red-500/20' : 'bg-white/10'}`}>
+          <div className={`w-5 h-5 rounded-full flex items-center justify-center ${participant.isMuted ? 'bg-red-500/30' : 'bg-white/15'}`}>
             {participant.isMuted ? (
               <svg className="w-3 h-3 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <line x1="1" y1="1" x2="23" y2="23" /><path d="M9 9v3a3 3 0 005.12 2.12M15 9.34V4a3 3 0 00-5.94-.6" /><path d="M17 16.95A7 7 0 015 12v-2m14 0v2a7 7 0 01-.11 1.23M12 19v3M8 23h8" />
@@ -145,7 +145,7 @@ export default function ParticipantCard({ participant, isActive, videoRef }: Pro
           {[1, 2, 3].map((i) => (
             <motion.div
               key={i}
-              className="w-1 bg-[#f4f4f5] rounded-full"
+              className="w-1 bg-emerald-400 rounded-full"
               animate={{ height: ['4px', '16px', '4px'] }}
               transition={{ repeat: Infinity, duration: 0.6, delay: i * 0.15 }}
             />

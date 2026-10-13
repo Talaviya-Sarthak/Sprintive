@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Sun, Moon } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 import { useMediaDevices } from '../../hooks/useMediaDevices';
 import { useMeetingSocket } from '../../hooks/useMeetingSocket';
 import { useAudioCapture } from '../../hooks/useAudioCapture';
@@ -58,6 +60,7 @@ export default function MeetingRoomPage() {
   const { meetingId } = useParams<{ meetingId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const screenShareVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -330,29 +333,29 @@ export default function MeetingRoomPage() {
   if (endedData) {
     const content = endedData.transcript?.content;
     return (
-      <div className="min-h-screen bg-[#0B1220] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[var(--app-bg)] flex items-center justify-center p-4">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-lg">
-          <div className="bg-[#111827] border border-white/8 rounded-3xl p-8 text-center">
+          <div className="bg-[var(--app-surface-card)] border border-[var(--app-border)] rounded-3xl p-8 text-center shadow-xl">
             <div className="w-16 h-16 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <svg className="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h2 className="text-xl font-bold text-[#F8FAFC] mb-1">Meeting Ended</h2>
-            <p className="text-[#94A3B8] text-sm mb-6">Summary is being generated...</p>
+            <h2 className="text-xl font-bold text-[var(--app-text-primary)] mb-1">Meeting Ended</h2>
+            <p className="text-[var(--app-text-muted)] text-sm mb-6">Summary is being generated...</p>
 
             {content && (
               <div className="text-left mb-6">
-                <p className="text-xs font-semibold text-[#94A3B8] mb-2 uppercase tracking-wider">Transcript</p>
-                <div className="bg-[#0d1117] border border-white/6 rounded-xl p-4 max-h-48 overflow-y-auto">
-                  <pre className="text-xs text-[#CBD5E1] whitespace-pre-wrap font-sans leading-relaxed">{content}</pre>
+                <p className="text-xs font-semibold text-[var(--app-text-muted)] mb-2 uppercase tracking-wider">Transcript</p>
+                <div className="bg-[var(--app-surface-subtle)] border border-[var(--app-border)] rounded-xl p-4 max-h-48 overflow-y-auto">
+                  <pre className="text-xs text-[var(--app-text-secondary)] whitespace-pre-wrap font-sans leading-relaxed">{content}</pre>
                 </div>
               </div>
             )}
 
             <button
               onClick={() => navigate(`/meetings/${meetingId}/summary`)}
-              className="w-full py-3 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white font-semibold text-sm transition-colors"
+              className="w-full py-3 rounded-xl bg-[var(--app-text-primary)] text-[var(--app-bg)] font-semibold text-sm transition-opacity hover:opacity-90 cursor-pointer shadow-xs"
             >
               View Summary
             </button>
@@ -365,29 +368,29 @@ export default function MeetingRoomPage() {
   // ── Loading ──
   if (loading && !meeting) {
     return (
-      <div className="h-screen bg-[#080c14] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#3B82F6]/30 border-t-[#3B82F6] rounded-full animate-spin" />
+      <div className="h-screen bg-[var(--app-bg)] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[var(--app-border)] border-t-[var(--app-text-primary)] rounded-full animate-spin" />
       </div>
     );
   }
 
   // ── Main Room ──
   return (
-    <div className="h-screen bg-[#080c14] flex flex-col overflow-hidden">
+    <div className="h-screen bg-[var(--app-bg)] flex flex-col overflow-hidden text-[var(--app-text-secondary)] transition-colors duration-200">
       {/* Remote audio elements: continuous playback regardless of video element mounting */}
       {remoteParticipants.map((p) => (
         <RemoteAudioPlayer key={`remote-audio-${p.user_id}`} stream={p.stream} />
       ))}
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-white/6 bg-[#0d1117]/80 backdrop-blur-sm flex-shrink-0">
+      <div className="flex items-center justify-between px-6 py-3 border-b border-[var(--app-border)] bg-[var(--app-surface-card)]/90 backdrop-blur-sm flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-[#3B82F6] animate-pulse" />
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <div>
-            <h1 className="text-sm font-semibold text-[#F8FAFC] leading-none">{meeting?.title ?? 'Meeting'}</h1>
-            {meeting?.sprint_name && <p className="text-[11px] text-[#475569] mt-0.5">{meeting.sprint_name}</p>}
+            <h1 className="text-sm font-semibold text-[var(--app-text-primary)] leading-none">{meeting?.title ?? 'Meeting'}</h1>
+            {meeting?.sprint_name && <p className="text-[11px] text-[var(--app-text-muted)] mt-0.5">{meeting.sprint_name}</p>}
           </div>
         </div>
-<div className="flex items-center gap-4">
+        <div className="flex items-center gap-3.5">
           {meeting?.status && <MeetingStatusBadge status={meeting.status} />}
 
           {/* Timer */}
@@ -396,30 +399,30 @@ export default function MeetingRoomPage() {
           {/* AI / STT status indicator */}
           <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${
             sttStatus === 'active'
-              ? 'bg-[#8B5CF6]/10 border-[#8B5CF6]/20'
+              ? 'bg-purple-500/10 border-purple-500/20'
               : sttStatus === 'finalizing'
               ? 'bg-amber-500/10 border-amber-500/20'
               : sttStatus === 'completed'
               ? 'bg-green-500/10 border-green-500/20'
               : sttStatus === 'failed'
               ? 'bg-red-500/10 border-red-500/20'
-              : 'bg-[#8B5CF6]/10 border-[#8B5CF6]/20'
+              : 'bg-[var(--app-surface-subtle)] border-[var(--app-border)]'
           }`}>
             <svg className={`w-3 h-3 ${
-              sttStatus === 'active' ? 'text-[#8B5CF6] animate-pulse' :
-              sttStatus === 'finalizing' ? 'text-amber-400 animate-pulse' :
-              sttStatus === 'completed' ? 'text-green-400' :
-              sttStatus === 'failed' ? 'text-red-400' :
-              'text-[#8B5CF6]'
+              sttStatus === 'active' ? 'text-purple-500 animate-pulse' :
+              sttStatus === 'finalizing' ? 'text-amber-500 animate-pulse' :
+              sttStatus === 'completed' ? 'text-green-500' :
+              sttStatus === 'failed' ? 'text-red-500' :
+              'text-[var(--app-text-muted)]'
             }`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
             <span className={`text-[11px] font-medium ${
-              sttStatus === 'active' ? 'text-[#8B5CF6]' :
-              sttStatus === 'finalizing' ? 'text-amber-400' :
-              sttStatus === 'completed' ? 'text-green-400' :
-              sttStatus === 'failed' ? 'text-red-400' :
-              'text-[#8B5CF6]'
+              sttStatus === 'active' ? 'text-purple-600 dark:text-purple-400' :
+              sttStatus === 'finalizing' ? 'text-amber-600 dark:text-amber-400' :
+              sttStatus === 'completed' ? 'text-green-600 dark:text-green-400' :
+              sttStatus === 'failed' ? 'text-red-600 dark:text-red-400' :
+              'text-[var(--app-text-secondary)]'
             }`}>
               {sttStatus === 'active' && 'STT Active'}
               {sttStatus === 'finalizing' && 'Finalizing...'}
@@ -431,21 +434,31 @@ export default function MeetingRoomPage() {
 
           {mediaError && (
             <div className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
-              <span className="text-[11px] text-amber-400">{mediaError}</span>
+              <span className="text-[11px] text-amber-500">{mediaError}</span>
             </div>
           )}
 
           {socketError && (
             <div className="px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20">
-              <span className="text-[11px] text-red-400">{socketError}</span>
+              <span className="text-[11px] text-red-500">{socketError}</span>
             </div>
           )}
 
           {/* Connection */}
           <div className="flex items-center gap-1.5">
-            <div className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-500'}`} />
-            <span className="text-[11px] text-[#475569]">{isConnected ? 'Connected' : 'Disconnected'}</span>
+            <div className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+            <span className="text-[11px] text-[var(--app-text-muted)]">{isConnected ? 'Connected' : 'Disconnected'}</span>
           </div>
+
+          {/* Theme toggle */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="p-1.5 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)] hover:bg-[var(--app-surface-hover)] text-[var(--app-text-secondary)] hover:text-[var(--app-text-primary)] transition-colors cursor-pointer"
+          >
+            {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+          </button>
         </div>
       </div>
 
@@ -455,13 +468,13 @@ export default function MeetingRoomPage() {
         <div className="flex-1 p-4 overflow-y-auto">
           {/* ── Screen Share Display ── */}
           {activeScreenShareStream && (
-            <div className="mb-3 rounded-xl overflow-hidden border border-[#3B82F6]/30 bg-[#0B1220] relative">
-              <div className="px-3 py-1.5 bg-[#3B82F6]/10 border-b border-[#3B82F6]/20 flex items-center gap-2">
-                <svg className="w-3.5 h-3.5 text-[#3B82F6]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div className="mb-3 rounded-xl overflow-hidden border border-[var(--app-border)] bg-[var(--app-surface-card)] relative shadow-md">
+              <div className="px-3 py-1.5 bg-blue-500/10 border-b border-blue-500/20 flex items-center gap-2">
+                <svg className="w-3.5 h-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <rect x="2" y="3" width="20" height="14" rx="2" />
                   <path d="M8 21h8M12 17v4" />
                 </svg>
-                <span className="text-[11px] font-medium text-[#3B82F6]">
+                <span className="text-[11px] font-medium text-blue-600 dark:text-blue-400">
                   {activeScreenShareUserId === userId ? 'You are sharing your screen' : `${participants.find(p => p.user_id === activeScreenShareUserId)?.full_name ?? 'Participant'} is sharing their screen`}
                 </span>
               </div>
@@ -502,25 +515,25 @@ export default function MeetingRoomPage() {
               animate={{ width: 320, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="border-l border-white/6 bg-[#0d1117] flex flex-col overflow-hidden flex-shrink-0"
+              className="border-l border-[var(--app-border)] bg-[var(--app-surface-card)] flex flex-col overflow-hidden flex-shrink-0"
             >
-              <div className="flex border-b border-white/6">
+              <div className="flex border-b border-[var(--app-border)]">
                 {(['participants', 'chat', 'transcript'] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => { setSidebarTab(tab); if (tab === 'chat') resetUnread(); }}
-                    className={`flex-1 py-3 text-xs font-semibold capitalize transition-colors relative ${
-                      sidebarTab === tab ? 'text-[#3B82F6]' : 'text-[#475569] hover:text-[#94A3B8]'
+                    className={`flex-1 py-3 text-xs font-semibold capitalize transition-colors relative cursor-pointer ${
+                      sidebarTab === tab ? 'text-[var(--app-text-primary)]' : 'text-[var(--app-text-muted)] hover:text-[var(--app-text-secondary)]'
                     }`}
                   >
                     {tab}
                     {tab === 'chat' && unreadCount > 0 && (
-                      <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#3B82F6] text-white text-[9px] font-bold flex items-center justify-center">
+                      <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[var(--app-text-primary)] text-[var(--app-bg)] text-[9px] font-bold flex items-center justify-center">
                         {unreadCount}
                       </span>
                     )}
                     {sidebarTab === tab && (
-                      <motion.div layoutId="sidebar-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3B82F6]" />
+                      <motion.div layoutId="sidebar-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--app-text-primary)]" />
                     )}
                   </button>
                 ))}

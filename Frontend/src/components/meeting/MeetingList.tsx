@@ -15,12 +15,12 @@ export default function MeetingList({ meetings, currentUserId, onEdit, onDelete,
   if (meetings.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-4">
-          <svg className="w-8 h-8 text-[#475569]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <div className="w-16 h-16 rounded-2xl bg-[var(--app-surface-subtle)] border border-[var(--app-border)] flex items-center justify-center mb-4">
+          <svg className="w-8 h-8 text-[var(--app-text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M3 8a2 2 0 00-2 2v4a2 2 0 002 2h9a2 2 0 002-2v-4a2 2 0 00-2-2H3z" />
           </svg>
         </div>
-        <p className="text-[#94A3B8] text-sm mb-3">{emptyMessage ?? 'No meetings found'}</p>
+        <p className="text-[var(--app-text-secondary)] text-sm mb-3">{emptyMessage ?? 'No meetings found'}</p>
         {emptyAction}
       </div>
     );

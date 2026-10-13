@@ -31,12 +31,12 @@ function Field({ icon: Icon, label, type = 'text', value, onChange, error, place
   const { theme } = useTheme();
   const isLight = theme === 'light';
 
-  const labelColor = isLight ? 'text-[#0f172a]' : 'text-[#FFFFFF]';
+  const labelColor = isLight ? 'text-[#172033]' : 'text-[#FFFFFF]';
   const iconColor = isLight ? 'text-[#475569]' : 'text-[#A1A1AA]';
   const inputBg = isLight ? 'bg-white' : 'bg-[#050505]';
-  const inputText = isLight ? 'text-[#0f172a]' : 'text-[#FFFFFF]';
-  const placeholderColor = isLight ? 'placeholder-[#94a3b8]' : 'placeholder-[#52525B]';
-  const inputBorder = isLight ? 'border-[#e2e8f0]' : 'border-[#262626]';
+  const inputText = isLight ? 'text-[#172033]' : 'text-[#FFFFFF]';
+  const placeholderColor = isLight ? 'placeholder-[#64748B]' : 'placeholder-[#52525B]';
+  const inputBorder = isLight ? 'border-[#D5DEE9]' : 'border-[#262626]';
 
   return (
     <div className="mb-4">

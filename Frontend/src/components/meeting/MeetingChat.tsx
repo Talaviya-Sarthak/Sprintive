@@ -53,27 +53,27 @@ export default function MeetingChat({ messages, currentUserId, onSend, onOpen }:
                 className={`flex gap-2.5 ${isMe ? 'flex-row-reverse' : ''}`}
               >
                 {!isMe && (
-                  <div className="w-7 h-7 rounded-full bg-[#1c1c21] border border-[#27272a] flex items-center justify-center text-[#f4f4f5] text-[10px] font-semibold flex-shrink-0 mt-1">
+                  <div className="w-7 h-7 rounded-full bg-[var(--app-surface-subtle)] border border-[var(--app-border)] flex items-center justify-center text-[var(--app-text-primary)] text-[10px] font-semibold flex-shrink-0 mt-1">
                     {group[0].avatar_url
                       ? <img src={group[0].avatar_url} className="w-full h-full rounded-full object-cover" alt="" />
                       : initials}
                   </div>
                 )}
                 <div className={`flex flex-col gap-1 max-w-[75%] ${isMe ? 'items-end' : ''}`}>
-                  {!isMe && <span className="text-[11px] text-[#71717a] font-mono px-1">{group[0].full_name}</span>}
+                  {!isMe && <span className="text-[11px] text-[var(--app-text-muted)] font-mono px-1">{group[0].full_name}</span>}
                   {group.map((msg, mi) => (
                     <div
                       key={mi}
                       className={`px-3 py-2 rounded-xl text-xs leading-relaxed ${
                         isMe
-                          ? 'bg-[#1c1c21] text-[#f4f4f5] border border-[#27272a] rounded-tr-xs'
-                          : 'bg-[#141417] text-[#a1a1aa] border border-[#27272a] rounded-tl-xs'
+                          ? 'bg-[var(--app-text-primary)] text-[var(--app-bg)] border border-transparent rounded-tr-xs shadow-xs font-normal'
+                          : 'bg-[var(--app-surface-subtle)] text-[var(--app-text-primary)] border border-[var(--app-border)] rounded-tl-xs'
                       }`}
                     >
                       {msg.message}
                     </div>
                   ))}
-                  <span className="text-[10px] text-[#71717a] font-mono px-1">
+                  <span className="text-[10px] text-[var(--app-text-muted)] font-mono px-1">
                     {new Date(group[group.length - 1].created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
@@ -85,21 +85,21 @@ export default function MeetingChat({ messages, currentUserId, onSend, onOpen }:
       </div>
 
       {/* Input */}
-      <div className="px-3 pb-3 pt-2 border-t border-[#27272a]">
-        <div className="flex items-center gap-2 bg-[#141417] rounded-xl border border-[#27272a] px-3 py-2">
+      <div className="px-3 pb-3 pt-2 border-t border-[var(--app-border)]">
+        <div className="flex items-center gap-2 bg-[var(--app-surface-subtle)] rounded-xl border border-[var(--app-border)] px-3 py-2">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
             placeholder="Message team..."
-            className="flex-1 bg-transparent text-xs text-[#f4f4f5] placeholder-[#71717a] outline-none"
+            className="flex-1 bg-transparent text-xs text-[var(--app-text-primary)] placeholder-[var(--app-text-muted)] outline-none"
           />
           <button
             onClick={handleSend}
             disabled={!input.trim()}
-            className="w-7 h-7 rounded-lg bg-[#f4f4f5] disabled:opacity-30 flex items-center justify-center transition-opacity cursor-pointer"
+            className="w-7 h-7 rounded-lg bg-[var(--app-text-primary)] text-[var(--app-bg)] disabled:opacity-30 flex items-center justify-center transition-opacity cursor-pointer shadow-xs"
           >
-            <svg className="w-3.5 h-3.5 text-[#09090b]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.269 20.876L5.999 12zm0 0h7.5" />
             </svg>
           </button>

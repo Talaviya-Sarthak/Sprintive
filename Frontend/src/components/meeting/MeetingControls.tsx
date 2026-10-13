@@ -18,16 +18,16 @@ function ControlButton({ icon, label, onClick, active, danger, badge }: ControlB
       title={label}
       className={`relative flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all duration-150 cursor-pointer ${
         danger
-          ? 'bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20'
+          ? 'bg-red-500/10 hover:bg-red-500 text-red-500 dark:text-red-400 hover:text-white border border-red-500/20'
           : active
-          ? 'bg-[#1c1c21] text-[#f4f4f5] border border-[#27272a]'
-          : 'bg-[#141417] hover:bg-[#18181b] text-[#a1a1aa] hover:text-[#f4f4f5] border border-[#27272a]'
+          ? 'bg-[var(--app-surface-hover)] text-[var(--app-text-primary)] border border-[var(--app-border)] font-semibold shadow-xs'
+          : 'bg-[var(--app-surface-subtle)] hover:bg-[var(--app-surface-hover)] text-[var(--app-text-secondary)] hover:text-[var(--app-text-primary)] border border-[var(--app-border)]'
       }`}
     >
       <span className="w-4.5 h-4.5">{icon}</span>
       <span className="text-[10px] font-medium">{label}</span>
       {badge != null && badge > 0 && (
-        <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#f4f4f5] text-[#09090b] text-[9px] font-bold flex items-center justify-center">
+        <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[var(--app-text-primary)] text-[var(--app-bg)] text-[9px] font-bold flex items-center justify-center shadow-xs">
           {badge > 9 ? '9+' : badge}
         </span>
       )}
@@ -60,7 +60,7 @@ export default function MeetingControls({
       initial={{ y: 80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#0c0c0e]/95 backdrop-blur-xl border border-[#27272a] shadow-2xl"
+      className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[var(--app-surface-card)]/95 backdrop-blur-xl border border-[var(--app-border)] shadow-xl"
     >
       <ControlButton
         icon={
@@ -85,13 +85,13 @@ export default function MeetingControls({
       />
 
       <ControlButton
-        icon={<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>}
+        icon={<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4"/></svg>}
         label={isScreenSharing ? 'Stop Share' : 'Share'}
         onClick={onToggleScreenShare}
         active={isScreenSharing}
       />
 
-      <div className="w-px h-8 bg-white/8 mx-1" />
+      <div className="w-px h-8 bg-[var(--app-border)] mx-1" />
 
       <ControlButton
         icon={<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>}
@@ -114,7 +114,7 @@ export default function MeetingControls({
         onClick={onRaiseHand}
       />
 
-      <div className="w-px h-8 bg-white/8 mx-1" />
+      <div className="w-px h-8 bg-[var(--app-border)] mx-1" />
 
       <ControlButton
         icon={<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>}
