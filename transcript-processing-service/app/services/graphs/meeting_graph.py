@@ -267,10 +267,13 @@ def get_compiled_meeting_graph():
     return _default_compiled_graph
 
 
+from app.services.tracing import sprintive_traceable
+
 # ---------------------------------------------------------------------------
 # High-Level Execution Runner
 # ---------------------------------------------------------------------------
 
+@sprintive_traceable(name="LangGraphWorkflow", run_type="chain", tags=["langgraph", "phase1"])
 async def run_meeting_langgraph(
     meeting_id: str,
     custom_transcript_path: Optional[str] = None,
@@ -342,8 +345,15 @@ async def run_meeting_langgraph(
 
     logger.info("Executing LangGraph meeting pipeline for meeting %s", meeting_id)
 
-    # Execute LangGraph asynchronously
-    final_state = await graph.ainvoke(initial_state)
+    # Execute LangGraph asynchronously with observability metadata
+    langgraph_config = {
+        "metadata": {
+            "meeting_id": meeting_id,
+            "pipeline": "LangGraph_Phase1",
+        },
+        "tags": ["phase1", "langgraph", "workflow"],
+    }
+    final_state = await graph.ainvoke(initial_state, config=langgraph_config)
 
     duration_ms = int((time.perf_counter() - start_ts) * 1000)
     final_state["duration_ms"] = duration_ms

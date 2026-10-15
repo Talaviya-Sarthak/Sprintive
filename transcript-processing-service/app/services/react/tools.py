@@ -14,6 +14,7 @@ from app.services.meeting_agent import MainMeetingAgent, get_main_meeting_agent
 from app.services.react.schemas import ToolObservation
 from app.services.scrum_agent import ScrumIntelligenceAgent, get_scrum_intelligence_agent
 from app.services.task_resolution_service import TaskResolutionService, get_task_resolution_service
+from app.services.tracing import sprintive_traceable
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 # Tool 1: Analyze Meeting
 # ---------------------------------------------------------------------------
 
+@sprintive_traceable(name="Tool:analyze_meeting", run_type="tool", tags=["tool", "react"])
 def execute_analyze_meeting(
     transcript: str,
     agent: Optional[MainMeetingAgent] = None,
@@ -62,6 +64,7 @@ def execute_analyze_meeting(
 # Tool 2: Extract Scrum Tasks
 # ---------------------------------------------------------------------------
 
+@sprintive_traceable(name="Tool:extract_scrum_tasks", run_type="tool", tags=["tool", "react"])
 def execute_extract_scrum_tasks(
     analysis: Optional[MeetingAnalysisResult],
     agent: Optional[ScrumIntelligenceAgent] = None,
@@ -107,6 +110,7 @@ def execute_extract_scrum_tasks(
 # Tool 3: Resolve and Validate Tasks
 # ---------------------------------------------------------------------------
 
+@sprintive_traceable(name="Tool:resolve_and_validate_tasks", run_type="tool", tags=["tool", "react"])
 def execute_resolve_and_validate_tasks(
     scrum_result: Optional[ScrumResult],
     meeting_id: str,
@@ -178,6 +182,7 @@ def execute_resolve_and_validate_tasks(
 # Tool 4: Inspect Meeting Context
 # ---------------------------------------------------------------------------
 
+@sprintive_traceable(name="Tool:inspect_meeting_context", run_type="tool", tags=["tool", "react"])
 def execute_inspect_meeting_context(
     meeting_id: str,
     team_id: str,

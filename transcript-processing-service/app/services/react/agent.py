@@ -14,6 +14,7 @@ from app.models.scrum_agent import ScrumResult
 from app.services.llm_client import BaseLLMClient, get_llm_client
 from app.services.react.schemas import ReActAction, ReActStep
 from app.services.react.tools import ALLOWED_TOOLS
+from app.services.tracing import sprintive_traceable
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +106,7 @@ class ReActAgent:
     def llm_client(self) -> BaseLLMClient:
         return self._llm_client or get_llm_client()
 
+    @sprintive_traceable(name="ReActAgent:decide_next_action", run_type="chain", tags=["react", "reasoning"])
     def decide_next_action(
         self,
         meeting_id: str,

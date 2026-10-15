@@ -346,42 +346,59 @@ class OpenAICompatibleLLMClient(BaseLLMClient):
                 # Request pacing and concurrency throttle
                 _pace_request(settings.GROQ_PACING_DELAY_SECONDS)
 
+                from app.services.tracing import LLMCallTracer
+                tracer = LLMCallTracer(
+                    model=current_model,
+                    provider="groq" if "groq" in self.base_url else "openai",
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
+                    response_model_name=response_model.__name__,
+                    temperature=self.temperature,
+                    attempt=attempt + 1,
+                )
+
                 try:
-                    with _concurrency_semaphore:
-                        with httpx.Client(timeout=self.timeout_seconds) as client:
-                            response = client.post(endpoint, json=payload, headers=headers)
+                    with tracer:
+                        with _concurrency_semaphore:
+                            with httpx.Client(timeout=self.timeout_seconds) as client:
+                                response = client.post(endpoint, json=payload, headers=headers)
 
-                    if response.status_code == 200:
-                        data = response.json()
-                        choices = data.get("choices", [])
-                        if not choices:
-                            raise LLMClientError(f"LLM returned empty choices list for model {current_model}.")
+                        if response.status_code == 200:
+                            data = response.json()
+                            choices = data.get("choices", [])
+                            if not choices:
+                                raise LLMClientError(f"LLM returned empty choices list for model {current_model}.")
 
-                        content = choices[0].get("message", {}).get("content", "")
-                        if not content:
-                            raise LLMClientError(f"LLM returned empty content for model {current_model}.")
+                            content = choices[0].get("message", {}).get("content", "")
+                            if not content:
+                                raise LLMClientError(f"LLM returned empty content for model {current_model}.")
 
-                        cleaned_content = re.sub(
-                            r"^```json\s*|\s*```$", "", content.strip(), flags=re.MULTILINE
+                            cleaned_content = re.sub(
+                                r"^```json\s*|\s*```$", "", content.strip(), flags=re.MULTILINE
+                            )
+                            json_match = re.search(r"(\{[\s\S]*\})", cleaned_content)
+                            if json_match:
+                                cleaned_content = json_match.group(1)
+
+                            parsed_json = json.loads(cleaned_content)
+                            validated_result = response_model.model_validate(parsed_json)
+                            model_succeeded = True
+                            tracer.record_success(data, validated_result)
+                            return validated_result
+
+                        # HTTP Error classification
+                        status_code = response.status_code
+                        raw_text = response.text
+                        resp_headers = dict(response.headers)
+                        error_category, retry_delay = classify_groq_error(
+                            status_code=status_code,
+                            response_text=raw_text,
+                            headers=resp_headers,
                         )
-                        json_match = re.search(r"(\{[\s\S]*\})", cleaned_content)
-                        if json_match:
-                            cleaned_content = json_match.group(1)
-
-                        parsed_json = json.loads(cleaned_content)
-                        validated_result = response_model.model_validate(parsed_json)
-                        model_succeeded = True
-                        return validated_result
-
-                    # HTTP Error classification
-                    status_code = response.status_code
-                    raw_text = response.text
-                    resp_headers = dict(response.headers)
-                    error_category, retry_delay = classify_groq_error(
-                        status_code=status_code,
-                        response_text=raw_text,
-                        headers=resp_headers,
-                    )
+                        tracer.record_error(
+                            Exception(f"Groq API {error_category.value}: {raw_text[:120]}"),
+                            status_code=status_code,
+                        )
 
                     logger.warning(
                         "Groq API error: model=%s status=%d category=%s retry_delay=%s (attempt %d/%d)",

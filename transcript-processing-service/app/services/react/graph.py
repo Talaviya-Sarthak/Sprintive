@@ -375,10 +375,13 @@ def build_react_graph(
     return workflow
 
 
+from app.services.tracing import sprintive_traceable
+
 # ---------------------------------------------------------------------------
 # ReAct Runner
 # ---------------------------------------------------------------------------
 
+@sprintive_traceable(name="ReActAgentWorkflow", run_type="chain", tags=["react", "phase2", "agent_loop"])
 async def run_react_meeting_pipeline(
     meeting_id: str,
     custom_transcript_path: Optional[str] = None,
@@ -469,7 +472,15 @@ async def run_react_meeting_pipeline(
 
     logger.info("Starting ReAct agent loop for meeting %s (max_iterations=%d)", valid_id, max_iterations)
 
-    final_state = await graph.ainvoke(initial_state)
+    react_config = {
+        "metadata": {
+            "meeting_id": valid_id,
+            "pipeline": "ReAct_Phase2",
+            "max_iterations": max_iterations,
+        },
+        "tags": ["phase2", "react", "agent_loop"],
+    }
+    final_state = await graph.ainvoke(initial_state, config=react_config)
 
     duration_ms = int((time.perf_counter() - start_ts) * 1000)
 

@@ -46,6 +46,7 @@ from app.services.storage_service import (
     TranscriptStorageService,
     get_storage_service,
 )
+from app.services.tracing import sprintive_traceable
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +61,7 @@ class TranscriptRetrievalError(MeetingAIPipelineError):
     pass
 
 
+@sprintive_traceable(name="SprintiveMeetingAIPipeline", run_type="chain", tags=["pipeline", "orchestration"])
 async def run_meeting_ai_pipeline(
     meeting_id: str,
     custom_transcript_path: Optional[str] = None,

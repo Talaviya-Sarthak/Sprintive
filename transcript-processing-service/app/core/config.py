@@ -133,6 +133,24 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("REACT_MAX_ITERATIONS"),
     )
 
+    # LangSmith Tracing & Observability settings
+    LANGSMITH_TRACING: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("LANGSMITH_TRACING", "LANGCHAIN_TRACING_V2"),
+    )
+    LANGSMITH_API_KEY: str = Field(
+        default="",
+        validation_alias=AliasChoices("LANGSMITH_API_KEY", "LANGCHAIN_API_KEY"),
+    )
+    LANGSMITH_PROJECT: str = Field(
+        default="sprintive-meeting-ai",
+        validation_alias=AliasChoices("LANGSMITH_PROJECT", "LANGCHAIN_PROJECT"),
+    )
+    LANGSMITH_ENDPOINT: str = Field(
+        default="https://api.smith.langchain.com",
+        validation_alias=AliasChoices("LANGSMITH_ENDPOINT", "LANGCHAIN_ENDPOINT"),
+    )
+
     @model_validator(mode="after")
     def configure_llm_defaults(self) -> "Settings":
         key = (self.LLM_API_KEY or "").strip()
@@ -144,6 +162,21 @@ class Settings(BaseSettings):
                 self.LLM_MODEL = "openai/gpt-oss-20b"
             if self.LLM_PROVIDER.lower() in ("openai", "mock"):
                 self.LLM_PROVIDER = "groq"
+
+        # Synchronize LangSmith settings to os.environ for SDK and LangChain tracer discovery
+        if self.LANGSMITH_TRACING:
+            import os
+            os.environ["LANGCHAIN_TRACING_V2"] = "true"
+            os.environ["LANGSMITH_TRACING"] = "true"
+            if self.LANGSMITH_API_KEY:
+                os.environ["LANGSMITH_API_KEY"] = self.LANGSMITH_API_KEY
+                os.environ["LANGCHAIN_API_KEY"] = self.LANGSMITH_API_KEY
+            if self.LANGSMITH_PROJECT:
+                os.environ["LANGSMITH_PROJECT"] = self.LANGSMITH_PROJECT
+                os.environ["LANGCHAIN_PROJECT"] = self.LANGSMITH_PROJECT
+            if self.LANGSMITH_ENDPOINT:
+                os.environ["LANGSMITH_ENDPOINT"] = self.LANGSMITH_ENDPOINT
+                os.environ["LANGCHAIN_ENDPOINT"] = self.LANGSMITH_ENDPOINT
         return self
 
     model_config = SettingsConfigDict(
