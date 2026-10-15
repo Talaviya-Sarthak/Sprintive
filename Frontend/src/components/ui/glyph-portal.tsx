@@ -127,8 +127,7 @@ export default function GlyphPortal({
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d", { willReadFrequently: true });
     let disposed = false, raf = 0, dirty = true, active = true, ready = false;
-    const mountedAt = performance.now();
-    let browserFrameSeen = false, stalled = false;
+    let browserFrameSeen = false;
     let W = 1, H = 1, travel = 1, startScale = 1, endScale = 1;
     let center = { x: 0, y: 0 }, target: Ink | null = null;
     let lastProgress = -1;
@@ -145,7 +144,6 @@ export default function GlyphPortal({
       catch { return true; }
     });
     glyph.style.fontFamily = available.length > 0 ? [...available, DEFAULT_FONT].join(",") : DEFAULT_FONT;
-    stalled = false;
 
     const readInk = () => {
       if (!context) return false;
@@ -274,7 +272,7 @@ export default function GlyphPortal({
 
     };
 
-    const frame = (time?: number) => {
+    const frame = () => {
       raf = 0;
       if (disposed) return;
       if (!browserFrameSeen) {

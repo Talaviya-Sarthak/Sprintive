@@ -18,6 +18,7 @@ from app.config.storage import (
     build_cleaned_transcript_path,
     validate_meeting_id,
 )
+from app.core.config import settings
 from app.models.meeting_agent import (
     MeetingAIPipelineResponse,
     MeetingAnalysisResult,
@@ -51,6 +52,7 @@ from app.services.storage_service import (
     TranscriptStorageService,
     get_storage_service,
 )
+from app.services.tracing import sprintive_traceable
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +99,7 @@ class TranscriptRetrievalError(MeetingAIPipelineError):
     pass
 
 
+@sprintive_traceable(name="SprintiveMeetingAIPipeline", run_type="chain", tags=["pipeline", "orchestration"])
 async def run_meeting_ai_pipeline(
     meeting_id: str,
     custom_transcript_path: Optional[str] = None,
@@ -113,13 +116,12 @@ async def run_meeting_ai_pipeline(
     participants: Optional[List[Dict[str, Any]]] = None,
     team_members: Optional[List[Dict[str, Any]]] = None,
     persist_to_database: bool = True,
+    use_react: Optional[bool] = None,
 ) -> MeetingAIPipelineResponse:
     """
     Execute AI pipeline stages for a completed meeting:
-    Stage 1: Supabase Storage .txt -> UTF-8 String -> Main Meeting Agent -> MeetingAnalysisResult
-    Stage 2: MeetingAnalysisResult -> Scrum Intelligence Agent -> Structured ScrumResult (Tasks)
-    Stage 3: ScrumResult -> Deterministic Task Resolution -> ResolvedTask (Kanban Tasks)
-    Stage 4: Automated Persistence -> meeting_summaries table in PostgreSQL
+    Phase 1: Deterministic LangGraph state machine.
+    Phase 2: Genuine ReAct (Reason + Act) agent loop when enabled.
 
     Args:
         meeting_id: Unique meeting identifier.
@@ -131,6 +133,7 @@ async def run_meeting_ai_pipeline(
         scrum_agent: Optional ScrumIntelligenceAgent instance (Stage 2).
         run_task_resolution: Whether to resolve tasks into canonical Kanban schema.
         persist_to_database: Whether to write summary and tasks to PostgreSQL.
+        use_react: Optional flag to toggle Phase 2 ReAct agent. Defaults to settings.ENABLE_REACT_PIPELINE.
 
     Returns:
         MeetingAIPipelineResponse with the structured analysis, Scrum tasks, and resolved Kanban tasks.
@@ -148,159 +151,93 @@ async def run_meeting_ai_pipeline(
     transcript_path = custom_transcript_path or build_cleaned_transcript_path(valid_id)
 
     # 3. Standardized Development Logging
-    logger.info("Meeting AI pipeline started")
+    should_use_react = settings.ENABLE_REACT_PIPELINE if use_react is None else use_react
+    logger.info("Meeting AI pipeline started (Mode: %s)", "ReAct Agent" if should_use_react else "LangGraph StateGraph")
     logger.info("Meeting ID: %s", valid_id)
     logger.info("Transcript path: %s", transcript_path)
 
-    # 4. Fetch DB context if missing team_id or team_members
-    from app.services.database import get_meeting_context, persist_meeting_summary_to_db
-
-    db_context = get_meeting_context(valid_id)
-    effective_team_id = team_id or db_context.get("team_id") or f"team-{valid_id}"
-    effective_participants = participants if participants is not None else db_context.get("participants", [])
-    effective_team_members = team_members if team_members is not None else db_context.get("team_members", [])
-    effective_meeting_timestamp = meeting_timestamp or db_context.get("started_at") or db_context.get("scheduled_start")
-    meeting_duration_minutes = db_context.get("duration_minutes", 0)
-
-    # 5. Resolve dependencies
-    storage = storage_service or get_storage_service()
-    analysis_agent = agent or get_main_meeting_agent(llm_client=llm_client)
-
-    # 6. Download .txt from Supabase Storage and decode as UTF-8 string
-    try:
-        raw_content = storage.provider.get_text(transcript_path)
-    except FileNotFoundError as exc:
-        logger.error("Transcript file not found in storage at path '%s' for meeting %s", transcript_path, valid_id)
-        raise TranscriptRetrievalError(f"Transcript not found at storage path: {transcript_path}") from exc
-    except TranscriptStorageError as exc:
-        logger.error("Storage error downloading transcript from path '%s' for meeting %s: %s", transcript_path, valid_id, exc)
-        raise TranscriptRetrievalError(f"Failed to download transcript from storage: {exc}") from exc
-    except Exception as exc:
-        logger.exception("Unexpected error downloading transcript for meeting %s: %s", valid_id, exc)
-        raise TranscriptRetrievalError(f"Unexpected storage error: {exc}") from exc
-
-    # Ensure UTF-8 string
-    if isinstance(raw_content, bytes):
+    # Phase 2: ReAct Pipeline Execution with safe fallback to Phase 1
+    if should_use_react:
+        from app.services.react.graph import run_react_meeting_pipeline
         try:
-            transcript_str = raw_content.decode("utf-8")
-        except UnicodeDecodeError as exc:
-            logger.error("Failed to decode transcript as UTF-8 for meeting %s: %s", valid_id, exc)
-            raise TranscriptRetrievalError(f"Transcript is not valid UTF-8: {exc}") from exc
-    else:
-        transcript_str = str(raw_content)
+            react_response = await run_react_meeting_pipeline(
+                meeting_id=valid_id,
+                custom_transcript_path=transcript_path,
+                storage_service=storage_service,
+                agent=agent,
+                llm_client=llm_client,
+                scrum_agent=scrum_agent,
+                task_resolution_service=task_resolution_service,
+                team_id=team_id,
+                meeting_timestamp=meeting_timestamp,
+                timezone_str=timezone_str,
+                participants=participants,
+                team_members=team_members,
+                persist_to_database=persist_to_database,
+                max_iterations=settings.REACT_MAX_ITERATIONS,
+            )
+            return react_response
+        except (InvalidMeetingIdError, EmptyTranscriptException, TranscriptRetrievalError):
+            raise
+        except Exception as react_err:
+            logger.warning(
+                "ReAct pipeline encountered an error for meeting %s: %s; falling back to verified LangGraph workflow",
+                valid_id,
+                react_err,
+            )
 
-    if not transcript_str or not transcript_str.strip():
-        logger.error("Downloaded transcript is empty for meeting %s at path %s", valid_id, transcript_path)
-        raise EmptyTranscriptException(f"Downloaded transcript is empty for meeting {valid_id}.")
+    # Phase 1: Verified LangGraph workflow
+    from app.services.graphs.meeting_graph import run_meeting_langgraph
 
-    logger.info("Transcript loaded successfully")
-    logger.info("Transcript length: %d", len(transcript_str))
-
-    # 6. Call Meeting Analysis & Scrum Agents
-    # Optimization: When both Stage 1 and Stage 2 are needed with default agents and a production LLM,
-    # execute a consolidated structured prompt to cut downstream LLM calls from 2 to 1.
-    analysis = None
-    scrum_result = None
-
-    active_client = llm_client or get_llm_client()
-    use_consolidated = (
-        run_scrum_agent
-        and agent is None
-        and scrum_agent is None
-        and isinstance(active_client, OpenAICompatibleLLMClient)
+    final_state = await run_meeting_langgraph(
+        meeting_id=valid_id,
+        custom_transcript_path=transcript_path,
+        storage_service=storage_service,
+        agent=agent,
+        llm_client=llm_client,
+        run_scrum_agent=run_scrum_agent,
+        scrum_agent=scrum_agent,
+        run_task_resolution=run_task_resolution,
+        task_resolution_service=task_resolution_service,
+        team_id=team_id,
+        meeting_timestamp=meeting_timestamp,
+        timezone_str=timezone_str,
+        participants=participants,
+        team_members=team_members,
+        persist_to_database=persist_to_database,
+        max_retries=1,
     )
 
-    if use_consolidated:
-        try:
-            logger.info("Calling Main Meeting Agent")
-            logger.info("Executing consolidated Meeting & Scrum Intelligence Agent prompt")
-            user_prompt = f"Meeting Transcript:\n\n{transcript_str}\n\nAnalyze this transcript and produce the structured meeting analysis and Scrum tasks."
-            combined: ConsolidatedMeetingAIOutput = active_client.generate_structured(
-                system_prompt=CONSOLIDATED_AI_SYSTEM_PROMPT,
-                user_prompt=user_prompt,
-                response_model=ConsolidatedMeetingAIOutput,
-            )
-            analysis = MeetingAnalysisResult(
-                summary=combined.summary,
-                topics=combined.topics,
-                decisions=combined.decisions,
-                action_items=combined.action_items,
-                blockers=combined.blockers,
-            )
-            scrum_result = ScrumResult(tasks=combined.tasks)
-            logger.info("LLM response received")
-            logger.info("Calling Scrum Intelligence Agent")
-            logger.info("Scrum Intelligence Agent completed (%d tasks generated)", len(scrum_result.tasks))
-        except Exception as exc:
-            logger.warning(
-                "Consolidated meeting analysis call failed (%s); falling back to sequential execution.",
-                exc,
-            )
-            analysis = None
-            scrum_result = None
+    # Handle LangGraph failure states and preserve exact exception contracts
+    if final_state.get("processing_status") == "FAILED" or final_state.get("error"):
+        err_msg = final_state.get("error") or "Unknown LangGraph execution error"
+        err_stage = final_state.get("error_stage") or ""
 
-    if analysis is None:
-        # Standard sequential path (used in unit tests and as fallback)
-        logger.info("Calling Main Meeting Agent")
-        try:
-            analysis = analysis_agent.analyze_transcript(transcript_str)
-        except Exception as exc:
-            logger.error("Main Meeting Agent failed for meeting %s: %s", valid_id, exc)
-            raise
+        if "Invalid meeting_id" in err_msg:
+            raise InvalidMeetingIdError(err_msg)
+        if "Transcript not found" in err_msg or "Failed to download" in err_msg:
+            raise TranscriptRetrievalError(err_msg)
+        if final_state.get("is_empty_transcript") or "empty for meeting" in err_msg.lower():
+            raise EmptyTranscriptException(err_msg)
+        if err_stage == "meeting_analysis" or "MainMeetingAgent" in err_msg:
+            raise MeetingAnalysisError(err_msg)
+        if err_stage == "scrum_extraction" or "ScrumIntelligenceAgent" in err_msg:
+            raise ScrumAnalysisError(err_msg)
 
-        if run_scrum_agent:
-            logger.info("Calling Scrum Intelligence Agent")
-            s_agent = scrum_agent or get_scrum_intelligence_agent(llm_client=llm_client)
-            try:
-                scrum_result = s_agent.analyze(analysis)
-                logger.info("Scrum Intelligence Agent completed (%d tasks generated)", len(scrum_result.tasks))
-            except Exception as exc:
-                logger.error("Scrum Intelligence Agent failed for meeting %s: %s", valid_id, exc)
-                raise
+        raise MeetingAIPipelineError(f"LangGraph execution failed at stage '{err_stage}': {err_msg}")
 
-    # 8. Deterministic Task Resolution (Stage 3)
-    resolved_tasks = None
-    if run_task_resolution and scrum_result:
-        resolver = task_resolution_service or get_task_resolution_service()
-        resolution_result = resolver.resolve_tasks(
-            scrum_result=scrum_result,
-            meeting_id=valid_id,
-            team_id=effective_team_id,
-            meeting_timestamp=effective_meeting_timestamp,
-            timezone_str=timezone_str,
-            participants=effective_participants,
-            team_members=effective_team_members,
-        )
-        resolved_tasks = resolution_result.tasks
-        logger.info("Resolved %d Kanban tasks for meeting %s", len(resolved_tasks), valid_id)
+    analysis = final_state.get("analysis")
+    scrum_result = final_state.get("scrum_result")
+    resolved_tasks = final_state.get("resolved_tasks")
+    duration_ms = final_state.get("duration_ms", int((time.perf_counter() - start_ts) * 1000))
 
-    # 10. Persist to PostgreSQL database (meeting_summaries table)
-    if persist_to_database and analysis:
-        tasks_to_persist = resolved_tasks if resolved_tasks is not None else (scrum_result.tasks if scrum_result else [])
-        persist_success = persist_meeting_summary_to_db(
-            meeting_id=valid_id,
-            ai_summary=analysis.summary,
-            action_items=analysis.action_items,
-            tickets_generated=tasks_to_persist,
-            duration_minutes=meeting_duration_minutes,
-            attendance_count=len(effective_participants),
-        )
-        if persist_success:
-            logger.info("Persisted AI summary and Kanban tasks directly into PostgreSQL for meeting %s", valid_id)
-        else:
-            logger.warning("Could not persist meeting summary directly into PostgreSQL for meeting %s", valid_id)
-
-    duration_ms = int((time.perf_counter() - start_ts) * 1000)
-
-    # 11. Standardized Completion Logging
-    logger.info("LLM response received")
     logger.info(
-        "AI pipeline completed (duration: %dms, topics: %d, decisions: %d, actions: %d, blockers: %d, tasks: %d, resolved: %d)",
+        "LangGraph AI pipeline completed (duration: %dms, topics: %d, decisions: %d, actions: %d, blockers: %d, tasks: %d, resolved: %d)",
         duration_ms,
-        len(analysis.topics),
-        len(analysis.decisions),
-        len(analysis.action_items),
-        len(analysis.blockers),
+        len(analysis.topics) if analysis else 0,
+        len(analysis.decisions) if analysis else 0,
+        len(analysis.action_items) if analysis else 0,
+        len(analysis.blockers) if analysis else 0,
         len(scrum_result.tasks) if scrum_result else 0,
         len(resolved_tasks) if resolved_tasks else 0,
     )
@@ -310,8 +247,8 @@ async def run_meeting_ai_pipeline(
 
     return MeetingAIPipelineResponse(
         meeting_id=valid_id,
-        transcript_path=transcript_path,
-        transcript_length=len(transcript_str),
+        transcript_path=final_state.get("transcript_path", transcript_path),
+        transcript_length=final_state.get("transcript_length", 0),
         analysis=analysis,
         scrum_analysis=scrum_result,
         resolved_tasks=resolved_tasks,

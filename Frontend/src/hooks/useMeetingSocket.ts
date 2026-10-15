@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { useMeetingStore, type TranscriptSegment, type LiveCaption } from '../store/meetingStore';
+import { useMeetingStore, type TranscriptSegment } from '../store/meetingStore';
 import { ensureFreshAccessToken } from '../services/api';
 import type { Participant, ChatMessage, Meeting } from '../types';
 
@@ -493,8 +493,8 @@ export function useMeetingSocket(meetingId: string | undefined) {
         }
       });
 
-      socket.on('stt:partial', ({ meetingId: mid, participantId, speakerName, text, start, duration }: {
-        meetingId: string; participantId: string; speakerName: string; text: string; start: number; duration: number;
+      socket.on('stt:partial', ({ meetingId: mid, participantId, speakerName, text, start }: {
+        meetingId: string; participantId: string; speakerName: string; text: string; start: number; duration?: number;
       }) => {
         if (mid === meetingId) {
           setLiveCaption({ participantId, speakerName, text, start });

@@ -405,10 +405,22 @@ class OpenAICompatibleLLMClient(BaseLLMClient):
                 # Request pacing and concurrency throttle
                 _pace_request(settings.GROQ_PACING_DELAY_SECONDS)
 
+                from app.services.tracing import LLMCallTracer
+                tracer = LLMCallTracer(
+                    model=current_model,
+                    provider="groq" if "groq" in self.base_url else "openai",
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
+                    response_model_name=response_model.__name__,
+                    temperature=self.temperature,
+                    attempt=attempt + 1,
+                )
+
                 try:
-                    with _concurrency_semaphore:
-                        with httpx.Client(timeout=self.timeout_seconds) as client:
-                            response = client.post(endpoint, json=payload, headers=headers)
+                    with tracer:
+                        with _concurrency_semaphore:
+                            with httpx.Client(timeout=self.timeout_seconds) as client:
+                                response = client.post(endpoint, json=payload, headers=headers)
 
                     if response.status_code == 200:
                         data = response.json()
@@ -435,6 +447,7 @@ class OpenAICompatibleLLMClient(BaseLLMClient):
                         parsed_json = json.loads(cleaned_content)
                         validated_result = response_model.model_validate(parsed_json)
                         model_succeeded = True
+                        tracer.record_success(data, validated_result)
                         return validated_result
 
                     # HTTP Error classification
@@ -445,6 +458,10 @@ class OpenAICompatibleLLMClient(BaseLLMClient):
                         status_code=status_code,
                         response_text=raw_text,
                         headers=resp_headers,
+                    )
+                    tracer.record_error(
+                        Exception(f"Groq API {error_category.value}: {raw_text[:120]}"),
+                        status_code=status_code,
                     )
                     if status_code == 429:
                         token_usage_tracker.record_429()

@@ -8,10 +8,20 @@ Provides deterministic persistence to PostgreSQL (Neon DB) for:
 import json
 import logging
 import os
+import uuid
 from typing import Any, Dict, List, Optional
 import psycopg
 
 logger = logging.getLogger(__name__)
+
+
+def is_valid_uuid(val: Any) -> bool:
+    """Check if value is a valid UUID string."""
+    try:
+        uuid.UUID(str(val))
+        return True
+    except (ValueError, TypeError, AttributeError):
+        return False
 
 # Default Neon DB connection string from Sprintive environment
 DEFAULT_DATABASE_URL = (
@@ -63,6 +73,10 @@ def get_meeting_context(meeting_id: str) -> Dict[str, Any]:
         "team_members": [],
         "participants": [],
     }
+
+    if not is_valid_uuid(meeting_id):
+        logger.debug("Non-UUID meeting_id %s, returning offline context", meeting_id)
+        return result
 
     try:
         with get_db_connection() as conn:
@@ -128,6 +142,27 @@ def get_meeting_context(meeting_id: str) -> Dict[str, Any]:
                     })
                 result["participants"] = participants
 
+                # 4. Fetch existing tasks from meeting_summaries for idempotent reconciliation
+                cur.execute(
+                    """
+                    SELECT tickets_generated
+                    FROM meeting_summaries
+                    WHERE meeting_id = %s
+                    LIMIT 1
+                    """,
+                    (meeting_id,),
+                )
+                s_row = cur.fetchone()
+                if s_row and s_row[0]:
+                    raw_tickets = s_row[0]
+                    if isinstance(raw_tickets, str):
+                        try:
+                            result["existing_tasks"] = json.loads(raw_tickets)
+                        except Exception:
+                            result["existing_tasks"] = []
+                    elif isinstance(raw_tickets, list):
+                        result["existing_tasks"] = raw_tickets
+
     except Exception as exc:
         logger.warning(
             "Could not fetch database context for meeting %s: %s (falling back to offline defaults)",
@@ -150,6 +185,13 @@ def persist_meeting_summary_to_db(
     Persist generated AI summary, action items, and Kanban tasks to meeting_summaries table.
     Ensures idempotency and updates records atomically.
     """
+    if not is_valid_uuid(meeting_id):
+        logger.info(
+            "Non-UUID meeting_id '%s'; skipping database persistence for test/mock run",
+            meeting_id,
+        )
+        return True
+
     try:
         # Convert any Pydantic models or objects to plain JSON-serializable dictionaries
         serialized_actions = []
@@ -180,14 +222,33 @@ def persist_meeting_summary_to_db(
             elif "due_date" in td and td["due_date"]:
                 td["dueDate"] = td["due_date"]
 
-            if td.get("assignee") and td.get("assignee_id"):
+            if td.get("assignee_id"):
+                assignee_val = td.get("assignee")
+                if isinstance(assignee_val, dict):
+                    assignee_name = assignee_val.get("name") or assignee_val.get("full_name") or ""
+                else:
+                    assignee_name = str(assignee_val or "")
                 td["assignee"] = {
-                    "id": td["assignee_id"],
-                    "name": td["assignee"],
+                    "id": str(td["assignee_id"]),
+                    "name": assignee_name,
                 }
 
             td["source"] = "ai"
             serialized_tickets.append(td)
+
+        # Deterministic Duplicate Prevention: Guarantee unique tickets per meeting
+        seen_ticket_keys = set()
+        unique_tickets = []
+        for td in serialized_tickets:
+            t_id = td.get("id") or td.get("ticket_id")
+            title_key = (td.get("title") or "").strip().lower()
+            action_key = (td.get("source_action_item") or "").strip().lower()
+            dedup_key = f"{t_id}:{title_key}:{action_key}"
+            if dedup_key in seen_ticket_keys:
+                continue
+            seen_ticket_keys.add(dedup_key)
+            unique_tickets.append(td)
+        serialized_tickets = unique_tickets
 
         actions_json = json.dumps(serialized_actions)
         tickets_json = json.dumps(serialized_tickets)

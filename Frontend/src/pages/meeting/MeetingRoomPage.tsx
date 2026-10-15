@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sun, Moon } from 'lucide-react';
@@ -82,7 +82,7 @@ export default function MeetingRoomPage() {
   const [endedData, setEndedData] = useState<EndMeetingData | null>(null);
 
   // Audio capture: send chunks to server for STT when meeting is active
-  const isMeetingActive = meeting?.status === 'active' || meeting?.status === 'live';
+  const isMeetingActive = (meeting?.status as string) === 'active' || (meeting?.status as string) === 'live';
   useAudioCapture({
     stream,
     enabled: isMeetingActive && !isMuted,
@@ -160,10 +160,11 @@ export default function MeetingRoomPage() {
   }, [onForceLeave, navigate, meetingId, performMeetingCleanup]);
 
   useEffect(() => {
-    const cleanup = onRedirect(({ url }) => {
+    const cleanup = onRedirect((payload: any) => {
       performMeetingCleanup();
-      if (url) {
-        navigate(url, { replace: true });
+      const redirectUrl = typeof payload === 'string' ? payload : payload?.url;
+      if (redirectUrl) {
+        navigate(redirectUrl, { replace: true });
       } else if (meetingId) {
         navigate(`/meetings/${meetingId}/summary`, { replace: true });
       }
@@ -259,11 +260,7 @@ export default function MeetingRoomPage() {
     }
   }, [isConnected, stream]);
 
-  // Listen for meeting end redirect
-  useEffect(() => {
-    const cleanup = onRedirect((url) => navigate(url));
-    return cleanup;
-  }, [onRedirect, navigate]);
+
 
   // Handlers
   const handleToggleMic = () => {

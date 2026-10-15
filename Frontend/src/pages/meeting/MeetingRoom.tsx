@@ -68,7 +68,7 @@ export default function MeetingRoom() {
   const screenShareVideoRef = useRef<HTMLVideoElement | null>(null);
 
   const {
-    meeting, participants, chats, transcriptSegments, liveCaption, isMuted, isCameraOff, isScreenSharing,
+    meeting, participants, chats, liveCaption, isMuted, isCameraOff, isScreenSharing,
     screenShareStream,
     activeSpeakerId, sidebarTab, unreadCount,
     setMeeting, setParticipants, setChats,
