@@ -1,4 +1,3 @@
-import React from 'react';
 import KanbanColumn from './KanbanColumn';
 import { KANBAN_COLUMNS } from '../data/mockKanbanData';
 import type { KanbanTask, KanbanStatus } from '../types';

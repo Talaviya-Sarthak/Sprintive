@@ -111,16 +111,26 @@ export default function KanbanColumn({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`flex flex-col flex-1 min-w-[210px] sm:min-w-[230px] max-w-[280px] rounded-xl border border-[#20222c] bg-[#111217] transition-all duration-150 select-none ${
+      className={`flex flex-col flex-1 min-w-[210px] sm:min-w-[230px] max-w-[280px] rounded-xl border transition-all duration-150 select-none ${
         theme.topBorder
       } ${isDragOver ? theme.dragActive : ''}`}
+      style={{
+        backgroundColor: 'var(--app-surface-subtle)',
+        borderColor: 'var(--app-border)',
+      }}
     >
       {/* Column Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-[#20222c]">
+      <div
+        className="flex items-center justify-between px-3 py-2.5 border-b"
+        style={{ borderColor: 'var(--app-border-subtle)' }}
+      >
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5">
             <ColumnIcon size={13} className={theme.iconColor} />
-            <h3 className="text-[11.5px] font-mono font-bold uppercase tracking-wider text-[#f4f4f5]">
+            <h3
+              className="text-[11.5px] font-mono font-bold uppercase tracking-wider"
+              style={{ color: 'var(--app-text-primary)' }}
+            >
               {column.title}
             </h3>
           </div>
@@ -135,7 +145,18 @@ export default function KanbanColumn({
           type="button"
           aria-label={`Add task to ${column.title}`}
           onClick={() => onAddTask(column.id)}
-          className="p-1 rounded-md text-[#71717a] hover:text-[#f4f4f5] hover:bg-[#1c1d25] border border-transparent hover:border-[#282a35] transition-all cursor-pointer"
+          className="p-1 rounded-md border border-transparent transition-all cursor-pointer"
+          style={{ color: 'var(--app-text-muted)' }}
+          onMouseEnter={e => {
+            e.currentTarget.style.color = 'var(--app-text-primary)';
+            e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+            e.currentTarget.style.borderColor = 'var(--app-border)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.color = 'var(--app-text-muted)';
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.borderColor = 'transparent';
+          }}
         >
           <Plus size={13} />
         </button>
@@ -154,15 +175,15 @@ export default function KanbanColumn({
           ))
         ) : (
           <div
-            className={`h-full min-h-[100px] flex flex-col items-center justify-center p-3 border border-dashed rounded-lg text-center transition-colors ${
-              isDragOver
-                ? 'border-[#3d4154] bg-[#181922]/50'
-                : 'border-[#242633] bg-[#15161d]/30'
-            }`}
+            className="h-full min-h-[100px] flex flex-col items-center justify-center p-3 border border-dashed rounded-lg text-center transition-colors"
+            style={{
+              borderColor: 'var(--app-border)',
+              backgroundColor: 'var(--app-surface-card)',
+            }}
           >
             <ColumnIcon size={16} className={`${theme.emptyIconColor} mb-1 opacity-70`} />
-            <p className="text-[11px] font-medium text-[#d4d4d8]">No tasks</p>
-            <p className="text-[10px] text-[#71717a] mt-0.5">
+            <p className="text-[11px] font-medium" style={{ color: 'var(--app-text-secondary)' }}>No tasks</p>
+            <p className="text-[10px] mt-0.5" style={{ color: 'var(--app-text-muted)' }}>
               Drop card or click +
             </p>
           </div>
@@ -174,7 +195,18 @@ export default function KanbanColumn({
         <button
           type="button"
           onClick={() => onAddTask(column.id)}
-          className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg border border-transparent hover:border-[#282a35] hover:bg-[#181920] text-[11px] font-medium text-[#8b8f9e] hover:text-[#f4f4f5] transition-all cursor-pointer"
+          className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg border border-transparent text-[11px] font-medium transition-all cursor-pointer"
+          style={{ color: 'var(--app-text-secondary)' }}
+          onMouseEnter={e => {
+            e.currentTarget.style.color = 'var(--app-text-primary)';
+            e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+            e.currentTarget.style.borderColor = 'var(--app-border)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.color = 'var(--app-text-secondary)';
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.borderColor = 'transparent';
+          }}
         >
           <Plus size={12} />
           <span>Add task</span>

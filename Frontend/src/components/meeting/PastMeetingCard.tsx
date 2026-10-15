@@ -29,12 +29,16 @@ export default function PastMeetingCard({ meeting }: PastMeetingCardProps) {
     <motion.button
       whileHover={{ y: -2 }}
       onClick={() => navigate(meeting.status === 'ended' ? `/meetings/${meeting.id}/summary` : `/meetings/${meeting.id}`)}
-      className="w-full text-left bg-[#111827] border border-white/8 rounded-2xl p-5 hover:border-white/16 transition-all group"
+      className="w-full text-left border rounded-2xl p-5 transition-all group"
+      style={{
+        backgroundColor: 'var(--app-surface-card)',
+        borderColor: 'var(--app-border)',
+      }}
     >
       <div className="flex items-start justify-between mb-3">
         <div>
-          <p className="text-xs text-[#475569] mb-1">{formatDate(meeting.date)}</p>
-          <h4 className="text-base font-bold text-[#F8FAFC] group-hover:text-[#3B82F6] transition-colors">
+          <p className="text-xs mb-1" style={{ color: 'var(--app-text-muted)' }}>{formatDate(meeting.date)}</p>
+          <h4 className="text-base font-semibold group-hover:text-[#3B82F6] transition-colors" style={{ color: 'var(--app-text-primary)' }}>
             {meeting.title}
           </h4>
         </div>

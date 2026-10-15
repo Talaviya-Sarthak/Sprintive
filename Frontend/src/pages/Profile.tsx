@@ -16,6 +16,7 @@ import {
 import { profileService } from '../services/profile.service';
 import { useAuth } from '../context/AuthContext';
 import AppLayout from '../layouts/AppLayout';
+import { AppPageLoader } from '../components/app-ui';
 import type { Team, User } from '../types';
 
 interface ProfileFormData extends Partial<User> {
@@ -109,9 +110,7 @@ export default function Profile() {
   if (loading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="w-7 h-7 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--app-border)', borderTopColor: 'var(--app-text-primary)' }} />
-        </div>
+        <AppPageLoader label="Loading engineer profile..." />
       </AppLayout>
     );
   }

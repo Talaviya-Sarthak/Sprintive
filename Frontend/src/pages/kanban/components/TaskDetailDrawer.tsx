@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -16,7 +16,6 @@ import {
   CheckCircle2,
   CheckSquare,
 } from 'lucide-react';
-import { MOCK_TEAM_MEMBERS } from '../data/mockKanbanData';
 import type { KanbanTask, KanbanStatus, TaskPriority } from '../types';
 
 interface TaskDetailDrawerProps {
@@ -94,7 +93,6 @@ export default function TaskDetailDrawer({
 
   if (!task) return null;
 
-  const currentPriority = PRIORITY_LIST.find(p => p.id === task.priority) ?? PRIORITY_LIST[1];
   const currentStatus = STATUS_LIST.find(s => s.id === task.status) ?? STATUS_LIST[0];
 
   const assigneeName = task.assignee?.name ?? 'Unassigned';
@@ -150,18 +148,35 @@ export default function TaskDetailDrawer({
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="w-screen max-w-md sm:max-w-lg bg-[#121319] border-l border-[#242634] shadow-2xl flex flex-col h-full"
+              className="w-screen max-w-md sm:max-w-lg border-l shadow-2xl flex flex-col h-full"
+              style={{
+                backgroundColor: 'var(--app-surface-card)',
+                borderColor: 'var(--app-border)',
+              }}
             >
               {/* Drawer Header */}
-              <div className="px-5 py-4 border-b border-[#20222e] flex items-center justify-between gap-3 bg-[#15161f]">
+              <div
+                className="px-5 py-4 border-b flex items-center justify-between gap-3"
+                style={{
+                  backgroundColor: 'var(--app-surface-subtle)',
+                  borderColor: 'var(--app-border-subtle)',
+                }}
+              >
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-[#1c1e29] border border-[#2b2d3d] text-[#a1a1aa] font-medium shrink-0">
+                  <span
+                    className="text-[11px] font-mono px-2 py-0.5 rounded border font-medium shrink-0"
+                    style={{
+                      backgroundColor: 'var(--app-surface-hover)',
+                      borderColor: 'var(--app-border)',
+                      color: 'var(--app-text-secondary)',
+                    }}
+                  >
                     {task.id.toUpperCase()}
                   </span>
-                  <div className="flex items-center gap-1.5 text-xs text-[#71717a] truncate font-mono">
+                  <div className="flex items-center gap-1.5 text-xs truncate font-mono" style={{ color: 'var(--app-text-muted)' }}>
                     <span>Task Overview</span>
                     <ChevronRight size={12} />
-                    <span className="text-[#f4f4f5] capitalize font-sans font-medium truncate">
+                    <span className="capitalize font-sans font-medium truncate" style={{ color: 'var(--app-text-primary)' }}>
                       {currentStatus.label}
                     </span>
                   </div>
@@ -174,7 +189,12 @@ export default function TaskDetailDrawer({
                       onEditTask(task);
                       onClose();
                     }}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-[#d4d4d8] hover:text-[#ffffff] bg-[#1d1f2b] hover:bg-[#252838] border border-[#2c2f42] transition-colors cursor-pointer"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer"
+                    style={{
+                      backgroundColor: 'var(--app-surface-hover)',
+                      borderColor: 'var(--app-border)',
+                      color: 'var(--app-text-primary)',
+                    }}
                   >
                     <Edit2 size={12} />
                     <span>Edit</span>
@@ -183,7 +203,16 @@ export default function TaskDetailDrawer({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="p-1.5 rounded-lg text-[#71717a] hover:text-[#f4f4f5] hover:bg-[#202230] transition-colors cursor-pointer"
+                    className="p-1.5 rounded-lg transition-colors cursor-pointer"
+                    style={{ color: 'var(--app-text-muted)' }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.color = 'var(--app-text-primary)';
+                      e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.color = 'var(--app-text-muted)';
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
                     aria-label="Close drawer"
                   >
                     <X size={16} />
@@ -192,29 +221,56 @@ export default function TaskDetailDrawer({
               </div>
 
               {/* Drawer Scrollable Content */}
-              <div className="flex-1 overflow-y-auto app-scrollbar p-6 space-y-6 text-xs text-[#a1a1aa]">
+              <div
+                className="flex-1 overflow-y-auto app-scrollbar p-6 space-y-6 text-xs"
+                style={{ color: 'var(--app-text-secondary)' }}
+              >
                 {/* Title */}
                 <div>
-                  <h2 className="text-base sm:text-lg font-bold text-[#f4f4f5] tracking-tight leading-snug">
+                  <h2
+                    className="text-base sm:text-lg font-bold tracking-tight leading-snug"
+                    style={{ color: 'var(--app-text-primary)' }}
+                  >
                     {task.title}
                   </h2>
                 </div>
 
                 {/* Status & Priority Quick Selectors */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl border border-[#222432] bg-[#161722]">
+                <div
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl border"
+                  style={{
+                    backgroundColor: 'var(--app-surface-subtle)',
+                    borderColor: 'var(--app-border)',
+                  }}
+                >
                   {/* Status Dropdown */}
                   <div className="space-y-1.5">
-                    <label className="block text-[10px] font-mono font-semibold uppercase tracking-wider text-[#71717a]">
+                    <label
+                      className="block text-[10px] font-mono font-semibold uppercase tracking-wider"
+                      style={{ color: 'var(--app-text-muted)' }}
+                    >
                       Column Status
                     </label>
                     <div className="relative">
                       <select
                         value={task.status}
                         onChange={e => onMoveStatus(task.id, e.target.value as KanbanStatus)}
-                        className="w-full bg-[#1b1c28] border border-[#292c3d] text-[#f4f4f5] rounded-lg px-2.5 py-1.5 text-xs outline-none cursor-pointer focus:border-blue-500/50"
+                        className="w-full border rounded-lg px-2.5 py-1.5 text-xs outline-none cursor-pointer"
+                        style={{
+                          backgroundColor: 'var(--app-surface-card)',
+                          borderColor: 'var(--app-border)',
+                          color: 'var(--app-text-primary)',
+                        }}
                       >
                         {STATUS_LIST.map(s => (
-                          <option key={s.id} value={s.id} className="bg-[#181922] text-[#f4f4f5]">
+                          <option
+                            key={s.id}
+                            value={s.id}
+                            style={{
+                              backgroundColor: 'var(--app-surface-card)',
+                              color: 'var(--app-text-primary)',
+                            }}
+                          >
                             {s.label}
                           </option>
                         ))}
@@ -224,17 +280,32 @@ export default function TaskDetailDrawer({
 
                   {/* Priority Selector */}
                   <div className="space-y-1.5">
-                    <label className="block text-[10px] font-mono font-semibold uppercase tracking-wider text-[#71717a]">
+                    <label
+                      className="block text-[10px] font-mono font-semibold uppercase tracking-wider"
+                      style={{ color: 'var(--app-text-muted)' }}
+                    >
                       Priority
                     </label>
                     <div className="relative">
                       <select
                         value={task.priority}
                         onChange={e => onUpdatePriority && onUpdatePriority(task.id, e.target.value as TaskPriority)}
-                        className="w-full bg-[#1b1c28] border border-[#292c3d] text-[#f4f4f5] rounded-lg px-2.5 py-1.5 text-xs outline-none cursor-pointer focus:border-blue-500/50 font-medium"
+                        className="w-full border rounded-lg px-2.5 py-1.5 text-xs outline-none cursor-pointer font-medium"
+                        style={{
+                          backgroundColor: 'var(--app-surface-card)',
+                          borderColor: 'var(--app-border)',
+                          color: 'var(--app-text-primary)',
+                        }}
                       >
                         {PRIORITY_LIST.map(p => (
-                          <option key={p.id} value={p.id} className="bg-[#181922] text-[#f4f4f5]">
+                          <option
+                            key={p.id}
+                            value={p.id}
+                            style={{
+                              backgroundColor: 'var(--app-surface-card)',
+                              color: 'var(--app-text-primary)',
+                            }}
+                          >
                             {p.label}
                           </option>
                         ))}
@@ -415,30 +486,37 @@ export default function TaskDetailDrawer({
               </div>
 
               {/* Drawer Footer Actions */}
-              <div className="p-4 border-t border-[#20222e] bg-[#15161f] flex items-center justify-between gap-3 shrink-0">
+              <div
+                className="p-4 border-t flex items-center justify-between gap-3 shrink-0"
+                style={{
+                  backgroundColor: 'var(--app-surface-subtle)',
+                  borderColor: 'var(--app-border-subtle)',
+                }}
+              >
                 {!confirmDelete ? (
                   <button
                     type="button"
                     onClick={() => setConfirmDelete(true)}
-                    className="flex items-center gap-1.5 text-xs text-[#f87171] hover:text-[#ef4444] px-2.5 py-1.5 rounded-lg hover:bg-rose-500/10 transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 px-2.5 py-1.5 rounded-lg hover:bg-rose-500/10 transition-colors cursor-pointer"
                   >
                     <Trash2 size={13} />
                     <span>Delete Task</span>
                   </button>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-[#ef4444] font-medium">Delete task?</span>
+                    <span className="text-[11px] text-red-500 font-medium">Delete task?</span>
                     <button
                       type="button"
                       onClick={handleDelete}
-                      className="text-xs bg-[#ef4444] text-white px-2.5 py-1 rounded-md font-semibold hover:bg-red-600 transition-colors cursor-pointer shadow-xs"
+                      className="text-xs bg-red-600 text-white px-2.5 py-1 rounded-md font-semibold hover:bg-red-700 transition-colors cursor-pointer shadow-xs"
                     >
                       Confirm
                     </button>
                     <button
                       type="button"
                       onClick={() => setConfirmDelete(false)}
-                      className="text-xs text-[#a1a1aa] hover:text-[#f4f4f5] px-1 cursor-pointer"
+                      className="text-xs px-1 cursor-pointer"
+                      style={{ color: 'var(--app-text-muted)' }}
                     >
                       Cancel
                     </button>
@@ -449,7 +527,12 @@ export default function TaskDetailDrawer({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium text-[#d4d4d8] hover:text-[#ffffff] bg-[#1d1f2b] hover:bg-[#252838] border border-[#2c2f42] transition-colors cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer"
+                    style={{
+                      backgroundColor: 'var(--app-surface-hover)',
+                      borderColor: 'var(--app-border)',
+                      color: 'var(--app-text-primary)',
+                    }}
                   >
                     Close
                   </button>

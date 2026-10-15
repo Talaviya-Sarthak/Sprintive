@@ -20,8 +20,11 @@ import {
   Kanban,
   PanelLeftClose,
   PanelLeftOpen,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -30,6 +33,7 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children, teamId }: AppLayoutProps) {
   const { user, teams, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -97,8 +101,8 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
           isCollapsed ? 'w-[64px]' : 'w-[260px]'
         }`}
         style={{
-          backgroundColor: 'var(--app-surface-subtle)',
-          borderColor: 'var(--app-border-subtle)',
+          backgroundColor: 'var(--dash-surface-sidebar)',
+          borderColor: 'var(--dash-border-subtle)',
         }}
       >
         {/* Brand Header */}
@@ -122,7 +126,7 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
               type="button"
               onClick={toggleSidebar}
               title="Expand sidebar"
-              className="p-1 rounded-md text-[#71717a] hover:text-[#f4f4f5] hover:bg-[#181920] transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-[var(--app-text-muted)] hover:text-[var(--app-text-primary)] hover:bg-[var(--app-surface-hover)] transition-colors cursor-pointer"
             >
               <PanelLeftOpen size={14} />
             </button>
@@ -168,7 +172,7 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
                 type="button"
                 onClick={toggleSidebar}
                 title="Collapse sidebar"
-                className="p-1 rounded-md text-[#71717a] hover:text-[#f4f4f5] hover:bg-[#181920] transition-colors cursor-pointer shrink-0"
+                className="p-1.5 rounded-lg text-[var(--app-text-muted)] hover:text-[var(--app-text-primary)] hover:bg-[var(--app-surface-hover)] transition-colors cursor-pointer shrink-0"
               >
                 <PanelLeftClose size={15} />
               </button>
@@ -722,7 +726,7 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
               type="button"
               onClick={toggleSidebar}
               title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              className="hidden md:flex p-1.5 rounded-lg text-[#71717a] hover:text-[#f4f4f5] hover:bg-[#181920] border border-transparent hover:border-[#27272a] transition-colors cursor-pointer"
+              className="hidden md:flex p-1.5 rounded-lg text-[var(--app-text-muted)] hover:text-[var(--app-text-primary)] hover:bg-[var(--app-surface-hover)] border border-transparent hover:border-[var(--app-border)] transition-colors cursor-pointer"
             >
               {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
             </button>
@@ -750,15 +754,34 @@ export default function AppLayout({ children, teamId }: AppLayoutProps) {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Theme Toggle Button */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              className="p-1.5 rounded-lg border transition-all cursor-pointer flex items-center justify-center text-[var(--app-text-muted)] hover:text-[var(--app-text-primary)] hover:bg-[var(--app-surface-hover)] border-transparent hover:border-[var(--app-border)]"
+            >
+              {theme === 'dark' ? (
+                <Sun size={15} className="transition-transform duration-200 hover:rotate-45" />
+              ) : (
+                <Moon size={15} className="transition-transform duration-200 hover:-rotate-12" />
+              )}
+            </button>
+
             {/* New Meeting CTA */}
             <button
               onClick={() => navigate(teamId ? `/meetings/create?team_id=${teamId}` : '/meetings/create')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold text-xs transition-all shadow-xs cursor-pointer"
-              style={{ backgroundColor: 'var(--app-text-primary)', color: 'var(--app-bg)' }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-xs transition-all shadow-xs cursor-pointer border"
+              style={{
+                backgroundColor: 'var(--app-action-bg)',
+                color: 'var(--app-action-text)',
+                borderColor: 'var(--app-action-bg)'
+              }}
               onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
               onMouseLeave={e => e.currentTarget.style.opacity = '1'}
             >
-              <Plus size={14} strokeWidth={2.5} />
+              <Plus size={13} strokeWidth={2.5} />
               <span className="hidden sm:inline">New Meeting</span>
             </button>
 

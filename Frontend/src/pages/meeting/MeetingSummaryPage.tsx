@@ -13,7 +13,7 @@ import { useMeeting } from '../../hooks/useMeeting';
 import { useMeetingParticipants } from '../../hooks/useMeetingParticipants';
 import AppLayout from '../../layouts/AppLayout';
 import { MeetingStatusBadge, MeetingTypeBadge, RoleBadge } from '../../components/ui/Badge';
-import { AppButton, AppCard } from '../../components/app-ui';
+import { AppButton, AppCard, AppPageLoader } from '../../components/app-ui';
 import AIProcessingStepper from '../../components/meeting/AIProcessingStepper';
 import type { MeetingParticipant, GeneratedTicket } from '../../types';
 
@@ -148,12 +148,7 @@ export default function MeetingSummaryPage() {
   if (meetingLoading || summaryLoading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-64">
-          <div
-            className="w-7 h-7 border-2 rounded-full animate-spin"
-            style={{ borderColor: 'var(--app-border)', borderTopColor: 'var(--app-text-primary)' }}
-          />
-        </div>
+        <AppPageLoader label="Loading meeting summary & intelligence logs..." />
       </AppLayout>
     );
   }
@@ -193,18 +188,6 @@ export default function MeetingSummaryPage() {
 
   // Processing stage indicators
   const currentStage = procStatus?.current_stage || 'pending';
-  const stageIndex = (() => {
-    switch (currentStage) {
-      case 'finalizing_transcript': return 1;
-      case 'saving_transcript': return 2;
-      case 'cleaning_transcript': return 3;
-      case 'analyzing_meeting': return 4;
-      case 'generating_tasks': return 5;
-      case 'resolving_tasks': return 6;
-      case 'completed': return 7;
-      default: return isProcessing ? 3 : 0;
-    }
-  })();
 
   return (
     <AppLayout teamId={meeting.team_id}>
@@ -213,7 +196,10 @@ export default function MeetingSummaryPage() {
         <div className="flex items-center justify-between">
           <button
             onClick={() => navigate(`/teams/${meeting.team_id}/meetings`)}
-            className="flex items-center gap-1.5 text-xs transition-colors cursor-pointer text-[#9ca3af] hover:text-[#f4f4f5]"
+            className="flex items-center gap-1.5 text-xs transition-colors cursor-pointer"
+            style={{ color: 'var(--app-text-muted)' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--app-text-primary)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--app-text-muted)')}
           >
             <ArrowLeft size={14} /> Back to Meetings
           </button>
@@ -231,20 +217,27 @@ export default function MeetingSummaryPage() {
 
         {/* Meeting Header */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-          <div className="pb-5 border-b border-[#242636] space-y-2">
+          <div className="pb-5 border-b space-y-2" style={{ borderColor: 'var(--app-border-subtle)' }}>
             <div className="flex items-center gap-2">
               <MeetingStatusBadge status={meeting.status} size="md" />
               <MeetingTypeBadge type={meeting.meeting_type} size="md" />
               {meeting.sprint_name && (
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#1c1d27] border border-[#2c2f42] text-zinc-300">
+                <span
+                  className="text-[11px] font-mono px-2 py-0.5 rounded-full border"
+                  style={{
+                    backgroundColor: 'var(--app-surface-hover)',
+                    borderColor: 'var(--app-border)',
+                    color: 'var(--app-text-secondary)',
+                  }}
+                >
                   {meeting.sprint_name}
                 </span>
               )}
             </div>
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-[#f4f4f5]">
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>
               {meeting.title}
             </h1>
-            <p className="text-xs font-mono text-[#71717a]">
+            <p className="text-xs font-mono" style={{ color: 'var(--app-text-muted)' }}>
               {formatDateLong(meeting.date)} · {formatTime12h(meeting.start_time)} - {formatTime12h(meeting.end_time)} ({meeting.timezone || 'UTC'})
             </p>
           </div>
@@ -252,26 +245,26 @@ export default function MeetingSummaryPage() {
           {/* Quick Metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <AppCard variant="dashboard" className="text-center p-4">
-              <Clock size={16} className="mx-auto mb-2 text-[#9ca3af]" />
-              <p className="text-xl font-bold text-[#f4f4f5]">{meeting.duration_minutes || summary?.duration_minutes || 0}</p>
-              <p className="text-[10px] font-mono uppercase mt-0.5 text-[#71717a]">Minutes</p>
+              <Clock size={16} className="mx-auto mb-2" style={{ color: 'var(--app-text-muted)' }} />
+              <p className="text-xl font-bold" style={{ color: 'var(--app-text-primary)' }}>{meeting.duration_minutes || summary?.duration_minutes || 0}</p>
+              <p className="text-[10px] font-mono uppercase mt-0.5" style={{ color: 'var(--app-text-muted)' }}>Minutes</p>
             </AppCard>
             <AppCard variant="dashboard" className="text-center p-4">
-              <Users size={16} className="mx-auto mb-2 text-[#9ca3af]" />
-              <p className="text-xl font-bold text-[#f4f4f5]">{participants.length}</p>
-              <p className="text-[10px] font-mono uppercase mt-0.5 text-[#71717a]">Participants</p>
+              <Users size={16} className="mx-auto mb-2" style={{ color: 'var(--app-text-muted)' }} />
+              <p className="text-xl font-bold" style={{ color: 'var(--app-text-primary)' }}>{participants.length}</p>
+              <p className="text-[10px] font-mono uppercase mt-0.5" style={{ color: 'var(--app-text-muted)' }}>Participants</p>
             </AppCard>
             <AppCard variant="dashboard" className="text-center p-4">
               <ListChecks size={16} className="mx-auto mb-2 text-indigo-400" />
-              <p className="text-xl font-bold text-[#f4f4f5]">{tickets.length}</p>
-              <p className="text-[10px] font-mono uppercase mt-0.5 text-[#71717a]">Generated Tasks</p>
+              <p className="text-xl font-bold" style={{ color: 'var(--app-text-primary)' }}>{tickets.length}</p>
+              <p className="text-[10px] font-mono uppercase mt-0.5" style={{ color: 'var(--app-text-muted)' }}>Generated Tasks</p>
             </AppCard>
             <AppCard variant="dashboard" className="text-center p-4">
               <Sparkles size={16} className="mx-auto mb-2 text-blue-400" />
-              <p className="text-xs font-semibold mt-1 text-[#f4f4f5]">
+              <p className="text-xs font-semibold mt-1" style={{ color: 'var(--app-text-primary)' }}>
                 {isProcessing ? 'Processing' : isFailed ? 'Failed' : 'Completed'}
               </p>
-              <p className="text-[10px] font-mono uppercase mt-0.5 text-[#71717a]">AI Lifecycle</p>
+              <p className="text-[10px] font-mono uppercase mt-0.5" style={{ color: 'var(--app-text-muted)' }}>AI Lifecycle</p>
             </AppCard>
           </div>
 

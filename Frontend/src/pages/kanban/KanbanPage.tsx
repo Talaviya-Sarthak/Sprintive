@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Search,
@@ -374,26 +374,33 @@ export default function KanbanPage() {
     <AppLayout teamId={activeTeamId}>
       <div className="flex flex-col h-full px-3 sm:px-5 py-3.5 max-w-[1600px] mx-auto select-none">
         {/* Compact Page Header */}
-        <div className="flex flex-col gap-3 pb-3.5 border-b border-[#1f202b] mb-3.5">
+        <div className="flex flex-col gap-3 pb-3.5 border-b mb-3.5" style={{ borderColor: 'var(--app-border-subtle)' }}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <div>
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#15161f] border border-[#242636] text-[#f4f4f5]">
+                <div
+                  className="w-7 h-7 rounded-lg flex items-center justify-center border"
+                  style={{
+                    backgroundColor: 'var(--app-surface-hover)',
+                    borderColor: 'var(--app-border)',
+                    color: 'var(--app-text-primary)'
+                  }}
+                >
                   <Kanban size={15} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h1 className="text-base sm:text-lg font-bold tracking-tight text-[#f4f4f5]">
+                    <h1 className="text-base sm:text-lg font-bold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>
                       Kanban Board
                     </h1>
                     {meetingIdParam !== 'all' && currentFilteredMeeting && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-300">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-300">
                         <Video size={10} />
                         <span className="max-w-[140px] truncate">{currentFilteredMeeting.title}</span>
                         <button
                           type="button"
                           onClick={() => handleMeetingChange('all')}
-                          className="hover:text-blue-100 ml-0.5 cursor-pointer"
+                          className="hover:opacity-80 ml-0.5 cursor-pointer"
                           title="Show all meetings"
                         >
                           <X size={10} />
@@ -401,9 +408,9 @@ export default function KanbanPage() {
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-[#9ca3af]">
+                  <p className="text-[11px]" style={{ color: 'var(--app-text-muted)' }}>
                     Manage tasks across{' '}
-                    <span className="text-[#f4f4f5] font-medium">
+                    <span className="font-medium" style={{ color: 'var(--app-text-primary)' }}>
                       {activeTeam?.name ?? 'your workspace'}
                     </span>
                   </p>
@@ -413,25 +420,31 @@ export default function KanbanPage() {
 
             {/* Quick Metrics Bar & Add Task CTA */}
             <div className="flex items-center gap-2">
-              <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#262836] bg-[#111217] text-xs">
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#1c1d27] border border-[#2b2d3d] text-zinc-300">
-                  <span className="text-[10.5px] text-[#9ca3af]">Total:</span>
-                  <span className="font-mono font-bold text-[#f4f4f5]">{totalCount}</span>
+              <div
+                className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs"
+                style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
+              >
+                <div
+                  className="flex items-center gap-1 px-1.5 py-0.5 rounded border"
+                  style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}
+                >
+                  <span className="text-[10.5px]" style={{ color: 'var(--app-text-muted)' }}>Total:</span>
+                  <span className="font-mono font-bold">{totalCount}</span>
                 </div>
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-blue-300">
-                  <Clock size={11} className="text-blue-400" />
-                  <span className="text-[10.5px] text-blue-300/80">Active:</span>
-                  <span className="font-mono font-bold text-blue-200">{inProgressCount}</span>
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/30 text-blue-600 dark:text-blue-300">
+                  <Clock size={11} className="text-blue-500 dark:text-blue-400" />
+                  <span className="text-[10.5px] opacity-80">Active:</span>
+                  <span className="font-mono font-bold">{inProgressCount}</span>
                 </div>
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300">
-                  <AlertCircle size={11} className="text-amber-400" />
-                  <span className="text-[10.5px] text-amber-300/80">Review:</span>
-                  <span className="font-mono font-bold text-amber-200">{reviewCount}</span>
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-300">
+                  <AlertCircle size={11} className="text-amber-500 dark:text-amber-400" />
+                  <span className="text-[10.5px] opacity-80">Review:</span>
+                  <span className="font-mono font-bold">{reviewCount}</span>
                 </div>
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">
-                  <CheckCircle2 size={11} className="text-emerald-400" />
-                  <span className="text-[10.5px] text-emerald-300/80">Done:</span>
-                  <span className="font-mono font-bold text-emerald-200">{doneCount}</span>
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300">
+                  <CheckCircle2 size={11} className="text-emerald-500 dark:text-emerald-400" />
+                  <span className="text-[10.5px] opacity-80">Done:</span>
+                  <span className="font-mono font-bold">{doneCount}</span>
                 </div>
               </div>
 
@@ -449,7 +462,7 @@ export default function KanbanPage() {
 
           {/* Action error banner */}
           {actionError && (
-            <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs">
+            <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/25 text-rose-500 dark:text-rose-300 text-xs">
               <span>{actionError}</span>
               <button
                 type="button"
@@ -467,20 +480,29 @@ export default function KanbanPage() {
             <div className="relative flex-1 max-w-sm">
               <Search
                 size={13}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#71717a] pointer-events-none"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                style={{ color: 'var(--app-text-muted)' }}
               />
               <input
                 type="text"
                 placeholder="Filter tasks by name, assignee, tag..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full border rounded-lg pl-8 pr-7 py-1 text-xs outline-none transition-colors bg-[#13141a] border-[#242636] text-[#f4f4f5] focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30"
+                className="w-full border rounded-lg pl-8 pr-7 py-1 text-xs outline-none transition-colors"
+                style={{
+                  backgroundColor: 'var(--app-surface-card)',
+                  borderColor: 'var(--app-border)',
+                  color: 'var(--app-text-primary)'
+                }}
+                onFocus={e => (e.currentTarget.style.borderColor = 'var(--app-border-focus)')}
+                onBlur={e => (e.currentTarget.style.borderColor = 'var(--app-border)')}
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[#71717a] hover:text-[#f4f4f5] cursor-pointer"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer"
+                  style={{ color: 'var(--app-text-muted)' }}
                 >
                   <X size={11} />
                 </button>
@@ -491,24 +513,25 @@ export default function KanbanPage() {
             <div className="flex flex-wrap items-center gap-1.5">
               {/* Meeting Filter Dropdown */}
               <div
-                className={`flex items-center gap-1 border rounded-lg px-2 py-0.5 text-xs transition-colors ${
-                  meetingIdParam !== 'all'
-                    ? 'border-blue-500/50 bg-blue-500/10 text-blue-300'
-                    : 'border-[#242636] bg-[#13141a] text-[#a1a1aa]'
-                }`}
+                className="flex items-center gap-1 border rounded-lg px-2 py-0.5 text-xs transition-colors"
+                style={{
+                  backgroundColor: meetingIdParam !== 'all' ? 'rgba(59, 130, 246, 0.1)' : 'var(--app-surface-card)',
+                  borderColor: meetingIdParam !== 'all' ? 'rgba(59, 130, 246, 0.4)' : 'var(--app-border)',
+                  color: meetingIdParam !== 'all' ? 'var(--app-accent-blue)' : 'var(--app-text-secondary)'
+                }}
               >
-                <Video size={11} className={meetingIdParam !== 'all' ? 'text-blue-400' : 'text-[#71717a]'} />
+                <Video size={11} className={meetingIdParam !== 'all' ? 'text-blue-500' : ''} style={{ color: meetingIdParam === 'all' ? 'var(--app-text-muted)' : undefined }} />
                 <span className="text-[10.5px] font-mono opacity-80">Meeting:</span>
                 <select
                   value={meetingIdParam}
                   onChange={e => handleMeetingChange(e.target.value)}
                   className="bg-transparent text-[11px] text-inherit outline-none cursor-pointer max-w-[130px] truncate font-medium"
                 >
-                  <option value="all" className="bg-[#181920] text-[#f4f4f5]">
+                  <option value="all" style={{ backgroundColor: 'var(--app-surface-card)', color: 'var(--app-text-primary)' }}>
                     All Meetings ({meetings.reduce((acc, m) => acc + (m.task_count || 0), 0)})
                   </option>
                   {meetings.map(m => (
-                    <option key={m.id} value={m.id} className="bg-[#181920] text-[#f4f4f5]">
+                    <option key={m.id} value={m.id} style={{ backgroundColor: 'var(--app-surface-card)', color: 'var(--app-text-primary)' }}>
                       {m.title} ({m.task_count})
                     </option>
                   ))}
@@ -517,40 +540,36 @@ export default function KanbanPage() {
 
               {/* Priority Filter */}
               <div
-                className={`flex items-center gap-1 border rounded-lg px-2 py-0.5 text-xs transition-colors ${
-                  priorityFilter !== 'all'
-                    ? priorityFilter === 'urgent'
-                      ? 'border-rose-500/50 bg-rose-500/10 text-rose-300'
-                      : priorityFilter === 'high'
-                      ? 'border-amber-500/50 bg-amber-500/10 text-amber-300'
-                      : priorityFilter === 'medium'
-                      ? 'border-blue-500/50 bg-blue-500/10 text-blue-300'
-                      : 'border-slate-500/50 bg-slate-500/10 text-slate-300'
-                    : 'border-[#242636] bg-[#13141a] text-[#a1a1aa]'
-                }`}
+                className="flex items-center gap-1 border rounded-lg px-2 py-0.5 text-xs transition-colors"
+                style={{
+                  backgroundColor: priorityFilter !== 'all' ? 'var(--app-surface-hover)' : 'var(--app-surface-card)',
+                  borderColor: priorityFilter !== 'all' ? 'var(--app-border-focus)' : 'var(--app-border)',
+                  color: 'var(--app-text-secondary)'
+                }}
               >
-                <SlidersHorizontal size={11} className={priorityFilter !== 'all' ? 'text-current' : 'text-[#71717a]'} />
+                <SlidersHorizontal size={11} style={{ color: 'var(--app-text-muted)' }} />
                 <span className="text-[10.5px] font-mono opacity-80">Priority:</span>
                 <select
                   value={priorityFilter}
                   onChange={e => setPriorityFilter(e.target.value as TaskPriority | 'all')}
                   className="bg-transparent text-[11px] text-inherit outline-none cursor-pointer font-medium"
                 >
-                  <option value="all" className="bg-[#181920] text-[#f4f4f5]">All</option>
-                  <option value="urgent" className="bg-[#181920] text-rose-300">Urgent</option>
-                  <option value="high" className="bg-[#181920] text-amber-300">High</option>
-                  <option value="medium" className="bg-[#181920] text-blue-300">Medium</option>
-                  <option value="low" className="bg-[#181920] text-slate-300">Low</option>
+                  <option value="all" style={{ backgroundColor: 'var(--app-surface-card)', color: 'var(--app-text-primary)' }}>All</option>
+                  <option value="urgent" style={{ backgroundColor: 'var(--app-surface-card)', color: '#ef4444' }}>Urgent</option>
+                  <option value="high" style={{ backgroundColor: 'var(--app-surface-card)', color: '#f59e0b' }}>High</option>
+                  <option value="medium" style={{ backgroundColor: 'var(--app-surface-card)', color: '#3b82f6' }}>Medium</option>
+                  <option value="low" style={{ backgroundColor: 'var(--app-surface-card)', color: 'var(--app-text-secondary)' }}>Low</option>
                 </select>
               </div>
 
               {/* Assignee Filter */}
               <div
-                className={`flex items-center gap-1 border rounded-lg px-2 py-0.5 text-xs transition-colors ${
-                  assigneeFilter !== 'all'
-                    ? 'border-indigo-500/50 bg-indigo-500/10 text-indigo-300'
-                    : 'border-[#242636] bg-[#13141a] text-[#a1a1aa]'
-                }`}
+                className="flex items-center gap-1 border rounded-lg px-2 py-0.5 text-xs transition-colors"
+                style={{
+                  backgroundColor: assigneeFilter !== 'all' ? 'var(--app-surface-hover)' : 'var(--app-surface-card)',
+                  borderColor: assigneeFilter !== 'all' ? 'var(--app-border-focus)' : 'var(--app-border)',
+                  color: 'var(--app-text-secondary)'
+                }}
               >
                 <span className="text-[10.5px] font-mono opacity-80">Assignee:</span>
                 <select
@@ -558,10 +577,10 @@ export default function KanbanPage() {
                   onChange={e => setAssigneeFilter(e.target.value)}
                   className="bg-transparent text-[11px] text-inherit outline-none cursor-pointer max-w-[105px] truncate font-medium"
                 >
-                  <option value="all" className="bg-[#181920] text-[#f4f4f5]">All</option>
-                  <option value="unassigned" className="bg-[#181920] text-[#f4f4f5]">Unassigned</option>
+                  <option value="all" style={{ backgroundColor: 'var(--app-surface-card)', color: 'var(--app-text-primary)' }}>All</option>
+                  <option value="unassigned" style={{ backgroundColor: 'var(--app-surface-card)', color: 'var(--app-text-primary)' }}>Unassigned</option>
                   {teamMembers.map(m => (
-                    <option key={m.id} value={m.id} className="bg-[#181920] text-[#f4f4f5]">
+                    <option key={m.id} value={m.id} style={{ backgroundColor: 'var(--app-surface-card)', color: 'var(--app-text-primary)' }}>
                       {m.name}
                     </option>
                   ))}
@@ -570,11 +589,12 @@ export default function KanbanPage() {
 
               {/* Status Filter */}
               <div
-                className={`flex items-center gap-1 border rounded-lg px-2 py-0.5 text-xs transition-colors ${
-                  statusFilter !== 'all'
-                    ? 'border-blue-500/50 bg-blue-500/10 text-blue-300'
-                    : 'border-[#242636] bg-[#13141a] text-[#a1a1aa]'
-                }`}
+                className="flex items-center gap-1 border rounded-lg px-2 py-0.5 text-xs transition-colors"
+                style={{
+                  backgroundColor: statusFilter !== 'all' ? 'var(--app-surface-hover)' : 'var(--app-surface-card)',
+                  borderColor: statusFilter !== 'all' ? 'var(--app-border-focus)' : 'var(--app-border)',
+                  color: 'var(--app-text-secondary)'
+                }}
               >
                 <span className="text-[10.5px] font-mono opacity-80">Status:</span>
                 <select
@@ -582,29 +602,37 @@ export default function KanbanPage() {
                   onChange={e => setStatusFilter(e.target.value as KanbanStatus | 'all')}
                   className="bg-transparent text-[11px] text-inherit outline-none cursor-pointer font-medium"
                 >
-                  <option value="all" className="bg-[#181920] text-[#f4f4f5]">All</option>
-                  <option value="backlog" className="bg-[#181920] text-[#f4f4f5]">Backlog</option>
-                  <option value="todo" className="bg-[#181920] text-[#f4f4f5]">To Do</option>
-                  <option value="in_progress" className="bg-[#181920] text-[#f4f4f5]">In Progress</option>
-                  <option value="review" className="bg-[#181920] text-[#f4f4f5]">Review</option>
-                  <option value="done" className="bg-[#181920] text-[#f4f4f5]">Done</option>
+                  <option value="all" style={{ backgroundColor: 'var(--app-surface-card)', color: 'var(--app-text-primary)' }}>All</option>
+                  <option value="backlog" style={{ backgroundColor: 'var(--app-surface-card)', color: 'var(--app-text-primary)' }}>Backlog</option>
+                  <option value="todo" style={{ backgroundColor: 'var(--app-surface-card)', color: 'var(--app-text-primary)' }}>To Do</option>
+                  <option value="in_progress" style={{ backgroundColor: 'var(--app-surface-card)', color: 'var(--app-text-primary)' }}>In Progress</option>
+                  <option value="review" style={{ backgroundColor: 'var(--app-surface-card)', color: 'var(--app-text-primary)' }}>Review</option>
+                  <option value="done" style={{ backgroundColor: 'var(--app-surface-card)', color: 'var(--app-text-primary)' }}>Done</option>
                 </select>
               </div>
 
               {/* Sort Dropdown */}
-              <div className="flex items-center gap-1 border border-[#242636] rounded-lg px-2 py-0.5 bg-[#13141a] text-xs text-[#a1a1aa]">
-                <ArrowUpDown size={11} className="text-[#71717a]" />
-                <span className="text-[10.5px] font-mono text-[#71717a]">Sort:</span>
+              <div
+                className="flex items-center gap-1 border rounded-lg px-2 py-0.5 text-xs"
+                style={{
+                  backgroundColor: 'var(--app-surface-card)',
+                  borderColor: 'var(--app-border)',
+                  color: 'var(--app-text-secondary)'
+                }}
+              >
+                <ArrowUpDown size={11} style={{ color: 'var(--app-text-muted)' }} />
+                <span className="text-[10.5px] font-mono" style={{ color: 'var(--app-text-muted)' }}>Sort:</span>
                 <select
                   value={sortBy}
                   onChange={e => setSortBy(e.target.value as SortOption)}
-                  className="bg-transparent text-[11px] text-[#f4f4f5] outline-none cursor-pointer font-medium"
+                  className="bg-transparent text-[11px] outline-none cursor-pointer font-medium"
+                  style={{ color: 'var(--app-text-primary)' }}
                 >
-                  <option value="recent" className="bg-[#181920] text-[#f4f4f5]">Recent</option>
-                  <option value="priority-desc" className="bg-[#181920] text-[#f4f4f5]">Priority (High)</option>
-                  <option value="priority-asc" className="bg-[#181920] text-[#f4f4f5]">Priority (Low)</option>
-                  <option value="due-asc" className="bg-[#181920] text-[#f4f4f5]">Due (Soon)</option>
-                  <option value="due-desc" className="bg-[#181920] text-[#f4f4f5]">Due (Late)</option>
+                  <option value="recent" style={{ backgroundColor: 'var(--app-surface-card)', color: 'var(--app-text-primary)' }}>Recent</option>
+                  <option value="priority-desc" style={{ backgroundColor: 'var(--app-surface-card)', color: 'var(--app-text-primary)' }}>Priority (High)</option>
+                  <option value="priority-asc" style={{ backgroundColor: 'var(--app-surface-card)', color: 'var(--app-text-primary)' }}>Priority (Low)</option>
+                  <option value="due-asc" style={{ backgroundColor: 'var(--app-surface-card)', color: 'var(--app-text-primary)' }}>Due (Soon)</option>
+                  <option value="due-desc" style={{ backgroundColor: 'var(--app-surface-card)', color: 'var(--app-text-primary)' }}>Due (Late)</option>
                 </select>
               </div>
 
@@ -613,7 +641,7 @@ export default function KanbanPage() {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="flex items-center gap-1 text-[11px] text-rose-300 hover:text-rose-200 px-1.5 py-0.5 rounded-md bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 transition-colors cursor-pointer"
+                  className="flex items-center gap-1 text-[11px] text-rose-500 hover:text-rose-600 dark:text-rose-300 dark:hover:text-rose-200 px-1.5 py-0.5 rounded-md bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 transition-colors cursor-pointer"
                 >
                   <X size={11} />
                   <span>Reset</span>
@@ -625,9 +653,9 @@ export default function KanbanPage() {
 
         {/* Loading State */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center h-80 gap-3">
+          <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3">
             <Loader2 size={24} className="animate-spin text-blue-400" />
-            <p className="text-xs text-[#a1a1aa] font-mono">Loading Kanban board...</p>
+            <p className="text-xs font-mono" style={{ color: 'var(--app-text-muted)' }}>Loading Kanban board...</p>
           </div>
         ) : error ? (
           /* Error State */

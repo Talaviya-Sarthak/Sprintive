@@ -26,7 +26,7 @@ export function AppCard({
   const containerStyle: React.CSSProperties = isDash
     ? {
         backgroundColor: 'var(--app-surface-card)',
-        borderColor: 'var(--app-border)',
+        border: '1px solid var(--app-border)',
         borderRadius: '0.75rem',
         overflow: 'hidden',
         display: 'flex',
@@ -35,7 +35,7 @@ export function AppCard({
       }
     : {
         backgroundColor: 'var(--app-surface-card)',
-        borderColor: 'var(--app-border)',
+        border: '1px solid var(--app-border)',
         borderRadius: '0.75rem',
         overflow: 'hidden',
         boxShadow: 'var(--app-shadow-sm)',

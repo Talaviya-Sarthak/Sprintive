@@ -13,7 +13,7 @@ const TIMEZONES = [
 ];
 
 const COLORS = [
-  '#F97316', '#3B82F6', '#10B981', '#8B5CF6', '#EC4899', '#F59E0B', '#06B6D4', '#6366F1'
+  '#3B82F6', '#10B981', '#8B5CF6', '#EC4899', '#F59E0B', '#06B6D4', '#6366F1', '#71717A'
 ];
 
 const DAYS = [
@@ -48,7 +48,7 @@ export default function CreateTeam() {
   const [form, setForm] = useState({
     name: '',
     description: '',
-    color: '#F97316',
+    color: '#3B82F6',
     timezone: 'UTC',
     working_days: [1, 2, 3, 4, 5] as number[],
     daily_scrum_time: getDefaultScrumTime(),

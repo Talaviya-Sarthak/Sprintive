@@ -139,23 +139,34 @@ export default function KanbanCard({
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={e => {
+        setIsHovered(true);
+        e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+        e.currentTarget.style.borderColor = 'var(--app-border-focus)';
+      }}
+      onMouseLeave={e => {
+        setIsHovered(false);
+        e.currentTarget.style.backgroundColor = 'var(--app-surface-card)';
+        e.currentTarget.style.borderColor = 'var(--app-border)';
+      }}
       onClick={() => onClick(task)}
-      className={`group relative rounded-xl border px-3 py-2.5 transition-all duration-150 cursor-pointer select-none ${
+      className={`group relative rounded-xl border px-3 py-2.5 transition-all duration-150 cursor-pointer select-none shadow-xs ${
         priorityConfig.borderClass
       } ${
-        isDragging
-          ? 'opacity-40 border-dashed border-[#52525b] scale-[0.98]'
-          : 'bg-[#181920] hover:bg-[#20212b] border-[#282a35] hover:border-[#3b3e4f] shadow-xs hover:shadow-md hover:shadow-black/50'
+        isDragging ? 'opacity-40 border-dashed scale-[0.98]' : ''
       }`}
+      style={{
+        backgroundColor: 'var(--app-surface-card)',
+        borderColor: 'var(--app-border)',
+      }}
     >
       {/* Top Header Row: Priority & Quick Move Arrows */}
       <div className="flex items-center justify-between gap-1.5 mb-1.5">
         <div className="flex items-center gap-1.5">
           <GripVertical
             size={11}
-            className="text-[#52525b] opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing shrink-0 -ml-1"
+            className="opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing shrink-0 -ml-1"
+            style={{ color: 'var(--app-text-muted)' }}
           />
           <span
             className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold uppercase tracking-wider border ${priorityConfig.badgeClass}`}
@@ -177,7 +188,16 @@ export default function KanbanCard({
               type="button"
               title={`Move to ${prevStatus.replace('_', ' ')}`}
               onClick={() => onMoveStatus(task.id, prevStatus)}
-              className="p-0.5 rounded text-[#71717a] hover:text-[#f4f4f5] hover:bg-[#282a35] transition-colors cursor-pointer"
+              className="p-0.5 rounded transition-colors cursor-pointer"
+              style={{ color: 'var(--app-text-muted)' }}
+              onMouseEnter={e => {
+                e.currentTarget.style.color = 'var(--app-text-primary)';
+                e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.color = 'var(--app-text-muted)';
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
             >
               <ChevronLeft size={12} />
             </button>
@@ -187,7 +207,16 @@ export default function KanbanCard({
               type="button"
               title={`Move to ${nextStatus.replace('_', ' ')}`}
               onClick={() => onMoveStatus(task.id, nextStatus)}
-              className="p-0.5 rounded text-[#71717a] hover:text-[#f4f4f5] hover:bg-[#282a35] transition-colors cursor-pointer"
+              className="p-0.5 rounded transition-colors cursor-pointer"
+              style={{ color: 'var(--app-text-muted)' }}
+              onMouseEnter={e => {
+                e.currentTarget.style.color = 'var(--app-text-primary)';
+                e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.color = 'var(--app-text-muted)';
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
             >
               <ChevronRight size={12} />
             </button>
@@ -196,13 +225,19 @@ export default function KanbanCard({
       </div>
 
       {/* Task Title */}
-      <h4 className="text-xs font-semibold text-[#f4f4f5] group-hover:text-[#ffffff] transition-colors leading-snug line-clamp-2 mb-1">
+      <h4
+        className="text-xs font-semibold leading-snug line-clamp-2 mb-1 transition-colors"
+        style={{ color: 'var(--app-text-primary)' }}
+      >
         {task.title}
       </h4>
 
-      {/* Short Preview Description (Single Line Preview) */}
+      {/* Short Preview Description */}
       {task.description && (
-        <p className="text-[11px] text-[#9ca3af] leading-normal line-clamp-1 mb-2">
+        <p
+          className="text-[11px] leading-normal line-clamp-1 mb-2"
+          style={{ color: 'var(--app-text-secondary)' }}
+        >
           {task.description}
         </p>
       )}
@@ -221,7 +256,14 @@ export default function KanbanCard({
             </span>
           ))}
           {remainingLabelsCount > 0 && (
-            <span className="text-[9px] font-mono text-[#71717a] px-1 py-0.5 rounded bg-[#13141a] border border-[#242633]">
+            <span
+              className="text-[9px] font-mono px-1 py-0.5 rounded border"
+              style={{
+                backgroundColor: 'var(--app-surface-hover)',
+                borderColor: 'var(--app-border)',
+                color: 'var(--app-text-muted)',
+              }}
+            >
               +{remainingLabelsCount}
             </span>
           )}
@@ -230,14 +272,20 @@ export default function KanbanCard({
 
       {/* Originating Meeting Badge */}
       {task.meeting_title && (
-        <div className="flex items-center gap-1.5 text-[10px] text-[#818498] font-mono truncate mb-2">
-          <Video size={10} className="text-[#9da1b8] shrink-0" />
+        <div
+          className="flex items-center gap-1.5 text-[10px] font-mono truncate mb-2"
+          style={{ color: 'var(--app-text-muted)' }}
+        >
+          <Video size={10} className="shrink-0" />
           <span className="truncate">{task.meeting_title}</span>
         </div>
       )}
 
       {/* Card Footer: Assignee & Due Date */}
-      <div className="flex items-center justify-between pt-2 border-t border-[#232530] text-xs">
+      <div
+        className="flex items-center justify-between pt-2 border-t text-xs"
+        style={{ borderColor: 'var(--app-border-subtle)' }}
+      >
         <div className="flex items-center gap-1.5 min-w-0" title={assigneeName}>
           <div
             className={`w-4.5 h-4.5 rounded-full flex items-center justify-center text-[9px] font-bold border shrink-0 ${avatarStyle}`}
@@ -252,14 +300,24 @@ export default function KanbanCard({
               initials
             )}
           </div>
-          <span className="text-[11px] font-medium text-[#d4d4d8] truncate max-w-[85px]">
+          <span
+            className="text-[11px] font-medium truncate max-w-[85px]"
+            style={{ color: 'var(--app-text-primary)' }}
+          >
             {firstName}
           </span>
         </div>
 
         {formattedDueDate && (
-          <div className="flex items-center gap-1 text-[10.5px] text-[#9ca3af] shrink-0 font-mono bg-[#111217] px-1.5 py-0.5 rounded border border-[#232530]">
-            <Calendar size={10} className="text-[#a1a1aa]" />
+          <div
+            className="flex items-center gap-1 text-[10.5px] shrink-0 font-mono px-1.5 py-0.5 rounded border"
+            style={{
+              backgroundColor: 'var(--app-surface-hover)',
+              borderColor: 'var(--app-border)',
+              color: 'var(--app-text-muted)',
+            }}
+          >
+            <Calendar size={10} style={{ color: 'var(--app-text-muted)' }} />
             <span>{formattedDueDate}</span>
           </div>
         )}

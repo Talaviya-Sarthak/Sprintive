@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -13,6 +14,8 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import AppLayout from '../../layouts/AppLayout';
 import { AppCard, AppButton, AppBadge } from '../../components/app-ui';
+import { meetingService } from '../../services/meeting.service';
+import { kanbanService } from '../../services/kanban.service';
 import type { Team } from '../../types';
 
 /* ─────────────────────────────────────────────
@@ -23,12 +26,14 @@ function StatCard({
   value,
   description,
   icon: Icon,
+  colorClass,
   delay = 0,
 }: {
   label: string;
   value: string | number;
   description: string;
   icon: React.ElementType;
+  colorClass?: { bg: string; text: string };
   delay?: number;
 }) {
   return (
@@ -43,12 +48,33 @@ function StatCard({
     >
       <div className="flex items-center justify-between mb-2" style={{ color: 'var(--app-text-muted)' }}>
         <span className="text-[10px] font-mono uppercase font-medium tracking-wider">{label}</span>
-        <Icon size={14} style={{ color: 'var(--app-text-secondary)' }} />
+        <div
+          className="w-7 h-7 rounded-lg flex items-center justify-center"
+          style={{
+            backgroundColor: colorClass ? colorClass.bg : 'var(--app-surface-hover)',
+            color: colorClass ? colorClass.text : 'var(--app-text-secondary)',
+          }}
+        >
+          <Icon size={14} />
+        </div>
       </div>
       <div className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>{value}</div>
       <span className="text-[11px] block mt-1" style={{ color: 'var(--app-text-muted)' }}>{description}</span>
     </motion.div>
   );
+}
+
+function getRoleBadgeVariant(role?: string): 'purple' | 'emerald' | 'amber' | 'blue' | 'neutral' {
+  switch (role) {
+    case 'scrum_master':
+      return 'purple';
+    case 'developer':
+      return 'emerald';
+    case 'product_owner':
+      return 'amber';
+    default:
+      return 'blue';
+  }
 }
 
 /* ─────────────────────────────────────────────
@@ -70,7 +96,7 @@ function TeamCard({ team, onOpen, delay = 0 }: { team: Team; onOpen: () => void;
         title={team.name}
         subtitle={team.description || 'Agile Scrum workspace & meeting intelligence'}
         action={
-          <AppBadge variant="mono" size="xs">
+          <AppBadge variant={getRoleBadgeVariant(team.my_role)} size="xs">
             {roleLabel}
           </AppBadge>
         }
@@ -98,9 +124,92 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { user, teams } = useAuth();
 
+  const [stats, setStats] = useState({
+    meetingCount: 0,
+    taskCount: 0,
+    doneTaskCount: 0,
+    savedHours: '0h',
+    loading: true,
+  });
+
   const ownedTeams = teams.filter(t => t.created_by === user?.id);
   const joinedTeams = teams.filter(t => t.created_by !== user?.id);
   const canCreate = ownedTeams.length < 2;
+
+  useEffect(() => {
+    if (teams.length === 0) {
+      setStats({
+        meetingCount: 0,
+        taskCount: 0,
+        doneTaskCount: 0,
+        savedHours: '0h',
+        loading: false,
+      });
+      return;
+    }
+
+    let isMounted = true;
+    const fetchRealData = async () => {
+      try {
+        let totalMeetings = 0;
+        let totalTasks = 0;
+        let doneTasks = 0;
+        let totalMinutes = 0;
+
+        await Promise.all(
+          teams.map(async (t) => {
+            try {
+              const [meetings, kanbanData] = await Promise.all([
+                meetingService.getMeetings(t.id).catch(() => []),
+                kanbanService.getKanbanTasks(t.id).catch(() => ({ columns: [], tasks: [] })),
+              ]);
+
+              if (Array.isArray(meetings)) {
+                totalMeetings += meetings.length;
+                meetings.forEach((m) => {
+                  if (m.status === 'completed' || m.status === 'ended') {
+                    totalMinutes += Number(m.duration_minutes || 30);
+                  }
+                });
+              }
+
+              if (kanbanData && Array.isArray(kanbanData.tasks)) {
+                totalTasks += kanbanData.tasks.length;
+                doneTasks += kanbanData.tasks.filter((task) => task.status === 'done').length;
+              }
+            } catch {
+              // ignore individual team failure
+            }
+          })
+        );
+
+        if (!isMounted) return;
+
+        const calculatedHours = totalMinutes > 0
+          ? `${(totalMinutes / 60).toFixed(1)}h`
+          : (totalMeetings > 0 ? `${(totalMeetings * 0.5).toFixed(1)}h` : '0h');
+
+        setStats({
+          meetingCount: totalMeetings,
+          taskCount: totalTasks,
+          doneTaskCount: doneTasks,
+          savedHours: calculatedHours,
+          loading: false,
+        });
+      } catch {
+        if (isMounted) setStats(prev => ({ ...prev, loading: false }));
+      }
+    };
+
+    fetchRealData();
+    return () => {
+      isMounted = false;
+    };
+  }, [teams]);
+
+  const sprintProgressDescription = stats.taskCount > 0
+    ? `${Math.round((stats.doneTaskCount / stats.taskCount) * 100)}% Sprint Progress`
+    : 'No active sprint tasks';
 
   return (
     <AppLayout>
@@ -125,34 +234,38 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* KPI Summary Cards */}
+        {/* Real KPI Summary Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             label="Active Teams"
             value={teams.length}
-            description="Workspaces"
+            description={teams.length === 1 ? '1 Workspace' : `${teams.length} Workspaces`}
             icon={Users}
+            colorClass={{ bg: 'rgba(59, 130, 246, 0.12)', text: '#60A5FA' }}
             delay={0}
           />
           <StatCard
             label="AI Meetings"
-            value={14}
-            description="Recorded & Synced"
+            value={stats.loading ? '—' : stats.meetingCount}
+            description={stats.meetingCount === 1 ? '1 Synced Session' : `${stats.meetingCount} Synced Sessions`}
             icon={Calendar}
+            colorClass={{ bg: 'rgba(14, 165, 233, 0.12)', text: '#38BDF8' }}
             delay={0.05}
           />
           <StatCard
             label="Sprint Tasks"
-            value={38}
-            description="85% Sprint Progress"
+            value={stats.loading ? '—' : stats.taskCount}
+            description={sprintProgressDescription}
             icon={CheckCircle2}
+            colorClass={{ bg: 'rgba(16, 185, 129, 0.12)', text: '#34D399' }}
             delay={0.1}
           />
           <StatCard
             label="AI Saved Time"
-            value="12.5h"
-            description="This Month"
+            value={stats.loading ? '—' : stats.savedHours}
+            description="Intelligence Cadence"
             icon={Activity}
+            colorClass={{ bg: 'rgba(139, 92, 246, 0.12)', text: '#A78BFA' }}
             delay={0.15}
           />
         </div>

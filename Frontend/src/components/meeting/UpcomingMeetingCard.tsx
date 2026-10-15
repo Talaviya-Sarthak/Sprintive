@@ -33,14 +33,18 @@ export default function UpcomingMeetingCard({ meeting }: UpcomingMeetingCardProp
     <motion.button
       whileHover={{ y: -2 }}
       onClick={() => navigate(`/meetings/${meeting.id}`)}
-      className="w-full text-left bg-[#111827] border border-white/8 rounded-2xl p-5 hover:border-[#3B82F6]/30 transition-all group"
+      className="w-full text-left border rounded-2xl p-5 hover:border-[#3B82F6]/40 transition-all group"
+      style={{
+        backgroundColor: 'var(--app-surface-card)',
+        borderColor: 'var(--app-border)',
+      }}
     >
       <div className="flex items-start justify-between mb-3">
         <div>
           <p className="text-xs font-semibold text-[#3B82F6] uppercase tracking-wider mb-1">
             {formatDate(meeting.date)}
           </p>
-          <h4 className="text-base font-bold text-[#F8FAFC] group-hover:text-[#3B82F6] transition-colors">
+          <h4 className="text-base font-semibold group-hover:text-[#3B82F6] transition-colors" style={{ color: 'var(--app-text-primary)' }}>
             {meeting.title}
           </h4>
         </div>

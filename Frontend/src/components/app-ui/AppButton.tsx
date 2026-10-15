@@ -16,15 +16,16 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
       switch (variant) {
         case 'primary':
           return {
-            backgroundColor: '#F97316',
-            color: '#ffffff',
-            borderColor: '#EA580C',
+            backgroundColor: 'var(--app-action-bg)',
+            color: 'var(--app-action-text)',
+            borderColor: 'var(--app-action-bg)',
+            fontWeight: 500,
             boxShadow: 'var(--app-shadow-sm)'
           };
         case 'secondary':
           return {
             backgroundColor: 'var(--app-surface-card)',
-            color: 'var(--app-text-secondary)',
+            color: 'var(--app-text-primary)',
             borderColor: 'var(--app-border)'
           };
         case 'ghost':
@@ -53,17 +54,17 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
           };
         case 'active':
           return {
-            backgroundColor: 'rgba(249, 115, 22, 0.1)',
-            color: '#F97316',
-            borderColor: 'rgba(249, 115, 22, 0.3)',
-            fontWeight: 600
+            backgroundColor: 'var(--app-surface-active)',
+            color: 'var(--app-text-primary)',
+            borderColor: 'var(--app-border-focus)',
+            fontWeight: 500
           };
         case 'mono':
           return {
-            backgroundColor: 'var(--app-text-primary)',
-            color: 'var(--app-bg)',
-            borderColor: 'var(--app-text-primary)',
-            fontWeight: 600
+            backgroundColor: 'var(--app-action-bg)',
+            color: 'var(--app-action-text)',
+            borderColor: 'var(--app-action-bg)',
+            fontWeight: 500
           };
         case 'mono-outline':
           return {
@@ -110,23 +111,21 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
       } else if (variant === 'mono-outline') {
         e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
         e.currentTarget.style.borderColor = 'var(--app-border-focus)';
-      } else if (variant === 'primary') {
-        e.currentTarget.style.backgroundColor = '#EA580C';
+      } else if (variant === 'primary' || variant === 'mono') {
+        e.currentTarget.style.opacity = '0.9';
       } else if (variant === 'danger') {
         e.currentTarget.style.backgroundColor = '#EF4444';
         e.currentTarget.style.color = '#ffffff';
       } else if (variant === 'success') {
         e.currentTarget.style.backgroundColor = '#10B981';
         e.currentTarget.style.color = '#ffffff';
-      } else if (variant === 'mono') {
-        e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)';
       }
     };
 
     const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
       if (variant === 'secondary') {
         e.currentTarget.style.backgroundColor = 'var(--app-surface-card)';
-        e.currentTarget.style.color = 'var(--app-text-secondary)';
+        e.currentTarget.style.color = 'var(--app-text-primary)';
         e.currentTarget.style.borderColor = 'var(--app-border)';
       } else if (variant === 'ghost' || variant === 'mono-ghost') {
         e.currentTarget.style.backgroundColor = 'transparent';
@@ -137,16 +136,14 @@ export const AppButton = React.forwardRef<HTMLButtonElement, AppButtonProps>(
       } else if (variant === 'mono-outline') {
         e.currentTarget.style.backgroundColor = 'var(--app-surface-card)';
         e.currentTarget.style.borderColor = 'var(--app-border)';
-      } else if (variant === 'primary') {
-        e.currentTarget.style.backgroundColor = '#F97316';
+      } else if (variant === 'primary' || variant === 'mono') {
+        e.currentTarget.style.opacity = '1';
       } else if (variant === 'danger') {
         e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
         e.currentTarget.style.color = '#EF4444';
       } else if (variant === 'success') {
         e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
         e.currentTarget.style.color = '#10B981';
-      } else if (variant === 'mono') {
-        e.currentTarget.style.backgroundColor = 'var(--app-text-primary)';
       }
     };
 

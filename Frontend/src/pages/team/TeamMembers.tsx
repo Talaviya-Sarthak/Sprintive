@@ -4,7 +4,8 @@ import { UserMinus, Plus, ArrowLeft, UserPlus } from 'lucide-react';
 import { teamService } from '../../services/team.service';
 import { useAuth } from '../../context/AuthContext';
 import AppLayout from '../../layouts/AppLayout';
-import { AppTable, AppButton, AppInput, AppBadge, AppTabs, MemberInviteModal } from '../../components/app-ui';
+import { AppTable, AppButton, AppInput, AppBadge, AppTabs, MemberInviteModal, AppPageLoader } from '../../components/app-ui';
+import { RoleBadge } from '../../components/ui/Badge';
 import type { TeamMember, Invitation } from '../../types';
 
 export default function TeamMembers() {
@@ -96,9 +97,7 @@ export default function TeamMembers() {
   if (loading) {
     return (
       <AppLayout teamId={id}>
-        <div className="flex items-center justify-center h-64">
-          <div className="w-7 h-7 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--app-border)', borderTopColor: 'var(--app-text-primary)' }} />
-        </div>
+        <AppPageLoader label="Loading team members..." />
       </AppLayout>
     );
   }
@@ -181,9 +180,7 @@ export default function TeamMembers() {
                 key: 'role',
                 header: 'Role',
                 render: (m: TeamMember) => (
-                  <AppBadge variant="mono" size="xs">
-                    {m.role}
-                  </AppBadge>
+                  <RoleBadge role={m.role as any} size="sm" />
                 ),
               },
               {

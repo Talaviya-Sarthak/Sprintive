@@ -9,7 +9,7 @@ import MeetingHeader from '../../components/meeting/MeetingHeader';
 import CreateMeetingModal from '../../components/meeting/CreateMeetingModal';
 import EditMeetingModal from '../../components/meeting/EditMeetingModal';
 import DeleteMeetingDialog from '../../components/meeting/DeleteMeetingDialog';
-import { AppTabs } from '../../components/app-ui';
+import { AppTabs, AppPageLoader } from '../../components/app-ui';
 import type { Meeting, MeetingStatus, MeetingType } from '../../types';
 
 export default function MeetingsPage() {
@@ -82,9 +82,7 @@ export default function MeetingsPage() {
   if (loading) {
     return (
       <AppLayout teamId={teamId}>
-        <div className="flex items-center justify-center h-64">
-          <div className="w-7 h-7 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--app-border)', borderTopColor: 'var(--app-text-primary)' }} />
-        </div>
+        <AppPageLoader label="Loading meetings..." />
       </AppLayout>
     );
   }

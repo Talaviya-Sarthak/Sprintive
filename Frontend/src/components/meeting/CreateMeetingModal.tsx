@@ -163,7 +163,7 @@ export default function CreateMeetingModal({ open, onClose, onCreate, teamMember
 
         {teamMembers.length > 0 && (
           <div className="space-y-2">
-            <label className="block text-xs font-mono font-medium text-[#71717a] uppercase tracking-wider">Participants *</label>
+            <label className="block text-xs font-mono font-medium uppercase tracking-wider" style={{ color: 'var(--app-text-muted)' }}>Participants *</label>
             {errors.participants && <p className="text-xs text-red-400 font-medium">{errors.participants}</p>}
             <div className="flex flex-wrap gap-2">
               {teamMembers.map(member => (
@@ -171,11 +171,12 @@ export default function CreateMeetingModal({ open, onClose, onCreate, teamMember
                   key={member.user_id}
                   type="button"
                   onClick={() => toggleParticipant(member.user_id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
-                    selectedParticipants.includes(member.user_id)
-                      ? 'bg-[#1c1c21] text-[#f4f4f5] border-[#27272a]'
-                      : 'bg-[#141417] text-[#71717a] border-[#27272a] hover:text-[#f4f4f5]'
-                  }`}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer"
+                  style={{
+                    backgroundColor: selectedParticipants.includes(member.user_id) ? 'var(--app-surface-active)' : 'var(--app-surface-subtle)',
+                    color: selectedParticipants.includes(member.user_id) ? 'var(--app-text-primary)' : 'var(--app-text-secondary)',
+                    borderColor: 'var(--app-border)',
+                  }}
                 >
                   {member.full_name}
                 </button>
@@ -185,7 +186,7 @@ export default function CreateMeetingModal({ open, onClose, onCreate, teamMember
         )}
 
         <div className="space-y-2">
-          <label className="block text-xs font-mono font-medium text-[#71717a] uppercase tracking-wider">Agenda Items</label>
+          <label className="block text-xs font-mono font-medium uppercase tracking-wider" style={{ color: 'var(--app-text-muted)' }}>Agenda Items</label>
           <div className="space-y-2">
             {agendaItems.map((item, index) => (
               <div key={index} className="flex items-center gap-2">
@@ -193,7 +194,12 @@ export default function CreateMeetingModal({ open, onClose, onCreate, teamMember
                   value={item}
                   onChange={e => updateAgendaItem(index, e.target.value)}
                   placeholder={`Agenda item ${index + 1}`}
-                  className="flex-1 bg-[#141417] border border-[#27272a] rounded-lg px-3 py-2 text-xs text-[#f4f4f5] placeholder-[#71717a] outline-none focus:border-[#3f3f46] transition-colors"
+                  className="flex-1 border rounded-lg px-3 py-2 text-xs outline-none transition-colors"
+                  style={{
+                    backgroundColor: 'var(--app-surface-subtle)',
+                    borderColor: 'var(--app-border)',
+                    color: 'var(--app-text-primary)',
+                  }}
                 />
                 {agendaItems.length > 1 && (
                   <button type="button" onClick={() => removeAgendaItem(index)} className="text-red-400 hover:text-red-300 p-1 cursor-pointer">
@@ -203,12 +209,17 @@ export default function CreateMeetingModal({ open, onClose, onCreate, teamMember
               </div>
             ))}
           </div>
-          <button type="button" onClick={addAgendaItem} className="text-xs text-[#f4f4f5] hover:underline font-medium cursor-pointer">
+          <button
+            type="button"
+            onClick={addAgendaItem}
+            className="text-xs font-medium cursor-pointer transition-colors"
+            style={{ color: 'var(--app-text-primary)' }}
+          >
             + Add agenda item
           </button>
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#1f1f23]">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t" style={{ borderColor: 'var(--app-border-subtle)' }}>
           <AppButton variant="mono-outline" size="sm" type="button" onClick={onClose}>
             Cancel
           </AppButton>
