@@ -1,405 +1,206 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Mail, Clock, MapPin, Send, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
-import Navbar from '../components/Navbar';
-import { Button } from '../components/ui/Button';
-import { useTheme } from '../context/ThemeContext';
-
-function GithubIcon({ size = 15 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
-      <path d="M9 18c-4.51 2-5-2-7-2" />
-    </svg>
-  );
-}
-
-function LinkedinIcon({ size = 15 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
-      <rect x="2" y="9" width="4" height="12" />
-      <circle cx="4" cy="4" r="2" />
-    </svg>
-  );
-}
-
-function TwitterIcon({ size = 15 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
-    </svg>
-  );
-}
-
-function DiscordIcon({ size = 15 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="9" cy="12" r="1" />
-      <circle cx="15" cy="12" r="1" />
-      <path d="M7.5 4.8c1.5-.5 3.1-.8 4.7-.8s3.2.3 4.7.8c0 0 2.1 3.5 2.1 9.2 0 0-1.3 2.1-4.7 2.2 0 0-.6-.7-1-1.3 2.3-.6 3.2-1.9 3.2-1.9-.7.5-1.5.8-2.3 1.1-.9.3-1.8.5-2.7.5s-1.8-.2-2.7-.5c-.8-.3-1.6-.6-2.3-1.1 0 0 .9 1.3 3.2 1.9-.4.6-1 1.3-1 1.3-3.4-.1-4.7-2.2-4.7-2.2 0-5.7 2.1-9.2 2.1-9.2z" />
-    </svg>
-  );
-}
-
-const socialLinks = [
-  { icon: GithubIcon, label: 'GitHub', href: '#' },
-  { icon: LinkedinIcon, label: 'LinkedIn', href: '#' },
-  { icon: TwitterIcon, label: 'X (Twitter)', href: '#' },
-  { icon: DiscordIcon, label: 'Discord', href: '#' },
-];
-
-const contactCards = [
-  {
-    icon: Mail,
-    title: 'Support & Inquiries',
-    value: 'support@sprintive.ai',
-    href: 'mailto:support@sprintive.ai',
-  },
-  {
-    icon: Clock,
-    title: 'Response Time',
-    value: 'Within 24 Hours',
-    href: null,
-  },
-  {
-    icon: MapPin,
-    title: 'HQ Location',
-    value: 'Remote • Global / India',
-    href: null,
-  },
-];
+import { Link } from 'react-router-dom';
+import { Send, CheckCircle2, ArrowLeft } from 'lucide-react';
 
 export default function Contact() {
-  const { theme } = useTheme();
-  const isLight = theme === 'light';
-
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    subject: '',
     message: '',
   });
-
-  const bgColor = isLight ? 'bg-[#f8fafc]' : 'bg-[#050505]';
-  const textColor = isLight ? 'text-[#475569]' : 'text-[#A1A1AA]';
-  const headingColor = isLight ? 'text-[#0f172a]' : 'text-white';
-  const gridColor = isLight ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.045)';
-  const cardBg = isLight ? 'bg-[#f8fafc]' : 'bg-[#111111]';
-  const cardBorder = isLight ? 'border-[#e2e8f0]' : 'border-[#262626]';
-  const inputBg = isLight ? 'bg-white' : 'bg-[#0B0B0D]';
-  const inputText = isLight ? 'text-[#0f172a]' : 'text-white';
-  const inputBorder = isLight ? 'border-[#e2e8f0]' : 'border-[#262626]';
-  const placeholderColor = isLight ? 'placeholder-[#94a3b8]' : 'placeholder-[#52525B]';
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [statusState, setStatusState] = useState<'idle' | 'success' | 'error'>('idle');
-
-  const validate = () => {
-    const newErrors: Record<string, string> = {};
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      newErrors.email = 'Invalid email address';
-    }
-    if (!formData.subject.trim()) {
-      newErrors.subject = 'Subject is required';
-    }
-    if (!formData.message.trim()) {
-      newErrors.message = 'Message is required';
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) {
-      setStatusState('error');
-      return;
-    }
+    if (!formData.name || !formData.email || !formData.message) return;
 
     setIsSubmitting(true);
-    setStatusState('idle');
-
     setTimeout(() => {
       setIsSubmitting(false);
-      setStatusState('success');
-      setFormData({
-        name: '',
-        email: '',
-        subject: '',
-        message: '',
-      });
-      setErrors({});
-    }, 1000);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
+      setIsSubmitted(true);
+      setFormData({ name: '', email: '', message: '' });
+    }, 600);
   };
 
   return (
-    <div className={`${bgColor} ${textColor} min-h-screen lg:h-screen flex flex-col justify-between relative overflow-x-hidden lg:overflow-hidden selection:bg-[#F97316]/25 selection:text-[#F97316]`}>
-      {/* Background Engineering Grid */}
-      <div
-        className="fixed inset-0 pointer-events-none z-0"
-        style={{
-          backgroundImage:
-            `linear-gradient(${gridColor} 1px, transparent 1px), linear-gradient(90deg, ${gridColor} 1px, transparent 1px)`,
-          backgroundSize: '44px 44px',
-        }}
-      />
+    <div className="min-h-screen lg:h-screen lg:overflow-hidden bg-white text-black flex flex-col justify-between selection:bg-[#EA580C] selection:text-white">
+      {/* Streamlined Header: Logo on left, Back to Home & Get Started on right */}
+      <header className="w-full border-b border-zinc-100 bg-white shrink-0">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 h-16 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="w-7 h-7 rounded-lg bg-[#EA580C] flex items-center justify-center shadow-sm">
+              <span className="font-mono font-black text-white text-xs">S</span>
+            </div>
+            <span className="font-mono font-black text-xl tracking-tight text-black">
+              sprintive<span className="text-[#EA580C]">.</span>
+            </span>
+          </Link>
 
-      <div className="relative z-10 flex flex-col h-full justify-between">
-        <Navbar />
-
-        {/* Main Content Area */}
-        <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 pt-20 pb-6 lg:pt-20 lg:pb-8 max-w-[1280px] w-full mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center w-full">
-            
-            {/* LEFT COLUMN (40%) */}
-            <motion.div
-              initial={{ opacity: 0, x: -16 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4 }}
-              className="lg:col-span-5 flex flex-col justify-between space-y-6"
+          <div className="flex items-center gap-4 sm:gap-6">
+            <Link
+              to="/"
+              className="text-xs font-semibold text-zinc-600 hover:text-black transition-colors flex items-center gap-1.5"
             >
-              <div>
-                {/* Neo-Brutalist Badge */}
-                <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 ${cardBg} border ${cardBorder} shadow-[2px_2px_0px_#F97316] text-[#F97316] font-mono text-[11px] font-bold uppercase tracking-wider mb-4`}>
-                  <span>CONTACT</span>
-                  <span className={textColor}>/</span>
-                  <span>ENGINEERING</span>
-                </div>
+              <ArrowLeft size={13} />
+              <span>Back to Home</span>
+            </Link>
+            <Link
+              to="/signup"
+              className="px-4 py-2 rounded-xl bg-black text-white hover:bg-zinc-800 text-xs font-bold uppercase tracking-wider transition-colors shadow-sm"
+            >
+              Get Started
+            </Link>
+          </div>
+        </div>
+      </header>
 
-                {/* Editorial Heading */}
-                <h1 className={`text-4xl sm:text-5xl lg:text-5xl font-extrabold ${headingColor} tracking-tight leading-[1.08] mb-3`}>
-                  Let's Talk.
-                </h1>
+      {/* Main Content: Scaled to fit comfortably on 100vh without vertical scroll */}
+      <main className="max-w-7xl mx-auto px-6 md:px-12 py-4 md:py-8 w-full flex-1 flex items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center w-full">
+          {/* Left Column (Heading, Description & 2 Info Cards) */}
+          <div className="lg:col-span-7 space-y-6">
+            <div className="space-y-3">
+              <h1 className="text-4xl sm:text-6xl md:text-7xl xl:text-8xl font-black tracking-tight text-black uppercase leading-[0.92] select-none font-sans">
+                CONNECT<br />
+                WITH<br />
+                SPRINTIVE.
+              </h1>
+              <p className="text-zinc-600 text-xs sm:text-sm md:text-base leading-relaxed max-w-lg font-normal pt-1">
+                Have questions about real-time voice conference, multi-agent AI task synthesis, or bespoke Jira &amp; Linear integrations? Our product engineering team is available 24/7.
+              </p>
+            </div>
 
-                {/* Single Concise Description */}
-                <p className={`text-sm sm:text-base ${textColor} leading-relaxed max-w-md`}>
-                  Questions, partnerships, or support—we're here to help.
+            {/* 2 Bottom Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
+              <div className="p-4 sm:p-5 border border-zinc-200 bg-white shadow-sm flex flex-col justify-between space-y-1.5">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-black">
+                  SUPPORT &amp; PRODUCT
+                </span>
+                <a
+                  href="mailto:support@sprintive.ai"
+                  className="text-xs font-bold text-black hover:text-[#EA580C] transition-colors"
+                >
+                  support@sprintive.ai
+                </a>
+                <p className="text-[11px] text-zinc-500 leading-normal">
+                  For workspace support, bug reports, and feedback.
                 </p>
               </div>
 
-              {/* Minimal Information Cards */}
-              <div className="space-y-3 pt-1">
-                {contactCards.map((card) => {
-                  const Icon = card.icon;
-                  const cardElement = (
-                    <div className={`p-3.5 ${cardBg} border ${cardBorder} shadow-[3px_3px_0px_#000000] flex items-center gap-3.5 hover:border-[#F97316]/50 transition-colors`}>
-                      <div className={`w-8 h-8 ${isLight ? 'bg-white' : 'bg-[#1A1A1A]'} border ${cardBorder} flex items-center justify-center text-[#F97316] shrink-0`}>
-                        <Icon size={15} strokeWidth={2} />
-                      </div>
-                      <div className="min-w-0">
-                        <div className={`text-[10px] font-mono ${textColor} uppercase tracking-wider font-semibold`}>
-                          {card.title}
-                        </div>
-                        <div className={`text-xs font-bold ${headingColor} truncate mt-0.5`}>
-                          {card.value}
-                        </div>
-                      </div>
-                    </div>
-                  );
-
-                  return card.href ? (
-                    <a key={card.title} href={card.href} className="block text-decoration-none">
-                      {cardElement}
-                    </a>
-                  ) : (
-                    <div key={card.title}>{cardElement}</div>
-                  );
-                })}
+              <div className="p-4 sm:p-5 border border-zinc-200 bg-white shadow-sm flex flex-col justify-between space-y-1.5">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-black">
+                  ENTERPRISE &amp; PRESS
+                </span>
+                <a
+                  href="mailto:founders@sprintive.ai"
+                  className="text-xs font-bold text-black hover:text-[#EA580C] transition-colors"
+                >
+                  founders@sprintive.ai
+                </a>
+                <p className="text-[11px] text-zinc-500 leading-normal">
+                  Direct founder access for enterprise inquiries and custom SLA.
+                </p>
               </div>
+            </div>
+          </div>
 
-              {/* Social Links & Trust Indicator */}
-              <div className="pt-2 flex items-center justify-between gap-4">
-                <div className="flex gap-2">
-                  {socialLinks.map(({ icon: Icon, label, href }) => (
-                    <a
-                      key={label}
-                      href={href}
-                      aria-label={label}
-                      className={`w-8 h-8 ${cardBg} border ${cardBorder} shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none flex items-center justify-center ${textColor} hover:text-[#F97316] hover:border-[#F97316] transition-colors duration-150`}
-                    >
-                      <Icon size={14} />
-                    </a>
-                  ))}
-                </div>
-
-                <div className={`flex items-center gap-1.5 text-[11px] font-mono ${textColor}`}>
-                  <ShieldCheck size={13} className="text-[#F97316]" />
-                  <span>Direct Dev Channel</span>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* RIGHT COLUMN (60%) - Contact Form */}
-            <motion.div
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4 }}
-              className="lg:col-span-7"
-            >
-              <div className={`${cardBg} border-2 ${frameBorder} shadow-[6px_6px_0px_#FFFFFF] p-5 sm:p-6`}>
-                <div className={`flex items-center justify-between mb-4 pb-2.5 border-b ${cardBorder}`}>
-                  <h2 className={`text-base font-bold ${headingColor} tracking-tight`}>
-                    Send us a message
-                  </h2>
-                  <span className={`text-[10px] font-mono ${textColor} uppercase tracking-wider`}>
-                    Fast response guaranteed
-                  </span>
-                </div>
-
-                {/* Inline Status Alerts */}
-                {statusState === 'success' && (
-                  <div className="mb-4 p-3 bg-[#050505] border border-[#F97316] text-[#FFFFFF] flex items-center gap-2.5 text-xs">
-                    <CheckCircle2 size={16} className="text-[#F97316] shrink-0" />
-                    <span>Message received. We'll be in touch shortly!</span>
+          {/* Right Column (Floating Card from screenshot) */}
+          <div className="lg:col-span-5 w-full flex justify-center lg:justify-end">
+            <div className="bg-white border border-zinc-200/90 shadow-[0_20px_50px_rgba(0,0,0,0.06)] p-6 sm:p-8 w-full max-w-md">
+              {isSubmitted ? (
+                <div className="py-8 text-center space-y-2.5">
+                  <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200">
+                    <CheckCircle2 size={20} />
                   </div>
-                )}
-
-                {statusState === 'error' && (
-                  <div className="mb-4 p-3 bg-[#050505] border border-red-500 text-[#FFFFFF] flex items-center gap-2.5 text-xs">
-                    <AlertCircle size={16} className="text-red-500 shrink-0" />
-                    <span>Please complete all required fields correctly.</span>
-                  </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-                  {/* Name & Email Row */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label
-                        htmlFor="name"
-                        className={`block text-[10px] font-mono font-bold ${headingColor} uppercase tracking-wider mb-1.5`}
-                      >
-                        Name <span className="text-[#F97316]">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        placeholder="Alex Morgan"
-                        className={`w-full ${inputBg} ${inputText} ${placeholderColor} px-3.5 py-2.5 border ${
-                          errors.name ? 'border-red-500' : inputBorder
-                        } focus:outline-none focus:border-[#F97316] transition-colors text-xs font-medium`}
-                      />
-                      {errors.name && (
-                        <p className="text-[10px] text-red-500 mt-1 font-mono">{errors.name}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="email"
-                        className={`block text-[10px] font-mono font-bold ${headingColor} uppercase tracking-wider mb-1.5`}
-                      >
-                        Email <span className="text-[#F97316]">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        placeholder="alex@company.com"
-                        className={`w-full ${inputBg} ${inputText} ${placeholderColor} px-3.5 py-2.5 border ${
-                          errors.email ? 'border-red-500' : inputBorder
-                        } focus:outline-none focus:border-[#F97316] transition-colors text-xs font-medium`}
-                      />
-                      {errors.email && (
-                        <p className="text-[10px] text-red-500 mt-1 font-mono">{errors.email}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Subject Field */}
+                  <h3 className="text-base font-bold text-black uppercase tracking-tight">
+                    Message Sent
+                  </h3>
+                  <p className="text-xs text-zinc-600 max-w-xs mx-auto leading-relaxed">
+                    Thank you for reaching out. A Sprintive product engineer will reply to your email within 2 hours.
+                  </p>
+                  <button
+                    onClick={() => setIsSubmitted(false)}
+                    className="mt-3 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-600 hover:text-black underline cursor-pointer"
+                  >
+                    Send another message
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label
-                      htmlFor="subject"
-                      className={`block text-[10px] font-mono font-bold ${headingColor} uppercase tracking-wider mb-1.5`}
-                    >
-                      Subject <span className="text-[#F97316]">*</span>
+                    <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-zinc-800 mb-1">
+                      YOUR NAME
                     </label>
                     <input
                       type="text"
-                      id="subject"
-                      name="subject"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      placeholder="How can we assist you?"
-                      className={`w-full ${inputBg} ${inputText} ${placeholderColor} px-3.5 py-2.5 border ${
-                        errors.subject ? 'border-red-500' : inputBorder
-                      } focus:outline-none focus:border-[#F97316] transition-colors text-xs font-medium`}
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Jane Doe"
+                      className="w-full bg-black text-white px-3.5 py-2.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[#EA580C] placeholder-zinc-500 rounded-none"
                     />
-                    {errors.subject && (
-                      <p className="text-[10px] text-red-500 mt-1 font-mono">{errors.subject}</p>
-                    )}
                   </div>
 
-                  {/* Message Field */}
                   <div>
-                    <label
-                      htmlFor="message"
-                      className={`block text-[10px] font-mono font-bold ${headingColor} uppercase tracking-wider mb-1.5`}
-                    >
-                      Message <span className="text-[#F97316]">*</span>
+                    <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-zinc-800 mb-1">
+                      EMAIL ADDRESS
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="name@example.com"
+                      className="w-full bg-black text-white px-3.5 py-2.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[#EA580C] placeholder-zinc-500 rounded-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-mono font-bold uppercase tracking-widest text-zinc-800 mb-1">
+                      MESSAGE
                     </label>
                     <textarea
-                      id="message"
-                      name="message"
-                      rows={4}
+                      rows={3}
+                      required
                       value={formData.message}
-                      onChange={handleChange}
-                      placeholder="Write your message here..."
-                      className={`w-full ${inputBg} ${inputText} ${placeholderColor} px-3.5 py-2.5 border ${
-                        errors.message ? 'border-red-500' : inputBorder
-                      } focus:outline-none focus:border-[#F97316] transition-colors text-xs font-medium resize-none`}
+                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                      placeholder="How can we help?"
+                      className="w-full bg-white text-black border border-zinc-200 px-3.5 py-2.5 text-xs font-medium focus:outline-none focus:border-black placeholder-zinc-400 resize-none min-h-[90px] rounded-none"
                     />
-                    {errors.message && (
-                      <p className="text-[10px] text-red-500 mt-1 font-mono">{errors.message}</p>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full py-3 bg-zinc-100 hover:bg-black hover:text-white text-black font-bold text-xs uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 border border-zinc-200 shadow-sm rounded-none"
+                  >
+                    {isSubmitting ? (
+                      <span>SENDING...</span>
+                    ) : (
+                      <>
+                        <span>SEND MESSAGE</span>
+                        <Send size={12} className="shrink-0" />
+                      </>
                     )}
-                  </div>
-
-                  {/* Submit Button */}
-                  <div className="pt-2">
-                    <Button
-                      type="submit"
-                      variant="orange"
-                      size="default"
-                      disabled={isSubmitting}
-                      className="w-full justify-center gap-2 py-3"
-                    >
-                      {isSubmitting ? (
-                        <span>Sending Message...</span>
-                      ) : (
-                        <>
-                          <Send size={14} strokeWidth={2.5} />
-                          <span>Submit Inquiry</span>
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                  </button>
                 </form>
-              </div>
-            </motion.div>
-
+              )}
+            </div>
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
+
+      {/* Subtle Bottom Sub-bar */}
+      <footer className="w-full border-t border-zinc-100 py-3.5 bg-white shrink-0">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 flex items-center justify-between text-[11px] text-zinc-400 font-mono">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#EA580C]" />
+            <span>&copy; {new Date().getFullYear()} Sprintive Inc.</span>
+          </div>
+          <span>Autonomous Agile Intelligence</span>
+        </div>
+      </footer>
     </div>
   );
 }

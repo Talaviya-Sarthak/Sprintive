@@ -22,7 +22,9 @@ import {
   Zap,
   ShieldCheck,
   ChevronRight,
+  ChevronLeft,
   Check,
+  ArrowUp,
 } from "lucide-react";
 import GlyphPortal from "../components/ui/glyph-portal";
 import TextBlockAnimation from "../components/ui/text-block-animation";
@@ -77,11 +79,59 @@ function TiltedSheetSection({
   );
 }
 
+const testimonials = [
+  {
+    quote: "Sprintive's customer support is unparalleled. They're always there when we need them.",
+    author: "Olivia",
+    role: "Customer Success Manager at ClientCare",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=180&h=180&q=80",
+  },
+  {
+    quote: "The efficiency gains we've seen since implementing Sprintive are off the charts!",
+    author: "Raj",
+    role: "Operations Manager at StreamlineSolutions",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=180&h=180&q=80",
+  },
+  {
+    quote: "Sprintive has revolutionized how we handle our workflows. It's a game-changer!",
+    author: "Lila",
+    role: "Workflow Specialist at ProcessHub",
+    avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=180&h=180&q=80",
+  },
+  {
+    quote: "The scalability of Sprintive's AI solution is impressive. It integrates with our business seamlessly.",
+    author: "Trevor",
+    role: "Scaling Officer at GrowthLab",
+    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=180&h=180&q=80",
+  },
+  {
+    quote: "It's so simple and intuitive. It got the team up to speed in minutes.",
+    author: "Marina",
+    role: "HR & Agile Manager at TalentForge",
+    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=180&h=180&q=80",
+  },
+  {
+    quote: "I've been searching for a solution like Sprintive for years. So glad I finally found it!",
+    author: "Elena",
+    role: "VP of Engineering at Synthetix",
+    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=180&h=180&q=80",
+  },
+];
+
 export default function LandingPage() {
   const navigate = useNavigate();
   const [face, setFace] = useState<string | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [billingAnnual, setBillingAnnual] = useState<boolean>(true);
+  const [activeTestimonial, setActiveTestimonial] = useState<number>(1);
+  const [activePipelineStep, setActivePipelineStep] = useState<number>(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActivePipelineStep((prev) => (prev + 1) % 7);
+    }, 1600);
+    return () => clearInterval(timer);
+  }, []);
   const containerRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
 
@@ -167,107 +217,45 @@ export default function LandingPage() {
   const pipelineSteps = [
     {
       num: "01",
-      title: "MEETING CREATED",
+      title: "Meeting Created",
       desc: "Launch standups, planning, or retros in 1-click.",
       icon: Calendar,
-      graphic: (
-        <div className="flex items-center gap-1.5 py-1 px-2.5 rounded-none bg-black/10 border border-black/10">
-          <span className="w-4 h-4 rounded-full bg-[#EA580C] text-[9px] font-bold text-white flex items-center justify-center">
-            A
-          </span>
-          <span className="w-4 h-4 rounded-full bg-[#3F3F46] text-[9px] font-bold text-white flex items-center justify-center">
-            B
-          </span>
-          <span className="w-4 h-4 rounded-full bg-[#27272A] text-[9px] font-bold text-gray-300 flex items-center justify-center">
-            C
-          </span>
-        </div>
-      ),
     },
     {
       num: "02",
-      title: "AI LISTENS",
+      title: "AI Listens",
       desc: "Real-time voice processing & noise-isolated audio stream.",
       icon: Mic,
-      graphic: (
-        <div className="flex items-center gap-1 py-1 px-2.5 rounded-none bg-black/10 border border-black/10 h-7">
-          {[35, 70, 95, 55, 85, 40, 75, 45, 90, 30].map((h, i) => (
-            <span
-              key={i}
-              className="w-0.5 bg-[#EA580C] rounded-none animate-pulse"
-              style={{
-                height: `${h}%`,
-                animationDelay: `${i * 80}ms`,
-              }}
-            />
-          ))}
-        </div>
-      ),
     },
     {
       num: "03",
-      title: "LIVE TRANSCRIPT",
+      title: "Live Transcript",
       desc: "Instant speaker-diarized text generated live.",
       icon: FileText,
-      graphic: (
-        <div className="w-24 py-1.5 px-2.5 rounded-none bg-black/10 border border-black/10 flex flex-col justify-center">
-          <div className="h-1.5 w-full bg-[#EA580C] rounded-none shadow-[0_0_8px_rgba(234,88,12,0.6)] animate-pulse" />
-        </div>
-      ),
     },
     {
       num: "04",
-      title: "AI ANALYSIS",
+      title: "AI Analysis",
       desc: "Context-aware extraction of decisions & blockers.",
       icon: Bot,
-      graphic: (
-        <div className="flex items-center gap-1.5 py-1.5 px-2 rounded-none bg-black/10 border border-black/10">
-          <div className="w-3 h-3 border-2 border-[#EA580C] border-t-transparent rounded-full animate-spin" />
-          <span className="text-[9px] font-mono tracking-wider font-semibold text-[#EA580C]">
-            ANALYZING...
-          </span>
-        </div>
-      ),
     },
     {
       num: "05",
-      title: "TASK EXTRACTION",
-      titleColor: "text-[#EA580C]",
+      title: "Task Extraction",
       desc: "Automatically assigned tickets with priority tags.",
       icon: CheckSquare,
-      graphic: (
-        <div className="flex items-center gap-1.5 py-1 px-2.5 rounded-none bg-black/10 border border-black/10">
-          <div className="w-2.5 h-2.5 bg-[#EA580C] rounded-none" />
-          <div className="w-2.5 h-2.5 bg-[#EA580C] rounded-none" />
-          <span className="text-[9px] font-mono font-bold text-[#18181B]">TASKS</span>
-        </div>
-      ),
     },
     {
       num: "06",
-      title: "KANBAN UPDATED",
+      title: "Kanban Updated",
       desc: "Sprint board syncs instantly without manual entry.",
       icon: Kanban,
-      graphic: (
-        <div className="flex items-center gap-1.5 py-1 px-2.5 rounded-none bg-black/10 border border-black/10">
-          <div className="w-5 h-2.5 bg-black/20 rounded-none" />
-          <div className="w-4 h-2 bg-[#EA580C] rounded-none" />
-        </div>
-      ),
     },
     {
       num: "07",
-      title: "SPRINT READY",
+      title: "Sprint Ready",
       desc: "Clear goals, automated insights, and team alignment.",
       icon: Rocket,
-      graphic: (
-        <div className="flex items-center gap-1.5 py-1 px-3 rounded-none bg-[#14532d] border border-[#22c55e]/40 shadow-[0_0_12px_rgba(34,197,94,0.3)]">
-          <span className="w-2 h-2 rounded-full bg-[#4ade80] animate-ping" />
-          <span className="text-[9px] font-mono font-bold text-white tracking-wide">
-            100% SYNCED
-          </span>
-        </div>
-      ),
     },
   ];
 
@@ -777,66 +765,109 @@ export default function LandingPage() {
                 </p>
               </div>
 
-              {/* Live Transmitting Data Pipeline Conduit (No cards, pure live stream) */}
-              <div className="w-full overflow-x-auto pb-4 pt-2 scrollbar-none">
-                <div className="min-w-[1040px] relative px-2">
-                  {/* Central Pipeline Line */}
-                  <div className="absolute top-[82px] left-8 right-8 h-1 bg-zinc-300 rounded-none z-0 overflow-hidden">
-                    <div className="w-full h-full pipeline-conduit-glow opacity-90" />
-                    <div className="data-packet" />
-                    <div className="data-packet data-packet-2" />
-                    <div className="data-packet data-packet-3" />
-                  </div>
+              {/* Stepper Pipeline: Clean, Minimal, Premium Stepper with Smooth Transition */}
+              <div className="w-full overflow-x-auto pb-4 pt-4 scrollbar-none">
+                <div className="min-w-[960px] max-w-[1240px] mx-auto px-4">
+                  <div className="relative">
+                    {/* Connecting Rail Line */}
+                    <div className="absolute top-[26px] left-[7%] right-[7%] h-[2px] bg-zinc-200/90 z-0 overflow-visible">
+                      {/* Active animated progress line smoothly expanding from step 1 to 7 */}
+                      <div
+                        className="h-full bg-gradient-to-r from-[#EA580C] via-[#f97316] to-[#EA580C] transition-all duration-700 ease-in-out relative"
+                        style={{
+                          width: `${(activePipelineStep / (pipelineSteps.length - 1)) * 100}%`,
+                        }}
+                      >
+                        {/* Glowing runner packet at the advancing tip */}
+                        <span className="absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-[#EA580C] shadow-[0_0_12px_#ea580c,0_0_24px_#f97316] animate-pulse" />
+                      </div>
+                    </div>
 
-                  {/* 7 Stage Stations */}
-                  <div className="grid grid-cols-7 gap-4 relative z-10">
-                    {pipelineSteps.map((step, index) => {
-                      const Icon = step.icon;
-                      return (
-                        <div
-                          key={step.num}
-                          className="flex flex-col items-center text-center group"
-                        >
-                          {/* Stage Number */}
-                          <div className="mb-3 flex items-center gap-1">
-                            <span className="text-[11px] font-mono font-bold text-[#EA580C]">
-                              STAGE {step.num}
-                            </span>
-                          </div>
+                    {/* 7 Pipeline Stepper Nodes */}
+                    <div className="grid grid-cols-7 gap-2 relative z-10">
+                      {pipelineSteps.map((step, index) => {
+                        const Icon = step.icon;
+                        const isCurrent = index === activePipelineStep;
+                        const isCompleted = index < activePipelineStep;
+                        const isLast = index === pipelineSteps.length - 1;
 
-                          {/* Central Glowing Transmission Hub Node */}
-                          <div className="relative mb-6">
-                            <div className="w-14 h-14 rounded-none bg-white border-2 border-[#EA580C] text-[#EA580C] flex items-center justify-center shadow-[0_4px_20px_rgba(234,88,12,0.25)] group-hover:scale-110 group-hover:shadow-[0_4px_28px_rgba(234,88,12,0.45)] transition-all cursor-pointer">
-                              <Icon size={20} className="stroke-[2.2]" />
-                            </div>
-                            {index < pipelineSteps.length - 1 && (
-                              <div className="hidden lg:flex absolute top-1/2 -right-4 -translate-y-1/2 z-20 text-[#EA580C]/70">
-                                <ChevronRight size={14} className="animate-pulse" />
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Station Title */}
-                          <h4
-                            className={`text-xs font-black tracking-wider uppercase mb-1.5 leading-snug ${
-                              step.titleColor ? step.titleColor : "text-[#18181B]"
-                            }`}
+                        return (
+                          <div
+                            key={step.num}
+                            onClick={() => setActivePipelineStep(index)}
+                            className="flex flex-col items-center text-center group cursor-pointer transition-all duration-300"
                           >
-                            {step.title}
-                          </h4>
+                            {/* Circular Stepper Node */}
+                            <div className="relative mb-4">
+                              <div
+                                className={cn(
+                                  "w-[52px] h-[52px] rounded-full bg-white border-2 flex items-center justify-center transition-all duration-500 shadow-xs",
+                                  isCurrent
+                                    ? isLast
+                                      ? "border-emerald-500 text-emerald-600 scale-110 shadow-[0_0_20px_rgba(16,185,129,0.35)] ring-4 ring-emerald-500/20"
+                                      : "border-[#EA580C] text-[#EA580C] scale-110 shadow-[0_0_20px_rgba(234,88,12,0.35)] ring-4 ring-[#EA580C]/20"
+                                    : isCompleted
+                                    ? isLast
+                                      ? "border-emerald-500 text-emerald-600 shadow-sm"
+                                      : "border-[#EA580C] text-[#EA580C] shadow-sm"
+                                    : "border-zinc-200 text-zinc-400 group-hover:border-zinc-400 group-hover:text-zinc-600"
+                                )}
+                              >
+                                <Icon
+                                  size={20}
+                                  className={cn(
+                                    "transition-transform duration-300",
+                                    isCurrent ? "scale-110 stroke-[2.2]" : "stroke-[1.8]"
+                                  )}
+                                />
+                              </div>
 
-                          {/* Station Description */}
-                          <p className="text-[11px] text-zinc-600 font-normal leading-relaxed max-w-[140px] mb-3">
-                            {step.desc}
-                          </p>
+                              {/* Stage Number Floating Pill */}
+                              <span
+                                className={cn(
+                                  "absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider transition-all duration-300 border",
+                                  isCurrent
+                                    ? isLast
+                                      ? "bg-emerald-500 text-white border-emerald-500 shadow-sm scale-105"
+                                      : "bg-[#EA580C] text-white border-[#EA580C] shadow-sm scale-105"
+                                    : isCompleted
+                                    ? "bg-white text-[#EA580C] border-[#EA580C]"
+                                    : "bg-white text-zinc-400 border-zinc-200 group-hover:border-zinc-300"
+                                )}
+                              >
+                                {step.num}
+                              </span>
+                            </div>
 
-                          {/* Dynamic Telemetry Indicator */}
-                          <div className="flex items-center justify-center min-h-[34px]">
-                            {step.graphic}
+                            {/* Step Title */}
+                            <h4
+                              className={cn(
+                                "text-xs font-bold tracking-tight uppercase mb-1.5 transition-colors duration-300",
+                                isCurrent
+                                  ? isLast
+                                    ? "text-emerald-700 font-extrabold"
+                                    : "text-[#EA580C] font-extrabold"
+                                  : isCompleted
+                                  ? "text-zinc-900"
+                                  : "text-zinc-500"
+                              )}
+                            >
+                              {step.title}
+                            </h4>
+
+                            {/* Step Description */}
+                            <p
+                              className={cn(
+                                "text-[11px] leading-relaxed max-w-[130px] transition-colors duration-300",
+                                isCurrent ? "text-zinc-700 font-medium" : "text-zinc-500 font-normal"
+                              )}
+                            >
+                              {step.desc}
+                            </p>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -846,38 +877,46 @@ export default function LandingPage() {
           {/* =========================================================================
               SECTION 4: TRANSPARENT PRICING
               Comes from right-bottom at -8° tilt, reaches half Y, straightens to 0° and covers Section 3
-              Electric Royal Blue (#1D4ED8) with full Sprintive pricing tiers
+              Deep Midnight Obsidian (#0B1120) with clean minimal premium pricing cards
               ========================================================================= */}
           <TiltedSheetSection
             id="pricing-sheet"
             zIndex={40}
             bg="#1D4ED8"
-            className="text-white py-24 px-6 md:px-14 flex flex-col justify-center"
+            className="text-white py-24 px-6 md:px-14 flex flex-col justify-center relative overflow-hidden"
           >
-            <div className="max-w-6xl mx-auto w-full space-y-12">
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                <div className="space-y-3">
-                  <span className="text-xs font-mono font-bold tracking-[0.2em] text-[#FED7AA] uppercase">
-                    04 — TRANSPARENT PRICING
-                  </span>
+            {/* Ambient Top Glow */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(255,255,255,0.15),transparent_70%)] pointer-events-none" />
+
+            <div className="max-w-6xl mx-auto w-full space-y-12 relative z-10">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
+                <div className="space-y-4">
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#EA580C] animate-pulse" />
+                    <span className="text-xs font-mono font-bold tracking-[0.2em] text-[#FED7AA] uppercase">
+                      04 — TRANSPARENT PRICING
+                    </span>
+                  </div>
                   <TextBlockAnimation blockColor="#EA580C" duration={0.8}>
                     <h2 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-white uppercase leading-none">
                       INVEST IN<br />
                       VELOCITY.
                     </h2>
                   </TextBlockAnimation>
-                  <p className="text-blue-100 text-xs md:text-sm max-w-lg font-medium">
-                    Simple, transparent plans designed for fast-growing engineering teams. No hidden compute fees.
+                  <p className="text-zinc-400 text-xs md:text-sm max-w-lg leading-relaxed">
+                    Simple, transparent plans designed for fast-growing engineering teams. Unlimited scale, zero per-token surprises.
                   </p>
                 </div>
 
-                {/* Annual / Monthly Toggle with sharp rectangle corners */}
-                <div className="flex items-center gap-2 bg-black/25 p-1.5 rounded-none border border-white/20 self-start md:self-auto">
+                {/* Floating Modern Pill Toggle */}
+                <div className="inline-flex items-center p-1 rounded-full bg-white/[0.06] border border-white/15 backdrop-blur-xl shadow-lg self-start md:self-auto">
                   <button
                     onClick={() => setBillingAnnual(false)}
                     className={cn(
-                      "text-xs font-semibold px-4 py-2 rounded-none transition-all cursor-pointer",
-                      !billingAnnual ? "bg-white text-blue-900 shadow-sm" : "text-white/80 hover:text-white"
+                      "text-xs font-semibold px-4 py-2 rounded-full transition-all duration-200 cursor-pointer",
+                      !billingAnnual
+                        ? "bg-white text-zinc-900 shadow-md font-bold"
+                        : "text-zinc-400 hover:text-white"
                     )}
                   >
                     Monthly
@@ -885,136 +924,166 @@ export default function LandingPage() {
                   <button
                     onClick={() => setBillingAnnual(true)}
                     className={cn(
-                      "text-xs font-semibold px-4 py-2 rounded-none transition-all flex items-center gap-1.5 cursor-pointer",
-                      billingAnnual ? "bg-[#EA580C] text-white shadow-sm" : "text-white/80 hover:text-white"
+                      "text-xs font-semibold px-4 py-2 rounded-full transition-all duration-200 flex items-center gap-1.5 cursor-pointer",
+                      billingAnnual
+                        ? "bg-[#EA580C] text-white shadow-md shadow-[#EA580C]/30 font-bold"
+                        : "text-zinc-400 hover:text-white"
                     )}
                   >
                     <span>Annual</span>
-                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded-none bg-white/20">
+                    <span className="text-[10px] uppercase font-black px-1.5 py-0.5 rounded-full bg-white/20 text-white">
                       Save 20%
                     </span>
                   </button>
                 </div>
               </div>
 
-              {/* 3 Pricing Cards with sharp rectangle borders */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch text-black">
+              {/* 3 Clean Minimal Premium Pricing Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
                 {/* Starter Tier */}
-                <div className="p-8 rounded-none bg-white border border-white/20 flex flex-col justify-between space-y-8 shadow-xl">
-                  <div className="space-y-6">
-                    <div className="space-y-1">
-                      <h3 className="text-base font-bold text-black uppercase tracking-wider">Starter</h3>
-                      <p className="text-xs text-zinc-600">For indie developers and small squads.</p>
-                    </div>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-5xl font-black font-mono tracking-tight text-black">$0</span>
-                      <span className="text-xs text-zinc-500 font-medium">/ month</span>
+                <div className="p-6 sm:p-7 rounded-3xl bg-white text-zinc-900 shadow-xl border border-white/60 flex flex-col justify-between space-y-6 hover:translate-y-[-2px] transition-all duration-300">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400">
+                        STARTER
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-zinc-100 text-[10px] font-mono font-bold text-zinc-600 uppercase">
+                        Free
+                      </span>
                     </div>
 
-                    <div className="space-y-3 pt-6 border-t border-zinc-200 text-xs md:text-sm text-zinc-700">
+                    <div>
+                      <h3 className="text-lg font-bold text-zinc-900 tracking-tight">Indie Squad</h3>
+                      <div className="flex items-baseline gap-1 pt-1.5">
+                        <span className="text-4xl sm:text-5xl font-black font-mono tracking-tight text-zinc-900">$0</span>
+                        <span className="text-xs text-zinc-500 font-medium">/ month</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2.5 pt-4 border-t border-zinc-100 text-xs text-zinc-600">
                       <div className="flex items-center gap-2.5">
-                        <Check size={16} className="text-[#EA580C] shrink-0" />
-                        <span>Up to 5 meetings / month</span>
+                        <div className="w-4 h-4 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                          <Check size={11} strokeWidth={2.5} />
+                        </div>
+                        <span>Up to 5 AI meetings / mo</span>
                       </div>
                       <div className="flex items-center gap-2.5">
-                        <Check size={16} className="text-[#EA580C] shrink-0" />
-                        <span>Real-time WebRTC audio conference</span>
+                        <div className="w-4 h-4 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                          <Check size={11} strokeWidth={2.5} />
+                        </div>
+                        <span>Live speech transcription</span>
                       </div>
                       <div className="flex items-center gap-2.5">
-                        <Check size={16} className="text-[#EA580C] shrink-0" />
-                        <span>Live Deepgram speech transcription</span>
-                      </div>
-                      <div className="flex items-center gap-2.5">
-                        <Check size={16} className="text-[#EA580C] shrink-0" />
-                        <span>Interactive team Kanban board</span>
+                        <div className="w-4 h-4 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                          <Check size={11} strokeWidth={2.5} />
+                        </div>
+                        <span>Interactive Kanban board</span>
                       </div>
                     </div>
                   </div>
 
                   <button
                     onClick={() => navigate("/signup")}
-                    className="w-full py-3 rounded-none border-2 border-black text-black font-bold text-xs uppercase tracking-wider hover:bg-black hover:text-white transition-all cursor-pointer"
+                    className="w-full py-2.5 rounded-xl border border-zinc-200 text-zinc-900 hover:bg-zinc-900 hover:text-white font-bold text-xs uppercase tracking-wider transition-all duration-200 cursor-pointer shadow-sm"
                   >
                     Start Free
                   </button>
                 </div>
 
-                {/* Pro Tier (Featured) */}
-                <div className="p-8 rounded-none bg-[#09090B] text-white border-2 border-[#EA580C] shadow-[0_12px_40px_rgba(234,88,12,0.35)] flex flex-col justify-between space-y-8 relative">
-                  <div className="absolute -top-3 left-6 px-3 py-0.5 rounded-none bg-[#EA580C] text-white font-mono text-[10px] font-bold tracking-widest uppercase shadow-md">
-                    Most Popular
+                {/* Pro Tier (Featured Centerpiece) */}
+                <div className="p-6 sm:p-7 rounded-3xl bg-white text-zinc-900 shadow-2xl border-2 border-[#EA580C] flex flex-col justify-between space-y-6 relative md:-translate-y-2 hover:translate-y-[-4px] transition-all duration-300 ring-4 ring-black/5">
+                  <div className="absolute -top-3 left-6 px-3 py-0.5 rounded-full bg-[#EA580C] text-white font-mono text-[10px] font-bold tracking-wider uppercase shadow-md flex items-center gap-1">
+                    <Sparkles size={11} className="text-white" />
+                    <span>Most Popular</span>
                   </div>
 
-                  <div className="space-y-6 pt-1">
-                    <div className="space-y-1">
-                      <h3 className="text-base font-bold text-white uppercase tracking-wider">Pro Team</h3>
-                      <p className="text-xs text-zinc-400">Everything needed to automate sprint velocity.</p>
-                    </div>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-5xl font-black font-mono tracking-tight text-[#EA580C]">
-                        {billingAnnual ? "$24" : "$29"}
+                  <div className="space-y-4 pt-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#EA580C]">
+                        PRO TEAM
                       </span>
-                      <span className="text-xs text-zinc-400 font-medium">/ seat / month</span>
+                      <span className="px-2 py-0.5 rounded-full bg-[#EA580C]/10 text-[10px] font-mono font-bold text-[#EA580C] uppercase">
+                        14-Day Trial
+                      </span>
                     </div>
 
-                    <div className="space-y-3 pt-6 border-t border-zinc-800 text-xs md:text-sm text-zinc-200">
+                    <div>
+                      <h3 className="text-lg font-bold text-zinc-900 tracking-tight">Autonomous Sprint</h3>
+                      <div className="flex items-baseline gap-1 pt-1.5">
+                        <span className="text-4xl sm:text-5xl font-black font-mono tracking-tight text-zinc-900">
+                          {billingAnnual ? "$24" : "$29"}
+                        </span>
+                        <span className="text-xs text-zinc-500 font-medium">/ seat / mo</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2.5 pt-4 border-t border-zinc-100 text-xs text-zinc-700">
                       <div className="flex items-center gap-2.5">
-                        <Check size={16} className="text-[#EA580C] shrink-0" />
-                        <span className="font-semibold text-white">Unlimited meetings &amp; transcripts</span>
+                        <div className="w-4 h-4 rounded-full bg-[#EA580C]/15 text-[#EA580C] flex items-center justify-center shrink-0">
+                          <Check size={11} strokeWidth={2.5} />
+                        </div>
+                        <span className="font-semibold text-zinc-900">Unlimited meetings & transcripts</span>
                       </div>
                       <div className="flex items-center gap-2.5">
-                        <Check size={16} className="text-[#EA580C] shrink-0" />
-                        <span className="font-semibold text-white">Full 13-Agent AI task synthesis</span>
+                        <div className="w-4 h-4 rounded-full bg-[#EA580C]/15 text-[#EA580C] flex items-center justify-center shrink-0">
+                          <Check size={11} strokeWidth={2.5} />
+                        </div>
+                        <span className="font-semibold text-zinc-900">13-agent AI task synthesis</span>
                       </div>
                       <div className="flex items-center gap-2.5">
-                        <Check size={16} className="text-[#EA580C] shrink-0" />
-                        <span>Automatic acceptance criteria builder</span>
-                      </div>
-                      <div className="flex items-center gap-2.5">
-                        <Check size={16} className="text-[#EA580C] shrink-0" />
-                        <span>Audio &amp; video recording upload</span>
-                      </div>
-                      <div className="flex items-center gap-2.5">
-                        <Check size={16} className="text-[#EA580C] shrink-0" />
-                        <span>Speaker diarization &amp; attribution</span>
+                        <div className="w-4 h-4 rounded-full bg-[#EA580C]/15 text-[#EA580C] flex items-center justify-center shrink-0">
+                          <Check size={11} strokeWidth={2.5} />
+                        </div>
+                        <span>Instant Jira & Linear sync</span>
                       </div>
                     </div>
                   </div>
 
                   <button
                     onClick={() => navigate("/signup")}
-                    className="w-full py-3.5 rounded-none bg-[#EA580C] text-white font-bold text-xs uppercase tracking-wider hover:bg-[#c2410c] shadow-[0_4px_20px_rgba(234,88,12,0.4)] transition-all cursor-pointer"
+                    className="w-full py-3 rounded-xl bg-[#EA580C] hover:bg-[#ff6d1f] text-white font-bold text-xs uppercase tracking-wider shadow-md shadow-[#EA580C]/25 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
                   >
-                    Start 14-Day Free Trial
+                    <span>Start 14-Day Free Trial</span>
+                    <ArrowRight size={13} />
                   </button>
                 </div>
 
                 {/* Enterprise Tier */}
-                <div className="p-8 rounded-none bg-white border border-white/20 flex flex-col justify-between space-y-8 shadow-xl">
-                  <div className="space-y-6">
-                    <div className="space-y-1">
-                      <h3 className="text-base font-bold text-black uppercase tracking-wider">Enterprise</h3>
-                      <p className="text-xs text-zinc-600">Dedicated compute, custom privacy, and SLA.</p>
-                    </div>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-5xl font-black font-mono tracking-tight text-black">Custom</span>
+                <div className="p-6 sm:p-7 rounded-3xl bg-white text-zinc-900 shadow-xl border border-white/60 flex flex-col justify-between space-y-6 hover:translate-y-[-2px] transition-all duration-300">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400">
+                        ENTERPRISE
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-zinc-100 text-[10px] font-mono font-bold text-zinc-600 uppercase">
+                        Dedicated
+                      </span>
                     </div>
 
-                    <div className="space-y-3 pt-6 border-t border-zinc-200 text-xs md:text-sm text-zinc-700">
+                    <div>
+                      <h3 className="text-lg font-bold text-zinc-900 tracking-tight">Custom Scale</h3>
+                      <div className="flex items-baseline gap-1 pt-1.5">
+                        <span className="text-4xl sm:text-5xl font-black font-mono tracking-tight text-zinc-900">Custom</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2.5 pt-4 border-t border-zinc-100 text-xs text-zinc-600">
                       <div className="flex items-center gap-2.5">
-                        <Check size={16} className="text-[#EA580C] shrink-0" />
-                        <span>Dedicated multi-agent pipeline instances</span>
+                        <div className="w-4 h-4 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                          <Check size={11} strokeWidth={2.5} />
+                        </div>
+                        <span>Dedicated multi-agent compute</span>
                       </div>
                       <div className="flex items-center gap-2.5">
-                        <Check size={16} className="text-[#EA580C] shrink-0" />
-                        <span>Custom Jira, Linear &amp; GitHub sync</span>
+                        <div className="w-4 h-4 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                          <Check size={11} strokeWidth={2.5} />
+                        </div>
+                        <span>SAML 2.0 SSO & directory sync</span>
                       </div>
                       <div className="flex items-center gap-2.5">
-                        <Check size={16} className="text-[#EA580C] shrink-0" />
-                        <span>SAML 2.0 SSO &amp; directory sync</span>
-                      </div>
-                      <div className="flex items-center gap-2.5">
-                        <Check size={16} className="text-[#EA580C] shrink-0" />
+                        <div className="w-4 h-4 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                          <Check size={11} strokeWidth={2.5} />
+                        </div>
                         <span>Zero-data-retention VPC deployment</span>
                       </div>
                     </div>
@@ -1022,10 +1091,26 @@ export default function LandingPage() {
 
                   <button
                     onClick={() => navigate("/signup")}
-                    className="w-full py-3 rounded-none border-2 border-zinc-300 text-black font-bold text-xs uppercase tracking-wider hover:border-black transition-all cursor-pointer"
+                    className="w-full py-2.5 rounded-xl border border-zinc-900 text-zinc-900 hover:bg-zinc-900 hover:text-white font-bold text-xs uppercase tracking-wider transition-all duration-200 cursor-pointer shadow-sm"
                   >
-                    Contact Enterprise Sales
+                    Contact Sales
                   </button>
+                </div>
+              </div>
+
+              {/* Bottom Trust Ribbon */}
+              <div className="pt-6 border-t border-white/10 flex flex-wrap items-center justify-center gap-6 md:gap-12 text-xs font-medium text-zinc-400">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck size={16} className="text-[#EA580C]" />
+                  <span>Enterprise-Grade 256-bit AES Encryption</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Zap size={16} className="text-[#EA580C]" />
+                  <span>Instant Setup • Cancel Anytime</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Star size={16} className="text-[#EA580C]" />
+                  <span>14-Day Full Access Trial</span>
                 </div>
               </div>
             </div>
@@ -1033,19 +1118,19 @@ export default function LandingPage() {
 
           {/* =========================================================================
               SECTION 5: SOCIAL PROOF / TESTIMONIALS
-              Comes from right-bottom at -8° tilt, reaches half Y, straightens to 0° and covers Section 4
-              Dark Obsidian (#0D1117) with verified Sprintive reviews
+              Comes from right-bottom at -8? tilt, reaches half Y, straightens to 0? and covers Section 4
+              Dark Obsidian (#0D1117) with horizontal 3D perspective testimonials cards
               ========================================================================= */}
           <TiltedSheetSection
             id="testimonials-sheet"
             zIndex={50}
             bg="#0d1117"
-            className="text-white py-24 px-6 md:px-14 flex flex-col justify-center"
+            className="text-white py-24 px-6 md:px-14 flex flex-col justify-center overflow-hidden"
           >
-            <div className="max-w-6xl mx-auto w-full space-y-12">
+            <div className="max-w-6xl mx-auto w-full space-y-10">
               <div className="space-y-3">
                 <span className="text-xs font-mono font-bold tracking-[0.2em] text-[#EA580C] uppercase">
-                  05 — SOCIAL PROOF
+                  05 ? SOCIAL PROOF
                 </span>
                 <TextBlockAnimation blockColor="#EA580C" duration={0.8}>
                   <h2 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-white uppercase leading-none">
@@ -1058,78 +1143,136 @@ export default function LandingPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="p-8 bg-[#161b22] border border-white/10 rounded-none flex flex-col justify-between space-y-6 hover:border-[#EA580C]/40 transition-colors shadow-lg">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-1 text-[#EA580C]">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} size={14} fill="#EA580C" />
-                      ))}
-                    </div>
-                    <p className="text-zinc-300 text-xs md:text-sm leading-relaxed italic">
-                      &quot;Sprintive saved our 40-engineer team at least 5 hours per developer every
-                      single sprint. The Kanban cards generated from our planning calls are more
-                      thorough than what our PMs used to write manually.&quot;
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 pt-4 border-t border-white/10">
-                    <div className="w-10 h-10 rounded-none bg-[#EA580C]/20 border border-[#EA580C]/40 text-[#EA580C] font-bold flex items-center justify-center text-sm">
-                      AC
-                    </div>
-                    <div>
-                      <h5 className="text-sm font-bold text-white">Alex Chen</h5>
-                      <p className="text-xs text-zinc-400">VP of Engineering, CloudScale</p>
-                    </div>
-                  </div>
-                </div>
+              {/* Horizontal 3D Perspective Testimonials Cards */}
+              <div className="relative w-full h-[430px] flex items-center justify-center overflow-hidden select-none">
+                {testimonials.map((item, index) => {
+                  const total = testimonials.length;
+                  let diff = index - activeTestimonial;
+                  if (diff > total / 2) diff -= total;
+                  if (diff < -total / 2) diff += total;
 
-                <div className="p-8 bg-[#161b22] border border-white/10 rounded-none flex flex-col justify-between space-y-6 hover:border-[#EA580C]/40 transition-colors shadow-lg">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-1 text-[#EA580C]">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} size={14} fill="#EA580C" />
-                      ))}
-                    </div>
-                    <p className="text-zinc-300 text-xs md:text-sm leading-relaxed italic">
-                      &quot;The 13-agent AI pipeline is astonishing. It doesn&apos;t just capture
-                      transcripts—it filters out the banter, isolates architectural decisions, and puts
-                      acceptance criteria right into our backlog.&quot;
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 pt-4 border-t border-white/10">
-                    <div className="w-10 h-10 rounded-none bg-[#EA580C]/20 border border-[#EA580C]/40 text-[#EA580C] font-bold flex items-center justify-center text-sm">
-                      ER
-                    </div>
-                    <div>
-                      <h5 className="text-sm font-bold text-white">Elena Rostova</h5>
-                      <p className="text-xs text-zinc-400">Head of Product, Synthetix</p>
-                    </div>
-                  </div>
-                </div>
+                  let xOffset = 0;
+                  let scale = 1;
+                  let rotation = 0;
+                  let zIndex = 10;
+                  let opacity = 1;
 
-                <div className="p-8 bg-[#161b22] border border-white/10 rounded-none flex flex-col justify-between space-y-6 hover:border-[#EA580C]/40 transition-colors shadow-lg">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-1 text-[#EA580C]">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} size={14} fill="#EA580C" />
-                      ))}
+                  if (diff === 0) {
+                    xOffset = 0;
+                    scale = 1.05;
+                    rotation = 0;
+                    zIndex = 30;
+                    opacity = 1;
+                  } else if (diff === -1) {
+                    xOffset = -280;
+                    scale = 0.92;
+                    rotation = -3.5;
+                    zIndex = 20;
+                    opacity = 0.85;
+                  } else if (diff === 1) {
+                    xOffset = 280;
+                    scale = 0.92;
+                    rotation = 3;
+                    zIndex = 20;
+                    opacity = 0.85;
+                  } else if (diff === -2) {
+                    xOffset = -530;
+                    scale = 0.82;
+                    rotation = -6;
+                    zIndex = 10;
+                    opacity = 0.45;
+                  } else if (diff === 2) {
+                    xOffset = 530;
+                    scale = 0.82;
+                    rotation = 6;
+                    zIndex = 10;
+                    opacity = 0.45;
+                  } else {
+                    const sign = diff < 0 ? -1 : 1;
+                    xOffset = sign * 750;
+                    scale = 0.7;
+                    rotation = sign * 8;
+                    zIndex = 5;
+                    opacity = 0;
+                  }
+
+                  const isCenter = diff === 0;
+
+                  return (
+                    <div
+                      key={index}
+                      onClick={() => setActiveTestimonial(index)}
+                      className={cn(
+                        "absolute w-[290px] sm:w-[350px] h-[330px] sm:h-[360px] p-7 sm:p-8 flex flex-col justify-between cursor-pointer",
+                        "transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]",
+                        isCenter
+                          ? "bg-[#EAEAEA] text-black shadow-2xl"
+                          : "bg-[#12151D] text-white border border-white/10 shadow-xl hover:border-white/25"
+                      )}
+                      style={{
+                        left: "50%",
+                        top: "50%",
+                        transform: `translate(calc(-50% + ${xOffset}px), -50%) scale(${scale}) rotate(${rotation}deg)`,
+                        zIndex,
+                        opacity,
+                        clipPath: "polygon(0 0, calc(100% - 36px) 0, 100% 36px, 100% 100%, 0 100%)",
+                        pointerEvents: opacity === 0 ? "none" : "auto",
+                      }}
+                    >
+                      <div className="space-y-4">
+                        <img
+                          src={item.avatar}
+                          alt={item.author}
+                          className={cn(
+                            "w-12 h-12 object-cover rounded-sm",
+                            isCenter ? "border border-black/15 shadow-sm" : "border border-white/10"
+                          )}
+                        />
+                        <p
+                          className={cn(
+                            "text-sm sm:text-base font-bold leading-snug tracking-tight pt-1",
+                            isCenter ? "text-black" : "text-white"
+                          )}
+                        >
+                          &ldquo;{item.quote}&rdquo;
+                        </p>
+                      </div>
+
+                      <div className="pt-4">
+                        <p
+                          className={cn(
+                            "text-xs italic leading-tight",
+                            isCenter ? "text-zinc-600" : "text-zinc-400"
+                          )}
+                        >
+                          - {item.author}, {item.role}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-zinc-300 text-xs md:text-sm leading-relaxed italic">
-                      &quot;Meetings used to end with &apos;who&apos;s taking notes?&apos;. Now everyone
-                      just leaves the call, and before they open their IDE, all tasks are prioritized
-                      and assigned on the board.&quot;
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 pt-4 border-t border-white/10">
-                    <div className="w-10 h-10 rounded-none bg-[#EA580C]/20 border border-[#EA580C]/40 text-[#EA580C] font-bold flex items-center justify-center text-sm">
-                      MV
-                    </div>
-                    <div>
-                      <h5 className="text-sm font-bold text-white">Marcus Vance</h5>
-                      <p className="text-xs text-zinc-400">Principal Agile Coach, DevSprint</p>
-                    </div>
-                  </div>
-                </div>
+                  );
+                })}
+              </div>
+
+              {/* Centered Controls (< and >) matching the screenshot */}
+              <div className="flex items-center justify-center gap-1.5 pt-1">
+                <button
+                  onClick={() =>
+                    setActiveTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length)
+                  }
+                  className="w-10 h-10 bg-black border border-white/20 text-white hover:bg-white hover:text-black transition-all duration-200 flex items-center justify-center cursor-pointer active:scale-95 shadow-sm"
+                  aria-label="Previous testimonial"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  onClick={() =>
+                    setActiveTestimonial((prev) => (prev + 1) % testimonials.length)
+                  }
+                  className="w-10 h-10 bg-black border border-white/20 text-white hover:bg-white hover:text-black transition-all duration-200 flex items-center justify-center cursor-pointer active:scale-95 shadow-sm"
+                  aria-label="Next testimonial"
+                >
+                  <ChevronRight size={16} />
+                </button>
               </div>
             </div>
           </TiltedSheetSection>
@@ -1143,33 +1286,39 @@ export default function LandingPage() {
             id="faqs-sheet"
             zIndex={60}
             bg="#08080a"
-            className="text-white py-24 px-6 md:px-14 flex flex-col justify-between"
+            className="text-white pt-24 pb-0 px-0 flex flex-col justify-between"
           >
-            <div className="max-w-4xl mx-auto w-full space-y-12">
-              <div className="space-y-3">
-                <span className="text-xs font-mono font-bold tracking-[0.2em] text-[#EA580C] uppercase">
-                  06 — COMMON QUESTIONS
-                </span>
+            <div className="max-w-4xl mx-auto w-full px-6 md:px-14 space-y-12">
+              <div className="space-y-4">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#EA580C] animate-pulse" />
+                  <span className="text-xs font-mono font-bold tracking-[0.2em] text-[#EA580C] uppercase">
+                    06 — COMMON QUESTIONS
+                  </span>
+                </div>
                 <TextBlockAnimation blockColor="#EA580C" duration={0.8}>
                   <h2 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-white uppercase leading-none">
                     EVERY QUESTION<br />
                     ANSWERED.
                   </h2>
                 </TextBlockAnimation>
+                <p className="text-zinc-400 text-xs md:text-sm max-w-lg leading-relaxed">
+                  Everything you need to know about autonomous meeting audio ingestion, multi-agent LLM task synthesis, and Kanban sync.
+                </p>
               </div>
 
-              {/* Accordion */}
-              <div className="space-y-3">
+              {/* Accordion with clean minimal rounded corners */}
+              <div className="space-y-3.5">
                 {faqs.map((faq, index) => {
                   const isOpen = openFaq === index;
                   return (
                     <div
                       key={index}
-                      className="border border-zinc-800/80 rounded-none bg-[#101013] overflow-hidden transition-colors"
+                      className="border border-white/10 rounded-2xl bg-white/[0.03] backdrop-blur-md overflow-hidden transition-all duration-200 hover:border-white/20"
                     >
                       <button
                         onClick={() => setOpenFaq(isOpen ? null : index)}
-                        className="w-full py-4 px-6 flex items-center justify-between text-left gap-4 hover:bg-zinc-800/20 transition-colors cursor-pointer"
+                        className="w-full py-4 px-6 flex items-center justify-between text-left gap-4 hover:bg-white/[0.03] transition-colors cursor-pointer"
                       >
                         <span className="font-semibold text-xs sm:text-sm text-zinc-100">{faq.q}</span>
                         <ChevronDown
@@ -1180,7 +1329,7 @@ export default function LandingPage() {
                         />
                       </button>
                       {isOpen && (
-                        <div className="px-6 pb-4 pt-1 text-xs md:text-sm text-zinc-400 leading-relaxed border-t border-zinc-800/60">
+                        <div className="px-6 pb-5 pt-1 text-xs md:text-sm text-zinc-400 leading-relaxed border-t border-white/10">
                           {faq.a}
                         </div>
                       )}
@@ -1188,61 +1337,117 @@ export default function LandingPage() {
                   );
                 })}
               </div>
-
-              {/* Final Sprintive CTA Box inside the terminal sheet */}
-              <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6">
-                <div>
-                  <h3 className="text-2xl font-black text-white uppercase tracking-tight">
-                    Stop taking notes. <span className="text-[#EA580C]">Start sprinting.</span>
-                  </h3>
-                  <p className="text-xs text-zinc-400 mt-1">
-                    Experience autonomous meeting transcription, 13-agent AI task synthesis, and automated Kanban workflows.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3 shrink-0">
-                  <button
-                    onClick={() => navigate("/signup")}
-                    className="px-6 py-3 rounded-none bg-[#EA580C] text-white font-bold text-xs uppercase tracking-widest hover:bg-[#c2410c] shadow-[0_4px_24px_rgba(234,88,12,0.4)] transition-all flex items-center gap-2 cursor-pointer"
-                  >
-                    <span>Create Workspace</span>
-                    <ArrowRight size={14} />
-                  </button>
-                  <button
-                    onClick={() => navigate("/login")}
-                    className="px-5 py-3 rounded-none border border-zinc-700 text-zinc-200 font-semibold text-xs uppercase tracking-widest hover:bg-zinc-900 transition-colors cursor-pointer"
-                  >
-                    Sign In
-                  </button>
-                </div>
-              </div>
             </div>
 
-            {/* Bottom Bar Footer Info */}
-            <div className="max-w-4xl mx-auto w-full pt-8 mt-12 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-xs text-zinc-500 gap-4">
-              <div className="flex items-center gap-2 font-mono">
-                <span className="w-2 h-2 rounded-none bg-[#EA580C]" />
-                <span>sprintive. · Autonomous Agile Platform</span>
+            {/* =========================================================================
+                CLEAN MINIMAL PREMIUM FOOTER
+                ========================================================================= */}
+            <footer className="w-full mt-20 pt-10 pb-12 border-t border-white/[0.08] bg-[#050507]">
+              <div className="max-w-6xl mx-auto px-6 md:px-10">
+                {/* Main Row: Brand & Minimal Navigation */}
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 pb-8 border-b border-white/[0.06]">
+                  {/* Brand & Mission Tagline */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-6 h-6 rounded-md bg-[#EA580C] flex items-center justify-center shadow-sm">
+                        <span className="font-mono font-black text-white text-xs">S</span>
+                      </div>
+                      <span className="font-mono font-black text-lg tracking-tight text-white">
+                        sprintive<span className="text-[#EA580C]">.</span>
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-400 max-w-sm leading-relaxed">
+                      Autonomous meeting intelligence and AI task synthesis for modern engineering teams.
+                    </p>
+                  </div>
+
+                  {/* Clean Curated Navigation */}
+                  <div className="flex flex-wrap items-center gap-x-8 gap-y-3 text-xs text-zinc-400">
+                    <a href="#how-it-works-sheet" className="hover:text-white transition-colors">
+                      Pipeline
+                    </a>
+                    <a href="#pricing-sheet" className="hover:text-white transition-colors">
+                      Pricing
+                    </a>
+                    <a href="#testimonials-sheet" className="hover:text-white transition-colors">
+                      Reviews
+                    </a>
+                    <a href="#faqs-sheet" className="hover:text-white transition-colors">
+                      FAQ
+                    </a>
+                    <Link to="/contact" className="hover:text-white transition-colors">
+                      Contact
+                    </Link>
+                    <Link to="/login" className="hover:text-white transition-colors">
+                      Sign In
+                    </Link>
+                    <Link
+                      to="/signup"
+                      className="text-white hover:text-[#EA580C] font-semibold transition-colors flex items-center gap-1.5"
+                    >
+                      <span>Get Started</span>
+                      <ArrowRight size={12} />
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Sub-bar: Copyright, Socials & Back to Top */}
+                <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
+                  <div className="flex items-center gap-3">
+                    <span>&copy; {new Date().getFullYear()} Sprintive Inc.</span>
+                    <span className="text-zinc-700">&bull;</span>
+                    <span className="text-zinc-500">Engineered for velocity.</span>
+                  </div>
+
+                  <div className="flex items-center gap-5">
+                    {/* Minimal Social Icons */}
+                    <div className="flex items-center gap-3.5 text-zinc-400">
+                      <a
+                        href="https://github.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-white transition-colors"
+                        aria-label="GitHub"
+                      >
+                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                        </svg>
+                      </a>
+                      <a
+                        href="https://twitter.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-white transition-colors"
+                        aria-label="X"
+                      >
+                        <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                        </svg>
+                      </a>
+                      <a
+                        href="https://discord.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-white transition-colors"
+                        aria-label="Discord"
+                      >
+                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                          <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
+                        </svg>
+                      </a>
+                    </div>
+
+                    <button
+                      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                      className="hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer font-mono text-[11px] text-zinc-400 group"
+                    >
+                      <span>Back to Top</span>
+                      <ArrowUp size={12} className="text-[#EA580C] group-hover:-translate-y-0.5 transition-transform" />
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-6">
-                <Link to="/login" className="hover:text-zinc-300 transition-colors">
-                  Dashboard
-                </Link>
-                <Link to="/signup" className="hover:text-zinc-300 transition-colors">
-                  Sign Up
-                </Link>
-                <a
-                  href="#top"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className="hover:text-zinc-300 transition-colors cursor-pointer"
-                >
-                  Back to Top ↑
-                </a>
-              </div>
-            </div>
+            </footer>
           </TiltedSheetSection>
         </div>
       ) : (
