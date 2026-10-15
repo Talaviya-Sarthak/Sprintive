@@ -7,6 +7,9 @@ from app.config.settings import settings
 from app.models.schemas import MeetingAnalysisRequest, MeetingAnalysisResponse
 from app.utils.logger import get_logger
 
+from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, status
+import httpx
+
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/api/v1/meetings", tags=["meetings"])
@@ -33,16 +36,32 @@ async def meetings_health() -> dict:
     return {"status": "ok", "service": "meetings-ai"}
 
 
+async def _run_downstream_ai_pipeline(meeting_id: str, transcript: str, metadata: Dict[str, Any] | None) -> None:
+    """Invoke the full AI pipeline on transcript-processing-service to generate summaries and Kanban tasks."""
+    try:
+        service_url = getattr(settings, "transcript_service_url", "http://127.0.0.1:8001").rstrip("/")
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            resp = await client.post(
+                f"{service_url}/transcript/process",
+                json={
+                    "meeting_id": meeting_id,
+                    "raw_text": transcript,
+                    "run_ai_pipeline": True,
+                    "async_processing": False,
+                },
+            )
+            logger.info("[AI_HANDOFF_PIPELINE] meeting_id=%s status=%d", meeting_id, resp.status_code)
+    except Exception as exc:
+        logger.error("[AI_HANDOFF_PIPELINE_ERROR] meeting_id=%s error=%s", meeting_id, exc)
+
+
 @router.post("/analyze", response_model=MeetingAnalysisResponse)
 async def receive_clean_transcript(
     payload: MeetingAnalysisRequest,
+    background_tasks: BackgroundTasks,
     x_internal_service_key: str | None = Header(None, alias="X-Internal-Service-Key"),
 ) -> MeetingAnalysisResponse:
-    """Receive and validate a cleaned transcript from backend for upcoming AI processing.
-
-    In this phase, this endpoint performs deterministic verification and acknowledgement
-    without triggering LLMs or generative agents.
-    """
+    """Receive and validate a cleaned transcript from backend and trigger full AI summarization & task resolution."""
     verify_internal_auth(x_internal_service_key)
 
     meeting_id = payload.meeting_id.strip()
@@ -94,6 +113,9 @@ async def receive_clean_transcript(
         payload.language,
     )
 
+    # Trigger downstream AI analysis, Scrum task generation, and database persistence
+    background_tasks.add_task(_run_downstream_ai_pipeline, meeting_id, transcript, payload.metadata)
+
     return MeetingAnalysisResponse(
         accepted=True,
         meeting_id=meeting_id,
@@ -101,3 +123,4 @@ async def receive_clean_transcript(
         received_at=now_iso,
         idempotent=False,
     )
+

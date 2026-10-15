@@ -19,6 +19,7 @@ from app.models.transcript import (
     ContextFlagType,
     ContextValidationLLMOutput,
     ContextValidationStatus,
+    SegmentClassification,
     TranscriptSegment,
 )
 from app.prompts.contextual_validation import (

@@ -7,8 +7,9 @@ interface MeetingParticipantsProps {
   currentUserId?: string;
 }
 
-function getInitials(name: string) {
-  return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+function getInitials(name?: any): string {
+  if (!name || typeof name !== 'string') return '?';
+  return name.split(' ').map(n => n[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '?';
 }
 
 export default function MeetingParticipants({ participants, currentUserId }: MeetingParticipantsProps) {

@@ -12,6 +12,7 @@ const updateProfileSchema = z.object({
   bio:         z.string().max(500).optional().nullable(),
   country:     z.string().max(80).optional().nullable(),
   timezone:    z.string().max(60).optional(),
+  remove_avatar: z.union([z.boolean(), z.enum(['true', 'false'])]).optional(),
 });
 
 export const profileController = {
@@ -47,7 +48,12 @@ export const profileController = {
         });
       }
       const fields = { ...parsed.data };
-      if (req.file) fields.avatar_url = `/uploads/${req.file.filename}`;
+      if (req.file) {
+        fields.avatar_url = `/uploads/${req.file.filename}`;
+      } else if (fields.remove_avatar === true || fields.remove_avatar === 'true') {
+        fields.avatar_url = null;
+      }
+      delete fields.remove_avatar;
 
       const updated = await updateUserProfile(req.user.id, fields);
       if (!updated) return sendError(res, { message: 'No fields to update', statusCode: HTTP_STATUS.BAD_REQUEST });

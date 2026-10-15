@@ -476,7 +476,7 @@ class TranscriptOrchestrator:
         raw_transcript_path: Optional[str] = None,
         formatting_config: Optional[FormattingConfig] = None,
         enforce_concurrency: bool = True,
-        run_ai_pipeline: bool = False,
+        run_ai_pipeline: bool = True,
     ) -> ProcessTranscriptResponse:
         """
         Execute the complete 14-stage transcript processing pipeline.
@@ -585,7 +585,7 @@ class TranscriptOrchestrator:
                 warnings=context.warnings,
             )
 
-            # Optional: AI Pipeline Execution (Stage 1 + Stage 2 + Stage 3)
+            # AI Pipeline Execution (Stage 1 Meeting Analysis + Stage 2 Scrum Tasks + Stage 3 Task Resolution & Persistence)
             meeting_analysis = None
             scrum_analysis = None
             resolved_tasks = None
@@ -597,10 +597,14 @@ class TranscriptOrchestrator:
                         custom_transcript_path=final_record.cleaned_transcript_path,
                         storage_service=self.storage_service,
                         llm_client=self.llm_client,
+                        run_scrum_agent=True,
+                        run_task_resolution=True,
+                        persist_to_database=True,
                     )
                     meeting_analysis = ai_pipeline_resp.analysis
                     scrum_analysis = ai_pipeline_resp.scrum_analysis
                     resolved_tasks = ai_pipeline_resp.resolved_tasks
+
                     if meeting_analysis:
                         context.metrics["meeting_analysis"] = meeting_analysis.model_dump()
                     if scrum_analysis:

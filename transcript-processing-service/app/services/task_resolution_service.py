@@ -500,6 +500,26 @@ class TaskResolutionService:
             elif due_date_str:
                 count_unresolved_due_dates += 1
 
+            # Map task priority safely ('critical' -> 'urgent', None -> 'medium')
+            task_priority = "medium"
+            if task.priority:
+                p_lower = str(task.priority).lower()
+                if p_lower == "critical":
+                    task_priority = "urgent"
+                elif p_lower in ("low", "medium", "high", "urgent"):
+                    task_priority = p_lower
+
+            # Map task type safely ('story' -> 'feature', 'research' -> 'task')
+            task_type = "task"
+            if task.type:
+                t_lower = str(task.type).lower()
+                if t_lower == "story":
+                    task_type = "feature"
+                elif t_lower in ("task", "bug", "feature", "improvement"):
+                    task_type = t_lower
+                else:
+                    task_type = "task"
+
             # 3. Construct ResolvedTask
             resolved_item = ResolvedTask(
                 id=stable_id,
@@ -509,10 +529,10 @@ class TaskResolutionService:
                 assignee=full_name,
                 assignee_id=user_id,
                 raw_assignee=raw_assignee,
-                priority=task.priority,
+                priority=task_priority,
                 due_date=due_date_str,
                 resolved_due_date=resolved_due_date,
-                type=task.type,
+                type=task_type,
                 status=stable_status,
                 acceptance_criteria=task.acceptance_criteria,
                 source_action_item=task.source_action_item,

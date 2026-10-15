@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Users, Clock, Calendar, Mail, Trash2, Video, Settings, UserPlus } from 'lucide-react';
+import { Users, Clock, Calendar, Mail, Trash2, Video, Settings, UserPlus, ShieldCheck } from 'lucide-react';
 import { teamService } from '../../services/team.service';
 import { useAuth } from '../../context/AuthContext';
 import AppLayout from '../../layouts/AppLayout';
-import { AppButton, AppBadge, AppInput, MemberInviteModal } from '../../components/app-ui';
+import { AppButton, AppBadge, AppInput, MemberInviteModal, AppPageLoader } from '../../components/app-ui';
+import { RoleBadge } from '../../components/ui/Badge';
 import type { Team, TeamMember } from '../../types';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -89,9 +90,7 @@ export default function TeamOverview() {
   if (loading) {
     return (
       <AppLayout teamId={id}>
-        <div className="flex items-center justify-center h-64">
-          <div className="w-7 h-7 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--app-border)', borderTopColor: 'var(--app-text-primary)' }} />
-        </div>
+        <AppPageLoader label="Loading workspace overview..." />
       </AppLayout>
     );
   }
@@ -157,117 +156,205 @@ export default function TeamOverview() {
           </div>
         </div>
 
-        {/* Content Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left 2 Cols: Stats & Members */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <div className="border rounded-xl p-4 transition-colors" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--app-border-focus)'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--app-border)'}
-              >
-                <div className="flex items-center justify-between mb-2" style={{ color: 'var(--app-text-muted)' }}>
-                  <span className="text-[10px] font-mono uppercase font-medium tracking-wider">Teammates</span>
-                  <Users size={14} style={{ color: 'var(--app-text-secondary)' }} />
-                </div>
-                <div className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>{members.length}</div>
-                <span className="text-[11px] block mt-1" style={{ color: 'var(--app-text-muted)' }}>Active Engineers</span>
-              </div>
-
-              <div className="border rounded-xl p-4 transition-colors" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--app-border-focus)'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--app-border)'}
-              >
-                <div className="flex items-center justify-between mb-2" style={{ color: 'var(--app-text-muted)' }}>
-                  <span className="text-[10px] font-mono uppercase font-medium tracking-wider">Daily Scrum</span>
-                  <Clock size={14} style={{ color: 'var(--app-text-secondary)' }} />
-                </div>
-                <div className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>{team.daily_scrum_time || new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}</div>
-                <span className="text-[11px] block mt-1" style={{ color: 'var(--app-text-muted)' }}>{team.timezone || 'UTC'}</span>
-              </div>
-
-              <div className="border rounded-xl p-4 transition-colors col-span-2 sm:col-span-1" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--app-border-focus)'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--app-border)'}
-              >
-                <div className="flex items-center justify-between mb-2" style={{ color: 'var(--app-text-muted)' }}>
-                  <span className="text-[10px] font-mono uppercase font-medium tracking-wider">Sprint Days</span>
-                  <Calendar size={14} style={{ color: 'var(--app-text-secondary)' }} />
-                </div>
-                <div className="text-xs font-semibold truncate mt-1" style={{ color: 'var(--app-text-primary)' }}>{workingDayNames}</div>
-                <span className="text-[11px] block mt-1" style={{ color: 'var(--app-text-secondary)' }}>Active Cadence</span>
+        {/* Quick Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div
+            className="border rounded-xl p-4 transition-all"
+            style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
+            onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--app-border-focus)')}
+            onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--app-border)')}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-medium tracking-tight" style={{ color: 'var(--app-text-muted)' }}>
+                Teammates
+              </span>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-blue-500/10 text-blue-400">
+                <Users size={14} />
               </div>
             </div>
+            <div className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>
+              {members.length}
+            </div>
+            <span className="text-xs block mt-1" style={{ color: 'var(--app-text-muted)' }}>
+              Active Engineers
+            </span>
+          </div>
 
-            {/* Team Members List */}
-            <div className="border rounded-xl p-6 space-y-4" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}>
-              <div className="flex items-center justify-between pb-3.5 border-b" style={{ borderColor: 'var(--app-border-subtle)' }}>
-                <h2 className="text-xs font-mono font-semibold uppercase tracking-wider" style={{ color: 'var(--app-text-muted)' }}>
-                  Team Members ({members.length})
-                </h2>
+          <div
+            className="border rounded-xl p-4 transition-all"
+            style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
+            onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--app-border-focus)')}
+            onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--app-border)')}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-medium tracking-tight" style={{ color: 'var(--app-text-muted)' }}>
+                Daily Scrum
+              </span>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-amber-500/10 text-amber-400">
+                <Clock size={14} />
+              </div>
+            </div>
+            <div className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>
+              {team.daily_scrum_time || new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
+            </div>
+            <span className="text-xs block mt-1" style={{ color: 'var(--app-text-muted)' }}>
+              Cadence · {team.timezone || 'UTC'}
+            </span>
+          </div>
+
+          <div
+            className="border rounded-xl p-4 transition-all"
+            style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
+            onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--app-border-focus)')}
+            onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--app-border)')}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-medium tracking-tight" style={{ color: 'var(--app-text-muted)' }}>
+                Sprint Days
+              </span>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-purple-500/10 text-purple-400">
+                <Calendar size={14} />
+              </div>
+            </div>
+            <div className="text-base font-semibold tracking-tight truncate mt-1.5" style={{ color: 'var(--app-text-primary)' }}>
+              {workingDayNames}
+            </div>
+            <span className="text-xs block mt-1" style={{ color: 'var(--app-text-muted)' }}>
+              Weekly Schedule
+            </span>
+          </div>
+
+          <div
+            className="border rounded-xl p-4 transition-all"
+            style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
+            onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--app-border-focus)')}
+            onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--app-border)')}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-medium tracking-tight" style={{ color: 'var(--app-text-muted)' }}>
+                Access Level
+              </span>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-emerald-500/10 text-emerald-400">
+                <ShieldCheck size={14} />
+              </div>
+            </div>
+            <div className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>
+              {isOwner ? 'Owner' : 'Member'}
+            </div>
+            <span className="text-xs block mt-1" style={{ color: 'var(--app-text-muted)' }}>
+              Workspace Rights
+            </span>
+          </div>
+        </div>
+
+        {/* Content Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left 2 Cols: Members List */}
+          <div className="lg:col-span-2 space-y-6">
+            <div
+              className="border rounded-xl p-5 space-y-3"
+              style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
+            >
+              <div className="flex items-center justify-between pb-3 border-b" style={{ borderColor: 'var(--app-border-subtle)' }}>
+                <div>
+                  <h2 className="text-xs font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>
+                    Team Members
+                  </h2>
+                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--app-text-muted)' }}>
+                    {members.length} {members.length === 1 ? 'active engineer' : 'active engineers'} in workspace
+                  </p>
+                </div>
                 <AppButton variant="mono-ghost" size="xs" onClick={() => navigate(`/teams/${team.id}/members`)}>
                   Manage Members
                 </AppButton>
               </div>
 
-              <div className="space-y-3">
+              <div className="divide-y" style={{ borderColor: 'var(--app-border-subtle)' }}>
                 {members.map(m => (
                   <div
                     key={m.user_id}
-                    className="flex items-center justify-between p-3.5 rounded-xl border"
-                    style={{ backgroundColor: 'var(--app-surface-hover)', borderColor: 'var(--app-border)' }}
+                    className="flex items-center justify-between py-3 px-2 rounded-lg transition-colors"
+                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'var(--app-surface-hover)')}
+                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center font-semibold text-xs" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)', color: 'var(--app-text-primary)' }}>
-                        {m.full_name?.[0] ?? 'U'}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center font-medium text-xs border shrink-0"
+                        style={{
+                          backgroundColor: 'var(--app-surface-hover)',
+                          borderColor: 'var(--app-border)',
+                          color: 'var(--app-text-primary)'
+                        }}
+                      >
+                        {m.full_name?.[0]?.toUpperCase() ?? 'U'}
                       </div>
-                      <div>
-                        <p className="text-xs font-medium" style={{ color: 'var(--app-text-primary)' }}>{m.full_name}</p>
-                        <p className="text-[10px]" style={{ color: 'var(--app-text-muted)' }}>{m.email}</p>
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium truncate" style={{ color: 'var(--app-text-primary)' }}>
+                          {m.full_name}
+                        </p>
+                        <p className="text-[11px] truncate" style={{ color: 'var(--app-text-muted)' }}>
+                          {m.email}
+                        </p>
                       </div>
                     </div>
-                    <AppBadge variant="mono" size="xs">
-                      {m.role}
-                    </AppBadge>
+                    <div className="shrink-0 ml-2">
+                      <RoleBadge role={m.role as any} size="sm" />
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Right Col: Invite & Workspace Actions */}
+          {/* Right Col: Invite & Danger Zone */}
           <div className="space-y-6">
             {/* Invite Teammates Card */}
             {isOwner && (
-              <div className="border rounded-xl p-6 space-y-4" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}>
+              <div
+                className="border rounded-xl p-5 space-y-4"
+                style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'var(--app-border)' }}
+              >
                 <div>
-                  <h2 className="text-xs font-mono font-semibold uppercase tracking-wider" style={{ color: 'var(--app-text-muted)' }}>
+                  <h2 className="text-xs font-semibold tracking-tight" style={{ color: 'var(--app-text-primary)' }}>
                     Invite Teammates
                   </h2>
-                  <p className="text-xs mt-1" style={{ color: 'var(--app-text-secondary)' }}>Send immediate email invitations to join workspace.</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--app-text-muted)' }}>
+                    Send immediate email invitations to join workspace.
+                  </p>
                 </div>
 
                 <div className="space-y-3">
                   <AppInput
                     placeholder="colleague@company.com"
                     value={inviteEmail}
-                    
                     onChange={e => setInviteEmail(e.target.value)}
                   />
-                  {inviteError && <p className="text-[10px] text-red-400">{inviteError}</p>}
-                  {inviteSuccess && <p className="text-[10px] text-emerald-400">{inviteSuccess}</p>}
-                  <AppButton variant="mono" size="xs" className="w-full justify-center" loading={inviting} onClick={handleInvite}>
+                  {inviteError && <p className="text-[11px] text-red-400">{inviteError}</p>}
+                  {inviteSuccess && <p className="text-[11px] text-emerald-400">{inviteSuccess}</p>}
+                  <AppButton
+                    variant="mono"
+                    size="sm"
+                    className="w-full justify-center"
+                    loading={inviting}
+                    onClick={handleInvite}
+                  >
                     <Mail size={13} className="mr-1.5" /> Send Invitation
                   </AppButton>
 
-                  <div className="flex items-center gap-2 py-1">
+                  <div className="flex items-center gap-2 py-0.5">
                     <div className="h-px flex-1" style={{ backgroundColor: 'var(--app-border-subtle)' }} />
-                    <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: 'var(--app-text-muted)' }}>or</span>
+                    <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: 'var(--app-text-muted)' }}>
+                      or
+                    </span>
                     <div className="h-px flex-1" style={{ backgroundColor: 'var(--app-border-subtle)' }} />
                   </div>
 
-                  <AppButton variant="mono-outline" size="xs" className="w-full justify-center" onClick={() => setShowInviteModal(true)}>
+                  <AppButton
+                    variant="mono-outline"
+                    size="sm"
+                    className="w-full justify-center"
+                    onClick={() => setShowInviteModal(true)}
+                  >
                     <UserPlus size={13} className="mr-1.5" /> Invite Members
                   </AppButton>
                 </div>
@@ -276,16 +363,19 @@ export default function TeamOverview() {
 
             {/* Owner Workspace Danger Zone */}
             {isOwner && (
-              <div className="border rounded-xl p-6 space-y-3" style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'rgba(239, 68, 68, 0.2)' }}>
-                <h2 className="text-xs font-mono font-semibold text-red-400 uppercase tracking-wider">
+              <div
+                className="border rounded-xl p-5 space-y-3"
+                style={{ backgroundColor: 'var(--app-surface-card)', borderColor: 'rgba(239, 68, 68, 0.25)' }}
+              >
+                <h2 className="text-xs font-semibold text-red-400 tracking-tight">
                   Danger Zone
                 </h2>
-                <p className="text-[11px] leading-normal" style={{ color: 'var(--app-text-muted)' }}>
+                <p className="text-[11px] leading-relaxed" style={{ color: 'var(--app-text-muted)' }}>
                   Permanently delete this team workspace, meeting records, and sprint task histories.
                 </p>
                 <AppButton
                   variant="danger"
-                  size="xs"
+                  size="sm"
                   className="w-full justify-center"
                   loading={deleting}
                   onClick={handleDelete}

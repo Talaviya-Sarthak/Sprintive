@@ -8,6 +8,7 @@ from app.models.transcript import (
     GrammarChangeDetail,
     GrammarChangeType,
     GrammarNormalizationLLMOutput,
+    SegmentClassification,
     TranscriptSegment,
 )
 from app.prompts.grammar_normalization import (
@@ -176,6 +177,24 @@ def normalize_grammar_and_punctuation(
                     "grammar_confidence": 1.0,
                     "grammar_changes": [],
                     "grammar_reason": "Excluded from meeting or empty segment",
+                }
+            )
+            normalized_segments.append(segment_copy)
+            continue
+
+        # Optimization & Guard 2: Clean segments with natural conversational syntax bypass LLM
+        if (
+            segment.classification == SegmentClassification.CLEAN
+            and (segment.confidence or 0.0) >= 0.95
+            and not segment.stt_modified
+        ):
+            segment_copy = segment.model_copy(
+                update={
+                    "grammar_corrected_text": active_text,
+                    "grammar_modified": False,
+                    "grammar_confidence": 0.98,
+                    "grammar_changes": [],
+                    "grammar_reason": "Clean segment with natural syntax; preserved input text",
                 }
             )
             normalized_segments.append(segment_copy)

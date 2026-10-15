@@ -44,7 +44,7 @@ export default function MeetingChat({ messages, currentUserId, onSend, onOpen }:
         <AnimatePresence initial={false}>
           {groups.map((group, gi) => {
             const isMe = group[0].user_id === currentUserId;
-            const initials = group[0].full_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
+            const initials = (typeof group[0]?.full_name === 'string' ? group[0].full_name : '').split(' ').map((n) => n[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '?';
             return (
               <motion.div
                 key={gi}

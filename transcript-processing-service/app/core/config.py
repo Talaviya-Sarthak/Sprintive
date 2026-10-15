@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     STORAGE_TYPE: str = "local"
     STORAGE_BASE_DIR: str = "./storage"
 
+    # LLM and STT Error Correction settings
     LLM_PROVIDER: str = Field(
         default="openai",
         validation_alias=AliasChoices("LLM_PROVIDER"),

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Clock, Users, CheckCircle2, Download, LayoutDashboard,
   Sparkles, AlertCircle, RefreshCw, Loader2, FileText, Check,
   ChevronDown, ChevronUp, Tag, UserCheck, Calendar, ListChecks,
-  ExternalLink, ArrowRight,
+  ArrowRight,
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { meetingService } from '../../services/meeting.service';
@@ -13,7 +13,8 @@ import { useMeeting } from '../../hooks/useMeeting';
 import { useMeetingParticipants } from '../../hooks/useMeetingParticipants';
 import AppLayout from '../../layouts/AppLayout';
 import { MeetingStatusBadge, MeetingTypeBadge, RoleBadge } from '../../components/ui/Badge';
-import { AppButton, AppCard } from '../../components/app-ui';
+import { AppButton, AppCard, AppPageLoader } from '../../components/app-ui';
+import AIProcessingStepper from '../../components/meeting/AIProcessingStepper';
 import type { MeetingParticipant, GeneratedTicket } from '../../types';
 
 function formatDateLong(dateStr?: string) {
@@ -37,9 +38,18 @@ function formatTime12h(time?: string) {
   return `${hour}:${(m ?? 0).toString().padStart(2, '0')} ${ampm}`;
 }
 
-function getInitials(name?: string) {
+function getInitials(name?: any): string {
   if (!name) return '?';
-  return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+  if (typeof name !== 'string') {
+    if (typeof name === 'object' && name !== null) {
+      const candidate = name.full_name || name.name || name.username || name.email || '';
+      if (candidate && typeof candidate === 'string') {
+        return candidate.split(' ').map((n: string) => n[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '?';
+      }
+    }
+    return '?';
+  }
+  return name.split(' ').map(n => n[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '?';
 }
 
 function getPriorityBadgeClass(priority?: string) {
@@ -147,12 +157,7 @@ export default function MeetingSummaryPage() {
   if (meetingLoading || summaryLoading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-64">
-          <div
-            className="w-7 h-7 border-2 rounded-full animate-spin"
-            style={{ borderColor: 'var(--app-border)', borderTopColor: 'var(--app-text-primary)' }}
-          />
-        </div>
+        <AppPageLoader label="Loading meeting summary & intelligence logs..." />
       </AppLayout>
     );
   }
@@ -193,18 +198,6 @@ export default function MeetingSummaryPage() {
 
   // Processing stage indicators
   const currentStage = procStatus?.current_stage || 'pending';
-  const stageIndex = (() => {
-    switch (currentStage) {
-      case 'finalizing_transcript': return 1;
-      case 'saving_transcript': return 2;
-      case 'cleaning_transcript': return 3;
-      case 'analyzing_meeting': return 4;
-      case 'generating_tasks': return 5;
-      case 'resolving_tasks': return 6;
-      case 'completed': return 7;
-      default: return isProcessing ? 3 : 0;
-    }
-  })();
 
   return (
     <AppLayout teamId={meeting.team_id}>
@@ -213,7 +206,10 @@ export default function MeetingSummaryPage() {
         <div className="flex items-center justify-between">
           <button
             onClick={() => navigate(`/teams/${meeting.team_id}/meetings`)}
-            className="flex items-center gap-1.5 text-xs transition-colors cursor-pointer text-[#9ca3af] hover:text-[#f4f4f5]"
+            className="flex items-center gap-1.5 text-xs transition-colors cursor-pointer"
+            style={{ color: 'var(--app-text-muted)' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--app-text-primary)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--app-text-muted)')}
           >
             <ArrowLeft size={14} /> Back to Meetings
           </button>
@@ -279,82 +275,11 @@ export default function MeetingSummaryPage() {
           {/* STATE 1: PROCESSING STATE                             */}
           {/* ══════════════════════════════════════════════════════ */}
           {isProcessing && (
-            <AppCard variant="dashboard" className="p-6 border-blue-500/30 bg-blue-500/[0.03]">
-              <div className="space-y-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400">
-                    <Sparkles size={18} className="animate-pulse" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-semibold text-[var(--app-text-primary)]">AI is analyzing this meeting</h2>
-                    <p className="text-xs text-[var(--app-text-secondary)]">
-                      Your summary and Kanban tasks will appear automatically when processing is complete.
-                    </p>
-                  </div>
-                </div>
-                <p className="text-xs text-[var(--app-text-secondary)]">
-                  {transcriptStatus === 'raw_stored' && 'Transcript saved. Your processed transcript will be ready in a few minutes...'}
-                  {transcriptStatus === 'processing' && 'Cleaning and preparing transcript through the 14-stage preprocessing pipeline...'}
-                  {transcriptStatus === 'ready_for_ai' && 'Transcript preprocessing completed. Cleaned and normalized for AI models.'}
-                  {transcriptStatus === 'failed' && (transcriptData?.error_message ? `Transcript processing failed: ${transcriptData.error_message}` : 'Transcript processing failed.')}
-                  {!transcriptStatus && (transcriptLoading ? 'Retrieving transcript details...' : 'No transcript recorded for this meeting.')}
-                </p>
-
-                {/* Timeline Stepper */}
-                <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 pt-2">
-                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)]">
-                    <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-500 dark:text-emerald-400 flex items-center justify-center text-xs shrink-0">
-                      <Check size={12} strokeWidth={3} />
-                    </div>
-                    <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">Meeting ended</span>
-                  </div>
-
-                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)]">
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                      stageIndex >= 2 ? 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400' : 'bg-blue-500/20 text-blue-600 dark:text-blue-400 animate-pulse'
-                    }`}>
-                      {stageIndex >= 2 ? <Check size={12} strokeWidth={3} /> : <Loader2 size={12} className="animate-spin" />}
-                    </div>
-                    <span className={`text-xs font-medium ${stageIndex >= 2 ? 'text-emerald-700 dark:text-emerald-300' : 'text-blue-700 dark:text-blue-300'}`}>
-                      Transcript saved
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)]">
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                      stageIndex >= 4 ? 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400' : (stageIndex === 3 ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400 animate-pulse' : 'bg-[var(--app-surface-hover)] text-[var(--app-text-muted)]')
-                    }`}>
-                      {stageIndex >= 4 ? <Check size={12} strokeWidth={3} /> : (stageIndex === 3 ? <Loader2 size={12} className="animate-spin" /> : <span className="w-1.5 h-1.5 rounded-full bg-current" />)}
-                    </div>
-                    <span className={`text-xs font-medium ${stageIndex >= 4 ? 'text-emerald-700 dark:text-emerald-300' : (stageIndex === 3 ? 'text-blue-700 dark:text-blue-300' : 'text-[var(--app-text-muted)]')}`}>
-                      AI analyzing
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)]">
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                      stageIndex >= 5 ? 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400' : (stageIndex === 4 ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400 animate-pulse' : 'bg-[var(--app-surface-hover)] text-[var(--app-text-muted)]')
-                    }`}>
-                      {stageIndex >= 5 ? <Check size={12} strokeWidth={3} /> : (stageIndex === 4 ? <Loader2 size={12} className="animate-spin" /> : <span className="w-1.5 h-1.5 rounded-full bg-current" />)}
-                    </div>
-                    <span className={`text-xs font-medium ${stageIndex >= 5 ? 'text-emerald-700 dark:text-emerald-300' : (stageIndex === 4 ? 'text-blue-700 dark:text-blue-300' : 'text-[var(--app-text-muted)]')}`}>
-                      Generating tasks
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2 p-2.5 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface-subtle)]">
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 ${
-                      stageIndex >= 6 ? 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400' : (stageIndex === 5 ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400 animate-pulse' : 'bg-[var(--app-surface-hover)] text-[var(--app-text-muted)]')
-                    }`}>
-                      {stageIndex >= 6 ? <Check size={12} strokeWidth={3} /> : (stageIndex === 5 ? <Loader2 size={12} className="animate-spin" /> : <span className="w-1.5 h-1.5 rounded-full bg-current" />)}
-                    </div>
-                    <span className={`text-xs font-medium ${stageIndex >= 6 ? 'text-emerald-700 dark:text-emerald-300' : (stageIndex === 5 ? 'text-blue-700 dark:text-blue-300' : 'text-[var(--app-text-muted)]')}`}>
-                      Resolving tasks
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </AppCard>
+            <AIProcessingStepper
+              currentStage={currentStage}
+              meetingTitle={meeting.title}
+              className="my-2"
+            />
           )}
 
           {/* ══════════════════════════════════════════════════════ */}
@@ -368,18 +293,26 @@ export default function MeetingSummaryPage() {
                     <AlertCircle size={20} />
                   </div>
                   <div className="space-y-1">
-                    <h2 className="text-sm font-semibold text-[var(--app-text-primary)]">Transcript processing failed</h2>
+                    <h2 className="text-sm font-semibold text-[var(--app-text-primary)]">AI Transcript Processing Failed</h2>
                     <p className="text-xs text-[var(--app-text-secondary)] leading-relaxed">
-                      Your meeting was saved, but we couldn't process the transcript.
-                      {errorMessage ? ` (${errorMessage})` : ''}
+                      {errorMessage?.includes('Failed to reach transcript service') || errorMessage?.includes('fetch failed')
+                        ? 'The transcript processing service (port 8001) could not be reached. Ensure transcript-processing-service is running and click Retry.'
+                        : errorMessage?.includes('No speech detected')
+                        ? 'No speech audio was detected during this meeting. You can speak next time or upload a transcript.'
+                        : "Your meeting was saved, but AI processing could not complete."}
                     </p>
+                    {errorMessage && (
+                      <p className="text-[11px] font-mono text-[#71717a] pt-1">
+                        Reason: {errorMessage}
+                      </p>
+                    )}
                   </div>
                 </div>
 
                 <AppButton
                   variant="mono"
                   size="sm"
-                  disabled={isRetrying || (errorMessage && errorMessage.includes('No speech detected'))}
+                  disabled={isRetrying || Boolean(errorMessage && errorMessage.includes('No speech detected'))}
                   onClick={handleRetry}
                   className="shrink-0 gap-1.5"
                 >
@@ -522,7 +455,11 @@ export default function MeetingSummaryPage() {
                               <div className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-500/30 flex items-center justify-center text-[10px] font-bold">
                                 {getInitials(t.assignee)}
                               </div>
-                              <span className="text-[var(--app-text-primary)] font-medium">{t.assignee}</span>
+                              <span className="text-[var(--app-text-primary)] font-medium">
+                                {typeof t.assignee === 'object' && t.assignee !== null
+                                  ? (t.assignee as any).full_name || (t.assignee as any).name || (t.assignee as any).email || 'Assigned'
+                                  : String(t.assignee)}
+                              </span>
                             </div>
                           )}
                           {(t.resolved_due_date || t.due_date) && (

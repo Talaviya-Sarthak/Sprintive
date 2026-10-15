@@ -16,10 +16,13 @@ import {
 import { profileService } from '../services/profile.service';
 import { useAuth } from '../context/AuthContext';
 import AppLayout from '../layouts/AppLayout';
+import { AppPageLoader } from '../components/app-ui';
+import { getAvatarUrl } from '../lib/utils';
 import type { Team, User } from '../types';
 
 interface ProfileFormData extends Partial<User> {
   avatar?: File;
+  remove_avatar?: boolean;
 }
 
 export default function Profile() {
@@ -62,7 +65,7 @@ export default function Profile() {
           country: data.country || '',
           timezone: data.timezone || '',
         });
-        if (data.avatar_url) setAvatarPreview(data.avatar_url);
+        if (data.avatar_url) setAvatarPreview(getAvatarUrl(data.avatar_url));
       } catch {
         setError('Failed to load profile');
       } finally {
@@ -109,9 +112,7 @@ export default function Profile() {
   if (loading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="w-7 h-7 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--app-border)', borderTopColor: 'var(--app-text-primary)' }} />
-        </div>
+        <AppPageLoader label="Loading engineer profile..." />
       </AppLayout>
     );
   }
@@ -212,6 +213,18 @@ export default function Profile() {
               onChange={handleAvatarChange}
               className="hidden"
             />
+            {isEditing && avatarPreview && (
+              <button
+                type="button"
+                onClick={() => {
+                  setAvatarPreview(null);
+                  setForm(f => ({ ...f, avatar: undefined, remove_avatar: true }));
+                }}
+                className="mt-1 text-[10px] text-rose-500 hover:text-rose-400 font-medium block text-center w-full underline cursor-pointer"
+              >
+                Remove
+              </button>
+            )}
           </div>
 
           <div className="flex-1 min-w-0 text-center sm:text-left">

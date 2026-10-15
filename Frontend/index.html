@@ -19,13 +19,18 @@
     rel="stylesheet" />
   <script>
     (function() {
-      var theme = localStorage.getItem('sprintive-theme');
-      if (theme === 'light') {
-        document.documentElement.classList.add('light');
-        document.documentElement.classList.remove('dark');
-      } else {
+      try {
+        var theme = localStorage.getItem('sprintive-theme');
+        var prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+        if (theme === 'light' || (!theme && prefersLight)) {
+          document.documentElement.classList.add('light');
+          document.documentElement.classList.remove('dark');
+        } else {
+          document.documentElement.classList.add('dark');
+          document.documentElement.classList.remove('light');
+        }
+      } catch (e) {
         document.documentElement.classList.add('dark');
-        document.documentElement.classList.remove('light');
       }
     })();
   </script>

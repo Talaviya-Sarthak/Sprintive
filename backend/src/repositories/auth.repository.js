@@ -151,7 +151,10 @@ export async function linkOAuthProvider(userId, { provider, providerId, avatarUr
     `UPDATE users
      SET auth_provider   = $1,
          provider_id     = $2,
-         avatar_url      = COALESCE($3, avatar_url),
+         avatar_url      = CASE 
+                             WHEN avatar_url IS NOT NULL AND avatar_url <> '' THEN avatar_url 
+                             ELSE $3 
+                           END,
          email_verified  = TRUE,
          updated_at      = NOW()
      WHERE id = $4

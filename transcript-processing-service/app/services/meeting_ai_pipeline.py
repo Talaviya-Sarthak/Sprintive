@@ -105,18 +105,21 @@ async def run_meeting_ai_pipeline(
     llm_client: Optional[BaseLLMClient] = None,
     run_scrum_agent: bool = True,
     scrum_agent: Optional[ScrumIntelligenceAgent] = None,
-    run_task_resolution: bool = False,
+    run_task_resolution: bool = True,
     task_resolution_service: Optional[TaskResolutionService] = None,
     team_id: Optional[str] = None,
     meeting_timestamp: Optional[Any] = None,
     timezone_str: str = "UTC",
     participants: Optional[List[Dict[str, Any]]] = None,
     team_members: Optional[List[Dict[str, Any]]] = None,
+    persist_to_database: bool = True,
 ) -> MeetingAIPipelineResponse:
     """
     Execute AI pipeline stages for a completed meeting:
     Stage 1: Supabase Storage .txt -> UTF-8 String -> Main Meeting Agent -> MeetingAnalysisResult
     Stage 2: MeetingAnalysisResult -> Scrum Intelligence Agent -> Structured ScrumResult (Tasks)
+    Stage 3: ScrumResult -> Deterministic Task Resolution -> ResolvedTask (Kanban Tasks)
+    Stage 4: Automated Persistence -> meeting_summaries table in PostgreSQL
 
     Args:
         meeting_id: Unique meeting identifier.
@@ -126,9 +129,11 @@ async def run_meeting_ai_pipeline(
         llm_client: Optional LLM client injected into agents.
         run_scrum_agent: Whether to execute Stage 2 Scrum Intelligence Agent.
         scrum_agent: Optional ScrumIntelligenceAgent instance (Stage 2).
+        run_task_resolution: Whether to resolve tasks into canonical Kanban schema.
+        persist_to_database: Whether to write summary and tasks to PostgreSQL.
 
     Returns:
-        MeetingAIPipelineResponse with the structured analysis, Scrum tasks, and metadata.
+        MeetingAIPipelineResponse with the structured analysis, Scrum tasks, and resolved Kanban tasks.
     """
     start_ts = time.perf_counter()
 
@@ -147,11 +152,21 @@ async def run_meeting_ai_pipeline(
     logger.info("Meeting ID: %s", valid_id)
     logger.info("Transcript path: %s", transcript_path)
 
-    # 4. Resolve dependencies
+    # 4. Fetch DB context if missing team_id or team_members
+    from app.services.database import get_meeting_context, persist_meeting_summary_to_db
+
+    db_context = get_meeting_context(valid_id)
+    effective_team_id = team_id or db_context.get("team_id") or f"team-{valid_id}"
+    effective_participants = participants if participants is not None else db_context.get("participants", [])
+    effective_team_members = team_members if team_members is not None else db_context.get("team_members", [])
+    effective_meeting_timestamp = meeting_timestamp or db_context.get("started_at") or db_context.get("scheduled_start")
+    meeting_duration_minutes = db_context.get("duration_minutes", 0)
+
+    # 5. Resolve dependencies
     storage = storage_service or get_storage_service()
     analysis_agent = agent or get_main_meeting_agent(llm_client=llm_client)
 
-    # 5. Download .txt from Supabase Storage and decode as UTF-8 string
+    # 6. Download .txt from Supabase Storage and decode as UTF-8 string
     try:
         raw_content = storage.provider.get_text(transcript_path)
     except FileNotFoundError as exc:
@@ -247,21 +262,37 @@ async def run_meeting_ai_pipeline(
     resolved_tasks = None
     if run_task_resolution and scrum_result:
         resolver = task_resolution_service or get_task_resolution_service()
-        effective_team_id = team_id or f"team-{valid_id}"
         resolution_result = resolver.resolve_tasks(
             scrum_result=scrum_result,
             meeting_id=valid_id,
             team_id=effective_team_id,
-            meeting_timestamp=meeting_timestamp,
+            meeting_timestamp=effective_meeting_timestamp,
             timezone_str=timezone_str,
-            participants=participants,
-            team_members=team_members,
+            participants=effective_participants,
+            team_members=effective_team_members,
         )
         resolved_tasks = resolution_result.tasks
+        logger.info("Resolved %d Kanban tasks for meeting %s", len(resolved_tasks), valid_id)
+
+    # 10. Persist to PostgreSQL database (meeting_summaries table)
+    if persist_to_database and analysis:
+        tasks_to_persist = resolved_tasks if resolved_tasks is not None else (scrum_result.tasks if scrum_result else [])
+        persist_success = persist_meeting_summary_to_db(
+            meeting_id=valid_id,
+            ai_summary=analysis.summary,
+            action_items=analysis.action_items,
+            tickets_generated=tasks_to_persist,
+            duration_minutes=meeting_duration_minutes,
+            attendance_count=len(effective_participants),
+        )
+        if persist_success:
+            logger.info("Persisted AI summary and Kanban tasks directly into PostgreSQL for meeting %s", valid_id)
+        else:
+            logger.warning("Could not persist meeting summary directly into PostgreSQL for meeting %s", valid_id)
 
     duration_ms = int((time.perf_counter() - start_ts) * 1000)
 
-    # 9. Standardized Completion Logging
+    # 11. Standardized Completion Logging
     logger.info("LLM response received")
     logger.info(
         "AI pipeline completed (duration: %dms, topics: %d, decisions: %d, actions: %d, blockers: %d, tasks: %d, resolved: %d)",
@@ -288,3 +319,4 @@ async def run_meeting_ai_pipeline(
         error=None,
         duration_ms=duration_ms,
     )
+

@@ -1,4 +1,3 @@
-import React from 'react';
 import KanbanColumn from './KanbanColumn';
 import { KANBAN_COLUMNS } from '../data/mockKanbanData';
 import type { KanbanTask, KanbanStatus } from '../types';
@@ -17,7 +16,7 @@ export default function KanbanBoard({
   onMoveStatus,
 }: KanbanBoardProps) {
   return (
-    <div className="w-full flex-1 min-h-0 overflow-x-auto overflow-y-hidden app-scrollbar pb-2">
+    <div className="w-full h-full flex-1 min-h-0 overflow-x-auto overflow-y-hidden app-scrollbar pb-2">
       <div className="flex items-stretch gap-2.5 sm:gap-3 min-w-max h-full">
         {KANBAN_COLUMNS.map(column => {
           const columnTasks = tasks.filter(t => t.status === column.id);

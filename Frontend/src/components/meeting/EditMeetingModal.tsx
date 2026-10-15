@@ -137,7 +137,7 @@ export default function EditMeetingModal({ open, onClose, onUpdate, meeting, tea
           options={timezones.map(tz => ({ value: tz, label: tz }))}
         />
 
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#1f1f23]">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t" style={{ borderColor: 'var(--app-border-subtle)' }}>
           <AppButton variant="mono-outline" size="sm" type="button" onClick={onClose}>
             Cancel
           </AppButton>

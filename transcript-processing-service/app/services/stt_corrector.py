@@ -126,10 +126,10 @@ def correct_stt_segments(
             corrected_segments.append(segment_copy)
             continue
 
-        # Token Reduction Optimization 2: Clean segments with very high confidence don't need expensive LLM correction
+        # Token Reduction Optimization 2: Clean segments with reasonable confidence don't need expensive LLM correction
         if (
-            segment.classification == SegmentClassification.CLEAN
-            and (segment.confidence or 0.0) >= 0.98
+            (segment.confidence is None or (segment.confidence or 0.0) >= 0.80)
+            and len(active_text.split()) >= 2
         ):
             segment_copy = segment.model_copy(
                 update={
@@ -137,7 +137,7 @@ def correct_stt_segments(
                     "stt_modified": False,
                     "stt_confidence": segment.confidence or 1.0,
                     "stt_error_type": None,
-                    "stt_reason": "High-confidence clean segment; preserved original text",
+                    "stt_reason": "Confidence verified; preserved verbatim text without per-segment LLM latency",
                 }
             )
             corrected_segments.append(segment_copy)

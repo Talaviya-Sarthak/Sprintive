@@ -9,7 +9,7 @@ interface Props {
 }
 
 export default function ParticipantCard({ participant, isActive, videoRef }: Props) {
-  const initials = participant.full_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
+  const initials = (typeof participant.full_name === 'string' ? participant.full_name : '').split(' ').map((n) => n[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '?';
   const internalRef = useRef<HTMLVideoElement | null>(null);
   const isLocal = participant.id === 'local' || !!videoRef;
 

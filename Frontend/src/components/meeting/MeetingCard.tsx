@@ -59,8 +59,9 @@ function formatTimeRange(meeting: Meeting) {
   return 'Time TBD';
 }
 
-function getInitials(name: string) {
-  return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+function getInitials(name?: any): string {
+  if (!name || typeof name !== 'string') return '?';
+  return name.split(' ').map(n => n[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '?';
 }
 
 function isMeetingJoinable(meeting: Meeting): boolean {

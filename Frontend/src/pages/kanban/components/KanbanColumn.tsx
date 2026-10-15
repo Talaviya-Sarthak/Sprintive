@@ -142,7 +142,7 @@ export default function KanbanColumn({
       </div>
 
       {/* Task Cards Container */}
-      <div className="flex-1 min-h-0 p-2 space-y-2 overflow-y-auto overflow-x-hidden app-scrollbar">
+      <div className="flex-1 min-h-0 p-2 pr-1.5 space-y-2 overflow-y-auto overflow-x-hidden overscroll-contain app-scrollbar">
         {tasks.length > 0 ? (
           tasks.map(task => (
             <KanbanCard

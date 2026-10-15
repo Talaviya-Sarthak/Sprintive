@@ -10,7 +10,7 @@ import { MeetingStatusBadge, MeetingTypeBadge, RoleBadge } from '../../component
 import MeetingInfo from '../../components/meeting/MeetingInfo';
 import EditMeetingModal from '../../components/meeting/EditMeetingModal';
 import DeleteMeetingDialog from '../../components/meeting/DeleteMeetingDialog';
-import { AppButton, AppCard } from '../../components/app-ui';
+import { AppButton, AppCard, AppPageLoader } from '../../components/app-ui';
 import { useTheme } from '../../context/ThemeContext';
 import type { Meeting } from '../../types';
 
@@ -131,9 +131,7 @@ export default function MeetingDetailsPage() {
   if (loading) {
     return (
       <AppLayout teamId={teamId || meeting?.team_id}>
-        <div className="flex items-center justify-center h-64">
-          <div className="w-7 h-7 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--app-border)', borderTopColor: 'var(--app-text-primary)' }} />
-        </div>
+        <AppPageLoader label="Loading meeting details..." />
       </AppLayout>
     );
   }

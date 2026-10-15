@@ -10,7 +10,7 @@ export default function ParticipantsList({ participants, currentUserId }: Props)
   return (
     <div className="flex flex-col gap-1 px-3 py-3 overflow-y-auto">
       {participants.map((p) => {
-        const initials = p.full_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
+        const initials = (typeof p.full_name === 'string' ? p.full_name : '').split(' ').map((n) => n[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '?';
         const isMe = p.user_id === currentUserId;
         return (
           <motion.div

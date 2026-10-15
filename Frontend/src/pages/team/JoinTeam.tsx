@@ -222,7 +222,7 @@ export default function JoinTeam() {
     return (
       <div className={`min-h-screen ${pageBg} flex items-center justify-center p-4`}>
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-orange-500/20 border-t-[#F97316] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
           <span className={`text-xs font-mono ${subtextColor} uppercase tracking-wider`}>Loading invitation...</span>
         </div>
       </div>

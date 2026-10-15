@@ -26,9 +26,9 @@ export function AppBadge({ variant = 'neutral', size = 'xs', children, pulse = f
         };
       case 'orange':
         return {
-          backgroundColor: 'rgba(249, 115, 22, 0.1)',
-          color: '#F97316',
-          borderColor: 'rgba(249, 115, 22, 0.25)'
+          backgroundColor: 'rgba(245, 158, 11, 0.1)',
+          color: 'var(--app-accent-amber)',
+          borderColor: 'rgba(245, 158, 11, 0.25)'
         };
       case 'emerald':
         return {

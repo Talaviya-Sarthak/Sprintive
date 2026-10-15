@@ -1,15 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
 
-import Navbar            from './components/Navbar';
-import Hero              from './components/Hero';
-import TrustedBy         from './components/TrustedBy';
-import Features          from './components/Features';
-import HowItWorks        from './components/HowItWorks';
-import DashboardShowcase from './components/DashboardShowcase';
-import Pricing           from './components/Pricing';
-import Testimonials      from './components/Testimonials';
-import FAQ               from './components/FAQ';
-import Footer            from './components/Footer';
 import ProtectedRoute    from './components/ProtectedRoute';
 
 import SignUp        from './pages/SignUp';
@@ -32,42 +22,7 @@ import MeetingDetailsPage from './pages/meeting/MeetingDetailsPage';
 import MeetingRoomPage   from './pages/meeting/MeetingRoomPage';
 import MeetingSummaryPage from './pages/meeting/MeetingSummaryPage';
 import KanbanPage         from './pages/kanban/KanbanPage';
-
-function LandingPage() {
-  return (
-    <div 
-      className="min-h-screen relative overflow-x-hidden selection:bg-[#F97316]/25 selection:text-[#F97316]"
-      style={{ 
-        backgroundColor: 'var(--landing-bg)', 
-        color: 'var(--landing-text)' 
-      }}
-    >
-      {/* Continuous Global Technical Grid Canvas (across every public section) */}
-      <div
-        className="fixed inset-0 pointer-events-none z-0"
-        style={{
-          backgroundImage: `linear-gradient(${String('var(--landing-grid-color)')} 1px, transparent 1px), linear-gradient(90deg, ${String('var(--landing-grid-color)')} 1px, transparent 1px)`,
-          backgroundSize: '44px 44px',
-        }}
-      />
-
-      <div className="relative z-10">
-        <Navbar />
-        <main className="bg-transparent">
-          <Hero />
-          <Features />
-          <HowItWorks />
-          <DashboardShowcase />
-          <Pricing />
-          <Testimonials />
-          <TrustedBy />
-          <FAQ />
-        </main>
-        <Footer />
-      </div>
-    </div>
-  );
-}
+import LandingPage        from './pages/LandingPage';
 
 export default function App() {
   return (

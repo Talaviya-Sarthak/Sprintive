@@ -25,7 +25,7 @@ export default function MeetingChatPlaceholder({ messages }: MeetingChatPlacehol
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
         {groups.map((group, gi) => {
-          const initials = group[0].full_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
+          const initials = (typeof group[0]?.full_name === 'string' ? group[0].full_name : '').split(' ').map((n) => n[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '?';
           return (
             <motion.div
               key={gi}

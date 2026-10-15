@@ -2,29 +2,29 @@ import type { MeetingStatus, MeetingType } from '../../types';
 
 const statusStyles: Record<MeetingStatus, React.CSSProperties> = {
   scheduled: {
-    backgroundColor: 'var(--app-surface-hover)',
-    color: 'var(--app-text-secondary)',
-    borderColor: 'var(--app-border)'
+    backgroundColor: 'rgba(59, 130, 246, 0.12)',
+    color: '#60A5FA',
+    borderColor: 'rgba(59, 130, 246, 0.28)'
   },
   active: {
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    color: '#10B981',
-    borderColor: 'rgba(16, 185, 129, 0.2)'
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    color: '#34D399',
+    borderColor: 'rgba(16, 185, 129, 0.35)'
   },
   ended: {
-    backgroundColor: 'var(--app-surface-subtle)',
-    color: 'var(--app-text-muted)',
-    borderColor: 'var(--app-border)'
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    color: '#10B981',
+    borderColor: 'rgba(16, 185, 129, 0.28)'
   },
   completed: {
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
     color: '#10B981',
-    borderColor: 'rgba(16, 185, 129, 0.2)'
+    borderColor: 'rgba(16, 185, 129, 0.28)'
   },
   cancelled: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    color: '#EF4444',
-    borderColor: 'rgba(239, 68, 68, 0.2)'
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    color: '#F87171',
+    borderColor: 'rgba(239, 68, 68, 0.28)'
   },
 };
 
@@ -42,6 +42,34 @@ const typeLabels: Record<MeetingType, string> = {
   review: 'Sprint Review',
   retrospective: 'Retrospective',
   custom: 'Custom',
+};
+
+const typeStyles: Record<MeetingType, React.CSSProperties> = {
+  daily_scrum: {
+    backgroundColor: 'rgba(14, 165, 233, 0.12)',
+    color: '#38BDF8',
+    borderColor: 'rgba(14, 165, 233, 0.25)',
+  },
+  sprint_planning: {
+    backgroundColor: 'rgba(139, 92, 246, 0.12)',
+    color: '#A78BFA',
+    borderColor: 'rgba(139, 92, 246, 0.25)',
+  },
+  review: {
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+    color: '#FBBF24',
+    borderColor: 'rgba(245, 158, 11, 0.25)',
+  },
+  retrospective: {
+    backgroundColor: 'rgba(20, 184, 166, 0.12)',
+    color: '#2DD4BF',
+    borderColor: 'rgba(20, 184, 166, 0.25)',
+  },
+  custom: {
+    backgroundColor: 'rgba(99, 102, 241, 0.12)',
+    color: '#818CF8',
+    borderColor: 'rgba(99, 102, 241, 0.25)',
+  },
 };
 
 interface StatusBadgeProps {
@@ -72,11 +100,7 @@ export function MeetingTypeBadge({ type, size = 'sm' }: TypeBadgeProps) {
   return (
     <span
       className={`inline-flex items-center rounded-md border font-medium ${sizeClasses}`}
-      style={{
-        backgroundColor: 'var(--app-surface-hover)',
-        color: 'var(--app-text-secondary)',
-        borderColor: 'var(--app-border)'
-      }}
+      style={typeStyles[type] ?? typeStyles.custom}
     >
       {typeLabels[type]}
     </span>
@@ -92,37 +116,37 @@ export function RoleBadge({ role, size = 'sm' }: RoleBadgeProps) {
   const sizeClasses = size === 'sm' ? 'px-2.5 py-0.5 text-[10px]' : 'px-3 py-1 text-[11px]';
   const colors: Record<string, React.CSSProperties> = {
     host: {
-      backgroundColor: 'var(--app-surface-hover)',
-      color: 'var(--app-text-primary)',
-      borderColor: 'var(--app-border)'
+      backgroundColor: 'rgba(59, 130, 246, 0.12)',
+      color: '#60A5FA',
+      borderColor: 'rgba(59, 130, 246, 0.25)'
     },
     'co-host': {
-      backgroundColor: 'rgba(139, 92, 246, 0.1)',
-      color: '#8B5CF6',
-      borderColor: 'rgba(139, 92, 246, 0.2)'
+      backgroundColor: 'rgba(168, 85, 247, 0.12)',
+      color: '#C084FC',
+      borderColor: 'rgba(168, 85, 247, 0.25)'
     },
     participant: {
-      backgroundColor: 'var(--app-surface-card)',
+      backgroundColor: 'var(--app-surface-hover)',
       color: 'var(--app-text-secondary)',
       borderColor: 'var(--app-border)'
     },
     scrum_master: {
-      backgroundColor: 'var(--app-surface-hover)',
-      color: 'var(--app-text-primary)',
-      borderColor: 'var(--app-border)'
+      backgroundColor: 'rgba(139, 92, 246, 0.12)',
+      color: '#A78BFA',
+      borderColor: 'rgba(139, 92, 246, 0.25)'
     },
     developer: {
-      backgroundColor: 'rgba(16, 185, 129, 0.1)',
-      color: '#10B981',
-      borderColor: 'rgba(16, 185, 129, 0.2)'
+      backgroundColor: 'rgba(16, 185, 129, 0.12)',
+      color: '#34D399',
+      borderColor: 'rgba(16, 185, 129, 0.25)'
     },
     product_owner: {
-      backgroundColor: 'rgba(245, 158, 11, 0.1)',
-      color: '#F59E0B',
-      borderColor: 'rgba(245, 158, 11, 0.2)'
+      backgroundColor: 'rgba(245, 158, 11, 0.12)',
+      color: '#FBBF24',
+      borderColor: 'rgba(245, 158, 11, 0.25)'
     },
     observer: {
-      backgroundColor: 'var(--app-surface-card)',
+      backgroundColor: 'var(--app-surface-hover)',
       color: 'var(--app-text-secondary)',
       borderColor: 'var(--app-border)'
     },
