@@ -123,6 +123,16 @@ class Settings(BaseSettings):
     CLEANER_VERSION: str = "1.0.0"
     OVERWRITE_PROCESSED_TRANSCRIPT: bool = True
 
+    # Phase 2 ReAct Agent settings
+    ENABLE_REACT_PIPELINE: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_REACT_PIPELINE", "USE_REACT"),
+    )
+    REACT_MAX_ITERATIONS: int = Field(
+        default=6,
+        validation_alias=AliasChoices("REACT_MAX_ITERATIONS"),
+    )
+
     @model_validator(mode="after")
     def configure_llm_defaults(self) -> "Settings":
         key = (self.LLM_API_KEY or "").strip()
