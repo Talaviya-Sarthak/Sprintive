@@ -96,7 +96,7 @@ export default function MeetingSummaryPage() {
   });
 
   // Summary query
-  const { data: summary, isLoading: summaryLoading } = useQuery({
+  const { data: summary } = useQuery({
     queryKey: ['summary', meetingId],
     queryFn: () => meetingService.getSummary(meetingId!),
     enabled: !!meetingId,
@@ -145,10 +145,10 @@ export default function MeetingSummaryPage() {
     URL.revokeObjectURL(url);
   };
 
-  if (meetingLoading || summaryLoading) {
+  if (meetingLoading) {
     return (
       <AppLayout>
-        <AppPageLoader label="Loading meeting summary & intelligence logs..." />
+        <AppPageLoader label="Loading meeting details & intelligence..." />
       </AppLayout>
     );
   }

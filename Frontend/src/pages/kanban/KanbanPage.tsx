@@ -108,13 +108,15 @@ export default function KanbanPage() {
   }, [activeTeamId]);
 
   // Fetch Board Data
-  const fetchBoardData = useCallback(async () => {
+  const fetchBoardData = useCallback(async (isInitial = false) => {
     if (!activeTeamId) {
       setLoading(false);
       return;
     }
 
-    setLoading(true);
+    if (isInitial || (tasks.length === 0 && !meetingProcStatus)) {
+      setLoading(true);
+    }
     setError(null);
     setActionError(null);
 
@@ -138,7 +140,7 @@ export default function KanbanPage() {
     } finally {
       setLoading(false);
     }
-  }, [activeTeamId, meetingIdParam]);
+  }, [activeTeamId, meetingIdParam, tasks.length, meetingProcStatus]);
 
   useEffect(() => {
     fetchBoardData();
@@ -651,117 +653,112 @@ export default function KanbanPage() {
           </div>
         </div>
 
-        {/* Loading State */}
-        {loading ? (
+        {/* Initial Full Loading State (only before any data or processing state is known) */}
+        {loading && tasks.length === 0 && !meetingProcStatus ? (
           <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3">
-            <Loader2 size={24} className="animate-spin text-blue-400" />
+            <Loader2 size={24} className="animate-spin text-emerald-400" />
             <p className="text-xs font-mono" style={{ color: 'var(--app-text-muted)' }}>Loading Kanban board...</p>
           </div>
-        ) : error ? (
+        ) : error && tasks.length === 0 && !meetingProcStatus ? (
           /* Error State */
           <div className="flex flex-col items-center justify-center h-80 gap-3 border border-rose-500/20 rounded-xl bg-rose-500/5 p-6 text-center">
             <AlertCircle size={28} className="text-rose-400" />
             <h3 className="text-sm font-semibold text-[#f4f4f5]">Unable to Load Board</h3>
             <p className="text-xs text-[#a1a1aa] max-w-sm">{error}</p>
-            <AppButton variant="mono-outline" size="sm" onClick={fetchBoardData} className="mt-2 gap-1.5">
+            <AppButton variant="mono-outline" size="sm" onClick={() => fetchBoardData(true)} className="mt-2 gap-1.5">
               <RefreshCw size={13} />
               <span>Retry</span>
             </AppButton>
           </div>
-        ) : tasks.length === 0 ? (
-          meetingProcStatus?.is_processing ? (
-            /* Processing State with Premium Stepper */
-            <div className="py-2">
-              <AIProcessingStepper
-                currentStage={meetingProcStatus.current_stage}
-                meetingTitle={activeProcessingMeetingTitle}
-              />
-            </div>
-          ) : (meetingProcStatus?.transcript_status === 'failed' || meetingProcStatus?.ai_status === 'failed') ? (
-            /* Failed State */
-            <div className="flex flex-col items-center justify-center h-80 gap-3 border border-rose-500/30 rounded-xl bg-rose-500/[0.03] p-8 text-center">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-rose-500/15 border border-rose-500/30 text-rose-400">
-                <AlertCircle size={20} />
-              </div>
-              <h3 className="text-sm font-semibold text-[#f4f4f5]">AI processing failed</h3>
-              <p className="text-xs text-[#9ca3af] max-w-md leading-relaxed">
-                {meetingProcStatus.error || 'We encountered an error processing the transcript for this meeting.'}
-              </p>
-              <div className="flex items-center gap-2 mt-2">
-                <AppButton
-                  variant="mono"
-                  size="sm"
-                  disabled={isRetryingProc}
-                  onClick={handleRetryProcessing}
-                  className="gap-1.5"
-                >
-                  {isRetryingProc ? (
-                    <>
-                      <Loader2 size={12} className="animate-spin" />
-                      <span>Retrying...</span>
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw size={12} />
-                      <span>Retry Processing</span>
-                    </>
-                  )}
-                </AppButton>
-                <AppButton variant="mono-outline" size="sm" onClick={() => handleMeetingChange('all')}>
-                  Show All Meetings
-                </AppButton>
-              </div>
-            </div>
-          ) : (
-            /* Standard Empty State */
-            <div className="flex flex-col items-center justify-center h-80 gap-3 border border-[#242636] rounded-xl bg-[#14151e] p-8 text-center">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#1d1f2b] border border-[#2c2f42] text-indigo-400">
-                <Sparkles size={20} />
-              </div>
-              <h3 className="text-sm font-semibold text-[#f4f4f5]">
-                {meetingIdParam !== 'all' ? 'No tasks from this meeting' : 'No tasks on this board yet'}
-              </h3>
-              <p className="text-xs text-[#a1a1aa] max-w-md leading-relaxed">
-                {meetingIdParam !== 'all'
-                  ? 'This meeting was processed, but did not produce any actionable tasks.'
-                  : 'Tasks generated by the Scrum Intelligence Agent after completed meetings will appear here automatically.'}
-              </p>
-              <div className="flex items-center gap-2 mt-2">
-                {meetingIdParam !== 'all' && (
-                  <AppButton variant="mono-outline" size="sm" onClick={() => handleMeetingChange('all')}>
-                    Show All Meetings
-                  </AppButton>
-                )}
-                {activeTeamId && (
-                  <AppButton
-                    variant="mono-outline"
-                    size="sm"
-                    onClick={() => navigate(`/teams/${activeTeamId}/meetings`)}
-                  >
-                    <Video size={13} className="mr-1.5" /> Go to Meetings
-                  </AppButton>
-                )}
-                <AppButton variant="mono" size="sm" onClick={() => handleOpenCreate('todo')}>
-                  <Plus size={13} className="mr-1.5" /> Create Task Manually
-                </AppButton>
-              </div>
-            </div>
-          )
         ) : (
-          /* Kanban Board Component */
+          /* Active Board & Stepper View */
           <div className="space-y-6">
+            {/* Minimal Green AI Processing Stepper when active */}
             {meetingProcStatus?.is_processing && (
               <AIProcessingStepper
                 currentStage={meetingProcStatus.current_stage}
                 meetingTitle={activeProcessingMeetingTitle}
               />
             )}
-            <KanbanBoard
-              tasks={filteredTasks}
-              onAddTask={handleOpenCreate}
-              onCardClick={handleOpenDrawer}
-              onMoveStatus={handleMoveStatus}
-            />
+
+            {/* If AI processing explicitly failed and there are 0 tasks */}
+            {tasks.length === 0 && (meetingProcStatus?.transcript_status === 'failed' || meetingProcStatus?.ai_status === 'failed') ? (
+              <div className="flex flex-col items-center justify-center h-80 gap-3 border border-rose-500/30 rounded-xl bg-rose-500/[0.03] p-8 text-center">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-rose-500/15 border border-rose-500/30 text-rose-400">
+                  <AlertCircle size={20} />
+                </div>
+                <h3 className="text-sm font-semibold text-[#f4f4f5]">AI processing failed</h3>
+                <p className="text-xs text-[#9ca3af] max-w-md leading-relaxed">
+                  {meetingProcStatus.error || 'We encountered an error processing the transcript for this meeting.'}
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <AppButton
+                    variant="mono"
+                    size="sm"
+                    disabled={isRetryingProc}
+                    onClick={handleRetryProcessing}
+                    className="gap-1.5"
+                  >
+                    {isRetryingProc ? (
+                      <>
+                        <Loader2 size={12} className="animate-spin" />
+                        <span>Retrying...</span>
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw size={12} />
+                        <span>Retry Processing</span>
+                      </>
+                    )}
+                  </AppButton>
+                  <AppButton variant="mono-outline" size="sm" onClick={() => handleMeetingChange('all')}>
+                    Show All Meetings
+                  </AppButton>
+                </div>
+              </div>
+            ) : tasks.length === 0 && !meetingProcStatus?.is_processing ? (
+              /* Standard Empty State when not processing */
+              <div className="flex flex-col items-center justify-center h-80 gap-3 border border-[#242636] rounded-xl bg-[#14151e] p-8 text-center">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#1d1f2b] border border-[#2c2f42] text-emerald-400">
+                  <Sparkles size={20} />
+                </div>
+                <h3 className="text-sm font-semibold text-[#f4f4f5]">
+                  {meetingIdParam !== 'all' ? 'No tasks from this meeting' : 'No tasks on this board yet'}
+                </h3>
+                <p className="text-xs text-[#a1a1aa] max-w-md leading-relaxed">
+                  {meetingIdParam !== 'all'
+                    ? 'This meeting was processed, but did not produce any actionable tasks.'
+                    : 'Tasks generated by the Scrum Intelligence Agent after completed meetings will appear here automatically.'}
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  {meetingIdParam !== 'all' && (
+                    <AppButton variant="mono-outline" size="sm" onClick={() => handleMeetingChange('all')}>
+                      Show All Meetings
+                    </AppButton>
+                  )}
+                  {activeTeamId && (
+                    <AppButton
+                      variant="mono-outline"
+                      size="sm"
+                      onClick={() => navigate(`/teams/${activeTeamId}/meetings`)}
+                    >
+                      <Video size={13} className="mr-1.5" /> Go to Meetings
+                    </AppButton>
+                  )}
+                  <AppButton variant="mono" size="sm" onClick={() => handleOpenCreate('todo')}>
+                    <Plus size={13} className="mr-1.5" /> Create Task Manually
+                  </AppButton>
+                </div>
+              </div>
+            ) : (
+              /* Always render the full Kanban board columns during processing or when tasks exist */
+              <KanbanBoard
+                tasks={filteredTasks}
+                onAddTask={handleOpenCreate}
+                onCardClick={handleOpenDrawer}
+                onMoveStatus={handleMoveStatus}
+              />
+            )}
           </div>
         )}
 
