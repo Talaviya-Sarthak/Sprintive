@@ -10,7 +10,11 @@ import logging
 import os
 import uuid
 from typing import Any, Dict, List, Optional
-import psycopg
+
+try:
+    import psycopg
+except ImportError:
+    psycopg = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +58,8 @@ def get_database_url() -> str:
 
 def get_db_connection():
     """Create a psycopg connection to PostgreSQL."""
+    if psycopg is None:
+        raise RuntimeError("psycopg is not installed. Please install 'psycopg[binary]'.")
     db_url = get_database_url()
     return psycopg.connect(db_url)
 
