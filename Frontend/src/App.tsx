@@ -24,6 +24,7 @@ import MeetingRoomPage   from './pages/meeting/MeetingRoomPage';
 import MeetingSummaryPage from './pages/meeting/MeetingSummaryPage';
 import KanbanPage         from './pages/kanban/KanbanPage';
 import LandingPage        from './pages/LandingPage';
+import DownloadPage       from './pages/DownloadPage';
 
 export default function App() {
   return (
@@ -31,11 +32,13 @@ export default function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/"                      element={<LandingPage />} />
+        <Route path="/download"              element={<DownloadPage />} />
         <Route path="/contact"               element={<Contact />} />
         <Route path="/about"                 element={<About />} />
         <Route path="/signup"                element={<SignUp />} />
         <Route path="/login"                 element={<Login />} />
         <Route path="/auth/callback"         element={<AuthCallback />} />
+
         
         {/* Team creation and joining */}
         <Route path="/teams/create"          element={<ProtectedRoute><CreateTeam /></ProtectedRoute>} />

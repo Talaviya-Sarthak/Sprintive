@@ -26,3 +26,13 @@ yarn-error.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# Android Signing Security (NEVER commit signing keys or keystores)
+*.keystore
+*.jks
+sprintive-android/.gradle/
+sprintive-android/build/
+sprintive-android/app/build/
+sprintive-android/*.keystore
+sprintive-android/hs_err_*.log
+

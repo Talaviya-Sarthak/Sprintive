@@ -12,8 +12,9 @@ interface FooterCol {
 }
 
 const cols: FooterCol[] = [
-  { title: 'Product', links: [{ label: 'Features', href: '/#features' }, { label: 'Pricing', href: '/#pricing' }, { label: 'Roadmap', href: '#' }, { label: 'Integrations', href: '#' }] },
+  { title: 'Product', links: [{ label: 'Features', href: '/#features' }, { label: 'Pricing', href: '/#pricing' }, { label: 'Android App', href: '/download' }, { label: 'Roadmap', href: '#' }, { label: 'Integrations', href: '#' }] },
   { title: 'Company', links: [{ label: 'About', href: '/about' }, { label: 'Blog', href: '#' }, { label: 'Contact', href: '/contact' }, { label: 'Careers', href: '#' }] },
+
   { title: 'Resources', links: [{ label: 'Documentation', href: '#' }, { label: 'Help Center', href: '#' }, { label: 'API', href: '#' }, { label: 'Community', href: '#' }] },
   { title: 'Legal', links: [{ label: 'Privacy', href: '#' }, { label: 'Terms', href: '#' }, { label: 'Cookies', href: '#' }] },
 ];
