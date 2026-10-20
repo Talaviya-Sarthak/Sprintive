@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+Allow: /download
+Allow: /about
+Allow: /contact
+
+# Authenticated & Private Routes
+Disallow: /dashboard
+Disallow: /kanban
+Disallow: /teams/
+Disallow: /meetings/
+Disallow: /invitations/
+Disallow: /join/
+Disallow: /auth/
+Disallow: /login
+Disallow: /signup
+Disallow: /profile
+
+# Sitemap
+Sitemap: https://sprintiveproduction.vercel.app/sitemap.xml
